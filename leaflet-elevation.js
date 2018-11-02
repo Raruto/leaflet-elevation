@@ -746,7 +746,7 @@ L.Control.Elevation = L.Control.extend({
 			this._map.fitBounds(e.target.getBounds());
 		});
 		this.gpx.on("addline", function(e) {
-			this.addData(e.line, this.g);
+			this.addData(e.line, this.gpx);
 		}, this);
 
 		this.gpx.addTo(this._map);
