@@ -91,7 +91,7 @@ _For a working example see [here](https://raruto.github.io/examples/leaflet-elev
 
 ---
 
-**Compatibile with:** leaflet@1.0.2
+**Compatibile with:** leaflet@1.0.2, d3js@4.13
 
 ---
 
