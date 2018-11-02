@@ -1,0 +1,166 @@
+.leaflet-control.elevation .background {
+	background-color: rgba(70, 130, 180, .2);
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-ms-border-radius: 5px;
+	-o-border-radius: 5px;
+	-webkit-border-radius: 5px;
+}
+
+.leaflet-control.elevation .axis line, .leaflet-control.elevation .axis path {
+	stroke: #2d1130;
+	stroke-width: 2;
+	fill: none;
+}
+
+.leaflet-control.elevation .area {
+	fill: #4682b4;
+	stroke: #000000;
+	stroke-width: 1.8;
+}
+
+.leaflet-control.elevation .mouse-focus-line {
+	stroke: #0d1821;
+	stroke-width: 1;
+	pointer-events: none;
+}
+
+.leaflet-control.elevation .mouse-drag {
+	fill: rgba(23, 74, 117, .4);
+}
+
+.leaflet-control.elevation .elevation-toggle {
+	cursor: pointer;
+	box-shadow: 0 1px 7px rgba(0, 0, 0, .4);
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	width: 36px;
+	height: 36px;
+	background-color: #f8f8f9;
+}
+
+.leaflet-control.elevation-collapsed .background {
+	display: none;
+}
+
+.leaflet-control.elevation-collapsed .elevation-toggle {
+	display: block;
+}
+
+.leaflet-control.elevation .elevation-toggle-icon {
+	background: url(images/elevation.png) no-repeat center center;
+}
+
+.leaflet-overlay-pane .height-focus {
+	fill: #4682b4;
+	stroke: #4682b4;
+}
+
+.leaflet-overlay-pane .height-focus.line {
+	pointer-events: none;
+	stroke-width: 2;
+}
+
+/*////////////////////////////////////////////////*/
+
+.lime-theme.leaflet-control.elevation .background {
+	background-color: rgba(156, 194, 34, .2);
+}
+
+.lime-theme.leaflet-control.elevation .axis line, .lime-theme.leaflet-control.elevation .axis path {
+	stroke: #566b13;
+}
+
+.lime-theme.leaflet-control.elevation .mouse-drag {
+	fill: rgba(99, 126, 11, .4);
+}
+
+.lime-theme.leaflet-control.elevation .elevation-toggle-icon {
+	background: url(images/elevation-lime.png) no-repeat center center;
+}
+
+.lime-theme.leaflet-control.elevation .area {
+	fill: #9cc222;
+}
+
+.lime-theme.leaflet-control.elevation .mouse-focus-line {
+	stroke: #101404;
+}
+
+.lime-theme.height-focus {
+	stroke: #9cc222;
+	fill: #9cc222;
+}
+
+/*////////////////////////////////////////////////*/
+
+.steelblue-theme.leaflet-control.elevation .background {
+	background-color: rgba(70, 130, 180, .2);
+}
+
+.steelblue-theme.leaflet-control.elevation .axis line, .steelblue-theme.leaflet-control.elevation .axis path {
+	stroke: #0d1821;
+}
+
+.steelblue-theme.leaflet-control.elevation .mouse-drag {
+	fill: rgba(23, 74, 117, .4);
+}
+
+.steelblue-theme.leaflet-control.elevation .elevation-toggle-icon {
+	background: url(images/elevation-steelblue.png) no-repeat center center;
+}
+
+.steelblue-theme.leaflet-control.elevation .area {
+	fill: #4682b4;
+}
+
+.steelblue-theme.leaflet-control.elevation .mouse-focus-line {
+	stroke: #0d1821;
+}
+
+.steelblue-theme.height-focus {
+	stroke: #4682b4;
+	fill: #4682b4;
+}
+
+/*////////////////////////////////////////////////*/
+
+.purple-theme.leaflet-control.elevation .background {
+	background-color: rgba(115, 44, 123, .2);
+}
+
+.purple-theme.leaflet-control.elevation .axis line, .purple-theme.leaflet-control.elevation .axis path {
+	stroke: #2d1130;
+}
+
+.purple-theme.leaflet-control.elevation .mouse-drag {
+	fill: rgba(74, 14, 80, .4);
+}
+
+.purple-theme.leaflet-control.elevation .elevation-toggle-icon {
+	background: url(images/elevation-purple.png) no-repeat center center;
+}
+
+.purple-theme.leaflet-control.elevation .area {
+	fill: #732c7b;
+}
+
+.purple-theme.leaflet-control.elevation .mouse-focus-line {
+	stroke: #000;
+}
+
+.purple-theme.height-focus {
+	stroke: #732c7b;
+	fill: #732c7b
+}
+
+/*////////////////////////////////////////////////*/
+
+.magenta-theme.leaflet-control.elevation .background {
+	background-color: rgba(255, 255, 255, 0.47);
+}
+
+.leaflet-control.elevation .area {
+	fill: #FF005E;
+	stroke: #000000;
+}
