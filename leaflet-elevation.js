@@ -161,6 +161,7 @@ L.Control.Elevation = L.Control.extend({
 		}
 
 		this._map.on('zoom viewreset zoomanim', this._forceHidePositionMarker, this);
+		this._map.on('resize', this._resetView, this);
 
 		return container;
 	},
@@ -452,6 +453,11 @@ L.Control.Elevation = L.Control.extend({
 		//this._hidePositionMarker();
 	},
 
+	_resetView: function() {
+		this._resetDrag();
+		this._forceHidePositionMarker();
+	},
+
 	_forceHidePositionMarker: function() {
 		this._hidePositionMarker(true);
 	},
@@ -701,49 +707,59 @@ L.Control.Elevation = L.Control.extend({
 			throw "Invalid gpx url";
 		}
 
+		var themeName = this.options.theme;
+		// TODO: find a better workaround for: this.gpx.setStyle({className: themeName});
+		var themeColor = themeName.substring(0, themeName.indexOf("-theme"));
+		var hexColor;
+		switch (themeColor) {
+			case 'lime':
+				hexColor = '#566B13';
+				break;
+			case 'steelblue':
+				hexColor = '#4682B4';
+				break;
+			case 'purple':
+				hexColor = '#732C7B';
+				break;
+			case 'magenta':
+				hexColor = '#FF005E';
+				break;
+			default:
+				hexColor = this.options.gpxOptions.polyline_options.color;
+				break;
+		}
+		this.options.gpxOptions.polyline_options.color = hexColor;
+
 		this.gpx = new L.GPX(url, this.options.gpxOptions);
 
 		this.gpx.on('loaded', function(e) {
 			this._map.fitBounds(e.target.getBounds());
 		});
-		this.gpx.on("addline", function(e) {
-			this.addData(e.line, this.gpx);
+		this.gpx.once("addline", function(e) {
+				this.addData(e.line, this.gpx);
 		}, this);
 
 		this.gpx.addTo(this._map);
 
 		this._map.on('resize', function(e) {
 			var mapDiv = this._map.getContainer();
-			var elevationdiv = document.querySelector(this.options.elevationDiv);
-			elevationdiv.parentNode.removeChild(elevationdiv);
-			elevationdiv = document.createElement("div");
-			elevationdiv.id = "elevation-div";
-			mapDiv.parentNode.insertBefore(elevationdiv, mapDiv.nextSibling);
+			var eleDiv = document.querySelector(this.options.elevationDiv);
+			eleDiv.parentNode.removeChild(eleDiv);
+			eleDiv = document.createElement("div");
+			eleDiv.id = "elevation-div";
+			mapDiv.parentNode.insertBefore(eleDiv, mapDiv.nextSibling);
 
-			this.options.width = elevationdiv.offsetWidth; // - 20;
+			this.options.width = eleDiv.offsetWidth; // - 20;
 
 			var container = this.onAdd(this._map);
 			container.classList.add("leaflet-control");
 
 			if (this.options.detachedView) {
-				elevationdiv.appendChild(container);
+				eleDiv.appendChild(container);
 			} else {
-				this.addTo(map);
+				this.addTo(this._map);
 			}
-
-			this.gpx.reload();
-			this.clear();
-
-			this.gpx.on("addline", function(e) {
-				this.clear();
-				this.onAddGPXLine(e, this.gpx);
-			}, this);
 		}, this);
-	},
-
-	onAddGPXLine: function(e, track) {
-		var polyline = e.line;
-		this.addData(polyline, track);
 	},
 
 	/*
