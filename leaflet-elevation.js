@@ -32,6 +32,20 @@ L.Control.Elevation = L.Control.extend({
 		elevationDiv: "#elevation-div",
 		detachedView: false,
 		responsiveView: false,
+		gpxOptions: {
+			async: true,
+			marker_options: {
+				startIconUrl: null,
+				endIconUrl: null,
+				shadowUrl: null,
+			},
+			polyline_options: {
+				color: '#FF005E',
+				opacity: 0.75,
+				weight: 5,
+				lineCap: 'round'
+			},
+		},
 	},
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
@@ -109,22 +123,19 @@ L.Control.Elevation = L.Control.extend({
 			.style("pointer-events", "all");
 
 		if (L.Browser.touch) {
-
 			background
 				.on("touchmove.drag", this._dragHandler.bind(this))
 				.on("touchstart.drag", this._dragStartHandler.bind(this))
 				.on("touchstart.focus", this._mousemoveHandler.bind(this));
 			L.DomEvent.on(this._container, 'touchend', this._dragEndHandler, this);
-
 		}
 
 		background
-			.on("mousemove.focus", this._mousemoveHandler.bind(this))
-			.on("mouseout.focus", this._mouseoutHandler.bind(this))
+			.on("mousemove.drag", this._dragHandler.bind(this))
 			.on("mousedown.drag", this._dragStartHandler.bind(this))
-			.on("mousemove.drag", this._dragHandler.bind(this));
+			.on("mousemove.focus", this._mousemoveHandler.bind(this))
+			.on("mouseout.focus", this._mouseoutHandler.bind(this));
 		L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
-
 
 		this._xaxisgraphicnode = g.append("g");
 		this._yaxisgraphicnode = g.append("g");
@@ -155,22 +166,26 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	_dragHandler: function() {
-
 		//we don´t want map events to occur here
 		d3.event.preventDefault();
 		d3.event.stopPropagation();
 
 		this._gotDragged = true;
-
 		this._drawDragRectangle();
+	},
 
+	_dragStartHandler: function() {
+		d3.event.preventDefault();
+		d3.event.stopPropagation();
+
+		this._gotDragged = false;
+		this._dragStartCoords = d3.mouse(this._background.node());
 	},
 
 	/*
 	 * Draws the currently dragged rectangle over the chart.
 	 */
 	_drawDragRectangle: function() {
-
 		if (!this._dragStartCoords) {
 			return;
 		}
@@ -195,37 +210,16 @@ L.Control.Elevation = L.Control.extend({
 			this._dragRectangle.attr("width", x2 - x1)
 				.attr("x", x1);
 		}
-
-	},
-
-	/*
-	 * Removes the drag rectangle and zoms back to the total extent of the data.
-	 */
-	_resetDrag: function() {
-
-		if (this._dragRectangleG) {
-
-			this._dragRectangleG.remove();
-			this._dragRectangleG = null;
-			this._dragRectangle = null;
-
-			this._hidePositionMarker();
-
-			this._map.fitBounds(this._fullExtent);
-
-		}
-
 	},
 
 	/*
 	 * Handles end of dragg operations. Zooms the map to the selected items extent.
 	 */
 	_dragEndHandler: function() {
-
 		if (!this._dragStartCoords || !this._gotDragged) {
 			this._dragStartCoords = null;
 			this._gotDragged = false;
-			this._resetDrag();
+			//this._resetDrag();
 			return;
 		}
 
@@ -238,18 +232,19 @@ L.Control.Elevation = L.Control.extend({
 
 		this._dragStartCoords = null;
 		this._gotDragged = false;
-
 	},
 
-	_dragStartHandler: function() {
-
-		d3.event.preventDefault();
-		d3.event.stopPropagation();
-
-		this._gotDragged = false;
-
-		this._dragStartCoords = d3.mouse(this._background.node());
-
+	/*
+	 * Removes the drag rectangle and zoms back to the total extent of the data.
+	 */
+	_resetDrag: function() {
+		if (this._dragRectangleG) {
+			this._dragRectangleG.remove();
+			this._dragRectangleG = null;
+			this._dragRectangle = null;
+			this._hidePositionMarker();
+			this._map.fitBounds(this._fullExtent);
+		}
 	},
 
 	/*
@@ -281,20 +276,16 @@ L.Control.Elevation = L.Control.extend({
 
 	/** Make the map fit the route section between given indexes. */
 	_fitSection: function(index1, index2) {
-
 		var start = Math.min(index1, index2),
 			end = Math.max(index1, index2);
 
 		var ext = this._calculateFullExtent(this._data.slice(start, end));
 
 		this._map.fitBounds(ext);
-
 	},
 
 	_initToggle: function() {
-
 		/* inspired by L.Control.Layers */
-
 		var container = this._container;
 
 		//Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
@@ -458,7 +449,7 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	_mouseoutHandler: function() {
-		this._hidePositionMarker();
+		//this._hidePositionMarker();
 	},
 
 	_forceHidePositionMarker: function() {
@@ -469,7 +460,6 @@ L.Control.Elevation = L.Control.extend({
 	 * Hides the position-/heigth indication marker drawn onto the map
 	 */
 	_hidePositionMarker: function(force) {
-
 		if (!this.options.autoHideHeightIndicator && !force) {
 			return;
 		}
@@ -486,7 +476,6 @@ L.Control.Elevation = L.Control.extend({
 			this._pointG.style("visibility", "hidden");
 		}
 		this._focusG.style("visibility", "hidden");
-
 	},
 
 	/*
@@ -505,7 +494,6 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	_showPositionMarker: function(item) {
-
 		var opts = this.options,
 			alt = item.altitude,
 			dist = item.dist,
@@ -518,9 +506,7 @@ L.Control.Elevation = L.Control.extend({
 		//if we use a height indicator we create one with SVG
 		//otherwise we show a marker
 		if (opts.useHeightIndicator) {
-
 			if (!this._mouseHeightFocus) {
-
 				var heightG = d3.select(this._map.getContainer()).select(".leaflet-overlay-pane svg")
 					.append("g");
 				this._mouseHeightFocus = heightG.append('svg:line')
@@ -565,19 +551,12 @@ L.Control.Elevation = L.Control.extend({
 					.text(numY + " m")
 					.style("visibility", "visible");
 			}
-
 		} else {
-
 			if (!this._marker) {
-
 				this._marker = new L.Marker(ll).addTo(this._map);
-
 			} else {
-
 				this._marker.setLatLng(ll);
-
 			}
-
 		}
 	},
 
@@ -685,7 +664,6 @@ L.Control.Elevation = L.Control.extend({
 	 * Calculates the full extent of the data array
 	 */
 	_calculateFullExtent: function(data) {
-
 		if (!data || data.length < 1) {
 			throw new Error("no data in parameters");
 		}
@@ -697,7 +675,6 @@ L.Control.Elevation = L.Control.extend({
 		});
 
 		return ext;
-
 	},
 
 	/*
@@ -720,27 +697,11 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	addGPXFile: function(url) {
-
 		if (!url) {
 			throw "Invalid gpx url";
 		}
 
-		this.gpx = new L.GPX(url, {
-			async: true,
-			marker_options: {
-				startIconUrl: null,
-				endIconUrl: null,
-				shadowUrl: null,
-			},
-			polyline_options: {
-				color: '#FF005E',
-				opacity: 0.75,
-				weight: 5,
-				lineCap: 'round'
-			},
-		});
-
-		var that = this;
+		this.gpx = new L.GPX(url, this.options.gpxOptions);
 
 		this.gpx.on('loaded', function(e) {
 			this._map.fitBounds(e.target.getBounds());
@@ -770,8 +731,6 @@ L.Control.Elevation = L.Control.extend({
 				this.addTo(map);
 			}
 
-
-
 			this.gpx.reload();
 			this.clear();
 
@@ -780,7 +739,6 @@ L.Control.Elevation = L.Control.extend({
 				this.onAddGPXLine(e, this.gpx);
 			}, this);
 		}, this);
-
 	},
 
 	onAddGPXLine: function(e, track) {
@@ -880,7 +838,6 @@ L.Control.Elevation = L.Control.extend({
 	 * Reset data and display
 	 */
 	clear: function() {
-
 		this._clearData();
 
 		if (!this._areapath) {
