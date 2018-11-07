@@ -256,8 +256,8 @@ L.Control.Elevation = L.Control.extend({
 
 		this._map.fireEvent("elechart_dragged", {
 			data: {
-				dragstart: item1,
-				dragend: item2
+				dragstart: this._data[item1],
+				dragend: this._data[item2]
 			}
 		}, true);
 	},
