@@ -1,7 +1,7 @@
 # leaflet-elevation.js
 A Leaflet plugin that allows to add elevation profiles using d3js
 
-_For a working example see [demo](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation.html)_
+_For a working example see [demo](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation.html) and [demo](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_hidden_map.html)_
 
 ---
 
