@@ -253,6 +253,13 @@ L.Control.Elevation = L.Control.extend({
 
 		this._dragStartCoords = null;
 		this._gotDragged = false;
+
+		this._map.fireEvent("elechart_dragged", {
+			data: {
+				dragstart: item1,
+				dragend: item2
+			}
+		}, true);
 	},
 
 	/*
