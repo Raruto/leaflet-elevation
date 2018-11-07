@@ -162,7 +162,8 @@ L.Control.Elevation = L.Control.extend({
 			.attr("rx", 3)
 			.attr("ry", 3)
 			.style("fill", "#000")
-			.style("fill-opacity", 0.75);
+			.style("fill-opacity", 0.75)
+			.style("pointer-events", "none");
 
 		this._focuslabeltext = focusG.append("svg:text")
 			.style("pointer-events", "none")
