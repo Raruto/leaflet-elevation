@@ -64,8 +64,10 @@ L.Control.Elevation = L.Control.extend({
 		opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
 
 		if (opts.detachedView && opts.responsiveView) {
-			opts.width = document.querySelector(opts.elevationDiv).offsetWidth;
-			opts.height = document.querySelector(opts.elevationDiv).offsetHeight - 20;
+			var offsetWi = document.querySelector(opts.elevationDiv).offsetWidth;
+			var offsetHe = document.querySelector(opts.elevationDiv).offsetHeight;
+			opts.width = offsetWi > 0 ? offsetWi : opts.width;
+			opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height - 20;
 		}
 
 		var x = this._x = d3.scaleLinear()
@@ -162,7 +164,8 @@ L.Control.Elevation = L.Control.extend({
 			.attr("rx", 3)
 			.attr("ry", 3)
 			.style("fill", "#000")
-			.style("fill-opacity", 0.75);
+			.style("fill-opacity", 0.75)
+			.style("pointer-events", "none");
 
 		this._focuslabeltext = focusG.append("svg:text")
 			.style("pointer-events", "none")
@@ -186,7 +189,7 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	_dragHandler: function() {
-		//we don´t want map events to occur here
+		//we donÂ´t want map events to occur here
 		d3.event.preventDefault();
 		d3.event.stopPropagation();
 
@@ -252,6 +255,13 @@ L.Control.Elevation = L.Control.extend({
 
 		this._dragStartCoords = null;
 		this._gotDragged = false;
+
+		this._map.fireEvent("elechart_dragged", {
+			data: {
+				dragstart: this._data[item1],
+				dragend: this._data[item2]
+			}
+		}, true);
 	},
 
 	/*
@@ -768,9 +778,14 @@ L.Control.Elevation = L.Control.extend({
 		this._map.on('resize', function(e) {
 			var mapDiv = this._map.getContainer();
 			var eleDiv = document.querySelector(this.options.elevationDiv);
-			eleDiv.innerHTML = "";
 
-			this.options.width = eleDiv.offsetWidth; // - 20;
+			var newWidth = eleDiv.offsetWidth; // - 20;
+
+			if(newWidth <= 0) return;
+
+			this.options.width = newWidth;
+
+			eleDiv.innerHTML = "";
 
 			var container = this.onAdd(this._map);
 			container.classList.add("leaflet-control");
