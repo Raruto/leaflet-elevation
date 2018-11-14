@@ -17,7 +17,7 @@ _For a working example see [demo](https://raruto.github.io/examples/leaflet-elev
     <script src="https://d3js.org/d3.v4.js" charset="utf-8"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet-src.js"></script>
-    <script src="https://raw.githack.com/mpetazzoni/leaflet-gpx/master/gpx.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
     <link rel="stylesheet" href="https://raruto.github.io/cdn/leaflet-elevation/0.0.5/leaflet-elevation.css" />
     <script src="https://raruto.github.io/cdn/leaflet-elevation/0.0.5/leaflet-elevation.js"></script>
     ...
