@@ -14,7 +14,7 @@ _For a working example see [demo](https://raruto.github.io/examples/leaflet-elev
     <head>
     ...
     <style> html, body, #map, #elevation-div { height: 100%; width: 100%; padding: 0; margin: 0; } #map { height: 75%; } #elevation-div {	height: 25%; font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif; } </style>
-    <script src="https://d3js.org/d3.v4.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.js" charset="utf-8"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.2/leaflet-src.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
@@ -91,7 +91,7 @@ _For a working example see [demo](https://raruto.github.io/examples/leaflet-elev
 
 ---
 
-**Compatibile with:** leaflet@1.3.2, d3js@4.13
+**Compatibile with:** leaflet@1.3.2, leaflet-gpx@1.4.0, d3js@4.13
 
 ---
 
