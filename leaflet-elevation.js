@@ -934,7 +934,15 @@ L.Control.Elevation = L.Control.extend({
 			this.addTo(map);
 		}
 		this.addGPXFile(url);
-	}
+	},
+
+	addToElevation: function(map) {
+    if (this.options.detachedView) {
+			this._addToElevationDiv(map);
+		} else {
+			this.addTo(map);
+		}
+  }
 });
 
 L.control.elevation = function(options) {
