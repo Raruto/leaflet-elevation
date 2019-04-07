@@ -927,14 +927,19 @@ L.Control.Elevation = L.Control.extend({
 		eleDiv.appendChild(container);
 	},
 
-	loadGPX: function(map, url) {
-		if (this.options.detachedView) {
+	loadChart: function(map) {
+    if (this.options.detachedView) {
 			this._addToElevationDiv(map);
 		} else {
 			this.addTo(map);
 		}
+  },
+
+	loadGPX: function(map, url) {
+		this.loadChart(map);
 		this.addGPXFile(url);
 	}
+
 });
 
 L.control.elevation = function(options) {
