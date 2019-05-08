@@ -70,6 +70,12 @@ L.Control.Elevation = L.Control.extend({
       opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height - 20;
     }
 
+    if (!opts.detachedView && opts.responsiveView) {
+      opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width
+      var containerWidth = map._container.clientWidth;
+      opts.width = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
+    }
+
     var x = this._x = d3.scaleLinear()
       .range([0, this._width()]);
 
@@ -744,24 +750,32 @@ L.Control.Elevation = L.Control.extend({
 
   _attachMapListeners: function() {
     this._map.on('resize', function(e) {
+
       var mapDiv = this._map.getContainer();
-      var eleDiv = document.querySelector(this.options.elevationDiv);
 
-      var newWidth = eleDiv.offsetWidth; // - 20;
+      if (this.options.responsiveView) {
 
-      if (newWidth <= 0) return;
+        if (this.options.detachedView) {
 
-      this.options.width = newWidth;
+          var eleDiv = document.querySelector(this.options.elevationDiv);
+          var newWidth = eleDiv.offsetWidth; // - 20;
 
-      eleDiv.innerHTML = "";
+          if (newWidth <= 0) return;
 
-      var container = this.onAdd(this._map);
-      container.classList.add("leaflet-control");
+          this.options.width = newWidth;
+          eleDiv.innerHTML = "";
 
-      if (this.options.detachedView) {
-        eleDiv.appendChild(container);
-      } else {
-        this.addTo(this._map);
+          var container = this.onAdd(this._map);
+          container.classList.add("leaflet-control");
+
+          eleDiv.appendChild(container);
+
+        } else {
+
+          this._map.removeControl(this._container);
+          this.addTo(this._map);
+
+        }
       }
     }, this);
   },
@@ -799,7 +813,7 @@ L.Control.Elevation = L.Control.extend({
     });
     this.gpx.once("addline", function(e) {
       this.addData(e.line, this.gpx);
-      that._map.fireEvent("eledata_loaded", {
+      this._map.fireEvent("eledata_loaded", {
         data: null,
         layer: this.gpx
       }, true);
