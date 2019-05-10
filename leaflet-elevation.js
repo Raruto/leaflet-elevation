@@ -31,7 +31,7 @@ L.Control.Elevation = L.Control.extend({
     imperial: false,
     elevationDiv: "#elevation-div",
     detachedView: false,
-    responsiveView: false,
+    responsiveView: true,
     gpxOptions: {
       async: true,
       marker_options: {
@@ -63,11 +63,17 @@ L.Control.Elevation = L.Control.extend({
     opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
     opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
 
-    if (opts.detachedView && opts.responsiveView) {
-      var offsetWi = document.querySelector(opts.elevationDiv).offsetWidth;
-      var offsetHe = document.querySelector(opts.elevationDiv).offsetHeight;
-      opts.width = offsetWi > 0 ? offsetWi : opts.width;
-      opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height - 20;
+    if (opts.responsiveView) {
+      if (opts.detachedView) {
+        var offsetWi = document.querySelector(opts.elevationDiv).offsetWidth;
+        var offsetHe = document.querySelector(opts.elevationDiv).offsetHeight;
+        opts.width = offsetWi > 0 ? offsetWi : opts.width;
+        opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height - 20;
+      } else {
+        opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
+        var containerWidth = map._container.clientWidth;
+        opts.width = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
+      }
     }
 
     var x = this._x = d3.scaleLinear()
@@ -184,6 +190,7 @@ L.Control.Elevation = L.Control.extend({
 
     this._map.on('zoom viewreset zoomanim', this._forceHidePositionMarker, this);
     this._map.on('resize', this._resetView, this);
+    this._map.on('resize', this._resizeChart, this);
 
     return container;
   },
@@ -487,6 +494,28 @@ L.Control.Elevation = L.Control.extend({
     this._forceHidePositionMarker();
   },
 
+  _resizeChart: function() {
+    if (this.options.responsiveView) {
+      if (this.options.detachedView) {
+        var eleDiv = document.querySelector(this.options.elevationDiv);
+        var newWidth = eleDiv.offsetWidth; // - 20;
+
+        if (newWidth <= 0) return;
+
+        this.options.width = newWidth;
+        eleDiv.innerHTML = "";
+
+        var container = this.onAdd(this._map);
+        container.classList.add("leaflet-control");
+
+        eleDiv.appendChild(container);
+      } else {
+        this._map.removeControl(this._container);
+        this.addTo(this._map);
+      }
+    }
+  },
+
   _forceHidePositionMarker: function() {
     this._hidePositionMarker(true);
   },
@@ -742,30 +771,6 @@ L.Control.Elevation = L.Control.extend({
     return hexColor;
   },
 
-  _attachMapListeners: function() {
-    this._map.on('resize', function(e) {
-      var mapDiv = this._map.getContainer();
-      var eleDiv = document.querySelector(this.options.elevationDiv);
-
-      var newWidth = eleDiv.offsetWidth; // - 20;
-
-      if (newWidth <= 0) return;
-
-      this.options.width = newWidth;
-
-      eleDiv.innerHTML = "";
-
-      var container = this.onAdd(this._map);
-      container.classList.add("leaflet-control");
-
-      if (this.options.detachedView) {
-        eleDiv.appendChild(container);
-      } else {
-        this.addTo(this._map);
-      }
-    }, this);
-  },
-
   /*
    * Add data to the diagram either from GPX or GeoJSON and
    * update the axis domain and data
@@ -799,16 +804,13 @@ L.Control.Elevation = L.Control.extend({
     });
     this.gpx.once("addline", function(e) {
       this.addData(e.line, this.gpx);
-      that._map.fireEvent("eledata_loaded", {
+      this._map.fireEvent("eledata_loaded", {
         data: null,
         layer: this.gpx
       }, true);
     }, this);
 
     this.gpx.addTo(this._map);
-
-    this._attachMapListeners();
-
   },
 
   addGeoJSONFile: function(url) {
@@ -849,8 +851,6 @@ L.Control.Elevation = L.Control.extend({
 
     };
     xhr.send();
-
-    this._attachMapListeners();
   },
 
   /*
