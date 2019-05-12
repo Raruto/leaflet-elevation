@@ -311,7 +311,9 @@ L.Control.Elevation = L.Control.extend({
     return result;
   },
 
-  /** Make the map fit the route section between given indexes. */
+  /**
+   * Make the map fit the route section between given indexes.
+   */
   _fitSection: function(index1, index2) {
     var start = Math.min(index1, index2),
       end = Math.max(index1, index2);
@@ -535,8 +537,7 @@ L.Control.Elevation = L.Control.extend({
 
     var layerpoint = this._map.latLngToLayerPoint(ll);
 
-    //if we use a height indicator we create one with SVG
-    //otherwise we show a marker
+    //if we use a height indicator we create one with SVG otherwise we show a marker
     if (opts.useHeightIndicator) {
       if (!this._mouseHeightFocus) {
         var heightG = d3.select(this._map.getContainer()).select(".leaflet-overlay-pane svg")
@@ -728,8 +729,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   /*
-   * Add data to the diagram either from GPX or GeoJSON and
-   * update the axis domain and data
+   * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
    */
   addData: function(d, layer) {
     this._addData(d);
