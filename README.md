@@ -22,8 +22,8 @@ _For a working example see demos: [#1](https://raruto.github.io/examples/leaflet
     <!-- leaflet-gpx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
     <!-- leaflet-elevation -->
-    <link rel="stylesheet" href="https://raruto.github.io/cdn/leaflet-elevation/0.1.1/leaflet-elevation.css" />
-    <script src="https://raruto.github.io/cdn/leaflet-elevation/0.1.1/leaflet-elevation.js"></script>
+    <link rel="stylesheet" href="https://raruto.github.io/cdn/leaflet-elevation/0.1.2/leaflet-elevation.css" />
+    <script src="https://raruto.github.io/cdn/leaflet-elevation/0.1.2/leaflet-elevation.js"></script>
     ...
     </head>
     ```
