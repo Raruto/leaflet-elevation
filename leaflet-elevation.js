@@ -401,77 +401,40 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _appendYaxis: function(y) {
-    var opts = this.options;
-
-    if (opts.imperial) {
-      y
-        .attr("class", "y axis")
-        .call(
-          d3
-          .axisLeft()
-          .scale(this._y)
-          .ticks(this.options.yTicks)
-        )
-        .append("text")
-        .attr("x", -37)
-        .attr("y", 3)
-        .style("text-anchor", "end")
-        .text("ft");
-    } else {
-      y
-        .attr("class", "y axis")
-        .call(
-          d3
-          .axisLeft()
-          .scale(this._y)
-          .ticks(this.options.yTicks)
-        )
-        .append("text")
-        .attr("x", -30)
-        .attr("y", 3)
-        .style("text-anchor", "end")
-        .style("fill", "#000")
-        .style("font-weight", "700")
-        .text("m");
-    }
+    y
+      .attr("class", "y axis")
+      .call(
+        d3
+        .axisLeft()
+        .scale(this._y)
+        .ticks(this.options.yTicks)
+      )
+      .append("text")
+      .attr("x", -30)
+      .attr("y", 3)
+      .style("text-anchor", "end")
+      .style("fill", "#000")
+      .style("font-weight", "700")
+      .text(this.options.imperial ? "ft" : "m");
   },
 
   _appendXaxis: function(x) {
-    var opts = this.options;
-
-    if (opts.imperial) {
-      x
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + this._height() + ")")
-        .call(
-          d3
-          .axisBottom()
-          .scale(this._x)
-          .ticks(this.options.xTicks)
-        )
-        .append("text")
-        .attr("x", this._width() + 10)
-        .attr("y", 15)
-        .style("text-anchor", "end")
-        .text("mi");
-    } else {
-      x
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + this._height() + ")")
-        .call(
-          d3
-          .axisBottom()
-          .scale(this._x)
-          .ticks(this.options.xTicks)
-        )
-        .append("text")
-        .attr("x", this._width() + 6)
-        .attr("y", 30)
-        .style("text-anchor", "end")
-        .style("fill", "#000")
-        .style("font-weight", "700")
-        .text("km");
-    }
+    x
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + this._height() + ")")
+      .call(
+        d3
+        .axisBottom()
+        .scale(this._x)
+        .ticks(this.options.xTicks)
+      )
+      .append("text")
+      .attr("x", this._width() + 6)
+      .attr("y", 30)
+      .style("text-anchor", "end")
+      .style("fill", "#000")
+      .style("font-weight", "700")
+      .text(this.options.imperial ? "mi" : "km");
   },
 
   _updateAxis: function() {
@@ -609,17 +572,10 @@ L.Control.Elevation = L.Control.extend({
       this._pointG.attr("transform", "translate(" + layerpoint.x + "," + layerpoint.y + ")")
         .style("visibility", "visible");
 
-      if (opts.imperial) {
-        this._mouseHeightFocusLabel.attr("x", layerpoint.x)
-          .attr("y", normalizedY)
-          .text(numY + " ft")
-          .style("visibility", "visible");
-      } else {
-        this._mouseHeightFocusLabel.attr("x", layerpoint.x)
-          .attr("y", normalizedY)
-          .text(numY + " m")
-          .style("visibility", "visible");
-      }
+      this._mouseHeightFocusLabel.attr("x", layerpoint.x)
+        .attr("y", normalizedY)
+        .text(numY + (opts.imperial ? " ft" : " m"))
+        .style("visibility", "visible");
     } else {
       if (!this._marker) {
         this._marker = new L.Marker(ll).addTo(this._map);
