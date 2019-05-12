@@ -830,6 +830,7 @@ L.Control.Elevation = L.Control.extend({
   _showDiagramIndicator: function(item, xCoordinate) {
     var opts = this.options;
     this._focusG.style("visibility", "visible");
+
     this._mousefocus.attr('x1', xCoordinate)
       .attr('y1', 0)
       .attr('x2', xCoordinate)
@@ -843,7 +844,7 @@ L.Control.Elevation = L.Control.extend({
       numX = opts.hoverNumber.formatter(dist, opts.hoverNumber.decimalsX);
 
     this._focuslabeltext
-      .attr("x", xCoordinate)
+      // .attr("x", xCoordinate)
       .attr("y", this._y(item.altitude))
       .style("font-weight", "700");
 
@@ -862,6 +863,13 @@ L.Control.Elevation = L.Control.extend({
       .attr("y", bbox.y - padding)
       .attr("width", bbox.width + (padding * 2))
       .attr("height", bbox.height + (padding * 2));
+
+    // move focus label to left
+    if (xCoordinate >= this._width() / 2) {
+      this._focuslabelrect.attr("x", this._focuslabelrect.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+      this._focuslabelX.attr("x", this._focuslabelX.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+      this._focuslabelY.attr("x", this._focuslabelY.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+    }
 
   },
 
