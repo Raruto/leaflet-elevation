@@ -91,7 +91,7 @@ L.Control.Elevation = L.Control.extend({
       })
       .y0(this._height())
       .y1(function(d) {
-        return y(d.altitude);
+        return y(d.z);
       });
 
     var container = this._container = L.DomUtil.create("div", "elevation");
@@ -529,7 +529,7 @@ L.Control.Elevation = L.Control.extend({
 
   _showPositionMarker: function(item) {
     var opts = this.options,
-      alt = item.altitude,
+      alt = item.z,
       dist = item.dist,
       ll = item.latlng,
       numY = opts.hoverNumber.formatter(alt, opts.hoverNumber.decimalsY),
@@ -656,7 +656,7 @@ L.Control.Elevation = L.Control.extend({
       .attr('y2', this._height())
       .classed('hidden', false);
 
-    var alt = item.altitude,
+    var alt = item.z,
       dist = item.dist,
       ll = item.latlng,
       numY = opts.hoverNumber.formatter(alt, opts.hoverNumber.decimalsY),
@@ -664,7 +664,7 @@ L.Control.Elevation = L.Control.extend({
 
     this._focuslabeltext
       // .attr("x", xCoordinate)
-      .attr("y", this._y(item.altitude))
+      .attr("y", this._y(item.z))
       .style("font-weight", "700");
 
     this._focuslabelX
@@ -697,7 +697,7 @@ L.Control.Elevation = L.Control.extend({
       return d.dist;
     });
     var ydomain = d3.extent(this._data, function(d) {
-      return d.altitude;
+      return d.z;
     });
     var opts = this.options;
 
@@ -722,8 +722,10 @@ L.Control.Elevation = L.Control.extend({
    */
   _clearData: function() {
     this._data = null;
-    this._dist = null;
+    this._distance = null;
     this._maxElevation = null;
+    this._minElevation = null;
+    this.track_info = null;
     // if (this.gpx) {
     // 	this.gpx.removeFrom(this._map);
     // }
@@ -804,67 +806,56 @@ L.Control.Elevation = L.Control.extend({
    * Parsing of GeoJSON data lines and their elevation in z-coordinate
    */
   _addGeoJSONData: function(coords) {
-    var opts = this.options;
     if (coords) {
-      var data = this._data || [];
-      var dist = this._dist || 0;
-      var ele = this._maxElevation || 0;
       for (var i = 0; i < coords.length; i++) {
-        var s = new L.LatLng(coords[i][1], coords[i][0]);
-        var e = new L.LatLng(coords[i ? i - 1 : 0][1], coords[i ? i - 1 : 0][0]);
-        var newdist = opts.imperial ? s.distanceTo(e) * this.__mileFactor : s.distanceTo(e);
-        dist = dist + Math.round(newdist / 1000 * 100000) / 100000;
-
-        // skip point if it has not elevation
-        if (typeof coords[i][2] !== "undefined") {
-          ele = ele < coords[i][2] ? coords[i][2] : ele;
-          data.push({
-            dist: dist,
-            altitude: opts.imperial ? coords[i][2] * this.__footFactor : coords[i][2],
-            x: coords[i][0],
-            y: coords[i][1],
-            latlng: s
-          });
-        }
+        this._addPoint(coords[i][1], coords[i][0], coords[i][2]);
       }
-      this._dist = dist;
-      this._data = data;
-      ele = opts.imperial ? ele * this.__footFactor : ele;
-      this._maxElevation = ele;
     }
   },
 
   /*
-   * Parsing function for GPX data as used by https://github.com/mpetazzoni/leaflet-gpx
+   * Parsing function for GPX data and their elevation in z-coordinate
    */
   _addGPXdata: function(coords) {
-    var opts = this.options;
     if (coords) {
-      var data = this._data || [];
-      var dist = this._dist || 0;
-      var ele = this._maxElevation || 0;
       for (var i = 0; i < coords.length; i++) {
-        var s = coords[i];
-        var e = coords[i ? i - 1 : 0];
-        var newdist = opts.imperial ? s.distanceTo(e) * this.__mileFactor : s.distanceTo(e);
-        dist = dist + Math.round(newdist / 1000 * 100000) / 100000;
-        // skip point if it has not elevation
-        if (typeof s.meta.ele !== "undefined") {
-          ele = ele < s.meta.ele ? s.meta.ele : ele;
-          data.push({
-            dist: dist,
-            altitude: opts.imperial ? s.meta.ele * this.__footFactor : s.meta.ele,
-            x: s.lng,
-            y: s.lat,
-            latlng: s
-          });
-        }
+        this._addPoint(coords[i].lat, coords[i].lng, coords[i].meta.ele);
       }
-      this._dist = dist;
-      this._data = data;
-      ele = opts.imperial ? ele * this.__footFactor : ele;
-      this._maxElevation = ele;
     }
+  },
+
+  _addPoint: function(x, y, z) {
+    var opts = this.options;
+
+    var data = this._data || [];
+    var eleMax = this._maxElevation || -Infinity;
+    var eleMin = this._minElevation || +Infinity;
+    var dist = this._distance || 0;
+
+    var curr = new L.LatLng(x, y);
+    var prev = data.length ? data[data.length - 1].latlng : curr;
+
+    var delta = (opts.imperial ? curr.distanceTo(prev) * this.__mileFactor : curr.distanceTo(prev));
+
+    dist = dist + Math.round(delta / 1000 * 100000) / 100000;
+
+    // skip point if it has not elevation
+    if (typeof z !== "undefined") {
+      eleMax = eleMax < z ? z : eleMax;
+      eleMin = eleMin > z ? z : eleMin;
+      data.push({
+        dist: dist,
+        x: x,
+        y: y,
+        z: opts.imperial ? z * this.__footFactor : z,
+        latlng: curr
+      });
+    }
+
+    this._data = data;
+    this._distance = dist;
+    this._maxElevation = opts.imperial ? eleMax * this.__footFactor : eleMax;
+    this._minElevation = opts.imperial ? eleMin * this.__footFactor : eleMin;
   },
 
   /*
@@ -880,8 +871,8 @@ L.Control.Elevation = L.Control.extend({
     }
     if (layer) {
       layer
-        .on("mousemove", this._handleLayerMouseOver.bind(this))
-        .on("mouseout", this._mouseoutHandler.bind(this));
+        .on("mousemove", this._handleLayerMouseOver, this)
+        .on("mouseout", this._mouseoutHandler, this);
     }
   },
 
@@ -892,14 +883,22 @@ L.Control.Elevation = L.Control.extend({
 
     this.gpx.on('loaded', function(e) {
       this._map.fitBounds(e.target.getBounds());
-    });
+    }, this);
     this.gpx.once("addline", function(e) {
       this.addData(e.line, this.gpx);
+
+      this.track_info = this.track_info || {};
+      this.track_info.type = "gpx";
+      this.track_info.name = this.gpx.get_name();
+      this.track_info.distance = this._distance;
+      this.track_info.elevation_max = this._maxElevation;
+      this.track_info.elevation_min = this._minElevation;
+
       this._map.fireEvent("eledata_loaded", {
         data: data,
-        filetype: "gpx",
         layer: this.gpx,
-        name: this.gpx.get_name()
+        name: this.track_info.name,
+        track_info: this.track_info,
       }, true);
     }, this);
 
@@ -919,16 +918,27 @@ L.Control.Elevation = L.Control.extend({
           color: lineColor
         };
       },
-      onEachFeature: this.addData.bind(this),
+      onEachFeature: function(feature, layer) {
+        this.addData(feature, layer);
+
+        this.track_info = this.track_info || {};
+        this.track_info.type = "geojson";
+        this.track_info.name = data.name;
+        this.track_info.distance = this._distance;
+        this.track_info.elevation_max = this._maxElevation;
+        this.track_info.elevation_min = this._minElevation;
+
+      }.bind(this),
     });
 
     this._map.once('layeradd', function(e) {
       this._map.fitBounds(this.geojson.getBounds());
+
       this._map.fireEvent("eledata_loaded", {
         data: data,
-        filetype: "geojson",
         layer: this.geojson,
-        name: data.name,
+        name: this.track_info.name,
+        track_info: this.track_info,
       }, true);
     }, this);
 
