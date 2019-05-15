@@ -587,106 +587,6 @@ L.Control.Elevation = L.Control.extend({
   },
 
   /*
-   * Parsing of GeoJSON data lines and their elevation in z-coordinate
-   */
-  _addGeoJSONData: function(coords) {
-    var opts = this.options;
-    if (coords) {
-      var data = this._data || [];
-      var dist = this._dist || 0;
-      var ele = this._maxElevation || 0;
-      for (var i = 0; i < coords.length; i++) {
-        var s = new L.LatLng(coords[i][1], coords[i][0]);
-        var e = new L.LatLng(coords[i ? i - 1 : 0][1], coords[i ? i - 1 : 0][0]);
-        var newdist = opts.imperial ? s.distanceTo(e) * this.__mileFactor : s.distanceTo(e);
-        dist = dist + Math.round(newdist / 1000 * 100000) / 100000;
-
-        // skip point if it has not elevation
-        if (typeof coords[i][2] !== "undefined") {
-          ele = ele < coords[i][2] ? coords[i][2] : ele;
-          data.push({
-            dist: dist,
-            altitude: opts.imperial ? coords[i][2] * this.__footFactor : coords[i][2],
-            x: coords[i][0],
-            y: coords[i][1],
-            latlng: s
-          });
-        }
-      }
-      this._dist = dist;
-      this._data = data;
-      ele = opts.imperial ? ele * this.__footFactor : ele;
-      this._maxElevation = ele;
-    }
-  },
-
-  /*
-   * Parsing function for GPX data as used by https://github.com/mpetazzoni/leaflet-gpx
-   */
-  _addGPXdata: function(coords) {
-    var opts = this.options;
-    if (coords) {
-      var data = this._data || [];
-      var dist = this._dist || 0;
-      var ele = this._maxElevation || 0;
-      for (var i = 0; i < coords.length; i++) {
-        var s = coords[i];
-        var e = coords[i ? i - 1 : 0];
-        var newdist = opts.imperial ? s.distanceTo(e) * this.__mileFactor : s.distanceTo(e);
-        dist = dist + Math.round(newdist / 1000 * 100000) / 100000;
-        // skip point if it has not elevation
-        if (typeof s.meta.ele !== "undefined") {
-          ele = ele < s.meta.ele ? s.meta.ele : ele;
-          data.push({
-            dist: dist,
-            altitude: opts.imperial ? s.meta.ele * this.__footFactor : s.meta.ele,
-            x: s.lng,
-            y: s.lat,
-            latlng: s
-          });
-        }
-      }
-      this._dist = dist;
-      this._data = data;
-      ele = opts.imperial ? ele * this.__footFactor : ele;
-      this._maxElevation = ele;
-    }
-  },
-
-  _addData: function(d) {
-    var geom = d && d.geometry && d.geometry;
-    var i;
-
-    if (geom) {
-      switch (geom.type) {
-        case 'LineString':
-          this._addGeoJSONData(geom.coordinates);
-          break;
-
-        case 'MultiLineString':
-          for (i = 0; i < geom.coordinates.length; i++) {
-            this._addGeoJSONData(geom.coordinates[i]);
-          }
-          break;
-
-        default:
-          throw new Error('Invalid GeoJSON object.');
-      }
-    }
-
-    var feat = d && d.type === "FeatureCollection";
-    if (feat) {
-      for (i = 0; i < d.features.length; i++) {
-        this._addData(d.features[i]);
-      }
-    }
-
-    if (d && d._latlngs) {
-      this._addGPXdata(d._latlngs);
-    }
-  },
-
-  /*
    * Calculates the full extent of the data array
    */
   _calculateFullExtent: function(data) {
@@ -726,87 +626,6 @@ L.Control.Elevation = L.Control.extend({
         break;
     }
     return hexColor;
-  },
-
-  /*
-   * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
-   */
-  addData: function(d, layer) {
-    this._addData(d);
-    if (this._container) {
-      this._applyData();
-    }
-    if (layer === null && d.on) {
-      layer = d;
-    }
-    if (layer) {
-      layer
-        .on("mousemove", this._handleLayerMouseOver.bind(this))
-        .on("mouseout", this._mouseoutHandler.bind(this));
-    }
-  },
-
-  addGPXFile: function(url) {
-    if (!url) {
-      throw "Invalid gpx url";
-    }
-
-    this.options.gpxOptions.polyline_options.color = this._getLineHexColor();
-
-    this.gpx = new L.GPX(url, this.options.gpxOptions);
-
-    this.gpx.on('loaded', function(e) {
-      this._map.fitBounds(e.target.getBounds());
-    });
-    this.gpx.once("addline", function(e) {
-      this.addData(e.line, this.gpx);
-      this._map.fireEvent("eledata_loaded", {
-        data: null,
-        layer: this.gpx
-      }, true);
-    }, this);
-
-    this.gpx.addTo(this._map);
-  },
-
-  addGeoJSONFile: function(url) {
-    if (!url) {
-      throw "Invalid gpx url";
-    }
-
-    var hexColor = this._getLineHexColor();
-
-    var that = this;
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.responseType = 'json';
-    xhr.onload = function() {
-
-      if (xhr.status !== 200) return;
-
-      that.geojson = L.geoJson(xhr.response, {
-        style: function(feature) {
-          return {
-            color: that._getLineHexColor()
-          };
-        },
-        onEachFeature: that.addData.bind(that),
-      });
-
-      that._map.once('layeradd', function(e) {
-        that._map.fitBounds(that.geojson.getBounds());
-        that._map.fireEvent("eledata_loaded", {
-          data: xhr.response,
-          layer: that.geojson
-        }, true);
-      });
-
-      that.geojson.addTo(that._map);
-
-    };
-    xhr.send();
   },
 
   /*
@@ -938,30 +757,220 @@ L.Control.Elevation = L.Control.extend({
     this._container.style.display = "block";
   },
 
-  _addToElevationDiv: function(map) {
+  _addToChartDiv: function(map) {
     var container = this.onAdd(map);
     container.classList.add("leaflet-control");
     var eleDiv = document.querySelector(this.options.elevationDiv);
     eleDiv.appendChild(container);
   },
 
+  /*
+   * Parsing data either from GPX or GeoJSON and update the diagram data
+   */
+  _addData: function(d) {
+    var geom = d && d.geometry && d.geometry;
+    var i;
+
+    if (geom) {
+      switch (geom.type) {
+        case 'LineString':
+          this._addGeoJSONData(geom.coordinates);
+          break;
+
+        case 'MultiLineString':
+          for (i = 0; i < geom.coordinates.length; i++) {
+            this._addGeoJSONData(geom.coordinates[i]);
+          }
+          break;
+
+        default:
+          throw new Error('Invalid GeoJSON object.');
+      }
+    }
+
+    var feat = d && d.type === "FeatureCollection";
+    if (feat) {
+      for (i = 0; i < d.features.length; i++) {
+        this._addData(d.features[i]);
+      }
+    }
+
+    if (d && d._latlngs) {
+      this._addGPXdata(d._latlngs);
+    }
+  },
+
+  /*
+   * Parsing of GeoJSON data lines and their elevation in z-coordinate
+   */
+  _addGeoJSONData: function(coords) {
+    var opts = this.options;
+    if (coords) {
+      var data = this._data || [];
+      var dist = this._dist || 0;
+      var ele = this._maxElevation || 0;
+      for (var i = 0; i < coords.length; i++) {
+        var s = new L.LatLng(coords[i][1], coords[i][0]);
+        var e = new L.LatLng(coords[i ? i - 1 : 0][1], coords[i ? i - 1 : 0][0]);
+        var newdist = opts.imperial ? s.distanceTo(e) * this.__mileFactor : s.distanceTo(e);
+        dist = dist + Math.round(newdist / 1000 * 100000) / 100000;
+
+        // skip point if it has not elevation
+        if (typeof coords[i][2] !== "undefined") {
+          ele = ele < coords[i][2] ? coords[i][2] : ele;
+          data.push({
+            dist: dist,
+            altitude: opts.imperial ? coords[i][2] * this.__footFactor : coords[i][2],
+            x: coords[i][0],
+            y: coords[i][1],
+            latlng: s
+          });
+        }
+      }
+      this._dist = dist;
+      this._data = data;
+      ele = opts.imperial ? ele * this.__footFactor : ele;
+      this._maxElevation = ele;
+    }
+  },
+
+  /*
+   * Parsing function for GPX data as used by https://github.com/mpetazzoni/leaflet-gpx
+   */
+  _addGPXdata: function(coords) {
+    var opts = this.options;
+    if (coords) {
+      var data = this._data || [];
+      var dist = this._dist || 0;
+      var ele = this._maxElevation || 0;
+      for (var i = 0; i < coords.length; i++) {
+        var s = coords[i];
+        var e = coords[i ? i - 1 : 0];
+        var newdist = opts.imperial ? s.distanceTo(e) * this.__mileFactor : s.distanceTo(e);
+        dist = dist + Math.round(newdist / 1000 * 100000) / 100000;
+        // skip point if it has not elevation
+        if (typeof s.meta.ele !== "undefined") {
+          ele = ele < s.meta.ele ? s.meta.ele : ele;
+          data.push({
+            dist: dist,
+            altitude: opts.imperial ? s.meta.ele * this.__footFactor : s.meta.ele,
+            x: s.lng,
+            y: s.lat,
+            latlng: s
+          });
+        }
+      }
+      this._dist = dist;
+      this._data = data;
+      ele = opts.imperial ? ele * this.__footFactor : ele;
+      this._maxElevation = ele;
+    }
+  },
+
+  /*
+   * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
+   */
+  addData: function(d, layer) {
+    this._addData(d);
+    if (this._container) {
+      this._applyData();
+    }
+    if (layer === null && d.on) {
+      layer = d;
+    }
+    if (layer) {
+      layer
+        .on("mousemove", this._handleLayerMouseOver.bind(this))
+        .on("mouseout", this._mouseoutHandler.bind(this));
+    }
+  },
+
+  loadGPX: function(data) {
+    this.options.gpxOptions.polyline_options.color = this._getLineHexColor();
+
+    this.gpx = new L.GPX(data, this.options.gpxOptions);
+
+    this.gpx.on('loaded', function(e) {
+      this._map.fitBounds(e.target.getBounds());
+    });
+    this.gpx.once("addline", function(e) {
+      this.addData(e.line, this.gpx);
+      this._map.fireEvent("eledata_loaded", {
+        data: data,
+        filetype: "gpx",
+        layer: this.gpx,
+        name: this.gpx.get_name()
+      }, true);
+    }, this);
+
+    this.gpx.addTo(this._map);
+  },
+
+  loadGeoJSON: function(data) {
+    var lineColor = this._getLineHexColor();
+
+    if (typeof data == "string") {
+      data = JSON.parse(data);
+    }
+
+    this.geojson = L.geoJson(data, {
+      style: function(feature) {
+        return {
+          color: lineColor
+        };
+      },
+      onEachFeature: this.addData.bind(this),
+    });
+
+    this._map.once('layeradd', function(e) {
+      this._map.fitBounds(this.geojson.getBounds());
+      this._map.fireEvent("eledata_loaded", {
+        data: data,
+        filetype: "geojson",
+        layer: this.geojson,
+        name: data.name,
+      }, true);
+    }, this);
+
+    this.geojson.addTo(this._map);
+  },
+
+  loadFile: function(url) {
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url);
+      xhr.onload = function() {
+        if (xhr.status !== 200) {
+          throw "Error " + xhr.status + " while fetching remote file: " + url;
+        } else {
+          this.loadData(xhr.response);
+        }
+      }.bind(this);
+      xhr.send();
+    } catch (e) {
+      console.warn(e);
+    }
+  },
+
   loadChart: function(map) {
     if (this.options.detachedView) {
-      this._addToElevationDiv(map);
+      this._addToChartDiv(map);
     } else {
       this.addTo(map);
     }
   },
 
-  loadGPX: function(map, url) {
-    this.loadChart(map);
-    this.addGPXFile(url);
-  },
+  loadData: function(data) {
+    var d = data.trim();
 
-  loadGeoJSON: function(map, url) {
-    this.loadChart(map);
-    this.addGeoJSONFile(url);
-  }
+    if (d.indexOf("<") == 0) {
+      this.loadGPX(d);
+    } else if (d.indexOf("{") == 0 || d.indexOf("[") == 0) {
+      this.loadGeoJSON(d);
+    } else {
+      this.loadFile(d);
+    }
+  },
 
 });
 
