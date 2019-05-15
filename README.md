@@ -27,8 +27,8 @@ _For a working example see one of the following demos:_
     <!-- leaflet-gpx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
     <!-- leaflet-elevation -->
-    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@0.1.3/leaflet-elevation.css" />
-    <script src="https://unpkg.com/@raruto/leaflet-elevation@0.1.3/leaflet-elevation.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@0.2.0/leaflet-elevation.css" />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation@0.2.0/leaflet-elevation.js"></script>
     ...
     </head>
     ```
@@ -91,7 +91,9 @@ _For a working example see one of the following demos:_
 
       controlZoom.addTo(map);
       controlLayer.addTo(map);
-      controlElevation.loadGPX(map, opts.elevationControl.url);
+
+      controlElevation.loadChart(map); // attach elevation chart element to map
+      controlElevation.loadData(opts.elevationControl.url); // url or plain gpx/geojson data
 
       map.addLayer(baseLayers.OTM);
     </script>
