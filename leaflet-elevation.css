@@ -82,8 +82,8 @@
 }
 
 .leaflet-overlay-pane .height-focus {
-  fill: #4682b4;
-  stroke: #4682b4;
+  stroke: #000;
+  fill: #fff;
 }
 
 .leaflet-overlay-pane .height-focus.line {
@@ -91,9 +91,22 @@
   stroke-width: 2;
 }
 
+.leaflet-overlay-pane .height-focus-label {
+  font-size: 14px;
+  font-weight: 600;
+  fill: #000;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 2px;
+}
+
 /*////////////////////////////////////////////////*/
 .lime-theme.leaflet-control.elevation .background {
   background-color: rgba(156, 194, 34, .2);
+}
+
+.lime-theme.leaflet-control.elevation .grid .tick line {
+  stroke: #ccc;
 }
 
 .lime-theme.leaflet-control.elevation .axis line, .lime-theme.leaflet-control.elevation .axis path {
@@ -117,7 +130,7 @@
 }
 
 .lime-theme.height-focus {
-  stroke: #9cc222;
+  stroke: #000;
   fill: #9cc222;
 }
 
@@ -147,7 +160,7 @@
 }
 
 .steelblue-theme.height-focus {
-  stroke: #4682b4;
+  stroke: #000;
   fill: #4682b4;
 }
 
@@ -177,7 +190,7 @@
 }
 
 .purple-theme.height-focus {
-  stroke: #732c7b;
+  stroke: #000;
   fill: #732c7b
 }
 
