@@ -27,8 +27,8 @@ _For a working example see one of the following demos:_
     <!-- leaflet-gpx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
     <!-- leaflet-elevation -->
-    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@0.2.3/leaflet-elevation.css" />
-    <script src="https://unpkg.com/@raruto/leaflet-elevation@0.2.3/leaflet-elevation.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@0.2.4/leaflet-elevation.css" />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation@0.2.4/leaflet-elevation.js"></script>
     ...
     </head>
     ```
@@ -67,10 +67,9 @@ _For a working example see one of the following demos:_
             position: "topleft",
             theme: "magenta-theme", //default: lime-theme
             useHeightIndicator: true, //if false a marker is drawn at map position
-            interpolation: d3.curveLinear, //see https://github.com/d3/d3/wiki/
             collapsed: false, //collapsed mode, show chart on click or mouseover
             detachedView: true, //if false the chart is drawn within map container
-            elevationDiv: "#elevation-div", // (detached) elevation chart container
+            elevationDiv: "#elevation-div", // if (detached), the elevation chart container
           },
         },
         layersControl: {
