@@ -94,23 +94,7 @@ L.Control.Elevation = L.Control.extend({
         return y(d.z);
       });
 
-    var container = this._container = L.DomUtil.create("div", "elevation");
-    L.DomUtil.addClass(container, opts.theme); //append theme to control
-
-    this._initToggle();
-
-    var cont = d3.select(container);
-    cont.attr("width", opts.width);
-    var svg = cont.append("svg");
-    svg.attr("width", opts.width)
-      .attr("class", "background")
-      .attr("height", opts.height)
-      .style("overflow", "visible")
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    var line = d3.line();
-    line = line
+    var line = this._line = d3.line()
       .x(function(d) {
         return d3.mouse(svg.select("g"))[0];
       })
@@ -118,71 +102,28 @@ L.Control.Elevation = L.Control.extend({
         return this._height();
       });
 
-    var g = d3.select(this._container).select("svg").select("g");
+    var container = this._container = L.DomUtil.create("div", "elevation");
+    L.DomUtil.addClass(container, opts.theme); //append theme to control
 
-    this._areapath = g.append("path")
-      .attr("class", "area")
-      .style("paint-order", "stroke fill");
+    this._initToggle();
 
-    var background = this._background = g.append("rect")
-      .attr("width", this._width())
-      .attr("height", this._height())
-      .style("fill", "none")
-      .style("stroke", "none")
-      .style("pointer-events", "all");
+    var cont = d3.select(container)
+      .attr("width", opts.width);
 
-    if (L.Browser.touch) {
-      background
-        .on("touchmove.drag", this._dragHandler.bind(this))
-        .on("touchstart.drag", this._dragStartHandler.bind(this))
-        .on("touchstart.focus", this._mousemoveHandler.bind(this));
-      L.DomEvent.on(this._container, 'touchend', this._dragEndHandler, this);
-    }
+    var svg = cont.append("svg")
+      .attr("class", "background")
+      .attr("width", opts.width)
+      .attr("height", opts.height);
 
-    background
-      .on("mousemove.drag", this._dragHandler.bind(this))
-      .on("mousedown.drag", this._dragStartHandler.bind(this))
-      .on("mousemove.focus", this._mousemoveHandler.bind(this))
-      .on("mouseout.focus", this._mouseoutHandler.bind(this));
-    L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
+    var g = svg
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    this._xaxisgraphicnode = g.append("g");
-    this._yaxisgraphicnode = g.append("g");
-    this._appendXaxis(this._xaxisgraphicnode);
-    this._appendYaxis(this._yaxisgraphicnode);
-
-    var focusG = this._focusG = g.append("g")
-      .attr("class", "mouse-focus-group");
-
-    this._mousefocus = focusG.append('svg:line')
-      .attr('class', 'mouse-focus-line')
-      .attr('x2', '0')
-      .attr('y2', '0')
-      .attr('x1', '0')
-      .attr('y1', '0');
-
-    this._focuslabelrect = focusG.append("rect")
-      .attr('class', 'mouse-focus-label')
-      .attr("x", 0)
-      .attr("y", 0)
-      .attr("width", 0)
-      .attr("height", 0)
-      .attr("rx", 3)
-      .attr("ry", 3)
-      .style("fill", "#000")
-      .style("fill-opacity", 0.75)
-      .style("pointer-events", "none");
-
-    this._focuslabeltext = focusG.append("svg:text")
-      .style("pointer-events", "none")
-      .attr("class", "mouse-focus-label-text")
-      .style("fill", "#fff");
-    this._focuslabelX = this._focuslabeltext.append("svg:tspan")
-      .attr("class", "mouse-focus-label-y")
-      .attr("dy", "-1em");
-    this._focuslabelY = this._focuslabeltext.append("svg:tspan")
-      .attr("class", "mouse-focus-label-y")
-      .attr("dy", "2em");
+    this._appendGrid(g);
+    this._appendAreaPath(g);
+    this._appendAxis(g);
+    this._appendFocusRect(g);
+    this._appendMouseFocusG(g);
 
     if (this._data) {
       this._applyData();
@@ -209,7 +150,7 @@ L.Control.Elevation = L.Control.extend({
     d3.event.stopPropagation();
 
     this._gotDragged = false;
-    this._dragStartCoords = d3.mouse(this._background.node());
+    this._dragStartCoords = d3.mouse(this._focusRect.node());
   },
 
   /*
@@ -220,7 +161,7 @@ L.Control.Elevation = L.Control.extend({
       return;
     }
 
-    var dragEndCoords = this._dragCurrentCoords = d3.mouse(this._background.node());
+    var dragEndCoords = this._dragCurrentCoords = d3.mouse(this._focusRect.node());
 
     var x1 = Math.min(this._dragStartCoords[0], dragEndCoords[0]),
       x2 = Math.max(this._dragStartCoords[0], dragEndCoords[0]);
@@ -402,8 +343,9 @@ L.Control.Elevation = L.Control.extend({
     return res;
   },
 
-  _appendYaxis: function(y) {
-    y
+  _appendYaxis: function(axis) {
+    axis
+      .append("g")
       .attr("class", "y axis")
       .call(
         d3
@@ -414,14 +356,12 @@ L.Control.Elevation = L.Control.extend({
       .append("text")
       .attr("x", -30)
       .attr("y", 3)
-      .style("text-anchor", "end")
-      .style("fill", "#000")
-      .style("font-weight", "700")
       .text(this.options.imperial ? "ft" : "m");
   },
 
-  _appendXaxis: function(x) {
-    x
+  _appendXaxis: function(axis) {
+    axis
+      .append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + this._height() + ")")
       .call(
@@ -433,21 +373,117 @@ L.Control.Elevation = L.Control.extend({
       .append("text")
       .attr("x", this._width() + 6)
       .attr("y", 30)
-      .style("text-anchor", "end")
-      .style("fill", "#000")
-      .style("font-weight", "700")
       .text(this.options.imperial ? "mi" : "km");
   },
 
+  _appendXGrid: function(grid) {
+    grid.append("g")
+      .attr("class", "x grid")
+      .attr("transform", "translate(0," + this._height() + ")")
+      .call(
+        d3
+        .axisBottom()
+        .scale(this._x)
+        .ticks(this.options.xTicks)
+        .tickSize(-this._height())
+        .tickFormat("")
+      );
+
+  },
+
+  _appendYGrid: function(grid) {
+    grid.append("g")
+      .attr("class", "y grid")
+      .call(
+        d3
+        .axisLeft()
+        .scale(this._y)
+        .ticks(this.options.yTicks)
+        .tickSize(-this._width())
+        .tickFormat("")
+      );
+  },
+
+  _appendGrid: function(g) {
+    this._grid = g.append("g")
+      .attr("class", "grid");
+    this._appendXGrid(this._grid);
+    this._appendYGrid(this._grid);
+  },
+
+  _appendAreaPath: function(g) {
+    this._areapath = g.append("path")
+      .attr("class", "area");
+
+  },
+  _appendAxis: function(g) {
+    this._axis = g.append("g")
+      .attr("class", "axis");
+    this._appendXaxis(this._axis);
+    this._appendYaxis(this._axis);
+  },
+
+  _appendFocusRect: function(g) {
+    var focusRect = this._focusRect = g.append("rect")
+      .attr("width", this._width())
+      .attr("height", this._height())
+      .style("fill", "none")
+      .style("stroke", "none")
+      .style("pointer-events", "all");
+
+    if (L.Browser.touch) {
+      focusRect
+        .on("touchmove.drag", this._dragHandler.bind(this))
+        .on("touchstart.drag", this._dragStartHandler.bind(this))
+        .on("touchstart.focus", this._mousemoveHandler.bind(this));
+      L.DomEvent.on(this._container, 'touchend', this._dragEndHandler, this);
+    }
+
+    focusRect
+      .on("mousemove.drag", this._dragHandler.bind(this))
+      .on("mousedown.drag", this._dragStartHandler.bind(this))
+      .on("mousemove.focus", this._mousemoveHandler.bind(this))
+      .on("mouseout.focus", this._mouseoutHandler.bind(this));
+    L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
+  },
+
+  _appendMouseFocusG: function(g) {
+    var focusG = this._focusG = g.append("g")
+      .attr("class", "mouse-focus-group");
+
+    this._mousefocus = focusG.append('svg:line')
+      .attr('class', 'mouse-focus-line')
+      .attr('x2', '0')
+      .attr('y2', '0')
+      .attr('x1', '0')
+      .attr('y1', '0');
+
+    this._focuslabelrect = focusG.append("rect")
+      .attr('class', 'mouse-focus-label')
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", 0)
+      .attr("height", 0)
+      .attr("rx", 3)
+      .attr("ry", 3);
+
+    this._focuslabeltext = focusG.append("svg:text")
+      .attr("class", "mouse-focus-label-text");
+    this._focuslabelX = this._focuslabeltext.append("svg:tspan")
+      .attr("class", "mouse-focus-label-y")
+      .attr("dy", "-1em");
+    this._focuslabelY = this._focuslabeltext.append("svg:tspan")
+      .attr("class", "mouse-focus-label-y")
+      .attr("dy", "2em");
+  },
+
   _updateAxis: function() {
-    this._xaxisgraphicnode.selectAll("g").remove();
-    this._xaxisgraphicnode.selectAll("path").remove();
-    this._xaxisgraphicnode.selectAll("text").remove();
-    this._yaxisgraphicnode.selectAll("g").remove();
-    this._yaxisgraphicnode.selectAll("path").remove();
-    this._yaxisgraphicnode.selectAll("text").remove();
-    this._appendXaxis(this._xaxisgraphicnode);
-    this._appendYaxis(this._yaxisgraphicnode);
+    this._grid.selectAll("g").remove();
+    this._axis.selectAll("g").remove();
+    this._appendXGrid(this._grid);
+    this._appendYGrid(this._grid);
+    this._appendXaxis(this._axis);
+    this._appendYaxis(this._axis);
   },
 
   _mouseoutHandler: function() {
@@ -514,7 +550,7 @@ L.Control.Elevation = L.Control.extend({
     if (!this._data || this._data.length === 0) {
       return;
     }
-    var coords = d3.mouse(this._background.node());
+    var coords = d3.mouse(this._focusRect.node());
     var item = this._data[this._findItemForX(coords[0])];
 
     this._forceHidePositionMarker();
