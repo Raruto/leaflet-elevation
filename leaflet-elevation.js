@@ -984,6 +984,7 @@ L.Control.Elevation = L.Control.extend({
   loadFile: function(url) {
     try {
       var xhr = new XMLHttpRequest();
+      xhr.responseType = "text";
       xhr.open('GET', url);
       xhr.onload = function() {
         if (xhr.status !== 200) {
