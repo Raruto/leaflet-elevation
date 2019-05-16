@@ -664,6 +664,32 @@ L.Control.Elevation = L.Control.extend({
     return hexColor;
   },
 
+  _isXMLDoc: function(doc) {
+    if (typeof doc === "string") {
+      doc = doc.trim();
+      return doc.indexOf("<") == 0;
+    } else {
+      var documentElement = (doc ? doc.ownerDocument || doc : 0).documentElement;
+      return documentElement ? documentElement.nodeName !== "HTML" : false;
+    }
+  },
+
+  _isJSONDoc: function(doc) {
+    if (typeof doc === "string") {
+      doc = doc.trim();
+      return doc.indexOf("{") == 0 || doc.indexOf("[") == 0;
+    } else {
+      try {
+        doc = doc.toString();
+        JSON.parse(doc);
+      } catch (e) {
+        console.warn(e);
+        return false;
+      }
+      return true;
+    }
+  },
+
   /*
    * Handles mouseover events of the data layers on the map.
    */
@@ -944,7 +970,7 @@ L.Control.Elevation = L.Control.extend({
   loadGeoJSON: function(data) {
     var lineColor = this._getLineHexColor();
 
-    if (typeof data == "string") {
+    if (typeof data === "string") {
       data = JSON.parse(data);
     }
 
@@ -1008,14 +1034,12 @@ L.Control.Elevation = L.Control.extend({
   },
 
   loadData: function(data) {
-    var d = data.trim();
-
-    if (d.indexOf("<") == 0) {
-      this.loadGPX(d);
-    } else if (d.indexOf("{") == 0 || d.indexOf("[") == 0) {
-      this.loadGeoJSON(d);
+    if (this._isXMLDoc(data)) {
+      this.loadGPX(data);
+    } else if (this._isJSONDoc(data)) {
+      this.loadGeoJSON(data);
     } else {
-      this.loadFile(d);
+      this.loadFile(data);
     }
   },
 
