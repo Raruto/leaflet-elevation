@@ -139,7 +139,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _dragHandler: function() {
-    //we donÂ´t want map events to occur here
+    //we don't want map events to occur here
     d3.event.preventDefault();
     d3.event.stopPropagation();
 
@@ -277,7 +277,7 @@ L.Control.Elevation = L.Control.extend({
       .disableClickPropagation(container);
     //.disableScrollPropagation(container);
 
-    if (L.Browser.touch) {
+    if (L.Browser.mobile) {
       L.DomEvent.on(container, 'click', L.DomEvent.stopPropagation);
     }
 
@@ -293,7 +293,7 @@ L.Control.Elevation = L.Control.extend({
       link.href = '#';
       link.title = this.options.controlButton.title;
 
-      if (L.Browser.touch) {
+      if (L.Browser.mobile) {
         L.DomEvent
           .on(link, 'click', L.DomEvent.stop)
           .on(link, 'click', this._expand, this);
@@ -434,7 +434,7 @@ L.Control.Elevation = L.Control.extend({
       .style("stroke", "none")
       .style("pointer-events", "all");
 
-    if (L.Browser.touch) {
+    if (L.Browser.mobile) {
       focusRect
         .on("touchmove.drag", this._dragHandler.bind(this))
         .on("touchstart.drag", this._dragStartHandler.bind(this))
