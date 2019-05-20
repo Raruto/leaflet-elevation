@@ -136,6 +136,10 @@
   fill: #9CC222;
 }
 
+.lime-theme.elevation-polyline {
+  stroke: #566B13;
+}
+
 /* //////////////////////////////////////////////// */
 .steelblue-theme.leaflet-control.elevation .background {
   background-color: rgba(70, 130, 180, 0.2);
@@ -165,6 +169,10 @@
 .steelblue-theme.height-focus {
   stroke: #000;
   fill: #4682B4;
+}
+
+.steelblue-theme.elevation-polyline {
+  stroke: #4682B4;
 }
 
 /* //////////////////////////////////////////////// */
@@ -198,9 +206,17 @@
   fill: #732C7B;
 }
 
+.purple-theme.elevation-polyline {
+  stroke: #732C7B;
+}
+
 /* //////////////////////////////////////////////// */
 .yellow-theme.leaflet-control.elevation .area {
   fill: #FF0;
+}
+
+.yellow-theme.elevation-polyline {
+  stroke: #FF0;
 }
 
 /* //////////////////////////////////////////////// */
@@ -210,5 +226,9 @@
 
 .magenta-theme.leaflet-control.elevation .area {
   fill: #FF005E;
-  stroke: #000000;
+  stroke: #000;
+}
+
+.magenta-theme.elevation-polyline {
+  stroke: #FF005E;
 }

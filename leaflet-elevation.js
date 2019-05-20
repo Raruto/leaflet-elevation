@@ -42,7 +42,8 @@ L.Control.Elevation = L.Control.extend({
         shadowUrl: null,
       },
       polyline_options: {
-        color: '#FF005E',
+        className: '',
+        color: '#566B13',
         opacity: 0.75,
         weight: 5,
         lineCap: 'round'
@@ -64,7 +65,9 @@ L.Control.Elevation = L.Control.extend({
       layer = d;
     }
     if (layer) {
-      L.DomUtil.addClass(layer._path, 'elevation-polyline ' + this.options.theme);
+      if (layer._path) {
+        L.DomUtil.addClass(layer._path, 'elevation-polyline ' + this.options.theme);
+      }
       layer
         .on("mousemove", this._mousemoveLayerHandler, this)
         .on("mouseout", this._mouseoutHandler, this);
@@ -145,8 +148,6 @@ L.Control.Elevation = L.Control.extend({
   },
 
   loadGeoJSON: function(data) {
-    var lineColor = this._getLineHexColor();
-
     if (typeof data === "string") {
       data = JSON.parse(data);
     }
@@ -154,7 +155,8 @@ L.Control.Elevation = L.Control.extend({
     this.geojson = L.geoJson(data, {
       style: function(feature) {
         return {
-          color: lineColor,
+          color: '#566B13',
+          className: 'elevation-polyline ' + this.options.theme,
         };
       }.bind(this),
       onEachFeature: function(feature, layer) {
@@ -185,7 +187,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   loadGPX: function(data) {
-    this.options.gpxOptions.polyline_options.color = this._getLineHexColor();
+    this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
 
     this.gpx = new L.GPX(data, this.options.gpxOptions);
 
@@ -767,31 +769,6 @@ L.Control.Elevation = L.Control.extend({
       res = numbers.join(sep || ".");
     }
     return res;
-  },
-
-  _getLineHexColor: function() {
-    var themeName = this.options.theme;
-    // TODO: find a better workaround for: this.gpx.setStyle({className: themeName});
-    var themeColor = themeName.substring(0, themeName.indexOf("-theme"));
-    var hexColor;
-    switch (themeColor) {
-      case 'lime':
-        hexColor = '#566B13';
-        break;
-      case 'steelblue':
-        hexColor = '#4682B4';
-        break;
-      case 'purple':
-        hexColor = '#732C7B';
-        break;
-      case 'magenta':
-        hexColor = '#FF005E';
-        break;
-      default:
-        hexColor = '#566B13';
-        break;
-    }
-    return hexColor;
   },
 
   _height: function() {
