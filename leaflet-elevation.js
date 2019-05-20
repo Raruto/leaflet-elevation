@@ -518,7 +518,7 @@ L.Control.Elevation = L.Control.extend({
       dist: item.dist,
       x: point.x,
       y: point.y,
-      z: point.y,
+      z: item.z,
     };
 
     if (!this._mouseHeightFocus) {
@@ -544,11 +544,11 @@ L.Control.Elevation = L.Control.extend({
   _updateHeightIndicator: function(item) {
     var opts = this.options;
 
-    var normalizedAlt = this._height() / this._maxElevation * item.z,
-      normalizedY = item.y - normalizedAlt;
-
     var numY = opts.hoverNumber.formatter(item.z, opts.hoverNumber.decimalsY),
       numX = opts.hoverNumber.formatter(item.dist, opts.hoverNumber.decimalsX);
+
+    var normalizedAlt = this._height() / this._maxElevation * item.z,
+      normalizedY = item.y - normalizedAlt;
 
     this._mouseHeightFocus
       .attr("x1", item.x)
@@ -975,6 +975,10 @@ L.Control.Elevation = L.Control.extend({
         .on("mousemove", this._handleLayerMouseOver, this)
         .on("mouseout", this._mouseoutHandler, this);
     }
+  },
+
+  fitBounds: function() {
+    this._map.fitBounds(this._fullExtent);
   },
 
   loadGPX: function(data) {
