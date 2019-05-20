@@ -10,8 +10,10 @@ L.Control.Elevation = L.Control.extend({
       bottom: 30,
       left: 50
     },
+    useLeafletMarker: false,
+    useMapIndicator: true,
     useHeightIndicator: true,
-    autoHideHeightIndicator: false,
+    autoHidePositionMarker: true,
     interpolation: d3.curveLinear,
     hoverNumber: {
       decimalsX: 2,
@@ -129,7 +131,7 @@ L.Control.Elevation = L.Control.extend({
       this._applyData();
     }
 
-    this._map.on('zoom viewreset zoomanim', this._forceHidePositionMarker, this);
+    this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
     this._map.on('resize', this._resetView, this);
     this._map.on('resize', this._resizeChart, this);
 
@@ -137,7 +139,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _dragHandler: function() {
-    //we donÂ´t want map events to occur here
+    //we don't want map events to occur here
     d3.event.preventDefault();
     d3.event.stopPropagation();
 
@@ -184,7 +186,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   /*
-   * Handles end of dragg operations. Zooms the map to the selected items extent.
+   * Handles end of drag operations. Zooms the map to the selected items extent.
    */
   _dragEndHandler: function() {
     if (!this._dragStartCoords || !this._gotDragged) {
@@ -275,7 +277,7 @@ L.Control.Elevation = L.Control.extend({
       .disableClickPropagation(container);
     //.disableScrollPropagation(container);
 
-    if (L.Browser.touch) {
+    if (L.Browser.mobile) {
       L.DomEvent.on(container, 'click', L.DomEvent.stopPropagation);
     }
 
@@ -291,7 +293,7 @@ L.Control.Elevation = L.Control.extend({
       link.href = '#';
       link.title = this.options.controlButton.title;
 
-      if (L.Browser.touch) {
+      if (L.Browser.mobile) {
         L.DomEvent
           .on(link, 'click', L.DomEvent.stop)
           .on(link, 'click', this._expand, this);
@@ -343,22 +345,6 @@ L.Control.Elevation = L.Control.extend({
     return res;
   },
 
-  _appendYaxis: function(axis) {
-    axis
-      .append("g")
-      .attr("class", "y axis")
-      .call(
-        d3
-        .axisLeft()
-        .scale(this._y)
-        .ticks(this.options.yTicks)
-      )
-      .append("text")
-      .attr("x", -30)
-      .attr("y", 3)
-      .text(this.options.imperial ? "ft" : "m");
-  },
-
   _appendXaxis: function(axis) {
     axis
       .append("g")
@@ -374,6 +360,22 @@ L.Control.Elevation = L.Control.extend({
       .attr("x", this._width() + 6)
       .attr("y", 30)
       .text(this.options.imperial ? "mi" : "km");
+  },
+
+  _appendYaxis: function(axis) {
+    axis
+      .append("g")
+      .attr("class", "y axis")
+      .call(
+        d3
+        .axisLeft()
+        .scale(this._y)
+        .ticks(this.options.yTicks)
+      )
+      .append("text")
+      .attr("x", -30)
+      .attr("y", 3)
+      .text(this.options.imperial ? "ft" : "m");
   },
 
   _appendXGrid: function(grid) {
@@ -416,6 +418,7 @@ L.Control.Elevation = L.Control.extend({
       .attr("class", "area");
 
   },
+
   _appendAxis: function(g) {
     this._axis = g.append("g")
       .attr("class", "axis");
@@ -431,7 +434,7 @@ L.Control.Elevation = L.Control.extend({
       .style("stroke", "none")
       .style("pointer-events", "all");
 
-    if (L.Browser.touch) {
+    if (L.Browser.mobile) {
       focusRect
         .on("touchmove.drag", this._dragHandler.bind(this))
         .on("touchstart.drag", this._dragStartHandler.bind(this))
@@ -477,6 +480,29 @@ L.Control.Elevation = L.Control.extend({
       .attr("dy", "2em");
   },
 
+  _appendPositionMarker: function(pane) {
+    var theme = this.options.theme;
+    var heightG = pane.append("g");
+
+    this._mouseHeightFocus = heightG.append('svg:line')
+      .attr("class", theme + " height-focus line")
+      .attr("x2", 0)
+      .attr("y2", 0)
+      .attr("x1", 0)
+      .attr("y1", 0);
+
+    this._pointG = heightG.append("g");
+    this._pointG.append("svg:circle")
+      .attr("class", theme + " height-focus circle-lower")
+      .attr("r", 6)
+      .attr("cx", 0)
+      .attr("cy", 0);
+
+    this._mouseHeightFocusLabel = heightG.append("svg:text")
+      .attr("class", theme + " height-focus-label")
+      .style("pointer-events", "none");
+  },
+
   _updateAxis: function() {
     this._grid.selectAll("g").remove();
     this._axis.selectAll("g").remove();
@@ -486,13 +512,78 @@ L.Control.Elevation = L.Control.extend({
     this._appendYaxis(this._axis);
   },
 
+  _updatePositionMarker: function(item) {
+    var point = this._map.latLngToLayerPoint(item.latlng);
+    var layerpoint = {
+      dist: item.dist,
+      x: point.x,
+      y: point.y,
+      z: item.z,
+    };
+
+    if (!this._mouseHeightFocus) {
+      var layerpane = d3.select(this._map.getContainer()).select(".leaflet-overlay-pane svg");
+      this._appendPositionMarker(layerpane);
+    }
+
+    if (this.options.useMapIndicator) {
+      this._updatePointG(layerpoint);
+    }
+
+    if (this.options.useHeightIndicator) {
+      this._updateHeightIndicator(layerpoint);
+    }
+  },
+
+  _updatePointG: function(item) {
+    this._pointG
+      .attr("transform", "translate(" + item.x + "," + item.y + ")")
+      .style("visibility", "visible");
+  },
+
+  _updateHeightIndicator: function(item) {
+    var opts = this.options;
+
+    var numY = opts.hoverNumber.formatter(item.z, opts.hoverNumber.decimalsY),
+      numX = opts.hoverNumber.formatter(item.dist, opts.hoverNumber.decimalsX);
+
+    var normalizedAlt = this._height() / this._maxElevation * item.z,
+      normalizedY = item.y - normalizedAlt;
+
+    this._mouseHeightFocus
+      .attr("x1", item.x)
+      .attr("x2", item.x)
+      .attr("y1", item.y)
+      .attr("y2", normalizedY)
+      .style("visibility", "visible");
+
+    this._mouseHeightFocusLabel
+      .attr("x", item.x)
+      .attr("y", normalizedY)
+      .text(numY + (opts.imperial ? " ft" : " m"))
+      .style("visibility", "visible");
+  },
+
+  _updateLeafletMarker: function(item) {
+    var ll = item.latlng;
+
+    if (!this._marker) {
+      this._marker = new L.Marker(ll);
+      this._marker.addTo(this._map);
+    } else {
+      this._marker.setLatLng(ll);
+    }
+  },
+
   _mouseoutHandler: function() {
-    //this._hidePositionMarker();
+    if (!this.options.detachedView) {
+      this._hidePositionMarker();
+    }
   },
 
   _resetView: function() {
     this._resetDrag();
-    this._forceHidePositionMarker();
+    this._hidePositionMarker();
   },
 
   _resizeChart: function() {
@@ -517,15 +608,11 @@ L.Control.Elevation = L.Control.extend({
     }
   },
 
-  _forceHidePositionMarker: function() {
-    this._hidePositionMarker(true);
-  },
-
   /*
-   * Hides the position-/heigth indication marker drawn onto the map
+   * Hides the position/height indicator marker drawn onto the map
    */
-  _hidePositionMarker: function(force) {
-    if (!this.options.autoHideHeightIndicator && !force) {
+  _hidePositionMarker: function() {
+    if (!this.options.autoHidePositionMarker) {
       return;
     }
 
@@ -551,10 +638,11 @@ L.Control.Elevation = L.Control.extend({
       return;
     }
     var coords = d3.mouse(this._focusRect.node());
-    var item = this._data[this._findItemForX(coords[0])];
+    var xCoord = coords[0];
+    var item = this._data[this._findItemForX(xCoord)];
 
-    this._forceHidePositionMarker();
-    this._showDiagramIndicator(item, coords[0]);
+    this._hidePositionMarker();
+    this._showDiagramIndicator(item, xCoord);
     this._showPositionMarker(item);
 
     this._map.fireEvent("elechart_change", {
@@ -564,61 +652,10 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _showPositionMarker: function(item) {
-    var opts = this.options,
-      alt = item.z,
-      dist = item.dist,
-      ll = item.latlng,
-      numY = opts.hoverNumber.formatter(alt, opts.hoverNumber.decimalsY),
-      numX = opts.hoverNumber.formatter(dist, opts.hoverNumber.decimalsX);
-
-    var layerpoint = this._map.latLngToLayerPoint(ll);
-
-    //if we use a height indicator we create one with SVG otherwise we show a marker
-    if (opts.useHeightIndicator) {
-      if (!this._mouseHeightFocus) {
-        var heightG = d3.select(this._map.getContainer()).select(".leaflet-overlay-pane svg")
-          .append("g");
-        this._mouseHeightFocus = heightG.append('svg:line')
-          .attr("class", opts.theme + " height-focus line")
-          .attr("x2", 0)
-          .attr("y2", 0)
-          .attr("x1", 0)
-          .attr("y1", 0);
-
-        var pointG = this._pointG = heightG.append("g");
-        pointG.append("svg:circle")
-          .attr("r", 6)
-          .attr("cx", 0)
-          .attr("cy", 0)
-          .attr("class", opts.theme + " height-focus circle-lower");
-
-        this._mouseHeightFocusLabel = heightG.append("svg:text")
-          .attr("class", opts.theme + " height-focus-label")
-          .style("pointer-events", "none");
-
-      }
-
-      var normalizedAlt = this._height() / this._maxElevation * alt;
-      var normalizedY = layerpoint.y - normalizedAlt;
-      this._mouseHeightFocus.attr("x1", layerpoint.x)
-        .attr("x2", layerpoint.x)
-        .attr("y1", layerpoint.y)
-        .attr("y2", normalizedY)
-        .style("visibility", "visible");
-
-      this._pointG.attr("transform", "translate(" + layerpoint.x + "," + layerpoint.y + ")")
-        .style("visibility", "visible");
-
-      this._mouseHeightFocusLabel.attr("x", layerpoint.x)
-        .attr("y", normalizedY)
-        .text(numY + (opts.imperial ? " ft" : " m"))
-        .style("visibility", "visible");
+    if (this.options.useLeafletMarker) {
+      this._updateLeafletMarker(item);
     } else {
-      if (!this._marker) {
-        this._marker = new L.Marker(ll).addTo(this._map);
-      } else {
-        this._marker.setLatLng(ll);
-      }
+      this._updatePositionMarker(item);
     }
   },
 
@@ -664,8 +701,9 @@ L.Control.Elevation = L.Control.extend({
     return hexColor;
   },
 
-  _isXMLDoc: function(doc) {
-    if (typeof doc === "string") {
+  _isXMLDoc: function(doc, lazy) {
+    lazy = typeof lazy === "undefined" ? true : lazy;
+    if (typeof doc === "string" && lazy) {
       doc = doc.trim();
       return doc.indexOf("<") == 0;
     } else {
@@ -674,8 +712,9 @@ L.Control.Elevation = L.Control.extend({
     }
   },
 
-  _isJSONDoc: function(doc) {
-    if (typeof doc === "string") {
+  _isJSONDoc: function(doc, lazy) {
+    lazy = typeof lazy === "undefined" ? true : lazy;
+    if (typeof doc === "string" && lazy) {
       doc = doc.trim();
       return doc.indexOf("{") == 0 || doc.indexOf("[") == 0;
     } else {
@@ -702,7 +741,7 @@ L.Control.Elevation = L.Control.extend({
     if (item) {
       var x = item.xDiagCoord;
 
-      this._forceHidePositionMarker();
+      this._hidePositionMarker();
       this._showDiagramIndicator(item, x);
       this._showPositionMarker(item);
     }
@@ -936,6 +975,10 @@ L.Control.Elevation = L.Control.extend({
         .on("mousemove", this._handleLayerMouseOver, this)
         .on("mouseout", this._mouseoutHandler, this);
     }
+  },
+
+  fitBounds: function() {
+    this._map.fitBounds(this._fullExtent);
   },
 
   loadGPX: function(data) {

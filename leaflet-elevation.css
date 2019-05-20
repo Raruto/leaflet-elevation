@@ -1,11 +1,18 @@
 .leaflet-control.elevation .background {
-  background-color: rgba(70, 130, 180, .2);
+  background-color: rgba(70, 130, 180, 0.2);
   border-radius: 5px;
   -moz-border-radius: 5px;
   -ms-border-radius: 5px;
   -o-border-radius: 5px;
   -webkit-border-radius: 5px;
   overflow: visible;
+}
+
+.leaflet-control.elevation .axis line,
+.leaflet-control.elevation .axis path {
+  stroke: #2D1130;
+  stroke-width: 2;
+  fill: none;
 }
 
 .leaflet-control.elevation .grid .tick line {
@@ -19,12 +26,6 @@
   pointer-events: none;
 }
 
-.leaflet-control.elevation .axis line, .leaflet-control.elevation .axis path {
-  stroke: #2d1130;
-  stroke-width: 2;
-  fill: none;
-}
-
 .leaflet-control.elevation .axis text {
   text-anchor: end;
   fill: #000;
@@ -32,14 +33,14 @@
 }
 
 .leaflet-control.elevation .area {
-  fill: #4682b4;
-  stroke: #000000;
+  fill: #4682B4;
+  stroke: #000;
   stroke-width: 1.8;
   paint-order: stroke fill;
 }
 
 .leaflet-control.elevation .mouse-focus-line {
-  stroke: #0d1821;
+  stroke: #0D1821;
   stroke-width: 1;
   pointer-events: none;
 }
@@ -51,22 +52,22 @@
 }
 
 .leaflet-control.elevation .mouse-focus-label-text {
-  fill: #fff;
+  fill: #FFF;
   pointer-events: none;
 }
 
 .leaflet-control.elevation .mouse-drag {
-  fill: rgba(23, 74, 117, .4);
+  fill: rgba(23, 74, 117, 0.4);
 }
 
 .leaflet-control.elevation .elevation-toggle {
   cursor: pointer;
-  box-shadow: 0 1px 7px rgba(0, 0, 0, .4);
+  box-shadow: 0 1px 7px rgba(0, 0, 0, 0.4);
   -webkit-border-radius: 5px;
   border-radius: 5px;
   width: 36px;
   height: 36px;
-  background-color: #f8f8f9;
+  background-color: #F8F8F9;
 }
 
 .leaflet-control.elevation-collapsed .background {
@@ -83,7 +84,7 @@
 
 .leaflet-overlay-pane .height-focus {
   stroke: #000;
-  fill: #fff;
+  fill: #FFF;
 }
 
 .leaflet-overlay-pane .height-focus.line {
@@ -96,25 +97,26 @@
   font-weight: 600;
   fill: #000;
   paint-order: stroke;
-  stroke: #fff;
+  stroke: #FFF;
   stroke-width: 2px;
 }
 
-/*////////////////////////////////////////////////*/
+/* //////////////////////////////////////////////// */
 .lime-theme.leaflet-control.elevation .background {
-  background-color: rgba(156, 194, 34, .2);
+  background-color: rgba(156, 194, 34, 0.2);
+}
+
+.lime-theme.leaflet-control.elevation .axis line,
+.lime-theme.leaflet-control.elevation .axis path {
+  stroke: #566B13;
 }
 
 .lime-theme.leaflet-control.elevation .grid .tick line {
-  stroke: #ccc;
-}
-
-.lime-theme.leaflet-control.elevation .axis line, .lime-theme.leaflet-control.elevation .axis path {
-  stroke: #566b13;
+  stroke: #CCC;
 }
 
 .lime-theme.leaflet-control.elevation .mouse-drag {
-  fill: rgba(99, 126, 11, .4);
+  fill: rgba(99, 126, 11, 0.4);
 }
 
 .lime-theme.leaflet-control.elevation .elevation-toggle-icon {
@@ -122,7 +124,7 @@
 }
 
 .lime-theme.leaflet-control.elevation .area {
-  fill: #9cc222;
+  fill: #9CC222;
 }
 
 .lime-theme.leaflet-control.elevation .mouse-focus-line {
@@ -131,20 +133,21 @@
 
 .lime-theme.height-focus {
   stroke: #000;
-  fill: #9cc222;
+  fill: #9CC222;
 }
 
-/*////////////////////////////////////////////////*/
+/* //////////////////////////////////////////////// */
 .steelblue-theme.leaflet-control.elevation .background {
-  background-color: rgba(70, 130, 180, .2);
+  background-color: rgba(70, 130, 180, 0.2);
 }
 
-.steelblue-theme.leaflet-control.elevation .axis line, .steelblue-theme.leaflet-control.elevation .axis path {
-  stroke: #0d1821;
+.steelblue-theme.leaflet-control.elevation .axis line,
+.steelblue-theme.leaflet-control.elevation .axis path {
+  stroke: #0D1821;
 }
 
 .steelblue-theme.leaflet-control.elevation .mouse-drag {
-  fill: rgba(23, 74, 117, .4);
+  fill: rgba(23, 74, 117, 0.4);
 }
 
 .steelblue-theme.leaflet-control.elevation .elevation-toggle-icon {
@@ -152,29 +155,30 @@
 }
 
 .steelblue-theme.leaflet-control.elevation .area {
-  fill: #4682b4;
+  fill: #4682B4;
 }
 
 .steelblue-theme.leaflet-control.elevation .mouse-focus-line {
-  stroke: #0d1821;
+  stroke: #0D1821;
 }
 
 .steelblue-theme.height-focus {
   stroke: #000;
-  fill: #4682b4;
+  fill: #4682B4;
 }
 
-/*////////////////////////////////////////////////*/
+/* //////////////////////////////////////////////// */
 .purple-theme.leaflet-control.elevation .background {
-  background-color: rgba(115, 44, 123, .2);
+  background-color: rgba(115, 44, 123, 0.2);
 }
 
-.purple-theme.leaflet-control.elevation .axis line, .purple-theme.leaflet-control.elevation .axis path {
-  stroke: #2d1130;
+.purple-theme.leaflet-control.elevation .axis line,
+.purple-theme.leaflet-control.elevation .axis path {
+  stroke: #2D1130;
 }
 
 .purple-theme.leaflet-control.elevation .mouse-drag {
-  fill: rgba(74, 14, 80, .4);
+  fill: rgba(74, 14, 80, 0.4);
 }
 
 .purple-theme.leaflet-control.elevation .elevation-toggle-icon {
@@ -182,7 +186,7 @@
 }
 
 .purple-theme.leaflet-control.elevation .area {
-  fill: #732c7b;
+  fill: #732C7B;
 }
 
 .purple-theme.leaflet-control.elevation .mouse-focus-line {
@@ -191,15 +195,20 @@
 
 .purple-theme.height-focus {
   stroke: #000;
-  fill: #732c7b
+  fill: #732C7B;
 }
 
-/*////////////////////////////////////////////////*/
+/* //////////////////////////////////////////////// */
+.yellow-theme.leaflet-control.elevation .area {
+  fill: #FF0;
+}
+
+/* //////////////////////////////////////////////// */
 .magenta-theme.leaflet-control.elevation .background {
   background-color: rgba(255, 255, 255, 0.47);
 }
 
-.leaflet-control.elevation .area {
+.magenta-theme.leaflet-control.elevation .area {
   fill: #FF005E;
   stroke: #000000;
 }
