@@ -60,7 +60,7 @@ L.Control.Elevation = L.Control.extend({
     if (this._container) {
       this._applyData();
     }
-    if (layer === null && d.on) {
+    if ((typeof layer === "undefined" || layer === null) && d.on) {
       layer = d;
     }
     if (layer) {
