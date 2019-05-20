@@ -29,8 +29,8 @@ _For a working example see one of the following demos:_
     <!-- leaflet-gpx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
     <!-- leaflet-elevation -->
-    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation/leaflet-elevation.css" />
-    <script src="https://unpkg.com/@raruto/leaflet-elevation/leaflet-elevation.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.css" />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.js"></script>
     ...
     </head>
     ```

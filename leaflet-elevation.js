@@ -52,6 +52,11 @@ L.Control.Elevation = L.Control.extend({
   __mileFactor: 0.621371,
   __footFactor: 3.28084,
 
+  initialize: function(options) {
+    L.Util.setOptions(this, options);
+    this._draggingEnabled = !L.Browser.mobile;
+  },
+
   onRemove: function(map) {
     this._container = null;
   },
@@ -159,7 +164,7 @@ L.Control.Elevation = L.Control.extend({
    * Draws the currently dragged rectangle over the chart.
    */
   _drawDragRectangle: function() {
-    if (!this._dragStartCoords) {
+    if (!this._dragStartCoords || !this._draggingEnabled) {
       return;
     }
 
@@ -189,17 +194,20 @@ L.Control.Elevation = L.Control.extend({
    * Handles end of drag operations. Zooms the map to the selected items extent.
    */
   _dragEndHandler: function() {
-    if (!this._dragStartCoords || !this._gotDragged) {
+    if (!this._dragStartCoords || !this._dragCurrentCoords || !this._gotDragged) {
       this._dragStartCoords = null;
       this._gotDragged = false;
       //this._resetDrag();
       return;
     }
 
-    this._hidePositionMarker();
-
     var item1 = this._findItemForX(this._dragStartCoords[0]),
       item2 = this._findItemForX(this._dragCurrentCoords[0]);
+
+    if (item1 == item2) return;
+
+    this._hidePositionMarker();
+
 
     this._fitSection(item1, item2);
 
@@ -307,7 +315,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _expand: function() {
-    this._container.className = this._container.className.replace(' elevation-collapsed', '');
+    L.DomUtil.removeClass(this._container, 'elevation-collapsed');
   },
 
   _collapse: function() {
@@ -438,7 +446,8 @@ L.Control.Elevation = L.Control.extend({
       focusRect
         .on("touchmove.drag", this._dragHandler.bind(this))
         .on("touchstart.drag", this._dragStartHandler.bind(this))
-        .on("touchstart.focus", this._mousemoveHandler.bind(this));
+        .on("touchstart.focus", this._mousemoveHandler.bind(this))
+        .on("touchmove.focus", this._mousemoveHandler.bind(this));
       L.DomEvent.on(this._container, 'touchend', this._dragEndHandler, this);
     }
 
@@ -598,7 +607,7 @@ L.Control.Elevation = L.Control.extend({
         eleDiv.innerHTML = "";
 
         var container = this.onAdd(this._map);
-        container.classList.add("leaflet-control");
+        L.DomUtil.addClass(container, 'leaflet-control');
 
         eleDiv.appendChild(container);
       } else {
@@ -860,9 +869,18 @@ L.Control.Elevation = L.Control.extend({
     this._container.style.display = "block";
   },
 
+  enableDragging: function() {
+    this._draggingEnabled = true;
+  },
+
+  disableDragging: function() {
+    this._draggingEnabled = false;
+    this._resetDrag();
+  },
+
   _addToChartDiv: function(map) {
     var container = this.onAdd(map);
-    container.classList.add("leaflet-control");
+    L.DomUtil.addClass(container, 'leaflet-control');
     var eleDiv = document.querySelector(this.options.elevationDiv);
     eleDiv.appendChild(container);
   },
