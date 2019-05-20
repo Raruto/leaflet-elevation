@@ -64,6 +64,7 @@ L.Control.Elevation = L.Control.extend({
       layer = d;
     }
     if (layer) {
+      L.DomUtil.addClass(layer._path, 'elevation-polyline ' + this.options.theme);
       layer
         .on("mousemove", this._mousemoveLayerHandler, this)
         .on("mouseout", this._mouseoutHandler, this);
@@ -153,9 +154,9 @@ L.Control.Elevation = L.Control.extend({
     this.geojson = L.geoJson(data, {
       style: function(feature) {
         return {
-          color: lineColor
+          color: lineColor,
         };
-      },
+      }.bind(this),
       onEachFeature: function(feature, layer) {
         this.addData(feature, layer);
 
