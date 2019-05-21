@@ -110,7 +110,7 @@ L.Control.Elevation = L.Control.extend({
       this._y.domain([0, 1]);
       this._updateAxis();
     }
-    if(this._map){
+    if (this._map) {
       this._map.fireEvent("eledata_clear");
     }
   },
@@ -319,6 +319,9 @@ L.Control.Elevation = L.Control.extend({
     this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
     this._map.on('resize', this._resetView, this);
     this._map.on('resize', this._resizeChart, this);
+    this._map.on('click', this._resetDrag, this);
+
+    L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
 
     return container;
   },
@@ -524,8 +527,10 @@ L.Control.Elevation = L.Control.extend({
     focusRect
       .on("mousemove.drag", this._dragHandler.bind(this))
       .on("mousedown.drag", this._dragStartHandler.bind(this))
+      .on("mousedown.click", this._mouseclickHandler.bind(this))
       .on("mousemove.focus", this._mousemoveHandler.bind(this))
       .on("mouseout.focus", this._mouseoutHandler.bind(this));
+
     L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
   },
 
@@ -677,7 +682,6 @@ L.Control.Elevation = L.Control.extend({
 
     this._hidePositionMarker();
 
-
     this._fitSection(item1, item2);
 
     this._dragStartCoords = null;
@@ -827,9 +831,11 @@ L.Control.Elevation = L.Control.extend({
     //Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
     container.setAttribute('aria-haspopup', true);
 
-    L.DomEvent
-      .disableClickPropagation(container);
-    //.disableScrollPropagation(container);
+    if (!this.options.detachedView) {
+      L.DomEvent
+        .disableClickPropagation(container);
+      //.disableScrollPropagation(container);
+    }
 
     if (L.Browser.mobile) {
       L.DomEvent.on(container, 'click', L.DomEvent.stopPropagation);
@@ -888,6 +894,10 @@ L.Control.Elevation = L.Control.extend({
     }
   },
 
+  _mouseclickHandler: function(e) {
+    this._resetDrag();
+  },
+
   /*
    * Handles the moueseover the chart and displays distance and altitude level
    */
@@ -942,13 +952,13 @@ L.Control.Elevation = L.Control.extend({
       this._dragRectangleG = null;
       this._dragRectangle = null;
       this._hidePositionMarker();
-      this._map.fitBounds(this._fullExtent);
     }
   },
 
   _resetView: function() {
     this._resetDrag();
     this._hidePositionMarker();
+    this._map.fitBounds(this._fullExtent);
   },
 
   _resizeChart: function() {
