@@ -72,26 +72,47 @@ L.Control.Elevation = L.Control.extend({
         .on("mousemove", this._mousemoveLayerHandler, this)
         .on("mouseout", this._mouseoutHandler, this);
     }
+
+    this.track_info = this.track_info || {};
+    this.track_info.distance = this._distance;
+    this.track_info.elevation_max = this._maxElevation;
+    this.track_info.elevation_min = this._minElevation;
+
+    this._layers = this._layers || {};
+    this._layers[layer._leaflet_id] = layer;
+
+    this._map.fireEvent("eledata_added", {
+      data: d,
+      layer: layer,
+      track_info: this.track_info,
+    }, true);
   },
 
   /*
    * Reset data and display
    */
   clear: function() {
-    this._clearData();
 
-    if (!this._areapath) {
-      return;
+    for (var id in this._layers) {
+      L.DomUtil.removeClass(this._layers[id]._path, "elevation-polyline");
+      L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
     }
 
-    // workaround for 'Error: Problem parsing d=""' in Webkit when empty data
-    // https://groups.google.com/d/msg/d3-js/7rFxpXKXFhI/HzIO_NPeDuMJ
-    //this._areapath.datum(this._data).attr("d", this._area);
-    this._areapath.attr("d", "M0 0");
+    this._clearData();
 
-    this._x.domain([0, 1]);
-    this._y.domain([0, 1]);
-    this._updateAxis();
+    if (this._areapath) {
+      // workaround for 'Error: Problem parsing d=""' in Webkit when empty data
+      // https://groups.google.com/d/msg/d3-js/7rFxpXKXFhI/HzIO_NPeDuMJ
+      //this._areapath.datum(this._data).attr("d", this._area);
+      this._areapath.attr("d", "M0 0");
+
+      this._x.domain([0, 1]);
+      this._y.domain([0, 1]);
+      this._updateAxis();
+    }
+    if(this._map){
+      this._map.fireEvent("eledata_clear");
+    }
   },
 
   disableDragging: function() {
@@ -619,6 +640,7 @@ L.Control.Elevation = L.Control.extend({
     this._maxElevation = null;
     this._minElevation = null;
     this.track_info = null;
+    this._layers = null;
     // if (this.gpx) {
     // 	this.gpx.removeFrom(this._map);
     // }
