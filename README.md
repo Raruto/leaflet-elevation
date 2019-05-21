@@ -7,8 +7,9 @@ _For a working example see one of the following demos:_
 - [loading string data](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_string-data.html)
 - [hoverable chart / hidden map](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_hidden-map.html)
 - [hoverable chart / hidden chart](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_hidden-chart.html)
+- [hoverable .gpx tracks](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation-hoverable-tracks.html)
 - [toggable .gpx tracks](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_toggable-tracks.html)
-- [toggable .gpx charts](https://raruto.github.io/examples/leaflet-elevation/multiple-tracks/)
+- [toggable .gpx charts](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation-multiple-tracks.html)
 
 ---
 
