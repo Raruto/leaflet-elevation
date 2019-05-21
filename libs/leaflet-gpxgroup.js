@@ -110,7 +110,7 @@ L.GpxGroup = L.Class.extend({
     points: [],
     points_options: {
       icon: {
-        iconUrl: 'img/poi.png',
+        iconUrl: '../images/elevation-poi.png',
         iconSize: [12, 12],
       }
     },
@@ -324,7 +324,7 @@ L.GpxGroup = L.Class.extend({
     for (var j in layers) {
       var selected = layers[j].isSelected();
       var legend = L.DomUtil.get('legend_' + layers[j]._leaflet_id);
-      legend.querySelector("line").style.stroke = selected ? this.options.highlight : "";
+      legend.querySelector("line").style.stroke = selected ? this.options.highlight.color : "";
       legend.parentNode.style.fontWeight = selected ? "700" : "";
     }
   },
