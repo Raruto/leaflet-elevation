@@ -94,8 +94,8 @@ _For a working example see one of the following demos:_
 
       controlZoom.addTo(map);
       controlLayer.addTo(map);
+      controlElevation.addTo(map); // attach elevation chart to map
 
-      controlElevation.loadChart(map); // attach elevation chart element to map
       controlElevation.loadData(opts.elevationControl.data); // url or plain gpx/geojson data
 
       map.addLayer(baseLayers.OTM);
