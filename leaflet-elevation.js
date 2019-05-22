@@ -110,7 +110,7 @@ L.Control.Elevation = L.Control.extend({
       this._y.domain([0, 1]);
       this._updateAxis();
     }
-    if(this._map){
+    if (this._map) {
       this._map.fireEvent("eledata_clear");
     }
   },
@@ -319,6 +319,10 @@ L.Control.Elevation = L.Control.extend({
     this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
     this._map.on('resize', this._resetView, this);
     this._map.on('resize', this._resizeChart, this);
+    this._map.on('mousedown', this._resetDrag, this);
+
+    L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
+    L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
 
     return container;
   },
@@ -666,7 +670,8 @@ L.Control.Elevation = L.Control.extend({
     if (!this._dragStartCoords || !this._dragCurrentCoords || !this._gotDragged) {
       this._dragStartCoords = null;
       this._gotDragged = false;
-      //this._resetDrag();
+      if (this._draggingEnabled)
+        this._resetDrag();
       return;
     }
 
@@ -676,7 +681,6 @@ L.Control.Elevation = L.Control.extend({
     if (item1 == item2) return;
 
     this._hidePositionMarker();
-
 
     this._fitSection(item1, item2);
 
@@ -827,9 +831,11 @@ L.Control.Elevation = L.Control.extend({
     //Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
     container.setAttribute('aria-haspopup', true);
 
-    L.DomEvent
-      .disableClickPropagation(container);
-    //.disableScrollPropagation(container);
+    if (!this.options.detachedView) {
+      L.DomEvent
+        .disableClickPropagation(container);
+      //.disableScrollPropagation(container);
+    }
 
     if (L.Browser.mobile) {
       L.DomEvent.on(container, 'click', L.DomEvent.stopPropagation);
@@ -942,13 +948,13 @@ L.Control.Elevation = L.Control.extend({
       this._dragRectangleG = null;
       this._dragRectangle = null;
       this._hidePositionMarker();
-      this._map.fitBounds(this._fullExtent);
     }
   },
 
   _resetView: function() {
     this._resetDrag();
     this._hidePositionMarker();
+    this._map.fitBounds(this._fullExtent);
   },
 
   _resizeChart: function() {
