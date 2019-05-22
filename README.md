@@ -10,7 +10,7 @@ _For a working example see one of the following demos:_
 - [hoverable .gpx tracks](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_hoverable-tracks.html)
 - [toggable .gpx tracks](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_toggable-tracks.html)
 - [toggable .gpx charts](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_multiple-tracks.html)
-- [custom-theme colors](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_custom-theme.html)
+- [custom theme colors](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_custom-theme.html)
 
 ---
 
@@ -66,7 +66,7 @@ _For a working example see one of the following demos:_
           },
         },
         elevationControl: {
-          url: "https://raruto.github.io/examples/leaflet-elevation/via-emilia.gpx",
+          data: "https://raruto.github.io/examples/leaflet-elevation/via-emilia.gpx",
           options: {
             position: "topleft",
             theme: "magenta-theme", //default: lime-theme
@@ -96,7 +96,7 @@ _For a working example see one of the following demos:_
       controlLayer.addTo(map);
 
       controlElevation.loadChart(map); // attach elevation chart element to map
-      controlElevation.loadData(opts.elevationControl.url); // url or plain gpx/geojson data
+      controlElevation.loadData(opts.elevationControl.data); // url or plain gpx/geojson data
 
       map.addLayer(baseLayers.OTM);
     </script>
