@@ -88,6 +88,14 @@ L.Control.Elevation = L.Control.extend({
     }, true);
   },
 
+  addTo: function(map) {
+    if (this.options.detachedView) {
+      this._addToChartDiv(map);
+    } else {
+      L.Control.prototype.addTo.call(this, map);
+    }
+  },
+
   /*
    * Reset data and display
    */
@@ -132,17 +140,11 @@ L.Control.Elevation = L.Control.extend({
     this._map.fitBounds(this._fullExtent);
   },
 
+  /**
+   * Alias for addTo
+   */
   loadChart: function(map) {
     this.addTo(map);
-  },
-
-  addTo: function(map) {
-    if (this.options.detachedView) {
-      this._addToChartDiv(map);
-    } else {
-      // this.addTo(map);
-      L.Control.prototype.addTo.call(this, map);
-    }
   },
 
   loadData: function(data) {
