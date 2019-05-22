@@ -319,9 +319,10 @@ L.Control.Elevation = L.Control.extend({
     this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
     this._map.on('resize', this._resetView, this);
     this._map.on('resize', this._resizeChart, this);
-    this._map.on('click', this._resetDrag, this);
+    this._map.on('mousedown', this._resetDrag, this);
 
     L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
+    L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
 
     return container;
   },
@@ -527,10 +528,8 @@ L.Control.Elevation = L.Control.extend({
     focusRect
       .on("mousemove.drag", this._dragHandler.bind(this))
       .on("mousedown.drag", this._dragStartHandler.bind(this))
-      .on("mousedown.click", this._mouseclickHandler.bind(this))
       .on("mousemove.focus", this._mousemoveHandler.bind(this))
       .on("mouseout.focus", this._mouseoutHandler.bind(this));
-
     L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
   },
 
@@ -671,7 +670,8 @@ L.Control.Elevation = L.Control.extend({
     if (!this._dragStartCoords || !this._dragCurrentCoords || !this._gotDragged) {
       this._dragStartCoords = null;
       this._gotDragged = false;
-      //this._resetDrag();
+      if (this._draggingEnabled)
+        this._resetDrag();
       return;
     }
 
@@ -892,10 +892,6 @@ L.Control.Elevation = L.Control.extend({
       var documentElement = (doc ? doc.ownerDocument || doc : 0).documentElement;
       return documentElement ? documentElement.nodeName !== "HTML" : false;
     }
-  },
-
-  _mouseclickHandler: function(e) {
-    this._resetDrag();
   },
 
   /*
