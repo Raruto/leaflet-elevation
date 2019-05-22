@@ -88,6 +88,14 @@ L.Control.Elevation = L.Control.extend({
     }, true);
   },
 
+  addTo: function(map) {
+    if (this.options.detachedView) {
+      this._addToChartDiv(map);
+    } else {
+      L.Control.prototype.addTo.call(this, map);
+    }
+  },
+
   /*
    * Reset data and display
    */
@@ -132,12 +140,11 @@ L.Control.Elevation = L.Control.extend({
     this._map.fitBounds(this._fullExtent);
   },
 
+  /**
+   * Alias for addTo
+   */
   loadChart: function(map) {
-    if (this.options.detachedView) {
-      this._addToChartDiv(map);
-    } else {
-      this.addTo(map);
-    }
+    this.addTo(map);
   },
 
   loadData: function(data) {
@@ -894,6 +901,10 @@ L.Control.Elevation = L.Control.extend({
     }
   },
 
+  _isDomVisible: function(elem) {
+    return !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
+  },
+
   /*
    * Handles the moueseover the chart and displays distance and altitude level
    */
@@ -1007,20 +1018,23 @@ L.Control.Elevation = L.Control.extend({
       .text(numX + (opts.imperial ? " mi" : " km"))
       .attr("x", xCoordinate + 10);
 
-    var bbox = this._focuslabeltext.node().getBBox();
-    var padding = 2;
+    var focuslabeltext = this._focuslabeltext.node();
+    if (this._isDomVisible(focuslabeltext)) {
+      var bbox = focuslabeltext.getBBox();
+      var padding = 2;
 
-    this._focuslabelrect
-      .attr("x", bbox.x - padding)
-      .attr("y", bbox.y - padding)
-      .attr("width", bbox.width + (padding * 2))
-      .attr("height", bbox.height + (padding * 2));
+      this._focuslabelrect
+        .attr("x", bbox.x - padding)
+        .attr("y", bbox.y - padding)
+        .attr("width", bbox.width + (padding * 2))
+        .attr("height", bbox.height + (padding * 2));
 
-    // move focus label to left
-    if (xCoordinate >= this._width() / 2) {
-      this._focuslabelrect.attr("x", this._focuslabelrect.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-      this._focuslabelX.attr("x", this._focuslabelX.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-      this._focuslabelY.attr("x", this._focuslabelY.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+      // move focus label to left
+      if (xCoordinate >= this._width() / 2) {
+        this._focuslabelrect.attr("x", this._focuslabelrect.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+        this._focuslabelX.attr("x", this._focuslabelX.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+        this._focuslabelY.attr("x", this._focuslabelY.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+      }
     }
 
   },
