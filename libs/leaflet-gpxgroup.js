@@ -63,7 +63,7 @@ L.Mixin.Selection = {
         this._selected.setSelected(true);
       }
     }
-    this.fire('selectionChanged');
+    this.fire('selection_changed');
   },
 };
 
@@ -82,7 +82,8 @@ L.Control.LayersLegend = L.Control.Layers.extend({
 
       if (input.checked) {
         this._map.fireEvent("legend_selected", {
-          layer: layer
+          layer: layer,
+          input: input,
         }, true);
 
       }
@@ -126,7 +127,11 @@ L.GpxGroup = L.Class.extend({
       // width: 500,
       detachedView: true,
       elevationDiv: '#elevation-div',
-    }
+    },
+    distanceMarkers: true,
+    distanceMarkers_options: {
+      lazy: true
+    },
   },
 
   initialize: function(tracks, options) {
@@ -153,6 +158,10 @@ L.GpxGroup = L.Class.extend({
       marker.addTo(this._markers);
     }, this);
 
+    if (typeof L.DistanceMarkers === "undefined") {
+      this.options.distanceMarkers = false;
+    }
+
   },
 
   getBounds: function() {
@@ -165,7 +174,7 @@ L.GpxGroup = L.Class.extend({
 
     this._map = map;
 
-    this.on('selectionChanged', this._onSelectionChanged, this);
+    this.on('selection_changed', this._onSelectionChanged, this);
     this._map.on('legend_selected', this._onLegendSelected, this);
     this._tracks.forEach(this.addTrack, this);
 
@@ -183,9 +192,7 @@ L.GpxGroup = L.Class.extend({
       color: color,
       opacity: 0.75,
       weight: 5,
-      distanceMarkers: {
-        lazy: true
-      },
+      distanceMarkers: this.options.distanceMarkers_options,
     };
 
     var marker_style = {
@@ -224,12 +231,16 @@ L.GpxGroup = L.Class.extend({
 
   highlight: function(route, polyline) {
     polyline.setStyle(this.options.highlight);
-    polyline.addDistanceMarkers();
+    if (this.options.distanceMarkers) {
+      polyline.addDistanceMarkers();
+    }
   },
 
   unhighlight: function(route, polyline) {
     polyline.setStyle(route.originalStyle);
-    polyline.removeDistanceMarkers();
+    if (this.options.distanceMarkers) {
+      polyline.removeDistanceMarkers();
+    }
   },
 
   _onRouteMouseOver: function(route, polyline) {
@@ -302,6 +313,7 @@ L.GpxGroup = L.Class.extend({
       route.getLayers().forEach(function(layer) {
         if (layer instanceof L.Polyline) {
           elevation.addData(layer);
+          layer.bringToFront();
         }
       });
     } else {
@@ -321,6 +333,9 @@ L.GpxGroup = L.Class.extend({
       }
       map.flyToBounds(e.layer.getBounds());
     }
+    e.input.scrollIntoView({
+      behavior: 'smooth'
+    });
     for (var j in layers) {
       var selected = layers[j].isSelected();
       var legend = L.DomUtil.get('legend_' + layers[j]._leaflet_id);
