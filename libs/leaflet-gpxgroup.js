@@ -225,7 +225,8 @@ L.GpxGroup = L.Class.extend({
     polyline.on('click', L.bind(this._onRouteClick, this, route, polyline));
 
     polyline.bindTooltip(route.get_name(), {
-      direction: 'auto'
+      direction: 'auto',
+      sticky: true,
     });
   },
 
