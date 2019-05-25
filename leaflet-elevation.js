@@ -14,6 +14,7 @@ L.Control.Elevation = L.Control.extend({
     useMapIndicator: true,
     useHeightIndicator: true,
     autoHidePositionMarker: true,
+    autohide: true,
     interpolation: d3.curveLinear,
     hoverNumber: {
       decimalsX: 2,
@@ -244,8 +245,10 @@ L.Control.Elevation = L.Control.extend({
   },
 
   initialize: function(options) {
-    L.Util.setOptions(this, options);
+    this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
     this._draggingEnabled = !L.Browser.mobile;
+
+    L.Util.setOptions(this, options);
   },
 
   onAdd: function(map) {
@@ -658,6 +661,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _collapse: function() {
+    L.DomUtil.removeClass(this._container, 'elevation-expanded');
     L.DomUtil.addClass(this._container, 'elevation-collapsed');
   },
 
@@ -742,6 +746,7 @@ L.Control.Elevation = L.Control.extend({
 
   _expand: function() {
     L.DomUtil.removeClass(this._container, 'elevation-collapsed');
+    L.DomUtil.addClass(this._container, 'elevation-expanded');
   },
 
   /*
@@ -817,6 +822,8 @@ L.Control.Elevation = L.Control.extend({
       return;
     }
 
+    this._selectedItem = null;
+
     if (this._marker) {
       this._map.removeLayer(this._marker);
       this._marker = null;
@@ -848,25 +855,29 @@ L.Control.Elevation = L.Control.extend({
       L.DomEvent.on(container, 'click', L.DomEvent.stopPropagation);
     }
 
-    if (this.options.collapsed) {
-      this._collapse();
+    L.DomEvent.on(container, 'mousewheel', this._mousewheelHandler, this);
 
-      if (!L.Browser.android) {
-        L.DomEvent
-          .on(container, 'mouseover', this._expand, this)
-          .on(container, 'mouseout', this._collapse, this);
+    if (!this.options.detachedView) {
+      if (this.options.collapsed) {
+        this._collapse();
       }
-      var link = this._button = L.DomUtil.create('a', "elevation-toggle " + this.options.controlButton.iconCssClass, container);
+
+      var iconCssClass = "elevation-toggle " + this.options.controlButton.iconCssClass + (this.options.autohide ? "" : " close-button");
+      var link = this._button = L.DomUtil.create('a', iconCssClass, container);
       link.href = '#';
       link.title = this.options.controlButton.title;
 
-      if (L.Browser.mobile) {
+      if (this.options.autohide) {
+        L.DomEvent
+          .on(container, 'mouseover', this._expand, this)
+          .on(container, 'mouseout', this._collapse, this);
+      } else {
         L.DomEvent
           .on(link, 'click', L.DomEvent.stop)
-          .on(link, 'click', this._expand, this);
+          .on(link, 'click', this._toggle, this);
       }
 
-      L.DomEvent.on(link, 'focus', this._expand, this);
+      L.DomEvent.on(link, 'focus', this._toggle, this);
 
       this._map.on('click', this._collapse, this);
       // TODO keyboard accessibility
@@ -948,6 +959,12 @@ L.Control.Elevation = L.Control.extend({
     if (!this.options.detachedView) {
       this._hidePositionMarker();
     }
+  },
+
+  _mousewheelHandler: function(e) {
+    var ll = this._selectedItem ? this._selectedItem.latlng : this._map.getCenter();
+    var z = e.deltaY > 0 ? this._map.getZoom() - 1 : this._map.getZoom() + 1;
+    this._map.flyTo(ll, z);
   },
 
   /*
@@ -1039,7 +1056,15 @@ L.Control.Elevation = L.Control.extend({
 
   },
 
+  _toggle: function() {
+    if (L.DomUtil.hasClass(this._container, "elevation-collapsed"))
+      this._expand();
+    else
+      this._collapse();
+  },
+
   _showPositionMarker: function(item) {
+    this._selectedItem = item;
     if (this.options.useLeafletMarker) {
       this._updateLeafletMarker(item);
     } else {
