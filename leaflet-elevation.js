@@ -981,6 +981,7 @@ L.Control.Elevation = L.Control.extend({
   _mousewheelHandler: function(e) {
     var ll = this._selectedItem ? this._selectedItem.latlng : this._map.getCenter();
     var z = e.deltaY > 0 ? this._map.getZoom() - 1 : this._map.getZoom() + 1;
+    this._resetDrag();
     this._map.flyTo(ll, z);
   },
 
