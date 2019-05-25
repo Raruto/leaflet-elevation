@@ -15,7 +15,7 @@ _For a working example see one of the following demos:_
 - [hoverable chart / hidden chart](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_hidden-chart.html)
 - [hoverable .gpx tracks](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_hoverable-tracks.html)
 - [toggable .gpx tracks](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_toggable-tracks.html)
-- [toggable .gpx charts](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_multiple-tracks.html)
+- [toggable .gpx charts](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_toggable-charts.html)
 - [custom-theme colors](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_custom-theme.html)
 - [follow marker location](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_follow-marker.html)
 
