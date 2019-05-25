@@ -966,7 +966,7 @@ L.Control.Elevation = L.Control.extend({
     this._showDiagramIndicator(item, xCoord);
     this._showPositionMarker(item);
 
-    if (this.options.followMarkerLocation) {
+    if (this.options.followPositionMarker) {
       var zoom = this._map.getZoom();
       zoom = zoom < this._zFollow ? this._zFollow : zoom;
       this._map.setView(item.latlng, zoom);
