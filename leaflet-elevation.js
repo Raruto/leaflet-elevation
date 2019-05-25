@@ -1,40 +1,16 @@
 L.Control.Elevation = L.Control.extend({
   options: {
-    position: "topright",
-    theme: "lime-theme",
-    width: 600,
-    height: 175,
-    margins: {
-      top: 10,
-      right: 20,
-      bottom: 30,
-      left: 50
-    },
-    useLeafletMarker: false,
-    useMapIndicator: true,
-    useHeightIndicator: true,
-    autoHidePositionMarker: true,
     autohide: true,
-    interpolation: d3.curveLinear,
-    hoverNumber: {
-      decimalsX: 2,
-      decimalsY: 0,
-      formatter: undefined
-    },
-    xTicks: undefined,
-    yTicks: undefined,
+    autoHidePositionMarker: true,
     collapsed: false,
-    yAxisMin: undefined,
-    yAxisMax: undefined,
-    forceAxisBounds: false,
     controlButton: {
       iconCssClass: "elevation-toggle-icon",
       title: "Elevation"
     },
-    imperial: false,
-    elevationDiv: "#elevation-div",
     detachedView: false,
-    responsiveView: true,
+    distanceFactor: 1,
+    elevationDiv: "#elevation-div",
+    forceAxisBounds: false,
     gpxOptions: {
       async: true,
       marker_options: {
@@ -50,6 +26,34 @@ L.Control.Elevation = L.Control.extend({
         lineCap: 'round'
       },
     },
+    height: 175,
+    heightFactor: 1,
+    hoverNumber: {
+      decimalsX: 2,
+      decimalsY: 0,
+      formatter: undefined
+    },
+    imperial: false,
+    interpolation: d3.curveLinear,
+    position: "topright",
+    theme: "lime-theme",
+    margins: {
+      top: 10,
+      right: 20,
+      bottom: 30,
+      left: 50
+    },
+    responsiveView: true,
+    useHeightIndicator: true,
+    useLeafletMarker: false,
+    useMapIndicator: true,
+    width: 600,
+    xLabel: "km",
+    xTicks: undefined,
+    yAxisMax: undefined,
+    yAxisMin: undefined,
+    yLabel: "m",
+    yTicks: undefined,
   },
   __mileFactor: 0.621371,
   __footFactor: 3.28084,
@@ -246,85 +250,36 @@ L.Control.Elevation = L.Control.extend({
 
   initialize: function(options) {
     this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
-    this._draggingEnabled = !L.Browser.mobile;
 
     L.Util.setOptions(this, options);
+
+    this._draggingEnabled = !L.Browser.mobile;
+
+    if (options.imperial) {
+      this._distanceFactor = this.__mileFactor;
+      this._heightFactor = this.__footFactor;
+      this._xLabel = "mi";
+      this._yLabel = "ft";
+    } else {
+      this._distanceFactor = this.options.distanceFactor;
+      this._heightFactor = this.options.heightFactor;
+      this._xLabel = this.options.xLabel;
+      this._yLabel = this.options.yLabel;
+    }
   },
 
   onAdd: function(map) {
     this._map = map;
 
     var opts = this.options;
-    var margin = opts.margins;
-    opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
-    opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
-    opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
-
-    if (opts.responsiveView) {
-      if (opts.detachedView) {
-        var offsetWi = document.querySelector(opts.elevationDiv).offsetWidth;
-        var offsetHe = document.querySelector(opts.elevationDiv).offsetHeight;
-        opts.width = offsetWi > 0 ? offsetWi : opts.width;
-        opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height - 20;
-      } else {
-        opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
-        var containerWidth = map._container.clientWidth;
-        opts.width = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
-      }
-    }
-
-    var x = this._x = d3.scaleLinear()
-      .range([0, this._width()]);
-
-    var y = this._y = d3.scaleLinear()
-      .range([this._height(), 0]);
-
-    var area = this._area = d3.area()
-      .curve(opts.interpolation)
-      .x(function(d) {
-        var xDiagCoord = x(d.dist);
-        d.xDiagCoord = xDiagCoord;
-        return xDiagCoord;
-      })
-      .y0(this._height())
-      .y1(function(d) {
-        return y(d.z);
-      });
-
-    var line = this._line = d3.line()
-      .x(function(d) {
-        return d3.mouse(svg.select("g"))[0];
-      })
-      .y(function(d) {
-        return this._height();
-      });
 
     var container = this._container = L.DomUtil.create("div", "elevation");
     L.DomUtil.addClass(container, opts.theme); //append theme to control
 
-    this._initToggle();
+    this._initToggle(container);
+    this._initChart(container);
 
-    var cont = d3.select(container)
-      .attr("width", opts.width);
-
-    var svg = cont.append("svg")
-      .attr("class", "background")
-      .attr("width", opts.width)
-      .attr("height", opts.height);
-
-    var g = svg
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    this._appendGrid(g);
-    this._appendAreaPath(g);
-    this._appendAxis(g);
-    this._appendFocusRect(g);
-    this._appendMouseFocusG(g);
-
-    if (this._data) {
-      this._applyData();
-    }
+    this._applyData();
 
     this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
     this._map.on('resize', this._resetView, this);
@@ -365,7 +320,7 @@ L.Control.Elevation = L.Control.extend({
           break;
 
         default:
-          throw new Error('Invalid GeoJSON object.');
+          console.warn('Unsopperted GeoJSON feature geometry type:' + geom.type);
       }
     }
 
@@ -414,7 +369,7 @@ L.Control.Elevation = L.Control.extend({
     var curr = new L.LatLng(x, y);
     var prev = data.length ? data[data.length - 1].latlng : curr;
 
-    var delta = (opts.imperial ? curr.distanceTo(prev) * this.__mileFactor : curr.distanceTo(prev));
+    var delta = curr.distanceTo(prev) * this._distanceFactor;
 
     dist = dist + Math.round(delta / 1000 * 100000) / 100000;
 
@@ -426,15 +381,15 @@ L.Control.Elevation = L.Control.extend({
         dist: dist,
         x: x,
         y: y,
-        z: opts.imperial ? z * this.__footFactor : z,
+        z: z * this._heightFactor,
         latlng: curr
       });
     }
 
     this._data = data;
     this._distance = dist;
-    this._maxElevation = opts.imperial ? eleMax * this.__footFactor : eleMax;
-    this._minElevation = opts.imperial ? eleMin * this.__footFactor : eleMin;
+    this._maxElevation = eleMax * this._heightFactor;
+    this._minElevation = eleMin * this._heightFactor;
   },
 
   _addToChartDiv: function(map) {
@@ -442,6 +397,18 @@ L.Control.Elevation = L.Control.extend({
     L.DomUtil.addClass(container, 'leaflet-control');
     var eleDiv = document.querySelector(this.options.elevationDiv);
     eleDiv.appendChild(container);
+  },
+
+  _appendChart: function(svg) {
+    var g = svg
+      .append("g")
+      .attr("transform", "translate(" + this.options.margins.left + "," + this.options.margins.top + ")");
+
+    this._appendGrid(g);
+    this._appendAreaPath(g);
+    this._appendAxis(g);
+    this._appendFocusRect(g);
+    this._appendMouseFocusG(g);
   },
 
   _appendXaxis: function(axis) {
@@ -458,7 +425,7 @@ L.Control.Elevation = L.Control.extend({
       .append("text")
       .attr("x", this._width() + 6)
       .attr("y", 30)
-      .text(this.options.imperial ? "mi" : "km");
+      .text(this._xLabel);
   },
 
   _appendXGrid: function(grid) {
@@ -489,7 +456,7 @@ L.Control.Elevation = L.Control.extend({
       .append("text")
       .attr("x", -30)
       .attr("y", 3)
-      .text(this.options.imperial ? "ft" : "m");
+      .text(this._yLabel);
   },
 
   _appendYGrid: function(grid) {
@@ -508,7 +475,6 @@ L.Control.Elevation = L.Control.extend({
   _appendAreaPath: function(g) {
     this._areapath = g.append("path")
       .attr("class", "area");
-
   },
 
   _appendAxis: function(g) {
@@ -572,11 +538,11 @@ L.Control.Elevation = L.Control.extend({
 
     this._focuslabeltext = focusG.append("svg:text")
       .attr("class", "mouse-focus-label-text");
-    this._focuslabelX = this._focuslabeltext.append("svg:tspan")
-      .attr("class", "mouse-focus-label-y")
-      .attr("dy", "-1em");
     this._focuslabelY = this._focuslabeltext.append("svg:tspan")
       .attr("class", "mouse-focus-label-y")
+      .attr("dy", "-1em");
+    this._focuslabelX = this._focuslabeltext.append("svg:tspan")
+      .attr("class", "mouse-focus-label-x")
       .attr("dy", "2em");
   },
 
@@ -604,6 +570,8 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _applyData: function() {
+    if (!this._data) return;
+
     var xdomain = d3.extent(this._data, function(d) {
       return d.dist;
     });
@@ -838,10 +806,61 @@ L.Control.Elevation = L.Control.extend({
     this._focusG.style("visibility", "hidden");
   },
 
-  _initToggle: function() {
-    /* inspired by L.Control.Layers */
+  _initChart: function() {
+    var opts = this.options;
+    opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
+    opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
+    opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
+
+    if (opts.responsiveView) {
+      if (opts.detachedView) {
+        var offsetWi = document.querySelector(opts.elevationDiv).offsetWidth;
+        var offsetHe = document.querySelector(opts.elevationDiv).offsetHeight;
+        opts.width = offsetWi > 0 ? offsetWi : opts.width;
+        opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height - 20;
+      } else {
+        opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
+        var containerWidth = this._map._container.clientWidth;
+        opts.width = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
+      }
+    }
+
+    var x = this._x = d3.scaleLinear().range([0, this._width()]);
+    var y = this._y = d3.scaleLinear().range([this._height(), 0]);
+
+    var area = this._area = d3.area().curve(opts.interpolation)
+      .x(function(d) {
+        return (d.xDiagCoord = x(d.dist));
+      })
+      .y0(this._height())
+      .y1(function(d) {
+        return y(d.z);
+      });
+    var line = this._line = d3.line()
+      .x(function(d) {
+        return d3.mouse(svg.select("g"))[0];
+      })
+      .y(function(d) {
+        return this._height();
+      });
+
     var container = this._container;
 
+    var cont = d3.select(container)
+      .attr("width", opts.width);
+
+    var svg = cont.append("svg")
+      .attr("class", "background")
+      .attr("width", opts.width)
+      .attr("height", opts.height);
+
+    this._appendChart(svg);
+  },
+
+  /**
+   * Inspired by L.Control.Layers
+   */
+  _initToggle: function(container) {
     //Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
     container.setAttribute('aria-haspopup', true);
 
@@ -964,6 +983,7 @@ L.Control.Elevation = L.Control.extend({
   _mousewheelHandler: function(e) {
     var ll = this._selectedItem ? this._selectedItem.latlng : this._map.getCenter();
     var z = e.deltaY > 0 ? this._map.getZoom() - 1 : this._map.getZoom() + 1;
+    this._resetDrag();
     this._map.flyTo(ll, z);
   },
 
@@ -1029,10 +1049,11 @@ L.Control.Elevation = L.Control.extend({
       .style("font-weight", "700");
 
     this._focuslabelX
-      .text(numY + (opts.imperial ? " ft" : " m"))
+      .text(numX + " " + this._xLabel)
       .attr("x", xCoordinate + 10);
+
     this._focuslabelY
-      .text(numX + (opts.imperial ? " mi" : " km"))
+      .text(numY + " " + this._yLabel)
       .attr("x", xCoordinate + 10);
 
     var focuslabeltext = this._focuslabeltext.node();
@@ -1100,7 +1121,7 @@ L.Control.Elevation = L.Control.extend({
     this._mouseHeightFocusLabel
       .attr("x", item.x)
       .attr("y", normalizedY)
-      .text(numY + (opts.imperial ? " ft" : " m"))
+      .text(numY + " " + this._yLabel)
       .style("visibility", "visible");
   },
 
