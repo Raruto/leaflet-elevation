@@ -274,7 +274,7 @@ L.Control.Elevation = L.Control.extend({
     var opts = this.options;
 
     var container = this._container = L.DomUtil.create("div", "elevation");
-    L.DomUtil.addClass(container, opts.theme); //append theme to control
+    L.DomUtil.addClass(container, 'leaflet-control ' + opts.theme); //append theme to control
 
     this._initToggle(container);
     this._initChart(container);
@@ -394,7 +394,6 @@ L.Control.Elevation = L.Control.extend({
 
   _addToChartDiv: function(map) {
     var container = this.onAdd(map);
-    L.DomUtil.addClass(container, 'leaflet-control');
     var eleDiv = document.querySelector(this.options.elevationDiv);
     eleDiv.appendChild(container);
   },
@@ -629,8 +628,10 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _collapse: function() {
-    L.DomUtil.removeClass(this._container, 'elevation-expanded');
-    L.DomUtil.addClass(this._container, 'elevation-collapsed');
+    if (this._container) {
+      L.DomUtil.removeClass(this._container, 'elevation-expanded');
+      L.DomUtil.addClass(this._container, 'elevation-collapsed');
+    }
   },
 
   _dragHandler: function() {
@@ -713,8 +714,10 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _expand: function() {
-    L.DomUtil.removeClass(this._container, 'elevation-collapsed');
-    L.DomUtil.addClass(this._container, 'elevation-expanded');
+    if (this._container) {
+      L.DomUtil.removeClass(this._container, 'elevation-collapsed');
+      L.DomUtil.addClass(this._container, 'elevation-expanded');
+    }
   },
 
   /*
@@ -877,29 +880,30 @@ L.Control.Elevation = L.Control.extend({
     L.DomEvent.on(container, 'mousewheel', this._mousewheelHandler, this);
 
     if (!this.options.detachedView) {
-      if (this.options.collapsed) {
-        this._collapse();
-      }
-
       var iconCssClass = "elevation-toggle " + this.options.controlButton.iconCssClass + (this.options.autohide ? "" : " close-button");
       var link = this._button = L.DomUtil.create('a', iconCssClass, container);
       link.href = '#';
       link.title = this.options.controlButton.title;
 
-      if (this.options.autohide) {
-        L.DomEvent
-          .on(container, 'mouseover', this._expand, this)
-          .on(container, 'mouseout', this._collapse, this);
-      } else {
-        L.DomEvent
-          .on(link, 'click', L.DomEvent.stop)
-          .on(link, 'click', this._toggle, this);
+      if (this.options.collapsed) {
+        this._collapse();
+        if (this.options.autohide) {
+          L.DomEvent
+            .on(container, 'mouseover', this._expand, this)
+            .on(container, 'mouseout', this._collapse, this);
+        } else {
+          L.DomEvent
+            .on(link, 'click', L.DomEvent.stop)
+            .on(link, 'click', this._toggle, this);
+        }
+
+        L.DomEvent.on(link, 'focus', this._toggle, this);
+
+        this._map.on('click', this._collapse, this);
+        // TODO: keyboard accessibility
       }
-
-      L.DomEvent.on(link, 'focus', this._toggle, this);
-
-      this._map.on('click', this._collapse, this);
-      // TODO keyboard accessibility
+    } else {
+      // TODO: handle autohide when detachedView=true
     }
   },
 
@@ -1017,7 +1021,6 @@ L.Control.Elevation = L.Control.extend({
         eleDiv.innerHTML = "";
 
         var container = this.onAdd(this._map);
-        L.DomUtil.addClass(container, 'leaflet-control');
 
         eleDiv.appendChild(container);
       } else {
@@ -1078,10 +1081,10 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _toggle: function() {
-    if (L.DomUtil.hasClass(this._container, "elevation-collapsed"))
-      this._expand();
-    else
+    if (L.DomUtil.hasClass(this._container, "elevation-expanded"))
       this._collapse();
+    else
+      this._expand();
   },
 
   _showPositionMarker: function(item) {
