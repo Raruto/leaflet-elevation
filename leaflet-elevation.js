@@ -1,7 +1,7 @@
 L.Control.Elevation = L.Control.extend({
   options: {
     autohide: true,
-    autoHidePositionMarker: true,
+    autohidePositionMarker: true,
     collapsed: false,
     controlButton: {
       iconCssClass: "elevation-toggle-icon",
@@ -10,6 +10,7 @@ L.Control.Elevation = L.Control.extend({
     detachedView: false,
     distanceFactor: 1,
     elevationDiv: "#elevation-div",
+    followPositionMarker: false,
     forceAxisBounds: false,
     gpxOptions: {
       async: true,
@@ -54,6 +55,7 @@ L.Control.Elevation = L.Control.extend({
     yAxisMin: undefined,
     yLabel: "m",
     yTicks: undefined,
+    zFollow: 13,
   },
   __mileFactor: 0.621371,
   __footFactor: 3.28084,
@@ -137,12 +139,16 @@ L.Control.Elevation = L.Control.extend({
     this._draggingEnabled = true;
   },
 
-  hide: function() {
-    this._container.style.display = "none";
-  },
-
   fitBounds: function() {
     this._map.fitBounds(this._fullExtent);
+  },
+
+  getZFollow: function() {
+    return this._zFollow;
+  },
+
+  hide: function() {
+    this._container.style.display = "none";
   },
 
   /**
@@ -266,6 +272,8 @@ L.Control.Elevation = L.Control.extend({
       this._xLabel = this.options.xLabel;
       this._yLabel = this.options.yLabel;
     }
+
+    this._zFollow = this.options.zFollow;
   },
 
   onAdd: function(map) {
@@ -294,6 +302,10 @@ L.Control.Elevation = L.Control.extend({
 
   onRemove: function(map) {
     this._container = null;
+  },
+
+  setZFollow: function(zoom) {
+    this._zFollow = zoom;
   },
 
   show: function() {
@@ -789,7 +801,7 @@ L.Control.Elevation = L.Control.extend({
    * Hides the position/height indicator marker drawn onto the map
    */
   _hidePositionMarker: function() {
-    if (!this.options.autoHidePositionMarker) {
+    if (!this.options.autohidePositionMarker) {
       return;
     }
 
@@ -953,6 +965,12 @@ L.Control.Elevation = L.Control.extend({
     this._hidePositionMarker();
     this._showDiagramIndicator(item, xCoord);
     this._showPositionMarker(item);
+
+    if (this.options.followMarkerLocation) {
+      var zoom = this._map.getZoom();
+      zoom = zoom < this._zFollow ? this._zFollow : zoom;
+      this._map.setView(item.latlng, zoom);
+    }
 
     this._map.fireEvent("elechart_change", {
       data: item
