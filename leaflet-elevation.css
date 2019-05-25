@@ -82,6 +82,16 @@
   background: url(images/elevation.png) no-repeat center center;
 }
 
+.leaflet-control.elevation.elevation-expanded .elevation-toggle-icon.close-button {
+  background: transparent url(images/remove.svg) no-repeat center center;
+  background-size: 14px 14px;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  height: 20px;
+  width: 20px;
+}
+
 .leaflet-overlay-pane .height-focus {
   stroke: #000;
   fill: #FFF;
