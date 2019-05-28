@@ -115,6 +115,7 @@ _For a working example see one of the following demos:_
       map.addLayer(baseLayers.OTM);
     </script>
     ```
+_Related: [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
 
 ---
 
