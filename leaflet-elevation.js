@@ -1,3 +1,38 @@
+/*
+ * Copyright (c) 2019, GPL-3.0+ Project, Raruto
+ *
+ *  This file is free software: you may copy, redistribute and/or modify it
+ *  under the terms of the GNU General Public License as published by the
+ *  Free Software Foundation, either version 2 of the License, or (at your
+ *  option) any later version.
+ *
+ *  This file is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see .
+ *
+ * This file incorporates work covered by the following copyright and
+ * permission notice:
+ *
+ *     Copyright (c) 2013-2016, MIT License, Felix “MrMufflon” Bache
+ *
+ *     Permission to use, copy, modify, and/or distribute this software
+ *     for any purpose with or without fee is hereby granted, provided
+ *     that the above copyright notice and this permission notice appear
+ *     in all copies.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ *     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ *     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ *     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+ *     CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+ *     OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ *     NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 L.Control.Elevation = L.Control.extend({
   options: {
     autohide: true,
@@ -86,7 +121,7 @@ L.Control.Elevation = L.Control.extend({
     this.track_info.elevation_min = this._minElevation;
 
     this._layers = this._layers || {};
-    this._layers[layer._leaflet_id] = layer;
+    this._layers[L.Util.stamp(layer)] = layer;
 
     this._map.fireEvent("eledata_added", {
       data: d,
@@ -108,23 +143,10 @@ L.Control.Elevation = L.Control.extend({
    */
   clear: function() {
 
-    for (var id in this._layers) {
-      L.DomUtil.removeClass(this._layers[id]._path, "elevation-polyline");
-      L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
-    }
-
+    this._clearPath();
+    this._clearChart();
     this._clearData();
 
-    if (this._areapath) {
-      // workaround for 'Error: Problem parsing d=""' in Webkit when empty data
-      // https://groups.google.com/d/msg/d3-js/7rFxpXKXFhI/HzIO_NPeDuMJ
-      //this._areapath.datum(this._data).attr("d", this._area);
-      this._areapath.attr("d", "M0 0");
-
-      this._x.domain([0, 1]);
-      this._y.domain([0, 1]);
-      this._updateAxis();
-    }
     if (this._map) {
       this._map.fireEvent("eledata_clear");
     }
@@ -191,7 +213,7 @@ L.Control.Elevation = L.Control.extend({
       data = JSON.parse(data);
     }
 
-    this.geojson = L.geoJson(data, {
+    this.layer = this.geojson = L.geoJson(data, {
       style: function(feature) {
         return {
           color: '#566B13',
@@ -212,46 +234,46 @@ L.Control.Elevation = L.Control.extend({
     });
 
     this._map.once('layeradd', function(e) {
-      this._map.fitBounds(this.geojson.getBounds());
+      this._map.fitBounds(this.layer.getBounds());
 
       this._map.fireEvent("eledata_loaded", {
         data: data,
-        layer: this.geojson,
+        layer: this.layer,
         name: this.track_info.name,
         track_info: this.track_info,
       }, true);
     }, this);
 
-    this.geojson.addTo(this._map);
+    this.layer.addTo(this._map);
   },
 
   loadGPX: function(data) {
     this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
 
-    this.gpx = new L.GPX(data, this.options.gpxOptions);
+    this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
 
-    this.gpx.on('loaded', function(e) {
+    this.layer.on('loaded', function(e) {
       this._map.fitBounds(e.target.getBounds());
     }, this);
-    this.gpx.once("addline", function(e) {
-      this.addData(e.line, this.gpx);
+    this.layer.once("addline", function(e) {
+      this.addData(e.line /*, this.layer*/ );
 
       this.track_info = this.track_info || {};
       this.track_info.type = "gpx";
-      this.track_info.name = this.gpx.get_name();
+      this.track_info.name = this.layer.get_name();
       this.track_info.distance = this._distance;
       this.track_info.elevation_max = this._maxElevation;
       this.track_info.elevation_min = this._minElevation;
 
       this._map.fireEvent("eledata_loaded", {
         data: data,
-        layer: this.gpx,
+        layer: this.layer,
         name: this.track_info.name,
         track_info: this.track_info,
       }, true);
     }, this);
 
-    this.gpx.addTo(this._map);
+    this.layer.addTo(this._map);
   },
 
   initialize: function(options) {
@@ -624,6 +646,20 @@ L.Control.Elevation = L.Control.extend({
     return ext;
   },
 
+  _clearChart: function() {
+    this._resetDrag();
+    if (this._areapath) {
+      // workaround for 'Error: Problem parsing d=""' in Webkit when empty data
+      // https://groups.google.com/d/msg/d3-js/7rFxpXKXFhI/HzIO_NPeDuMJ
+      //this._areapath.datum(this._data).attr("d", this._area);
+      this._areapath.attr("d", "M0 0");
+
+      this._x.domain([0, 1]);
+      this._y.domain([0, 1]);
+      this._updateAxis();
+    }
+  },
+
   /*
    * Reset data
    */
@@ -634,9 +670,17 @@ L.Control.Elevation = L.Control.extend({
     this._minElevation = null;
     this.track_info = null;
     this._layers = null;
-    // if (this.gpx) {
-    // 	this.gpx.removeFrom(this._map);
+    // if (this.layer) {
+    // 	this.layer.removeFrom(this._map);
     // }
+  },
+
+  _clearPath: function() {
+    this._hidePositionMarker();
+    for (var id in this._layers) {
+      L.DomUtil.removeClass(this._layers[id]._path, "elevation-polyline");
+      L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
+    }
   },
 
   _collapse: function() {
