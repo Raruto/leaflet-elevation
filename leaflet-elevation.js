@@ -409,21 +409,22 @@ L.Control.Elevation = L.Control.extend({
 
     // skip point if it has not elevation
     if (typeof z !== "undefined") {
+      z = z * this._heightFactor;
       eleMax = eleMax < z ? z : eleMax;
       eleMin = eleMin > z ? z : eleMin;
       data.push({
         dist: dist,
         x: x,
         y: y,
-        z: z * this._heightFactor,
+        z: z,
         latlng: curr
       });
     }
 
     this._data = data;
     this._distance = dist;
-    this._maxElevation = eleMax * this._heightFactor;
-    this._minElevation = eleMin * this._heightFactor;
+    this._maxElevation = eleMax;
+    this._minElevation = eleMin;
   },
 
   _addToChartDiv: function(map) {
