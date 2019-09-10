@@ -40,10 +40,6 @@ _For a working example see one of the following demos:_
     <!-- Leaflet (JS/CSS) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.2/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
-    <!-- D3.js -->
-    <script src="https://unpkg.com/d3@4.13.0/build/d3.min.js" charset="utf-8"></script>
-    <!-- leaflet-gpx -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
     <!-- leaflet-elevation -->
     <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.css" />
     <script src="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.js"></script>
