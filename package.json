@@ -1,6 +1,6 @@
 {
   "name": "@raruto/leaflet-elevation",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "A Leaflet plugin that allows to add elevation profiles using d3js",
   "main": "leaflet-elevation.js",
   "scripts": {
@@ -24,7 +24,8 @@
     "name": "Felix “MrMufflon” Bache",
     "url": "https: //github.com/MrMufflon/Leaflet.Elevation"
   },
-  "contributors": [{
+  "contributors": [
+    {
       "name": "Raruto",
       "url": "https://github.com/Raruto/leaflet-elevation"
     },
