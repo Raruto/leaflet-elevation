@@ -81,6 +81,7 @@ L.Control.Elevation = L.Control.extend({
       left: 50
     },
     responsiveView: true,
+    showTrackInfo: true,
     useHeightIndicator: true,
     useLeafletMarker: false,
     useMapIndicator: true,
@@ -325,6 +326,8 @@ L.Control.Elevation = L.Control.extend({
       this._map.on('resize', this._resetView, this);
       this._map.on('resize', this._resizeChart, this);
       this._map.on('mousedown', this._resetDrag, this);
+
+      this._map.on('eledata_loaded', this._updateSummary, this);
 
       L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
       L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
@@ -934,7 +937,11 @@ L.Control.Elevation = L.Control.extend({
       .attr("width", opts.width)
       .attr("height", opts.height);
 
+    var summary = cont.append("div")
+      .attr("class", "summary");
+
     this._appendChart(svg);
+    this._updateSummary();
   },
 
   /**
@@ -1255,6 +1262,16 @@ L.Control.Elevation = L.Control.extend({
 
     if (this.options.useHeightIndicator) {
       this._updateHeightIndicator(layerpoint);
+    }
+  },
+
+  _updateSummary: function() {
+    if (this.options.showTrackInfo) {
+      this.track_info = this.track_info || {};
+      this.track_info.distance = this._distance || 0;
+      this.track_info.elevation_max = this._maxElevation || 0;
+      this.track_info.elevation_min = this._minElevation || 0;
+      d3.select(this._container).select(".summary").html('<span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span> &mdash; <span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span> &mdash; <span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
     }
   },
 
