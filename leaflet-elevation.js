@@ -451,6 +451,7 @@ L.Control.Elevation = L.Control.extend({
   _addToChartDiv: function(map) {
     var container = this.onAdd(map);
     var eleDiv = document.querySelector(this.options.elevationDiv);
+    if (!eleDiv) eleDiv = this._appendElevationDiv(map._container);
     eleDiv.appendChild(container);
   },
 
@@ -464,6 +465,14 @@ L.Control.Elevation = L.Control.extend({
     this._appendAxis(g);
     this._appendFocusRect(g);
     this._appendMouseFocusG(g);
+  },
+
+  _appendElevationDiv: function(container) {
+    var eleDiv = L.DomUtil.create('div', 'leaflet-control elevation elevation-div');
+    this.options.elevationDiv = '#elevation-div_' + Math.random().toString(36).substr(2, 9);
+    eleDiv.id = this.options.elevationDiv.substr(1);
+    container.parentNode.insertBefore(eleDiv, container.nextSibling); // insert after end of container.
+    return eleDiv;
   },
 
   _appendXaxis: function(axis) {
@@ -895,8 +904,9 @@ L.Control.Elevation = L.Control.extend({
 
     if (opts.responsiveView) {
       if (opts.detachedView) {
-        var offsetWi = document.querySelector(opts.elevationDiv).offsetWidth;
-        var offsetHe = document.querySelector(opts.elevationDiv).offsetHeight;
+        var eleDiv = document.querySelector(opts.elevationDiv);
+        var offsetWi = eleDiv.offsetWidth;
+        var offsetHe = eleDiv.offsetHeight;
         opts.width = offsetWi > 0 ? offsetWi : opts.width;
         opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height - 20;
       } else {
