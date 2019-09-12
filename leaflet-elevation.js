@@ -198,6 +198,13 @@ L.Control.Elevation = L.Control.extend({
   },
 
   /**
+   * Alias for loadData
+   */
+  load: function(data) {
+    this.loadData(data);
+  },
+
+  /**
    * Alias for addTo
    */
   loadChart: function(map) {
