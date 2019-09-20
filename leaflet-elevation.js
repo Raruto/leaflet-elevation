@@ -42,7 +42,7 @@ L.Control.Elevation = L.Control.extend({
       iconCssClass: "elevation-toggle-icon",
       title: "Elevation"
     },
-    detachedView: false,
+    detached: true,
     distanceFactor: 1,
     elevationDiv: "#elevation-div",
     followPositionMarker: false,
@@ -80,7 +80,7 @@ L.Control.Elevation = L.Control.extend({
       bottom: 30,
       left: 50
     },
-    responsiveView: true,
+    responsive: true,
     showTrackInfo: true,
     useHeightIndicator: true,
     useLeafletMarker: false,
@@ -133,7 +133,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   addTo: function(map) {
-    if (this.options.detachedView) {
+    if (this.options.detached) {
       this._addToChartDiv(map);
     } else {
       L.Control.prototype.addTo.call(this, map);
@@ -177,6 +177,9 @@ L.Control.Elevation = L.Control.extend({
 
   initialize: function(options) {
     this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
+
+    if (options.detachedView) this.options.detached = options.detachedView;
+    if (options.responsiveView) this.options.responsive = options.responsiveView;
 
     L.Util.setOptions(this, options);
 
@@ -279,40 +282,38 @@ L.Control.Elevation = L.Control.extend({
   },
 
   loadGPX: function(data) {
-    var async_func = function(data) {
-      this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
-
-      this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
-
-      this.layer.on('loaded', function(e) {
-        this._map.fitBounds(e.target.getBounds());
-      }, this);
-      this.layer.once("addline", function(e) {
-        this.addData(e.line /*, this.layer*/ );
-
-        this.track_info = this.track_info || {};
-        this.track_info.type = "gpx";
-        this.track_info.name = this.layer.get_name();
-        this.track_info.distance = this._distance;
-        this.track_info.elevation_max = this._maxElevation;
-        this.track_info.elevation_min = this._minElevation;
-
-        this._map.fireEvent("eledata_loaded", {
-          data: data,
-          layer: this.layer,
-          name: this.track_info.name,
-          track_info: this.track_info,
-        }, true);
-      }, this);
-
-      this.layer.addTo(this._map);
-    }.bind(this, data);
-
     if (typeof L.GPX !== 'function' && this.options.lazyLoadJS) {
-      this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js', async_func);
-    } else {
-      async_func.call();
+      this._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js');
     }
+    this._gpxLazyLoader
+      .then(function(data) {
+        this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
+
+        this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
+
+        this.layer.on('loaded', function(e) {
+          this._map.fitBounds(e.target.getBounds());
+        }, this);
+        this.layer.once("addline", function(e) {
+          this.addData(e.line /*, this.layer*/ );
+
+          this.track_info = this.track_info || {};
+          this.track_info.type = "gpx";
+          this.track_info.name = this.layer.get_name();
+          this.track_info.distance = this._distance;
+          this.track_info.elevation_max = this._maxElevation;
+          this.track_info.elevation_min = this._minElevation;
+
+          this._map.fireEvent("eledata_loaded", {
+            data: data,
+            layer: this.layer,
+            name: this.track_info.name,
+            track_info: this.track_info,
+          }, true);
+        }, this);
+
+        this.layer.addTo(this._map);
+      }.bind(this, data));
   },
 
   onAdd: function(map) {
@@ -323,29 +324,28 @@ L.Control.Elevation = L.Control.extend({
     var container = this._container = L.DomUtil.create("div", "elevation");
     L.DomUtil.addClass(container, 'leaflet-control ' + opts.theme); //append theme to control
 
-    var async_func = function(map, container) {
-      this._initToggle(container);
-      this._initChart(container);
-
-      this._applyData();
-
-      this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
-      this._map.on('resize', this._resetView, this);
-      this._map.on('resize', this._resizeChart, this);
-      this._map.on('mousedown', this._resetDrag, this);
-
-      this._map.on('eledata_loaded', this._updateSummary, this);
-
-      L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
-      L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
-
-    }.bind(this, map, container);
-
     if (typeof d3 !== 'object' && this.options.lazyLoadJS) {
-      this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js', async_func);
-    } else {
-      async_func.call();
+      this._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js');
     }
+    this._d3LazyLoader
+      .then(function(map, container) {
+        this._initToggle(container);
+        this._initChart(container);
+
+        this._applyData();
+
+        this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
+        this._map.on('resize', this._resetView, this);
+        this._map.on('resize', this._resizeChart, this);
+        this._map.on('mousedown', this._resetDrag, this);
+
+        this._map.on('eledata_loaded', this._updateSummary, this);
+
+        L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
+        L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
+
+      }.bind(this, map, container));
+
 
     return container;
   },
@@ -909,8 +909,8 @@ L.Control.Elevation = L.Control.extend({
     opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
     opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
 
-    if (opts.responsiveView) {
-      if (opts.detachedView) {
+    if (opts.responsive) {
+      if (opts.detached) {
         var eleDiv = document.querySelector(opts.elevationDiv);
         var offsetWi = eleDiv.offsetWidth;
         var offsetHe = eleDiv.offsetHeight;
@@ -968,7 +968,7 @@ L.Control.Elevation = L.Control.extend({
     //Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
     container.setAttribute('aria-haspopup', true);
 
-    if (!this.options.detachedView) {
+    if (!this.options.detached) {
       L.DomEvent
         .disableClickPropagation(container);
       //.disableScrollPropagation(container);
@@ -980,7 +980,7 @@ L.Control.Elevation = L.Control.extend({
 
     L.DomEvent.on(container, 'mousewheel', this._mousewheelHandler, this);
 
-    if (!this.options.detachedView) {
+    if (!this.options.detached) {
       var iconCssClass = "elevation-toggle " + this.options.controlButton.iconCssClass + (this.options.autohide ? "" : " close-button");
       var link = this._button = L.DomUtil.create('a', iconCssClass, container);
       link.href = '#';
@@ -1004,7 +1004,7 @@ L.Control.Elevation = L.Control.extend({
         // TODO: keyboard accessibility
       }
     } else {
-      // TODO: handle autohide when detachedView=true
+      // TODO: handle autohide when detached=true
     }
   },
 
@@ -1040,11 +1040,15 @@ L.Control.Elevation = L.Control.extend({
     return !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
   },
 
-  _lazyLoadJS: function(url, callback) {
-    var tag = document.createElement("script");
-    tag.src = url;
-    tag.onload = callback;
-    document.head.appendChild(tag);
+  _lazyLoadJS: function(url) {
+    return new Promise(function(resolve, reject) {
+      var tag = document.createElement("script");
+      tag.addEventListener('load', resolve, {
+        once: true
+      });
+      tag.src = url;
+      document.head.appendChild(tag);
+    });
   },
 
   /*
@@ -1093,7 +1097,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _mouseoutHandler: function() {
-    if (!this.options.detachedView) {
+    if (!this.options.detached) {
       this._hidePositionMarker();
     }
   },
@@ -1124,8 +1128,8 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _resizeChart: function() {
-    if (this.options.responsiveView) {
-      if (this.options.detachedView) {
+    if (this.options.responsive) {
+      if (this.options.detached) {
         var eleDiv = document.querySelector(this.options.elevationDiv);
         var newWidth = eleDiv.offsetWidth; // - 20;
 

@@ -1,3 +1,8 @@
+.leaflet-control.elevation.elevation-div {
+  width: 100%;
+  font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
 .leaflet-control.elevation .background {
   background-color: rgba(70, 130, 180, 0.2);
   border-radius: 5px;
