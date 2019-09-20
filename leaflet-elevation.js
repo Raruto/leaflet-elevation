@@ -178,8 +178,8 @@ L.Control.Elevation = L.Control.extend({
   initialize: function(options) {
     this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
 
-    if (options.detachedView) this.options.detached = options.detachedView;
-    if (options.responsiveView) this.options.responsive = options.responsiveView;
+    if (typeof options.detachedView !== "undefined") this.options.detached = options.detachedView;
+    if (typeof options.responsiveView !== "undefined") this.options.responsive = options.responsiveView;
 
     L.Util.setOptions(this, options);
 
