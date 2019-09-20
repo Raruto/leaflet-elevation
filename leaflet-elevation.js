@@ -283,9 +283,9 @@ L.Control.Elevation = L.Control.extend({
 
   loadGPX: function(data) {
     if (typeof L.GPX !== 'function' && this.options.lazyLoadJS) {
-      this._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js');
+      L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js');
     }
-    this._gpxLazyLoader
+    L.Control.Elevation._gpxLazyLoader
       .then(function(data) {
         this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
 
@@ -325,9 +325,9 @@ L.Control.Elevation = L.Control.extend({
     L.DomUtil.addClass(container, 'leaflet-control ' + opts.theme); //append theme to control
 
     if (typeof d3 !== 'object' && this.options.lazyLoadJS) {
-      this._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js');
+      L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js');
     }
-    this._d3LazyLoader
+    L.Control.Elevation._d3LazyLoader
       .then(function(map, container) {
         this._initToggle(container);
         this._initChart(container);

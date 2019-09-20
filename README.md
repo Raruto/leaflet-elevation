@@ -82,7 +82,7 @@ _For a working example see one of the following demos:_
             theme: "magenta-theme", //default: lime-theme
             useHeightIndicator: true, //if false a marker is drawn at map position
             collapsed: false, //collapsed mode, show chart on click or mouseover
-            detachedView: true, //if false the chart is drawn within map container
+            detached: true, //if false the chart is drawn within map container
             elevationDiv: "#elevation-div", // if (detached), the elevation chart container
           },
         },
