@@ -282,7 +282,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   loadGPX: function(data) {
-    if (typeof L.GPX !== 'function' && this.options.lazyLoadJS) {
+    if (typeof L.GPX !== 'function' && this.options.lazyLoadJS && !L.Control.Elevation._gpxLazyLoader) {
       L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js');
     }
     L.Control.Elevation._gpxLazyLoader
@@ -324,7 +324,7 @@ L.Control.Elevation = L.Control.extend({
     var container = this._container = L.DomUtil.create("div", "elevation");
     L.DomUtil.addClass(container, 'leaflet-control ' + opts.theme); //append theme to control
 
-    if (typeof d3 !== 'object' && this.options.lazyLoadJS) {
+    if (typeof d3 !== 'object' && this.options.lazyLoadJS && !L.Control.Elevation._d3LazyLoader) {
       L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js');
     }
     L.Control.Elevation._d3LazyLoader
