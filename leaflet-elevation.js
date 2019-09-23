@@ -282,9 +282,8 @@ L.Control.Elevation = L.Control.extend({
   },
 
   loadGPX: function(data) {
-    if (typeof L.GPX !== 'function' && this.options.lazyLoadJS && !L.Control.Elevation._gpxLazyLoader) {
-      L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js');
-    }
+    var isJSLoaded = typeof L.GPX !== 'function' && this.options.lazyLoadJS && !L.Control.Elevation._gpxLazyLoader;
+    L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js', !isJSLoaded);
     L.Control.Elevation._gpxLazyLoader
       .then(function(data) {
         this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
@@ -324,9 +323,9 @@ L.Control.Elevation = L.Control.extend({
     var container = this._container = L.DomUtil.create("div", "elevation");
     L.DomUtil.addClass(container, 'leaflet-control ' + opts.theme); //append theme to control
 
-    if (typeof d3 !== 'object' && this.options.lazyLoadJS && !L.Control.Elevation._d3LazyLoader) {
-      L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js');
-    }
+    var isJSLoaded = typeof d3 !== 'object' && this.options.lazyLoadJS && !L.Control.Elevation._d3LazyLoader;
+
+    L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js', !isJSLoaded);
     L.Control.Elevation._d3LazyLoader
       .then(function(map, container) {
         this._initToggle(container);
@@ -1040,8 +1039,12 @@ L.Control.Elevation = L.Control.extend({
     return !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
   },
 
-  _lazyLoadJS: function(url) {
+  _lazyLoadJS: function(url, skip) {
+    if (typeof skip == "undefined") {
+      skip = false;
+    }
     return new Promise(function(resolve, reject) {
+      if (skip) resolve();
       var tag = document.createElement("script");
       tag.addEventListener('load', resolve, {
         once: true
