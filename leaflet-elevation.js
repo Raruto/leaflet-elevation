@@ -284,35 +284,34 @@ L.Control.Elevation = L.Control.extend({
   loadGPX: function(data) {
     var isJSLoaded = typeof L.GPX !== 'function' && this.options.lazyLoadJS && !L.Control.Elevation._gpxLazyLoader;
     L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js', !isJSLoaded);
-    L.Control.Elevation._gpxLazyLoader
-      .then(function(data) {
-        this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
+    L.Control.Elevation._gpxLazyLoader.then(function(data) {
+      this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
 
-        this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
+      this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
 
-        this.layer.on('loaded', function(e) {
-          this._map.fitBounds(e.target.getBounds());
-        }, this);
-        this.layer.once("addline", function(e) {
-          this.addData(e.line /*, this.layer*/ );
+      this.layer.on('loaded', function(e) {
+        this._map.fitBounds(e.target.getBounds());
+      }, this);
+      this.layer.once("addline", function(e) {
+        this.addData(e.line /*, this.layer*/ );
 
-          this.track_info = this.track_info || {};
-          this.track_info.type = "gpx";
-          this.track_info.name = this.layer.get_name();
-          this.track_info.distance = this._distance;
-          this.track_info.elevation_max = this._maxElevation;
-          this.track_info.elevation_min = this._minElevation;
+        this.track_info = this.track_info || {};
+        this.track_info.type = "gpx";
+        this.track_info.name = this.layer.get_name();
+        this.track_info.distance = this._distance;
+        this.track_info.elevation_max = this._maxElevation;
+        this.track_info.elevation_min = this._minElevation;
 
-          this._map.fireEvent("eledata_loaded", {
-            data: data,
-            layer: this.layer,
-            name: this.track_info.name,
-            track_info: this.track_info,
-          }, true);
-        }, this);
+        this._map.fireEvent("eledata_loaded", {
+          data: data,
+          layer: this.layer,
+          name: this.track_info.name,
+          track_info: this.track_info,
+        }, true);
+      }, this);
 
-        this.layer.addTo(this._map);
-      }.bind(this, data));
+      this.layer.addTo(this._map);
+    }.bind(this, data));
   },
 
   onAdd: function(map) {
@@ -326,24 +325,23 @@ L.Control.Elevation = L.Control.extend({
     var isJSLoaded = typeof d3 !== 'object' && this.options.lazyLoadJS && !L.Control.Elevation._d3LazyLoader;
 
     L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js', !isJSLoaded);
-    L.Control.Elevation._d3LazyLoader
-      .then(function(map, container) {
-        this._initToggle(container);
-        this._initChart(container);
+    L.Control.Elevation._d3LazyLoader.then(function(map, container) {
+      this._initToggle(container);
+      this._initChart(container);
 
-        this._applyData();
+      this._applyData();
 
-        this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
-        this._map.on('resize', this._resetView, this);
-        this._map.on('resize', this._resizeChart, this);
-        this._map.on('mousedown', this._resetDrag, this);
+      this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
+      this._map.on('resize', this._resetView, this);
+      this._map.on('resize', this._resizeChart, this);
+      this._map.on('mousedown', this._resetDrag, this);
 
-        this._map.on('eledata_loaded', this._updateSummary, this);
+      this._map.on('eledata_loaded', this._updateSummary, this);
 
-        L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
-        L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
+      L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
+      L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
 
-      }.bind(this, map, container));
+    }.bind(this, map, container));
 
 
     return container;
@@ -1106,10 +1104,12 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _mousewheelHandler: function(e) {
+    if (this._map.gestureHandling && this._map.gestureHandling._enabled) return;
     var ll = this._selectedItem ? this._selectedItem.latlng : this._map.getCenter();
     var z = e.deltaY > 0 ? this._map.getZoom() - 1 : this._map.getZoom() + 1;
     this._resetDrag();
     this._map.flyTo(ll, z);
+
   },
 
   /*
