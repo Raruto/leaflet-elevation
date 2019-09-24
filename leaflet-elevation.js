@@ -44,8 +44,9 @@ L.Control.Elevation = L.Control.extend({
     },
     detached: true,
     distanceFactor: 1,
+    downloadLink: true,
     elevationDiv: "#elevation-div",
-    followPositionMarker: false,
+    followPositionMarker: true,
     forceAxisBounds: false,
     gpxOptions: {
       async: true,
@@ -53,6 +54,14 @@ L.Control.Elevation = L.Control.extend({
         startIconUrl: null,
         endIconUrl: null,
         shadowUrl: null,
+        wptIcons: {
+          '': L.divIcon({
+            className: 'elevation-waypoint-marker',
+            html: '<i class="elevation-waypoint-icon"></i>',
+            iconSize: [30, 30],
+            iconAnchor: [8, 30],
+          })
+        },
       },
       polyline_options: {
         className: '',
@@ -72,6 +81,12 @@ L.Control.Elevation = L.Control.extend({
     imperial: false,
     interpolation: "curveLinear",
     lazyLoadJS: true,
+    leafletMarkerIcon: L.divIcon({
+      className: 'elevation-position-marker',
+      html: '<i class="elevation-position-icon"></i>',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    }),
     position: "topright",
     theme: "lime-theme",
     margins: {
@@ -225,6 +240,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   loadFile: function(url) {
+    this._downloadURL = url; // TODO: handle multiple urls?
     try {
       var xhr = new XMLHttpRequest();
       xhr.responseType = "text";
@@ -292,6 +308,15 @@ L.Control.Elevation = L.Control.extend({
       this.layer.on('loaded', function(e) {
         this._map.fitBounds(e.target.getBounds());
       }, this);
+      this.layer.on('addpoint', function(e) {
+        if (e.point._popup) {
+          e.point._popup.options.className = 'elevation-popup';
+        }
+        if (e.point._popup && e.point._popup._content) {
+          console.log(e.point);
+          e.point.bindTooltip(e.point._popup._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
+        }
+      });
       this.layer.once("addline", function(e) {
         this.addData(e.line /*, this.layer*/ );
 
@@ -455,7 +480,7 @@ L.Control.Elevation = L.Control.extend({
   _addToChartDiv: function(map) {
     var container = this.onAdd(map);
     var eleDiv = document.querySelector(this.options.elevationDiv);
-    if (!eleDiv) eleDiv = this._appendElevationDiv(map._container);
+    eleDiv = eleDiv ? eleDiv : this._appendElevationDiv(map._container);
     eleDiv.appendChild(container);
   },
 
@@ -472,7 +497,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _appendElevationDiv: function(container) {
-    var eleDiv = L.DomUtil.create('div', 'leaflet-control elevation elevation-div');
+    var eleDiv = this.eleDiv = L.DomUtil.create('div', 'leaflet-control elevation elevation-div');
     this.options.elevationDiv = '#elevation-div_' + Math.random().toString(36).substr(2, 9);
     eleDiv.id = this.options.elevationDiv.substr(1);
     container.parentNode.insertBefore(eleDiv, container.nextSibling); // insert after end of container.
@@ -907,12 +932,11 @@ L.Control.Elevation = L.Control.extend({
     opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
 
     if (opts.responsive) {
-      if (opts.detached) {
-        var eleDiv = document.querySelector(opts.elevationDiv);
-        var offsetWi = eleDiv.offsetWidth;
-        var offsetHe = eleDiv.offsetHeight;
+      if (opts.detached && this.eleDiv) {
+        var offsetWi = this.eleDiv.offsetWidth;
+        var offsetHe = this.eleDiv.offsetHeight;
         opts.width = offsetWi > 0 ? offsetWi : opts.width;
-        opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height - 20;
+        opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height; // 20 = summaryDiv height.
       } else {
         opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
         var containerWidth = this._map._container.clientWidth;
@@ -951,11 +975,12 @@ L.Control.Elevation = L.Control.extend({
       .attr("width", opts.width)
       .attr("height", opts.height);
 
-    var summary = cont.append("div")
+    var summary = this.summaryDiv = cont.append("div")
       .attr("class", "summary");
 
     this._appendChart(svg);
     this._updateSummary();
+
   },
 
   /**
@@ -1133,17 +1158,16 @@ L.Control.Elevation = L.Control.extend({
   _resizeChart: function() {
     if (this.options.responsive) {
       if (this.options.detached) {
-        var eleDiv = document.querySelector(this.options.elevationDiv);
-        var newWidth = eleDiv.offsetWidth; // - 20;
+        var newWidth = this.eleDiv.offsetWidth; // - 20;
 
         if (newWidth <= 0) return;
 
         this.options.width = newWidth;
-        eleDiv.innerHTML = "";
+        this.eleDiv.innerHTML = "";
 
         var container = this.onAdd(this._map);
 
-        eleDiv.appendChild(container);
+        this.eleDiv.appendChild(container);
       } else {
         this._map.removeControl(this._container);
         this.addTo(this._map);
@@ -1253,7 +1277,10 @@ L.Control.Elevation = L.Control.extend({
     var ll = item.latlng;
 
     if (!this._marker) {
-      this._marker = new L.Marker(ll);
+      this._marker = new L.Marker(ll, {
+        icon: this.options.leafletMarkerIcon,
+        zIndexOffset: 1000000,
+      });
       this._marker.addTo(this._map);
     } else {
       this._marker.setLatLng(ll);
@@ -1276,6 +1303,7 @@ L.Control.Elevation = L.Control.extend({
     };
 
     if (!this._mouseHeightFocus) {
+      // TODO: replace overlay-pane with "L.divIcon" to prevent gpx waypoints markers overlaps
       var layerpane = d3.select(this._map.getContainer()).select(".leaflet-overlay-pane svg");
       this._appendPositionMarker(layerpane);
     }
@@ -1295,7 +1323,23 @@ L.Control.Elevation = L.Control.extend({
       this.track_info.distance = this._distance || 0;
       this.track_info.elevation_max = this._maxElevation || 0;
       this.track_info.elevation_min = this._minElevation || 0;
-      d3.select(this._container).select(".summary").html('<span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span> &mdash; <span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span> &mdash; <span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
+      this.summaryDiv.html('<span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
+    }
+    if (this.options.downloadLink) {
+      var span = document.createElement('span');
+      span.className = 'download';
+      var save = document.createElement('a');
+      save.innerHTML = "Download";
+      save.href = "#";
+      (function(save, fileURL) {
+        save.onclick = function(e) {
+          this.href = fileURL;
+          this.target = '_blank';
+          this.download = ""; //fileName || 'unknown';
+        };
+      })(save, this._downloadURL);
+
+      this.summaryDiv.node().appendChild(span).appendChild(save);
     }
   },
 
