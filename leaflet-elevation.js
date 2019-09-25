@@ -1348,7 +1348,7 @@ L.Control.Elevation = L.Control.extend({
       var span = document.createElement('span');
       span.className = 'download';
       var save = document.createElement('a');
-      a.className = 'download-link';
+      save.className = 'download-link';
       save.innerHTML = "Download";
       save.href = "#";
       (function(save, fileURL) {
