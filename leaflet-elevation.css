@@ -2,6 +2,8 @@
   font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
   height: auto;
   width: 100%;
+  position: relative;
+  z-index: 1000;
 }
 
 .elevation-detached .elevation {
@@ -12,7 +14,7 @@
   max-width: 100%;
 }
 
-.leaflet-control.elevation .background {
+.elevation-control.elevation .background {
   background-color: rgba(70, 130, 180, 0.2);
   border-radius: 5px;
   -moz-border-radius: 5px;
@@ -23,59 +25,59 @@
   display: block;
 }
 
-.leaflet-control.elevation .axis line,
-.leaflet-control.elevation .axis path {
+.elevation-control.elevation .axis line,
+.elevation-control.elevation .axis path {
   stroke: #2D1130;
   stroke-width: 2;
   fill: none;
 }
 
-.leaflet-control.elevation .grid .tick line {
+.elevation-control.elevation .grid .tick line {
   stroke: #EEE;
   stroke-width: 1px;
   shape-rendering: crispEdges;
 }
 
-.leaflet-control.elevation .grid path {
+.elevation-control.elevation .grid path {
   stroke-width: 0;
   pointer-events: none;
 }
 
-.leaflet-control.elevation .axis text {
+.elevation-control.elevation .axis text {
   text-anchor: end;
   fill: #000;
   font-weight: 700;
 }
 
-.leaflet-control.elevation .area {
+.elevation-control.elevation .area {
   fill: #4682B4;
   stroke: #000;
   stroke-width: 1.8;
   paint-order: stroke fill;
 }
 
-.leaflet-control.elevation .mouse-focus-line {
+.elevation-control.elevation .mouse-focus-line {
   stroke: #0D1821;
   stroke-width: 1;
   pointer-events: none;
 }
 
-.leaflet-control.elevation .mouse-focus-label {
+.elevation-control.elevation .mouse-focus-label {
   fill: #000;
   fill-opacity: 0.75;
   pointer-events: none;
 }
 
-.leaflet-control.elevation .mouse-focus-label-text {
+.elevation-control.elevation .mouse-focus-label-text {
   fill: #FFF;
   pointer-events: none;
 }
 
-.leaflet-control.elevation .mouse-drag {
+.elevation-control.elevation .mouse-drag {
   fill: rgba(23, 74, 117, 0.4);
 }
 
-.leaflet-control.elevation .elevation-toggle {
+.elevation-control.elevation .elevation-toggle {
   cursor: pointer;
   box-shadow: 0 1px 7px rgba(0, 0, 0, 0.4);
   -webkit-border-radius: 5px;
@@ -136,20 +138,20 @@
   font-weight: bold;
 }
 
-.leaflet-control.elevation-collapsed .background,
-.leaflet-control.elevation-collapsed .elevation-summary {
+.elevation-control.elevation-collapsed .background,
+.elevation-control.elevation-collapsed .elevation-summary {
   display: none;
 }
 
-.leaflet-control.elevation-collapsed .elevation-toggle {
+.elevation-control.elevation-collapsed .elevation-toggle {
   display: block;
 }
 
-.leaflet-control.elevation .elevation-toggle-icon {
+.elevation-control.elevation .elevation-toggle-icon {
   background: url(images/elevation.png) no-repeat center center;
 }
 
-.leaflet-control.elevation.elevation-expanded .elevation-toggle-icon.close-button {
+.elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button {
   background: transparent url(images/remove.svg) no-repeat center center;
   background-size: 14px 14px;
   position: absolute;
@@ -198,32 +200,32 @@
 }
 
 /* //////////////////////////////////////////////// */
-.lime-theme.leaflet-control.elevation .background {
+.lime-theme.elevation-control.elevation .background {
   background-color: rgba(156, 194, 34, 0.2);
 }
 
-.lime-theme.leaflet-control.elevation .axis line,
-.lime-theme.leaflet-control.elevation .axis path {
+.lime-theme.elevation-control.elevation .axis line,
+.lime-theme.elevation-control.elevation .axis path {
   stroke: #566B13;
 }
 
-.lime-theme.leaflet-control.elevation .grid .tick line {
+.lime-theme.elevation-control.elevation .grid .tick line {
   stroke: #CCC;
 }
 
-.lime-theme.leaflet-control.elevation .mouse-drag {
+.lime-theme.elevation-control.elevation .mouse-drag {
   fill: rgba(99, 126, 11, 0.4);
 }
 
-.lime-theme.leaflet-control.elevation .elevation-toggle-icon {
+.lime-theme.elevation-control.elevation .elevation-toggle-icon {
   background: url(images/elevation-lime.png) no-repeat center center;
 }
 
-.lime-theme.leaflet-control.elevation .area {
+.lime-theme.elevation-control.elevation .area {
   fill: #9CC222;
 }
 
-.lime-theme.leaflet-control.elevation .mouse-focus-line {
+.lime-theme.elevation-control.elevation .mouse-focus-line {
   stroke: #101404;
 }
 
@@ -237,28 +239,28 @@
 }
 
 /* //////////////////////////////////////////////// */
-.steelblue-theme.leaflet-control.elevation .background {
+.steelblue-theme.elevation-control.elevation .background {
   background-color: rgba(70, 130, 180, 0.2);
 }
 
-.steelblue-theme.leaflet-control.elevation .axis line,
-.steelblue-theme.leaflet-control.elevation .axis path {
+.steelblue-theme.elevation-control.elevation .axis line,
+.steelblue-theme.elevation-control.elevation .axis path {
   stroke: #0D1821;
 }
 
-.steelblue-theme.leaflet-control.elevation .mouse-drag {
+.steelblue-theme.elevation-control.elevation .mouse-drag {
   fill: rgba(23, 74, 117, 0.4);
 }
 
-.steelblue-theme.leaflet-control.elevation .elevation-toggle-icon {
+.steelblue-theme.elevation-control.elevation .elevation-toggle-icon {
   background: url(images/elevation-steelblue.png) no-repeat center center;
 }
 
-.steelblue-theme.leaflet-control.elevation .area {
+.steelblue-theme.elevation-control.elevation .area {
   fill: #4682B4;
 }
 
-.steelblue-theme.leaflet-control.elevation .mouse-focus-line {
+.steelblue-theme.elevation-control.elevation .mouse-focus-line {
   stroke: #0D1821;
 }
 
@@ -272,28 +274,28 @@
 }
 
 /* //////////////////////////////////////////////// */
-.purple-theme.leaflet-control.elevation .background {
+.purple-theme.elevation-control.elevation .background {
   background-color: rgba(115, 44, 123, 0.2);
 }
 
-.purple-theme.leaflet-control.elevation .axis line,
-.purple-theme.leaflet-control.elevation .axis path {
+.purple-theme.elevation-control.elevation .axis line,
+.purple-theme.elevation-control.elevation .axis path {
   stroke: #2D1130;
 }
 
-.purple-theme.leaflet-control.elevation .mouse-drag {
+.purple-theme.elevation-control.elevation .mouse-drag {
   fill: rgba(74, 14, 80, 0.4);
 }
 
-.purple-theme.leaflet-control.elevation .elevation-toggle-icon {
+.purple-theme.elevation-control.elevation .elevation-toggle-icon {
   background: url(images/elevation-purple.png) no-repeat center center;
 }
 
-.purple-theme.leaflet-control.elevation .area {
+.purple-theme.elevation-control.elevation .area {
   fill: #732C7B;
 }
 
-.purple-theme.leaflet-control.elevation .mouse-focus-line {
+.purple-theme.elevation-control.elevation .mouse-focus-line {
   stroke: #000;
 }
 
@@ -307,7 +309,7 @@
 }
 
 /* //////////////////////////////////////////////// */
-.yellow-theme.leaflet-control.elevation .area {
+.yellow-theme.elevation-control.elevation .area {
   fill: #FF0;
 }
 
@@ -316,11 +318,11 @@
 }
 
 /* //////////////////////////////////////////////// */
-.magenta-theme.leaflet-control.elevation .background {
+.magenta-theme.elevation-control.elevation .background {
   background-color: rgba(255, 255, 255, 0.47);
 }
 
-.magenta-theme.leaflet-control.elevation .area {
+.magenta-theme.elevation-control.elevation .area {
   fill: #FF005E;
   stroke: #000;
 }
@@ -330,13 +332,13 @@
 }
 
 /* //////////////////////////////////////////////// */
-.lightblue-theme.leaflet-control.elevation .area {
+.lightblue-theme.elevation-control.elevation .area {
   fill: #3366CC;
   stroke: #000;
   stroke-width: 1.25;
 }
 
-.elevation-detached .lightblue-theme.leaflet-control.elevation .area {
+.elevation-detached .lightblue-theme.elevation-control.elevation .area {
   stroke: #3366CC;
   fill-opacity: 0.45;
 }

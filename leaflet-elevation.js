@@ -345,8 +345,15 @@ L.Control.Elevation = L.Control.extend({
 
     var opts = this.options;
 
-    var container = this._container = L.DomUtil.create("div", "elevation");
-    L.DomUtil.addClass(container, 'leaflet-control ' + opts.theme); //append theme to control
+    var container = this._container = L.DomUtil.create("div", "elevation-control elevation");
+
+    if (!this.options.detached) {
+      L.DomUtil.addClass(container, 'leaflet-control');
+    }
+
+    if (this.options.theme) {
+      L.DomUtil.addClass(container, opts.theme); //append theme to control
+    }
 
     var isJSLoaded = typeof d3 !== 'object' && this.options.lazyLoadJS && !L.Control.Elevation._d3LazyLoader;
 
@@ -504,6 +511,7 @@ L.Control.Elevation = L.Control.extend({
     }
     if (this.options.detached) {
       L.DomUtil.addClass(eleDiv, 'elevation-detached');
+      L.DomUtil.removeClass(eleDiv, 'leaflet-control');
     }
     this.eleDiv = eleDiv;
     return this.eleDiv;
@@ -1340,6 +1348,7 @@ L.Control.Elevation = L.Control.extend({
       var span = document.createElement('span');
       span.className = 'download';
       var save = document.createElement('a');
+      a.className = 'download-link';
       save.innerHTML = "Download";
       save.href = "#";
       (function(save, fileURL) {
