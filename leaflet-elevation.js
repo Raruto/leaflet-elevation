@@ -71,7 +71,7 @@ L.Control.Elevation = L.Control.extend({
         lineCap: 'round'
       },
     },
-    height: 175,
+    height: 200,
     heightFactor: 1,
     hoverNumber: {
       decimalsX: 2,
@@ -97,6 +97,7 @@ L.Control.Elevation = L.Control.extend({
     },
     responsive: true,
     showTrackInfo: true,
+    summaryType: 'inline',
     useHeightIndicator: true,
     useLeafletMarker: false,
     useMapIndicator: true,
@@ -313,7 +314,6 @@ L.Control.Elevation = L.Control.extend({
           e.point._popup.options.className = 'elevation-popup';
         }
         if (e.point._popup && e.point._popup._content) {
-          console.log(e.point);
           e.point.bindTooltip(e.point._popup._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
         }
       });
@@ -932,11 +932,11 @@ L.Control.Elevation = L.Control.extend({
     opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
 
     if (opts.responsive) {
-      if (opts.detached && this.eleDiv) {
+      if (opts.detached) {
         var offsetWi = this.eleDiv.offsetWidth;
         var offsetHe = this.eleDiv.offsetHeight;
         opts.width = offsetWi > 0 ? offsetWi : opts.width;
-        opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height; // 20 = summaryDiv height.
+        opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height; // 20 = horizontal scrollbar size.
       } else {
         opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
         var containerWidth = this._map._container.clientWidth;
@@ -965,18 +965,15 @@ L.Control.Elevation = L.Control.extend({
         return this._height();
       });
 
-    var container = this._container;
+    var container = d3.select(this._container);
 
-    var cont = d3.select(container)
-      .attr("width", opts.width);
-
-    var svg = cont.append("svg")
+    var svg = container.append("svg")
       .attr("class", "background")
       .attr("width", opts.width)
       .attr("height", opts.height);
 
-    var summary = this.summaryDiv = cont.append("div")
-      .attr("class", "summary");
+    var summary = this.summaryDiv = container.append("div")
+      .attr("class", "summary " + this.options.summaryType + "-summary").node();
 
     this._appendChart(svg);
     this._updateSummary();
@@ -1323,7 +1320,7 @@ L.Control.Elevation = L.Control.extend({
       this.track_info.distance = this._distance || 0;
       this.track_info.elevation_max = this._maxElevation || 0;
       this.track_info.elevation_min = this._minElevation || 0;
-      this.summaryDiv.html('<span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
+      d3.select(this.summaryDiv).html('<span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
     }
     if (this.options.downloadLink) {
       var span = document.createElement('span');
@@ -1339,7 +1336,7 @@ L.Control.Elevation = L.Control.extend({
         };
       })(save, this._downloadURL);
 
-      this.summaryDiv.node().appendChild(span).appendChild(save);
+      this.summaryDiv.appendChild(span).appendChild(save);
     }
   },
 

@@ -1,6 +1,15 @@
 .leaflet-control.elevation.elevation-div {
-  width: 100%;
   font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+  height: auto;
+  width: 100%;
+}
+
+.leaflet-control.elevation.elevation-div .elevation {
+  width: 100%;
+}
+
+.leaflet-control.elevation.elevation-div .background {
+  max-width: 100%;
 }
 
 .leaflet-control.elevation .background {
@@ -94,8 +103,12 @@
     -1px 1px 0 #FFF;
 }
 
-.leaflet-control.elevation .summary>span:not(:last-child):after {
+.leaflet-control.elevation .summary.inline-summary>span:not(:last-child):after {
   content: "\0020\2014\0020";
+}
+
+.leaflet-control.elevation .summary.multiline-summary>span {
+  display: block;
 }
 
 .leaflet-control.elevation .summary .summaryvalue {
