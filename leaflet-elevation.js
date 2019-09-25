@@ -97,7 +97,7 @@ L.Control.Elevation = L.Control.extend({
     },
     responsive: true,
     showTrackInfo: true,
-    summaryType: 'inline',
+    summary: 'inline',
     useHeightIndicator: true,
     useLeafletMarker: false,
     useMapIndicator: true,
@@ -196,6 +196,7 @@ L.Control.Elevation = L.Control.extend({
 
     if (typeof options.detachedView !== "undefined") this.options.detached = options.detachedView;
     if (typeof options.responsiveView !== "undefined") this.options.responsive = options.responsiveView;
+    if (typeof options.summaryType !== "undefined") this.options.summary = options.summaryType;
 
     L.Util.setOptions(this, options);
 
@@ -478,10 +479,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _addToChartDiv: function(map) {
-    var container = this.onAdd(map);
-    var eleDiv = document.querySelector(this.options.elevationDiv);
-    eleDiv = eleDiv ? eleDiv : this._appendElevationDiv(map._container);
-    eleDiv.appendChild(container);
+    this._appendElevationDiv(map._container).appendChild(this.onAdd(map));
   },
 
   _appendChart: function(svg) {
@@ -497,11 +495,18 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _appendElevationDiv: function(container) {
-    var eleDiv = this.eleDiv = L.DomUtil.create('div', 'leaflet-control elevation elevation-div');
-    this.options.elevationDiv = '#elevation-div_' + Math.random().toString(36).substr(2, 9);
-    eleDiv.id = this.options.elevationDiv.substr(1);
-    container.parentNode.insertBefore(eleDiv, container.nextSibling); // insert after end of container.
-    return eleDiv;
+    var eleDiv = document.querySelector(this.options.elevationDiv);
+    if (!eleDiv) {
+      eleDiv = L.DomUtil.create('div', 'leaflet-control elevation elevation-div');
+      this.options.elevationDiv = '#elevation-div_' + Math.random().toString(36).substr(2, 9);
+      eleDiv.id = this.options.elevationDiv.substr(1);
+      container.parentNode.insertBefore(eleDiv, container.nextSibling); // insert after end of container.
+    }
+    if (this.options.detached) {
+      L.DomUtil.addClass(eleDiv, 'elevation-detached');
+    }
+    this.eleDiv = eleDiv;
+    return this.eleDiv;
   },
 
   _appendXaxis: function(axis) {
@@ -641,7 +646,7 @@ L.Control.Elevation = L.Control.extend({
 
   _appendPositionMarker: function(pane) {
     var theme = this.options.theme;
-    var heightG = pane.append("g");
+    var heightG = pane.select("g");
 
     this._mouseHeightFocus = heightG.append('svg:line')
       .attr("class", theme + " height-focus line")
@@ -973,7 +978,7 @@ L.Control.Elevation = L.Control.extend({
       .attr("height", opts.height);
 
     var summary = this.summaryDiv = container.append("div")
-      .attr("class", "summary " + this.options.summaryType + "-summary").node();
+      .attr("class", "elevation-summary " + this.options.summary + "-summary").node();
 
     this._appendChart(svg);
     this._updateSummary();
@@ -1231,6 +1236,13 @@ L.Control.Elevation = L.Control.extend({
 
   _showPositionMarker: function(item) {
     this._selectedItem = item;
+
+    if (!this._map.getPane('elevationPane')) {
+      this._map.createPane('elevationPane');
+      this._map.getPane('elevationPane').style.zIndex = 625; // This pane is above markers but below popups.
+      this._map.getPane('elevationPane').style.pointerEvents = 'none';
+    }
+
     if (this.options.useLeafletMarker) {
       this._updateLeafletMarker(item);
     } else {
@@ -1278,7 +1290,9 @@ L.Control.Elevation = L.Control.extend({
         icon: this.options.leafletMarkerIcon,
         zIndexOffset: 1000000,
       });
-      this._marker.addTo(this._map);
+      this._marker.addTo(this._map, {
+        pane: 'elevationPane',
+      });
     } else {
       this._marker.setLatLng(ll);
     }
@@ -1300,8 +1314,8 @@ L.Control.Elevation = L.Control.extend({
     };
 
     if (!this._mouseHeightFocus) {
-      // TODO: replace overlay-pane with "L.divIcon" to prevent gpx waypoints markers overlaps
-      var layerpane = d3.select(this._map.getContainer()).select(".leaflet-overlay-pane svg");
+      L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
+      var layerpane = d3.select(this._map.getContainer()).select(".leaflet-elevation-pane svg");
       this._appendPositionMarker(layerpane);
     }
 
@@ -1330,10 +1344,17 @@ L.Control.Elevation = L.Control.extend({
       save.href = "#";
       (function(save, fileURL) {
         save.onclick = function(e) {
-          this.href = fileURL;
-          this.target = '_blank';
-          this.download = ""; //fileName || 'unknown';
+          e.preventDefault();
+          var element = document.createElement('a');
+          element.href = fileURL;
+          element.target = '_new';
+          element.download = ""; // fileName
+          element.style.display = 'none';
+          document.body.appendChild(element);
+          element.click();
+          document.body.removeChild(element);
         };
+
       })(save, this._downloadURL);
 
       this.summaryDiv.appendChild(span).appendChild(save);

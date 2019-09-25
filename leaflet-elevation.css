@@ -1,14 +1,14 @@
-.leaflet-control.elevation.elevation-div {
+.elevation-detached {
   font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
   height: auto;
   width: 100%;
 }
 
-.leaflet-control.elevation.elevation-div .elevation {
+.elevation-detached .elevation {
   width: 100%;
 }
 
-.leaflet-control.elevation.elevation-div .background {
+.elevation-detached .background {
   max-width: 100%;
 }
 
@@ -85,13 +85,13 @@
   background-color: #F8F8F9;
 }
 
-.leaflet-control.elevation .summary {
+.elevation-summary {
   font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
   font-size: 12px;
   margin-left: 45px;
 }
 
-.leaflet-control-container .leaflet-control.elevation .summary {
+.leaflet-control-container .elevation-summary {
   text-shadow:
     1.5px 0 0 #FFF,
     -1.5px 0 0 #FFF,
@@ -103,20 +103,41 @@
     -1px 1px 0 #FFF;
 }
 
-.leaflet-control.elevation .summary.inline-summary>span:not(:last-child):after {
+.elevation-summary.multiline-summary {
+  margin-right: 30px;
+}
+
+.elevation-detached .elevation-summary.multiline-summary {
+  margin-bottom: 12px;
+  margin-top: 12px;
+  line-height: 2;
+}
+
+.elevation-summary.inline-summary>span:not(:last-child):after {
   content: "\0020\2014\0020";
 }
 
-.leaflet-control.elevation .summary.multiline-summary>span {
+.elevation-summary.multiline-summary>span {
   display: block;
 }
 
-.leaflet-control.elevation .summary .summaryvalue {
+.elevation-summary.multiline-summary .download {
+  float: right;
+  margin-top: -2.5em;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.elevation-detached .elevation-summary.multiline-summary .download {
+  margin-top: -3.5em;
+}
+
+.elevation-summary .summaryvalue {
   font-weight: bold;
 }
 
 .leaflet-control.elevation-collapsed .background,
-.leaflet-control.elevation-collapsed .summary {
+.leaflet-control.elevation-collapsed .elevation-summary {
   display: none;
 }
 
@@ -138,16 +159,19 @@
   width: 20px;
 }
 
+.leaflet-elevation-pane .height-focus,
 .leaflet-overlay-pane .height-focus {
   stroke: #000;
   fill: #FFF;
 }
 
+.leaflet-elevation-pane .height-focus.line,
 .leaflet-overlay-pane .height-focus.line {
   pointer-events: none;
   stroke-width: 2;
 }
 
+.leaflet-elevation-pane .height-focus-label,
 .leaflet-overlay-pane .height-focus-label {
   font-size: 14px;
   font-weight: 600;
@@ -312,7 +336,7 @@
   stroke-width: 1.25;
 }
 
-.elevation-div .lightblue-theme.leaflet-control.elevation .area {
+.elevation-detached .lightblue-theme.leaflet-control.elevation .area {
   stroke: #3366CC;
   fill-opacity: 0.45;
 }
