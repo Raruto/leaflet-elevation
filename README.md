@@ -20,6 +20,7 @@ _For a working example see one of the following demos:_
 - [close button](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_close-button.html)
 - [follow marker location](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_follow-marker.html)
 - [gpx waypoint icons](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_gpx-waypoints.html)
+- [upload local gpx file](https://raruto.github.io/examples/leaflet-elevation/leaflet-elevation_upload-gpx.html)
 
 ---
 
