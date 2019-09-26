@@ -34,9 +34,12 @@
  *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 L.Control.Elevation = L.Control.extend({
+
+  includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
+
   options: {
     autohide: true,
-    autohidePositionMarker: true,
+    autohideMarker: true,
     collapsed: false,
     controlButton: {
       iconCssClass: "elevation-toggle-icon",
@@ -46,7 +49,7 @@ L.Control.Elevation = L.Control.extend({
     distanceFactor: 1,
     downloadLink: true,
     elevationDiv: "#elevation-div",
-    followPositionMarker: true,
+    followMarker: true,
     forceAxisBounds: false,
     gpxOptions: {
       async: true,
@@ -81,14 +84,15 @@ L.Control.Elevation = L.Control.extend({
     imperial: false,
     interpolation: "curveLinear",
     lazyLoadJS: true,
-    leafletMarkerIcon: L.divIcon({
+    marker: 'elevation-line',
+    markerIcon: L.divIcon({
       className: 'elevation-position-marker',
       html: '<i class="elevation-position-icon"></i>',
       iconSize: [32, 32],
       iconAnchor: [16, 16],
     }),
     position: "topright",
-    theme: "lime-theme",
+    theme: "lightblue-theme",
     margins: {
       top: 10,
       right: 20,
@@ -96,11 +100,7 @@ L.Control.Elevation = L.Control.extend({
       left: 50
     },
     responsive: true,
-    showTrackInfo: true,
     summary: 'inline',
-    useHeightIndicator: true,
-    useLeafletMarker: false,
-    useMapIndicator: true,
     width: 600,
     xLabel: "km",
     xTicks: undefined,
@@ -141,13 +141,13 @@ L.Control.Elevation = L.Control.extend({
     this._layers = this._layers || {};
     this._layers[L.Util.stamp(layer)] = layer;
 
-    if (this._map) {
-      this._map.fireEvent("eledata_added", {
-        data: d,
-        layer: layer,
-        track_info: this.track_info,
-      }, true);
-    }
+    var evt = {
+      data: d,
+      layer: layer,
+      track_info: this.track_info,
+    };
+    if (this.fire) this.fire("eledata_added", evt, true);
+    if (this._map) this._map.fire("eledata_added", evt, true);
   },
 
   addTo: function(map) {
@@ -167,9 +167,8 @@ L.Control.Elevation = L.Control.extend({
     this._clearChart();
     this._clearData();
 
-    if (this._map) {
-      this._map.fireEvent("eledata_clear");
-    }
+    if (this.fire) this.fire("eledata_clear");
+    if (this._map) this._map.fire("eledata_clear");
   },
 
   disableDragging: function() {
@@ -182,7 +181,7 @@ L.Control.Elevation = L.Control.extend({
   },
 
   fitBounds: function() {
-    this._map.fitBounds(this._fullExtent);
+    if (this._map) this._map.fitBounds(this._fullExtent);
   },
 
   getZFollow: function() {
@@ -196,9 +195,15 @@ L.Control.Elevation = L.Control.extend({
   initialize: function(options) {
     this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
 
+    // Aliases.
     if (typeof options.detachedView !== "undefined") this.options.detached = options.detachedView;
     if (typeof options.responsiveView !== "undefined") this.options.responsive = options.responsiveView;
+    if (typeof options.showTrackInfo !== "undefined") this.options.summary = options.showTrackInfo;
     if (typeof options.summaryType !== "undefined") this.options.summary = options.summaryType;
+    if (typeof options.autohidePositionMarker !== "undefined") this.options.autohideMarker = options.autohidePositionMarker;
+    if (typeof options.followPositionMarker !== "undefined") this.options.followMarker = options.followMarker;
+    if (typeof options.useLeafletMarker !== "undefined") this.options.marker = options.useLeafletMarker ? 'position-marker' : 'elevation-line';
+    if (typeof options.leafletMarkerIcon !== "undefined") this.options.markerIcon = options.leafletMarkerIcon;
 
     // L.Util.setOptions(this, options);
     this.options = this._deepExtend(this.options, options);
@@ -287,19 +292,23 @@ L.Control.Elevation = L.Control.extend({
 
       }.bind(this),
     });
+    if (this._map) {
+      this._map.once('layeradd', function(e) {
+        this._map.fitBounds(this.layer.getBounds());
+        var evt = {
+          data: data,
+          layer: this.layer,
+          name: this.track_info.name,
+          track_info: this.track_info,
+        };
+        if (this.fire) this.fire("eledata_loaded", evt, true);
+        if (this._map) this._map.fire("eledata_loaded", evt, true);
+      }, this);
 
-    this._map.once('layeradd', function(e) {
-      this._map.fitBounds(this.layer.getBounds());
-
-      this._map.fireEvent("eledata_loaded", {
-        data: data,
-        layer: this.layer,
-        name: this.track_info.name,
-        track_info: this.track_info,
-      }, true);
-    }, this);
-
-    this.layer.addTo(this._map);
+      this.layer.addTo(this._map);
+    } else {
+      console.warn("Undefined elevation map object");
+    }
   },
 
   loadGPX: function(data) {
@@ -311,7 +320,7 @@ L.Control.Elevation = L.Control.extend({
       this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
 
       this.layer.on('loaded', function(e) {
-        this._map.fitBounds(e.target.getBounds());
+        if (this._map) this._map.fitBounds(e.target.getBounds());
       }, this);
       this.layer.on('addpoint', function(e) {
         if (e.point._popup) {
@@ -331,15 +340,22 @@ L.Control.Elevation = L.Control.extend({
         this.track_info.elevation_max = this._maxElevation;
         this.track_info.elevation_min = this._minElevation;
 
-        this._map.fireEvent("eledata_loaded", {
+        var evt = {
           data: data,
           layer: this.layer,
           name: this.track_info.name,
           track_info: this.track_info,
-        }, true);
+        };
+
+        if (this.fire) this.fire("eledata_loaded", evt, true);
+        if (this._map) this._map.fire("eledata_loaded", evt, true);
       }, this);
 
-      this.layer.addTo(this._map);
+      if (this._map) {
+        this.layer.addTo(this._map);
+      } else {
+        console.warn("Undefined elevation map object");
+      }
     }.bind(this, data));
   },
 
@@ -816,12 +832,14 @@ L.Control.Elevation = L.Control.extend({
     this._dragStartCoords = null;
     this._gotDragged = false;
 
-    this._map.fireEvent("elechart_dragged", {
+    var evt = {
       data: {
         dragstart: this._data[item1],
         dragend: this._data[item2]
       }
-    }, true);
+    };
+    if (this.fire) this.fire("elechart_dragged", evt, true);
+    if (this._map) this._map.fire("elechart_dragged", evt, true);
   },
 
   _dragStartHandler: function() {
@@ -905,7 +923,7 @@ L.Control.Elevation = L.Control.extend({
 
     var ext = this._calculateFullExtent(this._data.slice(start, end));
 
-    this._map.fitBounds(ext);
+    if (this._map) this._map.fitBounds(ext);
   },
 
   /*
@@ -938,14 +956,14 @@ L.Control.Elevation = L.Control.extend({
    * Hides the position/height indicator marker drawn onto the map
    */
   _hidePositionMarker: function() {
-    if (!this.options.autohidePositionMarker) {
+    if (!this.options.autohideMarker) {
       return;
     }
 
     this._selectedItem = null;
 
     if (this._marker) {
-      this._map.removeLayer(this._marker);
+      if (this._map) this._map.removeLayer(this._marker);
       this._marker = null;
     }
     if (this._mouseHeightFocus) {
@@ -1124,15 +1142,16 @@ L.Control.Elevation = L.Control.extend({
     this._showDiagramIndicator(item, xCoord);
     this._showPositionMarker(item);
 
-    if (this.options.followPositionMarker) {
+    if (this.options.followMarker) {
       var zoom = this._map.getZoom();
       zoom = zoom < this._zFollow ? this._zFollow : zoom;
       this._map.setView(item.latlng, zoom);
     }
-
-    this._map.fireEvent("elechart_change", {
+    var evt = {
       data: item
-    }, true);
+    };
+    if (this.fire) this.fire("elechart_change", evt, true);
+    if (this._map) this._map.fire("elechart_change", evt, true);
 
   },
 
@@ -1184,7 +1203,7 @@ L.Control.Elevation = L.Control.extend({
   _resetView: function() {
     this._resetDrag();
     this._hidePositionMarker();
-    this._map.fitBounds(this._fullExtent);
+    if (this._map) this._map.fitBounds(this._fullExtent);
   },
 
   _resizeChart: function() {
@@ -1267,16 +1286,16 @@ L.Control.Elevation = L.Control.extend({
   _showPositionMarker: function(item) {
     this._selectedItem = item;
 
-    if (!this._map.getPane('elevationPane')) {
+    if (this._map && !this._map.getPane('elevationPane')) {
       this._map.createPane('elevationPane');
       this._map.getPane('elevationPane').style.zIndex = 625; // This pane is above markers but below popups.
       this._map.getPane('elevationPane').style.pointerEvents = 'none';
     }
 
-    if (this.options.useLeafletMarker) {
-      this._updateLeafletMarker(item);
-    } else {
+    if (this.options.marker == 'elevation-line') {
       this._updatePositionMarker(item);
+    } else if (this.options.marker == 'position-marker') {
+      this._updateLeafletMarker(item);
     }
   },
 
@@ -1317,7 +1336,7 @@ L.Control.Elevation = L.Control.extend({
 
     if (!this._marker) {
       this._marker = new L.Marker(ll, {
-        icon: this.options.leafletMarkerIcon,
+        icon: this.options.MarkerIcon,
         zIndexOffset: 1000000,
       });
       this._marker.addTo(this._map, {
@@ -1349,30 +1368,26 @@ L.Control.Elevation = L.Control.extend({
       this._appendPositionMarker(layerpane);
     }
 
-    if (this.options.useMapIndicator) {
-      this._updatePointG(layerpoint);
-    }
-
-    if (this.options.useHeightIndicator) {
-      this._updateHeightIndicator(layerpoint);
-    }
+    this._updatePointG(layerpoint);
+    this._updateHeightIndicator(layerpoint);
   },
 
   _updateSummary: function() {
-    if (this.options.showTrackInfo) {
+    if (this.options.summary) {
       this.track_info = this.track_info || {};
       this.track_info.distance = this._distance || 0;
       this.track_info.elevation_max = this._maxElevation || 0;
       this.track_info.elevation_min = this._minElevation || 0;
       d3.select(this.summaryDiv).html('<span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
     }
-    if (this.options.downloadLink) {
+    if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
       var span = document.createElement('span');
       span.className = 'download';
       var save = document.createElement('a');
       save.className = 'download-link';
       save.innerHTML = "Download";
       save.href = "#";
+      save.download = "";
       (function(save, fileURL) {
         save.onclick = function(e) {
           e.preventDefault();
