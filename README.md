@@ -39,78 +39,65 @@ _For a working example see one of the following demos:_
     <head>
     ...
     <style> html, body, #map, #elevation-div { height: 100%; width: 100%; padding: 0; margin: 0; } #map { height: 75%; } #elevation-div {	height: 25%; font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif; } </style>
-    <!-- Leaflet (JS/CSS) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.2/dist/leaflet.css" />
+    <!-- Leaflet -->
     <script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-ui@0.2.0/dist/leaflet-ui.js"></script>
+
     <!-- leaflet-elevation -->
     <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.css" />
     <script src="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.js"></script>
     ...
     </head>
     ```
-2. **choose the div containers used for the slippy map**
+2. **choose the div container used for the slippy map**
     ```html
     <body>
     ...
     <div id="map"></div>
-    <div id="elevation-div"></div>
     ...
     </body>
     ```
 3. **create your first simple “leaflet-elevation” slippy map**
     ```html
     <script>
-      var opts = {
-        map: {
-          center: [41.4583, 12.7059],
-          zoom: 5,
-          markerZoomAnimation: false,
-          zoomControl: false,
-        },
-        zoomControl: {
-          position: 'topleft',
-        },
-        otmLayer: {
-          url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-          options: {
-            attribution: 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-            /*subdomains:"1234"*/
-          },
-        },
-        elevationControl: {
-          data: "https://raruto.github.io/examples/leaflet-elevation/via-emilia.gpx",
-          options: {
-            position: "topleft",
-            theme: "magenta-theme", //default: lime-theme
-            useHeightIndicator: true, //if false a marker is drawn at map position
-            collapsed: false, //collapsed mode, show chart on click or mouseover
-            detached: true, //if false the chart is drawn within map container
-            elevationDiv: "#elevation-div", // if (detached), the elevation chart container
-          },
-        },
-        layersControl: {
-          options: {
-            collapsed: false,
-          },
-        },
+      // Full list options at "leaflet-elevation.js"
+      var elevation_options = {
+
+        // Default chart colors: theme lime-theme, magenta-theme, ...
+        theme: "lightblue-theme",
+
+        // Chart container outside/inside map container
+        detached: true,
+
+        // if (detached), the elevation chart container
+        elevationDiv: "#elevation-div",
+
+        // if (!detached) autohide chart profile on chart mouseleave
+        autohide: false,
+
+        // if (!detached) initial state of chart profile control
+        collapsed: false,
+
+        // Autoupdate map center on chart mouseover.
+        followMarker: true,
+
+        // Chart distance/elevation units.
+        imperial: false,
+
+        // Summary track info style: "line" || "multiline" || false,
+        summary: 'multiline',
+
       };
 
-      var map = new L.Map('map', opts.map);
+      // Instantiate map.
+      var map = new L.Map('map', { center: [41.4583, 12.7059], zoom: 5 });
 
-      var baseLayers = {};
-      baseLayers.OTM = new L.TileLayer(opts.otmLayer.url, opts.otmLayer.options);
+      // Instantiate elevation control.
+		  var controlElevation = L.control.elevation(elevation_options).addTo(map);
 
-      var controlZoom = new L.Control.Zoom(opts.zoomControl);
-      var controlElevation = L.control.elevation(opts.elevationControl.options);
-      var controlLayer = L.control.layers(baseLayers, null, opts.layersControl.options);
+      // Load track from url (allowed data types: "*.geojson", "*.gpx")
+      controlElevation.load("https://raruto.github.io/examples/leaflet-elevation/via-emilia.gpx");
 
-      controlZoom.addTo(map);
-      controlLayer.addTo(map);
-      controlElevation.addTo(map); // attach elevation chart to map
-
-      controlElevation.loadData(opts.elevationControl.data); // url or plain gpx/geojson data
-
-      map.addLayer(baseLayers.OTM);
     </script>
     ```
 _Related: [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
