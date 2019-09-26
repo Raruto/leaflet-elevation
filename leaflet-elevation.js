@@ -141,11 +141,13 @@ L.Control.Elevation = L.Control.extend({
     this._layers = this._layers || {};
     this._layers[L.Util.stamp(layer)] = layer;
 
-    this._map.fireEvent("eledata_added", {
-      data: d,
-      layer: layer,
-      track_info: this.track_info,
-    }, true);
+    if (this._map) {
+      this._map.fireEvent("eledata_added", {
+        data: d,
+        layer: layer,
+        track_info: this.track_info,
+      }, true);
+    }
   },
 
   addTo: function(map) {
@@ -953,7 +955,9 @@ L.Control.Elevation = L.Control.extend({
     if (this._pointG) {
       this._pointG.style("visibility", "hidden");
     }
-    this._focusG.style("visibility", "hidden");
+    if (this._focusG) {
+      this._focusG.style("visibility", "hidden");
+    }
   },
 
   _initChart: function() {
@@ -1065,9 +1069,9 @@ L.Control.Elevation = L.Control.extend({
       return doc.indexOf("{") == 0 || doc.indexOf("[") == 0;
     } else {
       try {
-        doc = doc.toString();
-        JSON.parse(doc);
+        JSON.parse(doc.toString());
       } catch (e) {
+        if (typeof doc === "object" && lazy) return true;
         console.warn(e);
         return false;
       }
