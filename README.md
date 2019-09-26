@@ -93,7 +93,7 @@ _For a working example see one of the following demos:_
       var map = new L.Map('map', { center: [41.4583, 12.7059], zoom: 5 });
 
       // Instantiate elevation control.
-		  var controlElevation = L.control.elevation(elevation_options).addTo(map);
+      var controlElevation = L.control.elevation(elevation_options).addTo(map);
 
       // Load track from url (allowed data types: "*.geojson", "*.gpx")
       controlElevation.load("https://raruto.github.io/examples/leaflet-elevation/via-emilia.gpx");
