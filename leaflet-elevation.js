@@ -198,7 +198,8 @@ L.Control.Elevation = L.Control.extend({
     if (typeof options.responsiveView !== "undefined") this.options.responsive = options.responsiveView;
     if (typeof options.summaryType !== "undefined") this.options.summary = options.summaryType;
 
-    L.Util.setOptions(this, options);
+    // L.Util.setOptions(this, options);
+    this.options = this._deepExtend(this.options, options);
 
     this._draggingEnabled = !L.Browser.mobile;
 
@@ -761,6 +762,23 @@ L.Control.Elevation = L.Control.extend({
       L.DomUtil.removeClass(this._container, 'elevation-expanded');
       L.DomUtil.addClass(this._container, 'elevation-collapsed');
     }
+  },
+
+  _deepExtend: function(out) {
+    out = out || {};
+    for (var i = 1, len = arguments.length; i < len; ++i) {
+      var obj = arguments[i];
+      if (!obj) continue;
+      for (var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        if (Object.prototype.toString.call(obj[key]) === '[object Object]') {
+          out[key] = this._deepExtend(out[key], obj[key]);
+          continue;
+        }
+        out[key] = obj[key];
+      }
+    }
+    return out;
   },
 
   _dragHandler: function() {
