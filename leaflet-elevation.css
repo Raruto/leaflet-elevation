@@ -1,9 +1,13 @@
+.leaflet-container {
+  z-index: 0; /* prevent overalpping the .elevation-detached chart */
+}
+
 .elevation-detached {
   font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
   height: auto;
   width: 100%;
   position: relative;
-  z-index: 1000;
+  z-index: 0;
 }
 
 .elevation-detached .elevation {
