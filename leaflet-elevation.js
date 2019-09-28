@@ -92,6 +92,7 @@ L.Control.Elevation = L.Control.extend({
       iconAnchor: [16, 16],
     }),
     position: "topright",
+    reverseCoords: false,
     theme: "lightblue-theme",
     margins: {
       top: 10,
@@ -470,7 +471,11 @@ L.Control.Elevation = L.Control.extend({
   },
 
   _addPoint: function(x, y, z) {
-    var opts = this.options;
+    if (this.options.reverseCoords) {
+      var tmp = x;
+      x = y;
+      y = tmp;
+    }
 
     var data = this._data || [];
     var eleMax = this._maxElevation || -Infinity;

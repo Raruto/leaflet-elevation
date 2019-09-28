@@ -39,7 +39,8 @@ _For a working example see one of the following demos:_
     <head>
     ...
     <style> html, body, #map, #elevation-div { height: 100%; width: 100%; padding: 0; margin: 0; } #map { height: 75%; } #elevation-div {	height: 25%; font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif; } </style>
-    <!-- Leaflet -->
+
+    <!-- leaflet-ui -->
     <script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-ui@0.2.0/dist/leaflet-ui.js"></script>
 
@@ -78,19 +79,25 @@ _For a working example see one of the following demos:_
         // if (!detached) initial state of chart profile control
         collapsed: false,
 
+        // if (!detached) control position on one of map corners
+        position: "topright",
+
         // Autoupdate map center on chart mouseover.
         followMarker: true,
 
         // Chart distance/elevation units.
         imperial: false,
 
+        // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
+        reverseCoords: false,
+
         // Summary track info style: "line" || "multiline" || false,
         summary: 'multiline',
 
       };
 
-      // Instantiate map.
-      var map = new L.Map('map', { center: [41.4583, 12.7059], zoom: 5 });
+      // Instantiate map (leaflet-ui).
+      var map = new L.Map('map', { mapTypeId: 'terrain', center: [41.4583, 12.7059], zoom: 5 });
 
       // Instantiate elevation control.
       var controlElevation = L.control.elevation(elevation_options).addTo(map);
