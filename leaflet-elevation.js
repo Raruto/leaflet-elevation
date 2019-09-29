@@ -47,7 +47,7 @@ L.Control.Elevation = L.Control.extend({
     },
     detached: true,
     distanceFactor: 1,
-    downloadLink: true,
+    download: 'link',
     elevationDiv: "#elevation-div",
     followMarker: true,
     forceAxisBounds: false,
@@ -804,6 +804,19 @@ L.Control.Elevation = L.Control.extend({
     return out;
   },
 
+  _saveFile: function(fileUrl) {
+    var d = document,
+      a = d.createElement('a'),
+      b = d.body;
+    a.href = fileUrl;
+    a.target = '_new';
+    a.download = ""; // fileName
+    a.style.display = 'none';
+    b.appendChild(a);
+    a.click();
+    b.removeChild(a);
+  },
+
   _dragHandler: function() {
     //we don't want map events to occur here
     d3.event.preventDefault();
@@ -1385,28 +1398,24 @@ L.Control.Elevation = L.Control.extend({
       this.track_info.elevation_min = this._minElevation || 0;
       d3.select(this.summaryDiv).html('<span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
     }
-    if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
+    if (this.options.download && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
       var span = document.createElement('span');
       span.className = 'download';
       var save = document.createElement('a');
-      save.className = 'download-link';
       save.innerHTML = "Download";
       save.href = "#";
-      save.download = "";
-      (function(save, fileURL) {
-        save.onclick = function(e) {
-          e.preventDefault();
-          var element = document.createElement('a');
-          element.href = fileURL;
-          element.target = '_new';
-          element.download = ""; // fileName
-          element.style.display = 'none';
-          document.body.appendChild(element);
-          element.click();
-          document.body.removeChild(element);
-        };
-
-      })(save, this._downloadURL);
+      save.onclick = function(e) {
+        e.preventDefault();
+        var evt = { confirm: this._saveFile.bind(this, this._downloadURL) };
+        var type = this.options.download;
+        if (type == 'modal') {
+          if (typeof CustomEvent === "function") document.dispatchEvent(new CustomEvent("eletrack_download", { detail: evt }));
+          if (this.fire) this.fire('eletrack_download', evt);
+          if (this._map) this._map.fire('eletrack_download', evt);
+        } else if (type == 'link' || type === true) {
+          evt.confirm();
+        }
+      }.bind(this);
 
       this.summaryDiv.appendChild(span).appendChild(save);
     }
