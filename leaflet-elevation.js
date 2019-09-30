@@ -224,6 +224,7 @@ L.Control.Elevation = L.Control.extend({
     }
 
     this._zFollow = this.options.zFollow;
+    if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
   },
 
   /**
@@ -1160,12 +1161,8 @@ L.Control.Elevation = L.Control.extend({
     this._hidePositionMarker();
     this._showDiagramIndicator(item, xCoord);
     this._showPositionMarker(item);
+    this._setMapView(item);
 
-    if (this.options.followMarker) {
-      var zoom = this._map.getZoom();
-      zoom = zoom < this._zFollow ? this._zFollow : zoom;
-      this._map.setView(item.latlng, zoom);
-    }
     var evt = {
       data: item
     };
@@ -1300,6 +1297,13 @@ L.Control.Elevation = L.Control.extend({
       this._collapse();
     else
       this._expand();
+  },
+
+  _setMapView: function(item) {
+    if (!this.options.followMarker || !this._map) return;
+    var zoom = this._map.getZoom();
+    zoom = zoom < this._zFollow ? this._zFollow : zoom;
+    this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
   },
 
   _showPositionMarker: function(item) {
