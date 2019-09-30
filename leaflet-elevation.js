@@ -326,6 +326,7 @@ L.Control.Elevation = L.Control.extend({
       this.layer.on('addpoint', function(e) {
         if (e.point._popup) {
           e.point._popup.options.className = 'elevation-popup';
+          e.point._popup._content = decodeURI(e.point._popup._content);
         }
         if (e.point._popup && e.point._popup._content) {
           e.point.bindTooltip(e.point._popup._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
