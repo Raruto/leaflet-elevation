@@ -314,7 +314,6 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	loadGPX: function(data) {
-		var skipJSLoading = typeof L.GPX === 'function' || (this.options.lazyLoadJS && !L.Control.Elevation._gpxLazyLoader);
 		var callback = function(data) {
 			this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
 
@@ -359,8 +358,8 @@ L.Control.Elevation = L.Control.extend({
 				console.warn("Undefined elevation map object");
 			}
 		}.bind(this, data);
-		if (!skipJSLoading) {
-			L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js', skipJSLoading);
+		if (typeof L.GPX !== 'function' && this.options.lazyLoadJS) {
+			L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js', L.Control.Elevation._gpxLazyLoader);
 			L.Control.Elevation._gpxLazyLoader.then(callback);
 		} else {
 			callback.call();
@@ -382,7 +381,6 @@ L.Control.Elevation = L.Control.extend({
 			L.DomUtil.addClass(container, opts.theme); //append theme to control
 		}
 
-		var skipJSLoading = typeof d3 === 'object' || (this.options.lazyLoadJS && !L.Control.Elevation._d3LazyLoader);
 		var callback = function(map, container) {
 			this._initToggle(container);
 			this._initChart(container);
@@ -400,8 +398,8 @@ L.Control.Elevation = L.Control.extend({
 			L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
 
 		}.bind(this, map, container);
-		if (!skipJSLoading) {
-			L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js', skipJSLoading);
+		if (typeof d3 !== 'object' && this.options.lazyLoadJS) {
+			L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js', L.Control.Elevation._d3LazyLoader);
 			L.Control.Elevation._d3LazyLoader.then(callback);
 		} else {
 			callback.call();
