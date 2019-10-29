@@ -47,7 +47,7 @@ L.Control.Elevation = L.Control.extend({
 		},
 		detached: true,
 		distanceFactor: 1,
-		download: 'link',
+		downloadLink: 'link',
 		elevationDiv: "#elevation-div",
 		followMarker: true,
 		forceAxisBounds: false,
@@ -205,6 +205,7 @@ L.Control.Elevation = L.Control.extend({
 		if (typeof options.followPositionMarker !== "undefined") this.options.followMarker = options.followPositionMarker;
 		if (typeof options.useLeafletMarker !== "undefined") this.options.marker = options.useLeafletMarker ? 'position-marker' : 'elevation-line';
 		if (typeof options.leafletMarkerIcon !== "undefined") this.options.markerIcon = options.leafletMarkerIcon;
+		if (typeof options.download !== "undefined") this.options.downloadLink = options.download;
 
 		// L.Util.setOptions(this, options);
 		this.options = this._deepExtend(this.options, options);
@@ -1408,7 +1409,7 @@ L.Control.Elevation = L.Control.extend({
 			this.track_info.elevation_min = this._minElevation || 0;
 			d3.select(this.summaryDiv).html('<span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
 		}
-		if (this.options.download && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
+		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
 			var span = document.createElement('span');
 			span.className = 'download';
 			var save = document.createElement('a');
@@ -1417,7 +1418,7 @@ L.Control.Elevation = L.Control.extend({
 			save.onclick = function(e) {
 				e.preventDefault();
 				var evt = { confirm: this._saveFile.bind(this, this._downloadURL) };
-				var type = this.options.download;
+				var type = this.options.downloadLink;
 				if (type == 'modal') {
 					if (typeof CustomEvent === "function") document.dispatchEvent(new CustomEvent("eletrack_download", { detail: evt }));
 					if (this.fire) this.fire('eletrack_download', evt);
