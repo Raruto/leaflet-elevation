@@ -236,29 +236,36 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	isVisibile: function(element) {
-		function isVisibleByStyles(element) {
-			var styles = window.getComputedStyle(element);
+		if (!element) return false;
+
+		let styles = window.getComputedStyle(element);
+
+		function isVisibleByStyles(element, styles) {
 			return styles.visibility !== 'hidden' && styles.display !== 'none';
 		}
 
-		function isBehindOtherElement(element) {
-			var boundingRect = element.getBoundingClientRect();
-			var left = boundingRect.left + 1;
-			var right = boundingRect.right - 1;
-			var top = boundingRect.top + 1;
-			var bottom = boundingRect.bottom - 1;
+		function isAboveOtherElements(element, styles) {
+			let boundingRect = element.getBoundingClientRect();
+			let left = boundingRect.left + 1;
+			let right = boundingRect.right - 1;
+			let top = boundingRect.top + 1;
+			let bottom = boundingRect.bottom - 1;
+			let above = true;
 
-			if (document.elementFromPoint(left, top) !== element) return true;
-			if (document.elementFromPoint(right, top) !== element) return true;
-			// Only for completely visible elements return true:
-			//if(document.elementFromPoint(left, bottom) !== element) return true;
-			//if(document.elementFromPoint(right, bottom) !== element) return true;
+			let pointerEvents = element.style.pointerEvents;
 
-			return false;
+			if (styles['pointer-events'] == 'none') element.style.pointerEvents = 'auto';
+
+			if (document.elementFromPoint(left, top) !== element) above = false;
+			if (document.elementFromPoint(right, top) !== element) above = false;
+
+			if (pointerEvents) element.style.pointerEvents = pointerEvents;
+
+			return above;
 		}
-		if (!element) return false;
-		if (!isVisibleByStyles(element)) return false;
-		if (isBehindOtherElement(element)) return false;
+
+		if (!isVisibleByStyles(element, styles)) return false;
+		if (!isAboveOtherElements(element, styles)) return false;
 		return true;
 	},
 
