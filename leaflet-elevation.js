@@ -208,7 +208,7 @@ L.Control.Elevation = L.Control.extend({
 		if (typeof options.download !== "undefined") this.options.downloadLink = options.download;
 
 		// L.Util.setOptions(this, options);
-		this.options = this._deepExtend(this.options, options);
+		this.options = this._deepExtend({}, this.options, options);
 
 		this._draggingEnabled = !L.Browser.mobile;
 
@@ -1142,12 +1142,13 @@ L.Control.Elevation = L.Control.extend({
 		if (typeof skip == "undefined") {
 			skip = false;
 		}
+		if (skip instanceof Promise) {
+			return skip;
+		}
 		return new Promise(function(resolve, reject) {
 			if (skip) return resolve();
 			var tag = document.createElement("script");
-			tag.addEventListener('load', resolve, {
-				once: true
-			});
+			tag.addEventListener('load', resolve, { once: true });
 			tag.src = url;
 			document.head.appendChild(tag);
 		});
