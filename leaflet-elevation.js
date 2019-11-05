@@ -259,7 +259,7 @@ L.Control.Elevation = L.Control.extend({
 			if (document.elementFromPoint(left, top) !== element) above = false;
 			if (document.elementFromPoint(right, top) !== element) above = false;
 
-			if (pointerEvents) element.style.pointerEvents = pointerEvents;
+			element.style.pointerEvents = pointerEvents;
 
 			return above;
 		}
