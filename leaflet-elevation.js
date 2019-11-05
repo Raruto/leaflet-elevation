@@ -84,6 +84,10 @@ L.Control.Elevation = L.Control.extend({
 		imperial: false,
 		interpolation: "curveLinear",
 		lazyLoadJS: true,
+		loadData: {
+			defer: false,
+			lazy: false,
+		},
 		marker: 'elevation-line',
 		markerIcon: L.divIcon({
 			className: 'elevation-position-marker',
@@ -91,6 +95,7 @@ L.Control.Elevation = L.Control.extend({
 			iconSize: [32, 32],
 			iconAnchor: [16, 16],
 		}),
+		placeholder: false,
 		position: "topright",
 		reverseCoords: false,
 		theme: "lightblue-theme",
@@ -225,14 +230,43 @@ L.Control.Elevation = L.Control.extend({
 		}
 
 		this._zFollow = this.options.zFollow;
+
 		if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
+		if (this.options.placeholder) this.options.loadData.lazy = this.options.loadData.defer = true;
+	},
+
+	isVisibile: function(element) {
+		function isVisibleByStyles(element) {
+			var styles = window.getComputedStyle(element);
+			return styles.visibility !== 'hidden' && styles.display !== 'none';
+		}
+
+		function isBehindOtherElement(element) {
+			var boundingRect = element.getBoundingClientRect();
+			var left = boundingRect.left + 1;
+			var right = boundingRect.right - 1;
+			var top = boundingRect.top + 1;
+			var bottom = boundingRect.bottom - 1;
+
+			if (document.elementFromPoint(left, top) !== element) return true;
+			if (document.elementFromPoint(right, top) !== element) return true;
+			// Only for completely visible elements return true:
+			//if(document.elementFromPoint(left, bottom) !== element) return true;
+			//if(document.elementFromPoint(right, bottom) !== element) return true;
+
+			return false;
+		}
+		if (!element) return false;
+		if (!isVisibleByStyles(element)) return false;
+		if (isBehindOtherElement(element)) return false;
+		return true;
 	},
 
 	/**
 	 * Alias for loadData
 	 */
-	load: function(data) {
-		this.loadData(data);
+	load: function(data, opts) {
+		this.loadData(data, opts);
 	},
 
 	/**
@@ -242,14 +276,26 @@ L.Control.Elevation = L.Control.extend({
 		this.addTo(map);
 	},
 
-	loadData: function(data) {
-		if (this._isXMLDoc(data)) {
+	loadData: function(data, opts) {
+		opts = L.extend({}, this.options.loadData, opts);
+		if (opts.defer) {
+			this.loadDefer(data, opts);
+		} else if (opts.lazy) {
+			this.loadLazy(data, opts);
+		} else if (this._isXMLDoc(data)) {
 			this.loadGPX(data);
 		} else if (this._isJSONDoc(data)) {
 			this.loadGeoJSON(data);
 		} else {
 			this.loadFile(data);
 		}
+	},
+
+	loadDefer: function(data, opts) {
+		opts = L.extend({}, this.options.loadData, opts);
+		opts.defer = false;
+		if (document.readyState !== 'complete') window.addEventListener("load", L.bind(this.loadData, this, data, opts), { once: true });
+		else this.loadData(data, opts)
 	},
 
 	loadFile: function(url) {
@@ -262,7 +308,7 @@ L.Control.Elevation = L.Control.extend({
 				if (xhr.status !== 200) {
 					throw "Error " + xhr.status + " while fetching remote file: " + url;
 				} else {
-					this.loadData(xhr.response);
+					this.loadData(xhr.response, { lazy: false, defer: false });
 				}
 			}.bind(this);
 			xhr.send();
@@ -367,10 +413,33 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	loadLazy: function(data, opts) {
+		opts = L.extend({}, this.options.loadData, opts);
+		opts.lazy = false;
+		let ticking = false;
+		let scrollFn = L.bind(function(data) {
+			if (!ticking) {
+				L.Util.requestAnimFrame(function() {
+					if (this.isVisibile(this.placeholder)) {
+						window.removeEventListener('scroll', scrollFn);
+						this.loadData(data, opts);
+						this.once('eledata_loaded', function() {
+							if (this.placeholder) {
+								this.placeholder.parentNode.removeChild(this.placeholder);
+							}
+						}, this)
+					}
+					ticking = false;
+				}, this);
+				ticking = true;
+			}
+		}, this, data);
+		window.addEventListener('scroll', scrollFn);
+		scrollFn();
+	},
+
 	onAdd: function(map) {
 		this._map = map;
-
-		var opts = this.options;
 
 		var container = this._container = L.DomUtil.create("div", "elevation-control elevation");
 
@@ -379,7 +448,18 @@ L.Control.Elevation = L.Control.extend({
 		}
 
 		if (this.options.theme) {
-			L.DomUtil.addClass(container, opts.theme); //append theme to control
+			L.DomUtil.addClass(container, this.options.theme); // append theme to control
+		}
+
+		if (this.options.placeholder && !this._data) {
+			this.placeholder = L.DomUtil.create('img', 'elevation-placeholder');
+			if (typeof this.options.placeholder === 'string') {
+				this.placeholder.src = this.options.placeholder;
+				this.placeholder.alt = '';
+			} else {
+				for (let i in this.options.placeholder) { this.placeholder.setAttribute(i, this.options.placeholder[i]); }
+			}
+			container.insertBefore(this.placeholder, container.firstChild);
 		}
 
 		var callback = function(map, container) {

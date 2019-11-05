@@ -1,6 +1,6 @@
 .leaflet-container {
   z-index: 0;
-  /* prevent overalpping the .elevation-detached chart */
+  /* prevent overlapping the .elevation-detached chart */
 }
 
 .elevation-detached {
@@ -208,7 +208,17 @@
   filter: drop-shadow(1px 1px 0 #FFF) drop-shadow(-1px -1px 0 #FFF) drop-shadow(1px -1px 0 #FFF) drop-shadow(-1px 1px 0 #FFF);
 }
 
-/* //////////////////////////////////////////////// */
+.elevation-placeholder {
+  margin: auto;
+  height: auto;
+  width: 100%;
+}
+
+.elevation-placeholder~* {
+  display: none !important;
+}
+
+/* LIME THEME //////////////////////////////////////////////// */
 .lime-theme.elevation-control.elevation .background {
   background-color: rgba(156, 194, 34, 0.2);
 }
@@ -247,7 +257,7 @@
   stroke: #566B13;
 }
 
-/* //////////////////////////////////////////////// */
+/* STEELBLUE THEME //////////////////////////////////////////////// */
 .steelblue-theme.elevation-control.elevation .background {
   background-color: rgba(70, 130, 180, 0.2);
 }
@@ -282,7 +292,7 @@
   stroke: #4682B4;
 }
 
-/* //////////////////////////////////////////////// */
+/* PURPLE THEME //////////////////////////////////////////////// */
 .purple-theme.elevation-control.elevation .background {
   background-color: rgba(115, 44, 123, 0.2);
 }
@@ -317,7 +327,7 @@
   stroke: #732C7B;
 }
 
-/* //////////////////////////////////////////////// */
+/* YELLOW THEME //////////////////////////////////////////////// */
 .yellow-theme.elevation-control.elevation .area {
   fill: #FF0;
 }
@@ -326,7 +336,7 @@
   stroke: #FF0;
 }
 
-/* //////////////////////////////////////////////// */
+/* MAGENTA THEME //////////////////////////////////////////////// */
 .magenta-theme.elevation-control.elevation .background {
   background-color: rgba(255, 255, 255, 0.47);
 }
@@ -340,7 +350,7 @@
   stroke: #FF005E;
 }
 
-/* //////////////////////////////////////////////// */
+/* LIGHTBLUE THEME //////////////////////////////////////////////// */
 .lightblue-theme.elevation-control.elevation .area {
   fill: #3366CC;
   stroke: #000;
