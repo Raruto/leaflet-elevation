@@ -235,40 +235,6 @@ L.Control.Elevation = L.Control.extend({
 		if (this.options.placeholder) this.options.loadData.lazy = this.options.loadData.defer = true;
 	},
 
-	isVisibile: function(element) {
-		if (!element) return false;
-
-		let styles = window.getComputedStyle(element);
-
-		function isVisibleByStyles(element, styles) {
-			return styles.visibility !== 'hidden' && styles.display !== 'none';
-		}
-
-		function isAboveOtherElements(element, styles) {
-			let boundingRect = element.getBoundingClientRect();
-			let left = boundingRect.left + 1;
-			let right = boundingRect.right - 1;
-			let top = boundingRect.top + 1;
-			let bottom = boundingRect.bottom - 1;
-			let above = true;
-
-			let pointerEvents = element.style.pointerEvents;
-
-			if (styles['pointer-events'] == 'none') element.style.pointerEvents = 'auto';
-
-			if (document.elementFromPoint(left, top) !== element) above = false;
-			if (document.elementFromPoint(right, top) !== element) above = false;
-
-			element.style.pointerEvents = pointerEvents;
-
-			return above;
-		}
-
-		if (!isVisibleByStyles(element, styles)) return false;
-		if (!isAboveOtherElements(element, styles)) return false;
-		return true;
-	},
-
 	/**
 	 * Alias for loadData
 	 */
@@ -427,7 +393,7 @@ L.Control.Elevation = L.Control.extend({
 		let scrollFn = L.bind(function(data) {
 			if (!ticking) {
 				L.Util.requestAnimFrame(function() {
-					if (this.isVisibile(this.placeholder)) {
+					if (this._isVisible(this.placeholder)) {
 						window.removeEventListener('scroll', scrollFn);
 						this.loadData(data, opts);
 						this.once('eledata_loaded', function() {
@@ -729,6 +695,7 @@ L.Control.Elevation = L.Control.extend({
 		focusRect
 			.on("mousemove.drag", this._dragHandler.bind(this))
 			.on("mousedown.drag", this._dragStartHandler.bind(this))
+			.on("mouseenter.focus", this._mouseenterHandler.bind(this))
 			.on("mousemove.focus", this._mousemoveHandler.bind(this))
 			.on("mouseout.focus", this._mouseoutHandler.bind(this));
 		L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
@@ -1225,6 +1192,44 @@ L.Control.Elevation = L.Control.extend({
 		return !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
 	},
 
+	_isVisible: function(elem) {
+		if (!elem) return false;
+
+		let styles = window.getComputedStyle(elem);
+
+		function isVisibleByStyles(elem, styles) {
+			return styles.visibility !== 'hidden' && styles.display !== 'none';
+		}
+
+		function isAboveOtherElements(elem, styles) {
+			let boundingRect = elem.getBoundingClientRect();
+			let left = boundingRect.left + 1;
+			let right = boundingRect.right - 1;
+			let top = boundingRect.top + 1;
+			let bottom = boundingRect.bottom - 1;
+			let above = true;
+
+			let pointerEvents = elem.style.pointerEvents;
+
+			if (styles['pointer-events'] == 'none') elem.style.pointerEvents = 'auto';
+
+			if (document.elementFromPoint(left, top) !== elem) above = false;
+			if (document.elementFromPoint(right, top) !== elem) above = false;
+
+			// Only for completely visible elements
+			// if (document.elementFromPoint(left, bottom) !== elem) above = false;
+			// if (document.elementFromPoint(right, bottom) !== elem) above = false;
+
+			elem.style.pointerEvents = pointerEvents;
+
+			return above;
+		}
+
+		if (!isVisibleByStyles(elem, styles)) return false;
+		if (!isAboveOtherElements(elem, styles)) return false;
+		return true;
+	},
+
 	_lazyLoadJS: function(url, skip) {
 		if (typeof skip == "undefined") {
 			skip = false;
@@ -1239,6 +1244,15 @@ L.Control.Elevation = L.Control.extend({
 			tag.src = url;
 			document.head.appendChild(tag);
 		});
+	},
+
+	_mouseenterHandler: function() {
+		if (this.fire) {
+			this.fire("elechart_enter", null, true);
+		}
+		if (this._map) {
+			this._map.fire("elechart_enter", null, true);
+		}
 	},
 
 	/*
@@ -1257,12 +1271,21 @@ L.Control.Elevation = L.Control.extend({
 		this._showPositionMarker(item);
 		this._setMapView(item);
 
+		if (this._map && this._map._container) {
+			L.DomUtil.addClass(this._map._container, 'elechart-hover');
+		}
+
 		var evt = {
 			data: item
 		};
-		if (this.fire) this.fire("elechart_change", evt, true);
-		if (this._map) this._map.fire("elechart_change", evt, true);
-
+		if (this.fire) {
+			this.fire("elechart_change", evt, true);
+			this.fire("elechart_hover", evt, true);
+		}
+		if (this._map) {
+			this._map.fire("elechart_change", evt, true);
+			this._map.fire("elechart_hover", evt, true);
+		}
 	},
 
 	/*
@@ -1287,6 +1310,13 @@ L.Control.Elevation = L.Control.extend({
 		if (!this.options.detached) {
 			this._hidePositionMarker();
 		}
+
+		if (this._map && this._map._container) {
+			L.DomUtil.removeClass(this._map._container, 'elechart-hover');
+		}
+
+		if (this.fire) this.fire("elechart_leave", null, true);
+		if (this._map) this._map.fire("elechart_leave", null, true);
 	},
 
 	_mousewheelHandler: function(e) {
