@@ -1066,10 +1066,10 @@ L.Control.Elevation = L.Control.extend({
 
 		if (opts.responsive) {
 			if (opts.detached) {
-				var offsetWi = this.eleDiv.offsetWidth;
-				var offsetHe = this.eleDiv.offsetHeight;
-				opts.width = offsetWi > 0 ? offsetWi : opts.width;
-				opts.height = (offsetHe - 20) > 0 ? offsetHe - 20 : opts.height; // 20 = horizontal scrollbar size.
+				var offWi = this.eleDiv.offsetWidth;
+				var offHe = this.eleDiv.offsetHeight;
+				opts.width = offWi > 0 ? offWi : opts.width;
+				opts.height = (offHe - 20) > 0 ? offHe - 20 : opts.height; // 20 = horizontal scrollbar size.
 			} else {
 				opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
 				var containerWidth = this._map._container.clientWidth;
@@ -1355,10 +1355,7 @@ L.Control.Elevation = L.Control.extend({
 
 				this.options.width = newWidth;
 				this.eleDiv.innerHTML = "";
-
-				var container = this.onAdd(this._map);
-
-				this.eleDiv.appendChild(container);
+				this.eleDiv.appendChild(this.onAdd(this._map));
 			} else {
 				this._map.removeControl(this._container);
 				this.addTo(this._map);
