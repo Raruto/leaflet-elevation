@@ -336,6 +336,16 @@
   stroke: #FF0;
 }
 
+/* RED THEME //////////////////////////////////////////////// */
+.red-theme.elevation-control.elevation .area {
+  fill: #F00;
+  stroke: #000;
+}
+
+.red-theme.elevation-polyline {
+  stroke: #F00;
+}
+
 /* MAGENTA THEME //////////////////////////////////////////////// */
 .magenta-theme.elevation-control.elevation .background {
   background-color: rgba(255, 255, 255, 0.47);

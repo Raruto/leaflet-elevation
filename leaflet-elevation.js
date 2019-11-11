@@ -408,6 +408,7 @@ L.Control.Elevation = L.Control.extend({
 			}
 		}, this, data);
 		window.addEventListener('scroll', scrollFn);
+		if (this.placeholder) this.placeholder.addEventListener('mouseenter', scrollFn, { once: true });
 		scrollFn();
 	},
 
