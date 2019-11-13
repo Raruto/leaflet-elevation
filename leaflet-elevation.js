@@ -98,6 +98,7 @@ L.Control.Elevation = L.Control.extend({
 		placeholder: false,
 		position: "topright",
 		reverseCoords: false,
+		skipNullZCoords: false,
 		theme: "lightblue-theme",
 		margins: {
 			top: 10,
@@ -124,6 +125,7 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	addData: function(d, layer) {
 		this._addData(d);
+
 		if (this._container) {
 			this._applyData();
 		}
@@ -216,6 +218,7 @@ L.Control.Elevation = L.Control.extend({
 		this.options = this._deepExtend({}, this.options, options);
 
 		this._draggingEnabled = !L.Browser.mobile;
+		this._chartEnabled = true;
 
 		if (options.imperial) {
 			this._distanceFactor = this.__mileFactor;
@@ -551,8 +554,25 @@ L.Control.Elevation = L.Control.extend({
 
 		dist = dist + Math.round(delta / 1000 * 100000) / 100000;
 
+		// check and fix missing elevation data on last added point
+		if (!this.options.skipNullZCoords && data.length > 0) {
+			var prevZ = data[data.length - 1].z;
+			if (isNaN(prevZ)) {
+				var lastZ = this._lastValidZ;
+				var currZ = z * this._heightFactor;
+				if (!isNaN(lastZ) && !isNaN(currZ)) {
+					prevZ = (lastZ + currZ) / 2;
+				} else if (!isNaN(lastZ)) {
+					prevZ = lastZ;
+				} else if (!isNaN(currZ)) {
+					prevZ = currZ;
+				}
+				data[data.length - 1].z = prevZ;
+			}
+		}
+
 		// skip point if it has not elevation
-		if (typeof z !== "undefined") {
+		if (!isNaN(z)) {
 			z = z * this._heightFactor;
 			eleMax = eleMax < z ? z : eleMax;
 			eleMin = eleMin > z ? z : eleMin;
@@ -563,7 +583,9 @@ L.Control.Elevation = L.Control.extend({
 				z: z,
 				latlng: curr
 			});
+			this._lastValidZ = z;
 		}
+
 
 		this._data = data;
 		this._distance = dist;
@@ -585,6 +607,7 @@ L.Control.Elevation = L.Control.extend({
 		this._appendAxis(g);
 		this._appendFocusRect(g);
 		this._appendMouseFocusG(g);
+		this._appendLegend(g);
 	},
 
 	_appendElevationDiv: function(container) {
@@ -739,6 +762,31 @@ L.Control.Elevation = L.Control.extend({
 			.attr("dy", "2em");
 	},
 
+	_appendLegend: function(g) {
+		var legend = this._legend = g.append('g')
+			.attr("class", "legend");
+
+		var altitude = this._altitudeLegend = this._legend.append('g')
+			.attr("class", "legend-altitude");
+
+		altitude.append("rect")
+			.attr("class", "area")
+			.attr("x", (this._width() / 2) - 50)
+			.attr("y", this._height() + this.options.margins.bottom - 17)
+			.attr("width", 50)
+			.attr("height", 5)
+			.attr("opacity", 0.75);
+
+		altitude.append('text')
+			.text('Altitude')
+			.attr("x", (this._width() / 2) + 5)
+			.attr("font-size", 10)
+			.style("text-decoration-thickness", "2px")
+			.style("font-weight", "700")
+			.attr('y', this._height() + this.options.margins.bottom - 11);
+
+	},
+
 	_appendPositionMarker: function(pane) {
 		var theme = this.options.theme;
 		var heightG = pane.select("g");
@@ -818,6 +866,9 @@ L.Control.Elevation = L.Control.extend({
 			this._y.domain([0, 1]);
 			this._updateAxis();
 		}
+		if (this._altitudeLegend) {
+			this._altitudeLegend.select('text').style("text-decoration-line", "line-through");
+		}
 	},
 
 	/*
@@ -896,8 +947,16 @@ L.Control.Elevation = L.Control.extend({
 		if (!this._dragStartCoords || !this._dragCurrentCoords || !this._gotDragged) {
 			this._dragStartCoords = null;
 			this._gotDragged = false;
-			if (this._draggingEnabled)
-				this._resetDrag();
+			if (this._draggingEnabled) this._resetDrag();
+			// autotoggle chart data on single click
+			if (this._chartEnabled) {
+				this._clearChart();
+				this._clearPath();
+				this._chartEnabled = false;
+			} else {
+				this._resizeChart();
+				this._chartEnabled = true;
+			}
 			return;
 		}
 
@@ -1260,7 +1319,7 @@ L.Control.Elevation = L.Control.extend({
 	 * Handles the moueseover the chart and displays distance and altitude level
 	 */
 	_mousemoveHandler: function(d, i, ctx) {
-		if (!this._data || this._data.length === 0) {
+		if (!this._data || this._data.length === 0 || !this._chartEnabled) {
 			return;
 		}
 		var coords = d3.mouse(this._focusRect.node());
@@ -1299,10 +1358,10 @@ L.Control.Elevation = L.Control.extend({
 		var latlng = e.latlng;
 		var item = this._findItemForLatLng(latlng);
 		if (item) {
-			var x = item.xDiagCoord;
+			var xCoord = item.xDiagCoord;
 
 			this._hidePositionMarker();
-			this._showDiagramIndicator(item, x);
+			this._showDiagramIndicator(item, xCoord);
 			this._showPositionMarker(item);
 		}
 	},
@@ -1365,6 +1424,8 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	_showDiagramIndicator: function(item, xCoordinate) {
+		if (!this._chartEnabled) return;
+
 		var opts = this.options;
 		this._focusG.style("visibility", "visible");
 
