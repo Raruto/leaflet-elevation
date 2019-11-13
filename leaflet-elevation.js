@@ -567,25 +567,27 @@ L.Control.Elevation = L.Control.extend({
 				} else if (!isNaN(currZ)) {
 					prevZ = currZ;
 				}
-				data[data.length - 1].z = prevZ;
+				if (!isNaN(prevZ)) data[data.length - 1].z = prevZ;
+				else data.splice(data.length - 1, 1);
 			}
 		}
 
+		z = z * this._heightFactor;
+
 		// skip point if it has not elevation
 		if (!isNaN(z)) {
-			z = z * this._heightFactor;
 			eleMax = eleMax < z ? z : eleMax;
 			eleMin = eleMin > z ? z : eleMin;
-			data.push({
-				dist: dist,
-				x: x,
-				y: y,
-				z: z,
-				latlng: curr
-			});
 			this._lastValidZ = z;
 		}
 
+		data.push({
+			dist: dist,
+			x: x,
+			y: y,
+			z: z,
+			latlng: curr
+		});
 
 		this._data = data;
 		this._distance = dist;
