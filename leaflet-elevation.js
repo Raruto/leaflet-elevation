@@ -84,6 +84,7 @@ L.Control.Elevation = L.Control.extend({
 		imperial: false,
 		interpolation: "curveLinear",
 		lazyLoadJS: true,
+		legend: true,
 		loadData: {
 			defer: false,
 			lazy: false,
@@ -400,7 +401,7 @@ L.Control.Elevation = L.Control.extend({
 						window.removeEventListener('scroll', scrollFn);
 						this.loadData(data, opts);
 						this.once('eledata_loaded', function() {
-							if (this.placeholder) {
+							if (this.placeholder && this.placeholder.parentNode) {
 								this.placeholder.parentNode.removeChild(this.placeholder);
 							}
 						}, this)
@@ -467,6 +468,10 @@ L.Control.Elevation = L.Control.extend({
 
 	onRemove: function(map) {
 		this._container = null;
+	},
+
+	redraw: function() {
+		this._resizeChart();
 	},
 
 	setZFollow: function(zoom) {
@@ -765,6 +770,8 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	_appendLegend: function(g) {
+		if (!this.options.legend) return;
+
 		var legend = this._legend = g.append('g')
 			.attr("class", "legend");
 
@@ -1581,7 +1588,7 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	_updateSummary: function() {
-		if (this.options.summary) {
+		if (this.options.summary && this.summaryDiv) {
 			this.track_info = this.track_info || {};
 			this.track_info.distance = this._distance || 0;
 			this.track_info.elevation_max = this._maxElevation || 0;
