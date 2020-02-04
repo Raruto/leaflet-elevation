@@ -1410,6 +1410,7 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	_resetView: function() {
+		if (this._map && this._map._isFullscreen) return;
 		this._resetDrag();
 		this._hidePositionMarker();
 		if (this._map) this._map.fitBounds(this._fullExtent);
