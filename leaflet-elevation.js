@@ -165,6 +165,7 @@ L.Control.Elevation = L.Control.extend({
 		} else {
 			L.Control.prototype.addTo.call(this, map);
 		}
+  		return this;
 	},
 
 	/*
