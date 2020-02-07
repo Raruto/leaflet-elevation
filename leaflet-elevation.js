@@ -165,7 +165,7 @@ L.Control.Elevation = L.Control.extend({
 		} else {
 			L.Control.prototype.addTo.call(this, map);
 		}
-  		return this;
+		return this;
 	},
 
 	/*
@@ -217,7 +217,7 @@ L.Control.Elevation = L.Control.extend({
 		if (typeof options.download !== "undefined") this.options.downloadLink = options.download;
 
 		// L.Util.setOptions(this, options);
-		this.options = this._deepExtend({}, this.options, options);
+		this.options = this._deepMerge({}, this.options, options);
 
 		this._draggingEnabled = !L.Browser.mobile;
 		this._chartEnabled = true;
@@ -911,21 +911,24 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
-	_deepExtend: function(out) {
-		out = out || {};
-		for (var i = 1, len = arguments.length; i < len; ++i) {
-			var obj = arguments[i];
-			if (!obj) continue;
-			for (var key in obj) {
-				if (!obj.hasOwnProperty(key)) continue;
-				if (Object.prototype.toString.call(obj[key]) === '[object Object]') {
-					out[key] = this._deepExtend(out[key], obj[key]);
-					continue;
+	_deepMerge: function(target, ...sources) {
+		if (!sources.length) return target;
+		const source = sources.shift();
+		if (this._isObject(target) && this._isObject(source)) {
+			for (const key in source) {
+				if (this._isObject(source[key])) {
+					if (!target[key]) Object.assign(target, {
+						[key]: {}
+					});
+					this._deepMerge(target[key], source[key]);
+				} else {
+					Object.assign(target, {
+						[key]: source[key]
+					});
 				}
-				out[key] = obj[key];
 			}
 		}
-		return out;
+		return this._deepMerge(target, ...sources);
 	},
 
 	_saveFile: function(fileUrl) {
@@ -1228,6 +1231,10 @@ L.Control.Elevation = L.Control.extend({
 		} else {
 			// TODO: handle autohide when detached=true
 		}
+	},
+
+	_isObject: function(item) {
+		return (item && typeof item === 'object' && !Array.isArray(item));
 	},
 
 	_isJSONDoc: function(doc, lazy) {
