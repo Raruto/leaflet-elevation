@@ -107,7 +107,7 @@ _For a working example see one of the following demos:_
 
     </script>
     ```
-_Related: [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
+_Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
 
 ---
 
