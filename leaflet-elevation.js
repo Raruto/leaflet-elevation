@@ -1553,7 +1553,7 @@ L.Control.Elevation = L.Control.extend({
 
 		if (!this._marker) {
 			this._marker = new L.Marker(ll, {
-				icon: this.options.MarkerIcon,
+				icon: this.options.markerIcon,
 				zIndexOffset: 1000000,
 			});
 			this._marker.addTo(this._map, {
