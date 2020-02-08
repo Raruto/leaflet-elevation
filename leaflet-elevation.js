@@ -190,8 +190,9 @@ L.Control.Elevation = L.Control.extend({
 		this._draggingEnabled = true;
 	},
 
-	fitBounds: function() {
-		if (this._map) this._map.fitBounds(this._fullExtent);
+	fitBounds: function(bounds) {
+		bounds = bounds || this._fullExtent;
+		if (this._map && bounds) this._map.fitBounds(bounds);
 	},
 
 	getZFollow: function() {
@@ -321,7 +322,7 @@ L.Control.Elevation = L.Control.extend({
 		});
 		if (this._map) {
 			this._map.once('layeradd', function(e) {
-				this._map.fitBounds(this.layer.getBounds());
+				this.fitBounds(this.layer.getBounds());
 				var evt = {
 					data: data,
 					layer: this.layer,
@@ -345,7 +346,7 @@ L.Control.Elevation = L.Control.extend({
 			this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
 
 			this.layer.on('loaded', function(e) {
-				if (this._map) this._map.fitBounds(e.target.getBounds());
+				this.fitBounds(e.target.getBounds());
 			}, this);
 			this.layer.on('addpoint', function(e) {
 				if (e.point._popup) {
@@ -1071,12 +1072,10 @@ L.Control.Elevation = L.Control.extend({
 	 * Make the map fit the route section between given indexes.
 	 */
 	_fitSection: function(index1, index2) {
-		var start = Math.min(index1, index2),
-			end = Math.max(index1, index2);
-
-		var ext = this._calculateFullExtent(this._data.slice(start, end));
-
-		if (this._map) this._map.fitBounds(ext);
+		var start = Math.min(index1, index2);
+		var end   = Math.max(index1, index2);
+		var ext   = this._calculateFullExtent(this._data.slice(start, end));
+		this.fitBounds(ext);
 	},
 
 	/*
@@ -1421,7 +1420,7 @@ L.Control.Elevation = L.Control.extend({
 		if (this._map && this._map._isFullscreen) return;
 		this._resetDrag();
 		this._hidePositionMarker();
-		if (this._map) this._map.fitBounds(this._fullExtent);
+		this.fitBounds(this._fullExtent);
 	},
 
 	_resizeChart: function() {
