@@ -963,7 +963,7 @@ L.Control.Elevation = L.Control.extend({
 			this._gotDragged = false;
 			if (this._draggingEnabled) this._resetDrag();
 			// autotoggle chart data on single click
-			if (this._chartEnabled) {
+			if (this.options.legend && this._chartEnabled) {
 				this._clearChart();
 				this._clearPath();
 				this._chartEnabled = false;
@@ -1073,8 +1073,8 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	_fitSection: function(index1, index2) {
 		var start = Math.min(index1, index2);
-		var end   = Math.max(index1, index2);
-		var ext   = this._calculateFullExtent(this._data.slice(start, end));
+		var end = Math.max(index1, index2);
+		var ext = this._calculateFullExtent(this._data.slice(start, end));
 		this.fitBounds(ext);
 	},
 
