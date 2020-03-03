@@ -1,4 +1,8 @@
 # leaflet-elevation.js
+
+[![NPM version](https://img.shields.io/npm/v/@raruto/leaflet-elevation.svg)](https://www.npmjs.com/package/@raruto/leaflet-elevation)
+[![License](https://img.shields.io/badge/license-GPL%203-blue.svg?style=flat)](LICENSE)
+
 A Leaflet plugin that allows to add elevation profiles using d3js
 
 <p align="center">
@@ -111,7 +115,10 @@ _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Inte
 
 ---
 
-**Compatibile with:** leaflet@1.3.2, leaflet-gpx@1.4.0, d3js@4.13
+**Compatibile with:**
+[![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.3.2-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
+[![leaflet-gpx 1.4 compatibile!](https://img.shields.io/badge/Leaflet%20GPX-1.4.0-1EB300.svg?style=flat)](https://github.com/mpetazzoni/leaflet-gpx)
+[![d3.js v4 compatibile!](https://img.shields.io/badge/d3.js-4.13-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
 
 ---
 
