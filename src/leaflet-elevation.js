@@ -330,7 +330,7 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Load GeoJSON data.
+	 * Load raw GeoJSON data.
 	 */
 	loadGeoJSON: function(data) {
 		if (typeof data === "string") {
@@ -376,7 +376,7 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Load GPX data.
+	 * Load raw GPX data.
 	 */
 	loadGPX: function(data) {
 		var callback = function(data) {
