@@ -964,7 +964,7 @@
     	},
 
     	/**
-    	 * Calculates [x, y] domain.
+    	 * Calculates [x, y] domain and then update chart.
     	 */
     	_applyData: function() {
     		if (!this._data) return;
@@ -1303,6 +1303,9 @@
     		}
     	},
 
+    	/**
+    	 * Generate "svg" chart DOM element.
+    	 */
     	_initChart: function() {
     		var opts = this.options;
     		opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
@@ -1403,10 +1406,16 @@
     		}
     	},
 
+    	/**
+    	 * Check object type.
+    	 */
     	_isObject: function(item) {
     		return (item && typeof item === 'object' && !Array.isArray(item));
     	},
 
+    	/**
+    	 * Check JSON object type.
+    	 */
     	_isJSONDoc: function(doc, lazy) {
     		lazy = typeof lazy === "undefined" ? true : lazy;
     		if (typeof doc === "string" && lazy) {
@@ -1424,6 +1433,9 @@
     		}
     	},
 
+    	/**
+    	 * Check XML object type.
+    	 */
     	_isXMLDoc: function(doc, lazy) {
     		lazy = typeof lazy === "undefined" ? true : lazy;
     		if (typeof doc === "string" && lazy) {
@@ -1435,10 +1447,16 @@
     		}
     	},
 
+    	/**
+    	 * Check DOM element visibility.
+    	 */
     	_isDomVisible: function(elem) {
     		return !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
     	},
 
+    	/**
+    	 * Check DOM element viewport visibility.
+    	 */
     	_isVisible: function(elem) {
     		if (!elem) return false;
 
@@ -1477,6 +1495,9 @@
     		return true;
     	},
 
+    	/**
+    	 * Async JS script download.
+    	 */
     	_lazyLoadJS: function(url, skip) {
     		if (typeof skip == "undefined") {
     			skip = false;
@@ -1493,6 +1514,9 @@
     		});
     	},
 
+    	/*
+    	 * Handles the moueseenter over the chart.
+    	 */
     	_mouseenterHandler: function() {
     		if (this.fire) {
     			this.fire("elechart_enter", null, true);
@@ -1503,7 +1527,7 @@
     	},
 
     	/*
-    	 * Handles the moueseover the chart and displays distance and altitude level
+    	 * Handles the moueseover the chart and displays distance and altitude level.
     	 */
     	_mousemoveHandler: function(d, i, ctx) {
     		if (!this._data || this._data.length === 0 || !this._chartEnabled) {
@@ -1553,6 +1577,9 @@
     		}
     	},
 
+    	/*
+    	 * Handles the moueseout over the chart.
+    	 */
     	_mouseoutHandler: function() {
     		if (!this.options.detached) {
     			this._hidePositionMarker();
@@ -1566,6 +1593,9 @@
     		if (this._map) this._map.fire("elechart_leave", null, true);
     	},
 
+    	/*
+    	 * Handles the mouesewheel over the chart.
+    	 */
     	_mousewheelHandler: function(e) {
     		if (this._map.gestureHandling && this._map.gestureHandling._enabled) return;
     		var ll = this._selectedItem ? this._selectedItem.latlng : this._map.getCenter();
@@ -1587,6 +1617,9 @@
     		}
     	},
 
+    	/**
+    	 * Resets drag, marker and bounds.
+    	 */
     	_resetView: function() {
     		if (this._map && this._map._isFullscreen) return;
     		this._resetDrag();
@@ -1594,6 +1627,9 @@
     		this.fitBounds(this._fullExtent);
     	},
 
+    	/**
+    	 * Hacky way for handling chart resize. Deletes it and redraw chart.
+    	 */
     	_resizeChart: function() {
     		if (this.options.responsive) {
     			if (this.options.detached) {
@@ -1611,6 +1647,9 @@
     		}
     	},
 
+    	/**
+    	 * Display distance and altitude level ("focus-rect").
+    	 */
     	_showDiagramIndicator: function(item, xCoordinate) {
     		if (!this._chartEnabled) return;
 
@@ -1663,6 +1702,9 @@
 
     	},
 
+    	/**
+    	 * Collapse or Expand current chart control.
+    	 */
     	_toggle: function() {
     		if (L.DomUtil.hasClass(this._container, "elevation-expanded"))
     			this._collapse();
@@ -1670,6 +1712,9 @@
     			this._expand();
     	},
 
+    	/**
+    	 * Sets the view of the map (center and zoom). Useful when "followMarker" is true.
+    	 */
     	_setMapView: function(item) {
     		if (!this.options.followMarker || !this._map) return;
     		var zoom = this._map.getZoom();
@@ -1677,6 +1722,9 @@
     		this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
     	},
 
+    	/*
+    	 * Shows the position/height indicator marker drawn onto the map
+    	 */
     	_showPositionMarker: function(item) {
     		this._selectedItem = item;
 
@@ -1693,6 +1741,9 @@
     		}
     	},
 
+    	/**
+    	 * Update chart axis.
+    	 */
     	_updateAxis: function() {
     		this._grid.selectAll("g").remove();
     		this._axis.selectAll("g").remove();
@@ -1702,6 +1753,9 @@
     		this._appendYaxis(this._axis);
     	},
 
+    	/**
+    	 * Update distance and altitude level ("leaflet-marker").
+    	 */
     	_updateHeightIndicator: function(item) {
     		var opts = this.options;
 
@@ -1725,6 +1779,9 @@
     			.style("visibility", "visible");
     	},
 
+    	/**
+    	 * Update position marker ("leaflet-marker").
+    	 */
     	_updateLeafletMarker: function(item) {
     		var ll = item.latlng;
 
@@ -1741,12 +1798,18 @@
     		}
     	},
 
+    	/**
+    	 * Update focus point ("leaflet-marker").
+    	 */
     	_updatePointG: function(item) {
     		this._pointG
     			.attr("transform", "translate(" + item.x + "," + item.y + ")")
     			.style("visibility", "visible");
     	},
 
+    	/**
+    	 * Update position marker ("leaflet-marker").
+    	 */
     	_updatePositionMarker: function(item) {
     		var point = this._map.latLngToLayerPoint(item.latlng);
     		var layerpoint = {
@@ -1766,6 +1829,9 @@
     		this._updateHeightIndicator(layerpoint);
     	},
 
+    	/**
+    	 * Update chart summary.
+    	 */
     	_updateSummary: function() {
     		if (this.options.summary && this.summaryDiv) {
     			this.track_info = this.track_info || {};
