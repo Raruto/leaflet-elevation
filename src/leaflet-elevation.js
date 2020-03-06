@@ -162,6 +162,9 @@ L.Control.Elevation = L.Control.extend({
 		if (this._map) this._map.fire("eledata_added", evt, true);
 	},
 
+	/**
+	 * Adds the control to the given map.
+	 */
 	addTo: function(map) {
 		if (this.options.detached) {
 			this._addToChartDiv(map);
@@ -184,28 +187,46 @@ L.Control.Elevation = L.Control.extend({
 		if (this._map) this._map.fire("eledata_clear");
 	},
 
+	/**
+	 * Disable dragging chart on touch events.
+	 */
 	disableDragging: function() {
 		this._draggingEnabled = false;
 		this._resetDrag();
 	},
 
+	/**
+	 * Enable dragging chart on touch events.
+	 */
 	enableDragging: function() {
 		this._draggingEnabled = true;
 	},
 
+	/**
+	 * Sets a map view that contains the given geographical bounds.
+	 */
 	fitBounds: function(bounds) {
 		bounds = bounds || this._fullExtent;
 		if (this._map && bounds) this._map.fitBounds(bounds);
 	},
 
+	/**
+	 * Get default zoom level when "followMarker" is true.
+	 */
 	getZFollow: function() {
 		return this._zFollow;
 	},
 
+	/**
+	 * Hide current elevation chart profile.
+	 */
 	hide: function() {
 		this._container.style.display = "none";
 	},
 
+	/**
+	 * Initialize chart control "options" and "container".
+	 */
 	initialize: function(options) {
 		this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
 
@@ -258,6 +279,9 @@ L.Control.Elevation = L.Control.extend({
 		this.addTo(map);
 	},
 
+	/**
+	 * Load elevation data (GPX or GeoJSON).
+	 */
 	loadData: function(data, opts) {
 		opts = L.extend({}, this.options.loadData, opts);
 		if (opts.defer) {
