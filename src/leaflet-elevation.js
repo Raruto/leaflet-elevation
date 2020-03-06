@@ -297,6 +297,9 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/**
+	 * Wait for document load before download data.
+	 */
 	loadDefer: function(data, opts) {
 		opts = L.extend({}, this.options.loadData, opts);
 		opts.defer = false;
@@ -304,6 +307,9 @@ L.Control.Elevation = L.Control.extend({
 		else this.loadData(data, opts)
 	},
 
+	/**
+	 * Load data from a remote url.
+	 */
 	loadFile: function(url) {
 		this._downloadURL = url; // TODO: handle multiple urls?
 		try {
@@ -323,6 +329,9 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/**
+	 * Load GeoJSON data.
+	 */
 	loadGeoJSON: function(data) {
 		if (typeof data === "string") {
 			data = JSON.parse(data);
@@ -366,6 +375,9 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/**
+	 * Load GPX data.
+	 */
 	loadGPX: function(data) {
 		var callback = function(data) {
 			this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
@@ -419,6 +431,9 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/**
+	 * Wait for chart container visible before download data.
+	 */
 	loadLazy: function(data, opts) {
 		opts = L.extend({}, this.options.loadData, opts);
 		opts.lazy = false;
@@ -445,6 +460,10 @@ L.Control.Elevation = L.Control.extend({
 		scrollFn();
 	},
 
+	/**
+	 * Create container DOM element and related event listeners.
+	 * Called on control.addTo(map).
+	 */
 	onAdd: function(map) {
 		this._map = map;
 
@@ -495,18 +514,31 @@ L.Control.Elevation = L.Control.extend({
 		return container;
 	},
 
+	/**
+	 * Clean up control code and related event listeners.
+	 * Called on control.remove().
+	 */
 	onRemove: function(map) {
 		this._container = null;
 	},
 
+	/**
+	 * Redraws the chart control. Sometimes useful after screen resize.
+	 */
 	redraw: function() {
 		this._resizeChart();
 	},
 
+	/**
+	 * Set default zoom level when "followMarker" is true.
+	 */
 	setZFollow: function(zoom) {
 		this._zFollow = zoom;
 	},
 
+	/**
+	 * Hide current elevation chart profile.
+	 */
 	show: function() {
 		this._container.style.display = "block";
 	},
