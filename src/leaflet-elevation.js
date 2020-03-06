@@ -167,7 +167,7 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	addTo: function(map) {
 		if (this.options.detached) {
-			this._addToChartDiv(map);
+			this._appendElevationDiv(map._container).appendChild(this.onAdd(map));
 		} else {
 			L.Control.prototype.addTo.call(this, map);
 		}
@@ -601,6 +601,9 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/*
+	 * Parse and push a single (x, y, z) point to current elevation profile.
+	 */
 	_addPoint: function(x, y, z) {
 		if (this.options.reverseCoords) {
 			var tmp = x;
@@ -661,10 +664,9 @@ L.Control.Elevation = L.Control.extend({
 		this._minElevation = eleMin;
 	},
 
-	_addToChartDiv: function(map) {
-		this._appendElevationDiv(map._container).appendChild(this.onAdd(map));
-	},
-
+	/**
+	 * Generate "svg" chart container.
+	 */
 	_appendChart: function(svg) {
 		var g = svg
 			.append("g")
@@ -678,6 +680,9 @@ L.Control.Elevation = L.Control.extend({
 		this._appendLegend(g);
 	},
 
+	/**
+	 * Adds the control to the given "detached" div.
+	 */
 	_appendElevationDiv: function(container) {
 		var eleDiv = document.querySelector(this.options.elevationDiv);
 		if (!eleDiv) {
@@ -694,6 +699,9 @@ L.Control.Elevation = L.Control.extend({
 		return this.eleDiv;
 	},
 
+	/**
+	 * Generate "x-axis".
+	 */
 	_appendXaxis: function(axis) {
 		axis
 			.append("g")
@@ -711,6 +719,9 @@ L.Control.Elevation = L.Control.extend({
 			.text(this._xLabel);
 	},
 
+	/**
+	 * Generate "x-grid".
+	 */
 	_appendXGrid: function(grid) {
 		grid.append("g")
 			.attr("class", "x grid")
@@ -726,6 +737,9 @@ L.Control.Elevation = L.Control.extend({
 
 	},
 
+	/**
+	 * Generate "y-axis".
+	 */
 	_appendYaxis: function(axis) {
 		axis
 			.append("g")
@@ -742,6 +756,9 @@ L.Control.Elevation = L.Control.extend({
 			.text(this._yLabel);
 	},
 
+	/**
+	 * Generate "y-grid".
+	 */
 	_appendYGrid: function(grid) {
 		grid.append("g")
 			.attr("class", "y grid")
@@ -755,11 +772,17 @@ L.Control.Elevation = L.Control.extend({
 			);
 	},
 
+	/**
+	 * Generate "path".
+	 */
 	_appendAreaPath: function(g) {
 		this._areapath = g.append("path")
 			.attr("class", "area");
 	},
 
+	/**
+	 * Generate "axis".
+	 */
 	_appendAxis: function(g) {
 		this._axis = g.append("g")
 			.attr("class", "axis");
@@ -767,6 +790,9 @@ L.Control.Elevation = L.Control.extend({
 		this._appendYaxis(this._axis);
 	},
 
+	/**
+	 * Generate "mouse-focus" and "drag-rect".
+	 */
 	_appendFocusRect: function(g) {
 		var focusRect = this._focusRect = g.append("rect")
 			.attr("width", this._width())
@@ -793,6 +819,9 @@ L.Control.Elevation = L.Control.extend({
 		L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
 	},
 
+	/**
+	 * Generate "grid".
+	 */
 	_appendGrid: function(g) {
 		this._grid = g.append("g")
 			.attr("class", "grid");
@@ -800,6 +829,9 @@ L.Control.Elevation = L.Control.extend({
 		this._appendYGrid(this._grid);
 	},
 
+	/**
+	 * Generate "mouse-focus".
+	 */
 	_appendMouseFocusG: function(g) {
 		var focusG = this._focusG = g.append("g")
 			.attr("class", "mouse-focus-group");
@@ -830,6 +862,9 @@ L.Control.Elevation = L.Control.extend({
 			.attr("dy", "2em");
 	},
 
+	/**
+	 * Generate "legend".
+	 */
 	_appendLegend: function(g) {
 		if (!this.options.legend) return;
 
@@ -857,6 +892,9 @@ L.Control.Elevation = L.Control.extend({
 
 	},
 
+	/**
+	 * Generate "svg:line".
+	 */
 	_appendPositionMarker: function(pane) {
 		var theme = this.options.theme;
 		var heightG = pane.select("g");
@@ -880,6 +918,9 @@ L.Control.Elevation = L.Control.extend({
 			.style("pointer-events", "none");
 	},
 
+	/**
+	 * Calculates [x, y] domain.
+	 */
 	_applyData: function() {
 		if (!this._data) return;
 
@@ -924,6 +965,9 @@ L.Control.Elevation = L.Control.extend({
 		return ext;
 	},
 
+	/*
+	 * Reset chart.
+	 */
 	_clearChart: function() {
 		this._resetDrag();
 		if (this._areapath) {
@@ -942,7 +986,7 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	/*
-	 * Reset data
+	 * Reset data.
 	 */
 	_clearData: function() {
 		this._data = null;
@@ -956,6 +1000,9 @@ L.Control.Elevation = L.Control.extend({
 		// }
 	},
 
+	/*
+	 * Reset path.
+	 */
 	_clearPath: function() {
 		this._hidePositionMarker();
 		for (var id in this._layers) {
@@ -964,6 +1011,9 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/*
+	 * Collapse current chart control.
+	 */
 	_collapse: function() {
 		if (this._container) {
 			L.DomUtil.removeClass(this._container, 'elevation-expanded');
@@ -971,6 +1021,10 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/**
+	 * Recursive deep merge objects.
+	 * Alternative to L.Util.setOptions(this, options).
+	 */
 	_deepMerge: function(target, ...sources) {
 		if (!sources.length) return target;
 		const source = sources.shift();
@@ -991,6 +1045,9 @@ L.Control.Elevation = L.Control.extend({
 		return this._deepMerge(target, ...sources);
 	},
 
+	/**
+	 * Generate GPX / GeoJSON download event.
+	 */
 	_saveFile: function(fileUrl) {
 		var d = document,
 			a = d.createElement('a'),
@@ -1004,6 +1061,9 @@ L.Control.Elevation = L.Control.extend({
 		b.removeChild(a);
 	},
 
+	/*
+	 * Handle drag operations.
+	 */
 	_dragHandler: function() {
 		//we don't want map events to occur here
 		d3.event.preventDefault();
@@ -1055,6 +1115,9 @@ L.Control.Elevation = L.Control.extend({
 		if (this._map) this._map.fire("elechart_dragged", evt, true);
 	},
 
+	/*
+	 * Handles start of drag operations.
+	 */
 	_dragStartHandler: function() {
 		d3.event.preventDefault();
 		d3.event.stopPropagation();
@@ -1093,6 +1156,9 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/*
+	 * Expand current chart control.
+	 */
 	_expand: function() {
 		if (this._container) {
 			L.DomUtil.removeClass(this._container, 'elevation-collapsed');
@@ -1158,6 +1224,9 @@ L.Control.Elevation = L.Control.extend({
 		return res;
 	},
 
+	/**
+	 * Calculates chart height.
+	 */
 	_height: function() {
 		var opts = this.options;
 		return opts.height - opts.margins.top - opts.margins.bottom;
@@ -1685,6 +1754,9 @@ L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/**
+	 * Calculates chart width.
+	 */
 	_width: function() {
 		var opts = this.options;
 		return opts.width - opts.margins.left - opts.margins.right;
