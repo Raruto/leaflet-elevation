@@ -212,7 +212,7 @@
     	 */
     	addTo: function(map) {
     		if (this.options.detached) {
-    			this._addToChartDiv(map);
+    			this._appendElevationDiv(map._container).appendChild(this.onAdd(map));
     		} else {
     			L.Control.prototype.addTo.call(this, map);
     		}
@@ -342,6 +342,9 @@
     		}
     	},
 
+    	/**
+    	 * Wait for document load before download data.
+    	 */
     	loadDefer: function(data, opts) {
     		opts = L.extend({}, this.options.loadData, opts);
     		opts.defer = false;
@@ -349,6 +352,9 @@
     		else this.loadData(data, opts);
     	},
 
+    	/**
+    	 * Load data from a remote url.
+    	 */
     	loadFile: function(url) {
     		this._downloadURL = url; // TODO: handle multiple urls?
     		try {
@@ -368,6 +374,9 @@
     		}
     	},
 
+    	/**
+    	 * Load raw GeoJSON data.
+    	 */
     	loadGeoJSON: function(data) {
     		if (typeof data === "string") {
     			data = JSON.parse(data);
@@ -411,6 +420,9 @@
     		}
     	},
 
+    	/**
+    	 * Load raw GPX data.
+    	 */
     	loadGPX: function(data) {
     		var callback = function(data) {
     			this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
@@ -464,6 +476,9 @@
     		}
     	},
 
+    	/**
+    	 * Wait for chart container visible before download data.
+    	 */
     	loadLazy: function(data, opts) {
     		opts = L.extend({}, this.options.loadData, opts);
     		opts.lazy = false;
@@ -490,6 +505,10 @@
     		scrollFn();
     	},
 
+    	/**
+    	 * Create container DOM element and related event listeners.
+    	 * Called on control.addTo(map).
+    	 */
     	onAdd: function(map) {
     		this._map = map;
 
@@ -540,18 +559,31 @@
     		return container;
     	},
 
+    	/**
+    	 * Clean up control code and related event listeners.
+    	 * Called on control.remove().
+    	 */
     	onRemove: function(map) {
     		this._container = null;
     	},
 
+    	/**
+    	 * Redraws the chart control. Sometimes useful after screen resize.
+    	 */
     	redraw: function() {
     		this._resizeChart();
     	},
 
+    	/**
+    	 * Set default zoom level when "followMarker" is true.
+    	 */
     	setZFollow: function(zoom) {
     		this._zFollow = zoom;
     	},
 
+    	/**
+    	 * Hide current elevation chart profile.
+    	 */
     	show: function() {
     		this._container.style.display = "block";
     	},
@@ -614,6 +646,9 @@
     		}
     	},
 
+    	/*
+    	 * Parse and push a single (x, y, z) point to current elevation profile.
+    	 */
     	_addPoint: function(x, y, z) {
     		if (this.options.reverseCoords) {
     			var tmp = x;
@@ -674,10 +709,9 @@
     		this._minElevation = eleMin;
     	},
 
-    	_addToChartDiv: function(map) {
-    		this._appendElevationDiv(map._container).appendChild(this.onAdd(map));
-    	},
-
+    	/**
+    	 * Generate "svg" chart container.
+    	 */
     	_appendChart: function(svg) {
     		var g = svg
     			.append("g")
@@ -691,6 +725,9 @@
     		this._appendLegend(g);
     	},
 
+    	/**
+    	 * Adds the control to the given "detached" div.
+    	 */
     	_appendElevationDiv: function(container) {
     		var eleDiv = document.querySelector(this.options.elevationDiv);
     		if (!eleDiv) {
@@ -707,6 +744,9 @@
     		return this.eleDiv;
     	},
 
+    	/**
+    	 * Generate "x-axis".
+    	 */
     	_appendXaxis: function(axis) {
     		axis
     			.append("g")
@@ -724,6 +764,9 @@
     			.text(this._xLabel);
     	},
 
+    	/**
+    	 * Generate "x-grid".
+    	 */
     	_appendXGrid: function(grid) {
     		grid.append("g")
     			.attr("class", "x grid")
@@ -739,6 +782,9 @@
 
     	},
 
+    	/**
+    	 * Generate "y-axis".
+    	 */
     	_appendYaxis: function(axis) {
     		axis
     			.append("g")
@@ -755,6 +801,9 @@
     			.text(this._yLabel);
     	},
 
+    	/**
+    	 * Generate "y-grid".
+    	 */
     	_appendYGrid: function(grid) {
     		grid.append("g")
     			.attr("class", "y grid")
@@ -768,11 +817,17 @@
     			);
     	},
 
+    	/**
+    	 * Generate "path".
+    	 */
     	_appendAreaPath: function(g) {
     		this._areapath = g.append("path")
     			.attr("class", "area");
     	},
 
+    	/**
+    	 * Generate "axis".
+    	 */
     	_appendAxis: function(g) {
     		this._axis = g.append("g")
     			.attr("class", "axis");
@@ -780,6 +835,9 @@
     		this._appendYaxis(this._axis);
     	},
 
+    	/**
+    	 * Generate "mouse-focus" and "drag-rect".
+    	 */
     	_appendFocusRect: function(g) {
     		var focusRect = this._focusRect = g.append("rect")
     			.attr("width", this._width())
@@ -806,6 +864,9 @@
     		L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
     	},
 
+    	/**
+    	 * Generate "grid".
+    	 */
     	_appendGrid: function(g) {
     		this._grid = g.append("g")
     			.attr("class", "grid");
@@ -813,6 +874,9 @@
     		this._appendYGrid(this._grid);
     	},
 
+    	/**
+    	 * Generate "mouse-focus".
+    	 */
     	_appendMouseFocusG: function(g) {
     		var focusG = this._focusG = g.append("g")
     			.attr("class", "mouse-focus-group");
@@ -843,6 +907,9 @@
     			.attr("dy", "2em");
     	},
 
+    	/**
+    	 * Generate "legend".
+    	 */
     	_appendLegend: function(g) {
     		if (!this.options.legend) return;
 
@@ -870,6 +937,9 @@
 
     	},
 
+    	/**
+    	 * Generate "svg:line".
+    	 */
     	_appendPositionMarker: function(pane) {
     		var theme = this.options.theme;
     		var heightG = pane.select("g");
@@ -893,6 +963,9 @@
     			.style("pointer-events", "none");
     	},
 
+    	/**
+    	 * Calculates [x, y] domain.
+    	 */
     	_applyData: function() {
     		if (!this._data) return;
 
@@ -937,6 +1010,9 @@
     		return ext;
     	},
 
+    	/*
+    	 * Reset chart.
+    	 */
     	_clearChart: function() {
     		this._resetDrag();
     		if (this._areapath) {
@@ -955,7 +1031,7 @@
     	},
 
     	/*
-    	 * Reset data
+    	 * Reset data.
     	 */
     	_clearData: function() {
     		this._data = null;
@@ -969,6 +1045,9 @@
     		// }
     	},
 
+    	/*
+    	 * Reset path.
+    	 */
     	_clearPath: function() {
     		this._hidePositionMarker();
     		for (var id in this._layers) {
@@ -977,6 +1056,9 @@
     		}
     	},
 
+    	/*
+    	 * Collapse current chart control.
+    	 */
     	_collapse: function() {
     		if (this._container) {
     			L.DomUtil.removeClass(this._container, 'elevation-expanded');
@@ -984,6 +1066,10 @@
     		}
     	},
 
+    	/**
+    	 * Recursive deep merge objects.
+    	 * Alternative to L.Util.setOptions(this, options).
+    	 */
     	_deepMerge: function(target, ...sources) {
     		if (!sources.length) return target;
     		const source = sources.shift();
@@ -1004,6 +1090,9 @@
     		return this._deepMerge(target, ...sources);
     	},
 
+    	/**
+    	 * Generate GPX / GeoJSON download event.
+    	 */
     	_saveFile: function(fileUrl) {
     		var d = document,
     			a = d.createElement('a'),
@@ -1017,6 +1106,9 @@
     		b.removeChild(a);
     	},
 
+    	/*
+    	 * Handle drag operations.
+    	 */
     	_dragHandler: function() {
     		//we don't want map events to occur here
     		d3.event.preventDefault();
@@ -1068,6 +1160,9 @@
     		if (this._map) this._map.fire("elechart_dragged", evt, true);
     	},
 
+    	/*
+    	 * Handles start of drag operations.
+    	 */
     	_dragStartHandler: function() {
     		d3.event.preventDefault();
     		d3.event.stopPropagation();
@@ -1106,6 +1201,9 @@
     		}
     	},
 
+    	/*
+    	 * Expand current chart control.
+    	 */
     	_expand: function() {
     		if (this._container) {
     			L.DomUtil.removeClass(this._container, 'elevation-collapsed');
@@ -1171,6 +1269,9 @@
     		return res;
     	},
 
+    	/**
+    	 * Calculates chart height.
+    	 */
     	_height: function() {
     		var opts = this.options;
     		return opts.height - opts.margins.top - opts.margins.bottom;
@@ -1696,6 +1797,9 @@
     		}
     	},
 
+    	/**
+    	 * Calculates chart width.
+    	 */
     	_width: function() {
     		var opts = this.options;
     		return opts.width - opts.margins.left - opts.margins.right;
