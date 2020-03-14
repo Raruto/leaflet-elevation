@@ -414,7 +414,7 @@ L.Control.Elevation = L.Control.extend({
 			}
 		}.bind(this, data);
 		if (typeof L.GPX !== 'function' && this.options.lazyLoadJS) {
-			L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js', L.Control.Elevation._gpxLazyLoader);
+			L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://unpkg.com/leaflet-gpx@1.5.0/gpx.js', L.Control.Elevation._gpxLazyLoader);
 			L.Control.Elevation._gpxLazyLoader.then(callback);
 		} else {
 			callback.call();

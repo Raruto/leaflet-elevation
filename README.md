@@ -120,8 +120,8 @@ _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Inte
 
 **Compatibile with:**
 [![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.3.2-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
-[![leaflet-gpx 1.4 compatibile!](https://img.shields.io/badge/Leaflet%20GPX-1.4.0-1EB300.svg?style=flat)](https://github.com/mpetazzoni/leaflet-gpx)
-[![d3.js v4 compatibile!](https://img.shields.io/badge/d3.js-4.13-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
+[![leaflet-gpx 1.5 compatibile!](https://img.shields.io/badge/Leaflet%20GPX-1.5.0-1EB300.svg?style=flat)](https://github.com/mpetazzoni/leaflet-gpx)
+[![d3.js v5 compatibile!](https://img.shields.io/badge/d3.js-5.15-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
 
 ---
 
