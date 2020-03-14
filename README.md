@@ -52,8 +52,8 @@ _For a working example see one of the following demos:_
     <script src="https://unpkg.com/leaflet-ui@0.2.0/dist/leaflet-ui.js"></script>
 
     <!-- leaflet-elevation -->
-    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.css" />
-    <script src="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css" />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.js"></script>
     ...
     </head>
     ```
