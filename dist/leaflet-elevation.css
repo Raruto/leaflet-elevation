@@ -1,0 +1,389 @@
+.leaflet-container {
+  z-index: 0;
+  /* prevent overlapping the .elevation-detached chart */
+}
+
+.elevation-detached {
+  font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+  height: auto;
+  width: 100%;
+  position: relative;
+  z-index: 0;
+}
+
+.elevation-detached .elevation {
+  width: 100%;
+}
+
+.elevation-detached .background {
+  max-width: 100%;
+}
+
+.elevation-control.elevation .background {
+  background-color: rgba(70, 130, 180, 0.2);
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -ms-border-radius: 5px;
+  -o-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  overflow: visible;
+  display: block;
+}
+
+.elevation-control.elevation .axis line,
+.elevation-control.elevation .axis path {
+  stroke: #2D1130;
+  stroke-width: 2;
+  fill: none;
+}
+
+.elevation-control.elevation .grid .tick line {
+  stroke: #EEE;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+
+.elevation-control.elevation .grid path {
+  stroke-width: 0;
+  pointer-events: none;
+}
+
+.elevation-control.elevation .axis text {
+  text-anchor: end;
+  fill: #000;
+  font-weight: 700;
+}
+
+.elevation-control.elevation .area {
+  fill: #4682B4;
+  stroke: #000;
+  stroke-width: 1.8;
+  paint-order: stroke fill;
+}
+
+.elevation-control.elevation .mouse-focus-line {
+  stroke: #0D1821;
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.elevation-control.elevation .mouse-focus-label {
+  fill: #000;
+  fill-opacity: 0.75;
+  pointer-events: none;
+}
+
+.elevation-control.elevation .mouse-focus-label-text {
+  fill: #FFF;
+  pointer-events: none;
+}
+
+.elevation-control.elevation .mouse-drag {
+  fill: rgba(23, 74, 117, 0.4);
+}
+
+.elevation-control.elevation .elevation-toggle {
+  cursor: pointer;
+  box-shadow: 0 1px 7px rgba(0, 0, 0, 0.4);
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  width: 36px;
+  height: 36px;
+  background-color: #F8F8F9;
+}
+
+.elevation-summary {
+  font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  margin-left: 45px;
+}
+
+.leaflet-control-container .elevation-summary {
+  text-shadow:
+    1.5px 0 0 #FFF,
+    -1.5px 0 0 #FFF,
+    0 1.5px 0 #FFF,
+    0 -1.5px 0 #FFF,
+    1px 1px #FFF,
+    -1px -1px 0 #FFF,
+    1px -1px 0 #FFF,
+    -1px 1px 0 #FFF;
+}
+
+.elevation-summary.multiline-summary {
+  margin-right: 30px;
+}
+
+.elevation-detached .elevation-summary.multiline-summary {
+  margin-bottom: 12px;
+  margin-top: 12px;
+  line-height: 2;
+}
+
+.elevation-summary.inline-summary>span:not(:last-child):after {
+  content: "\0020\2014\0020";
+}
+
+.elevation-summary.multiline-summary>span {
+  display: block;
+}
+
+.elevation-summary.multiline-summary .download {
+  float: right;
+  margin-top: -2.5em;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.elevation-detached .elevation-summary.multiline-summary .download {
+  margin-top: -3.5em;
+}
+
+.elevation-summary .summaryvalue {
+  font-weight: bold;
+}
+
+.elevation-control.elevation-collapsed .background,
+.elevation-control.elevation-collapsed .elevation-summary {
+  display: none;
+}
+
+.elevation-control.elevation-collapsed .elevation-toggle {
+  display: block;
+}
+
+.elevation-control.elevation .elevation-toggle-icon {
+  background: url(../images/elevation.png) no-repeat center center;
+}
+
+.elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button {
+  background: transparent url(../images/remove.svg) no-repeat center center;
+  background-size: 14px 14px;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  height: 20px;
+  width: 20px;
+}
+
+.leaflet-elevation-pane .height-focus,
+.leaflet-overlay-pane .height-focus {
+  stroke: #000;
+  fill: #FFF;
+}
+
+.leaflet-elevation-pane .height-focus.line,
+.leaflet-overlay-pane .height-focus.line {
+  pointer-events: none;
+  stroke-width: 2;
+}
+
+.leaflet-elevation-pane .height-focus-label,
+.leaflet-overlay-pane .height-focus-label {
+  font-size: 14px;
+  font-weight: 600;
+  fill: #000;
+  paint-order: stroke;
+  stroke: #FFF;
+  stroke-width: 2px;
+}
+
+.elevation-waypoint-icon:before {
+  background: url(../images/elevation-pushpin.png) no-repeat center center / contain;
+  content: "";
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+}
+
+.elevation-position-icon:before {
+  background: url(../images/elevation-position.png) no-repeat center center / contain;
+  content: "";
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+}
+
+.elevation-polyline {
+  filter: drop-shadow(1px 1px 0 #FFF) drop-shadow(-1px -1px 0 #FFF) drop-shadow(1px -1px 0 #FFF) drop-shadow(-1px 1px 0 #FFF);
+}
+
+.elevation-placeholder {
+  margin: auto;
+  height: auto;
+  width: 100%;
+}
+
+.elevation-placeholder~* {
+  display: none !important;
+}
+
+/* LIME THEME //////////////////////////////////////////////// */
+
+.lime-theme.elevation-control.elevation .background {
+  background-color: rgba(156, 194, 34, 0.2);
+}
+
+.lime-theme.elevation-control.elevation .axis line,
+.lime-theme.elevation-control.elevation .axis path {
+  stroke: #566B13;
+}
+
+.lime-theme.elevation-control.elevation .grid .tick line {
+  stroke: #CCC;
+}
+
+.lime-theme.elevation-control.elevation .mouse-drag {
+  fill: rgba(99, 126, 11, 0.4);
+}
+
+.lime-theme.elevation-control.elevation .elevation-toggle-icon {
+  background: url(../images/elevation-lime.png) no-repeat center center;
+}
+
+.lime-theme.elevation-control.elevation .area {
+  fill: #9CC222;
+}
+
+.lime-theme.elevation-control.elevation .mouse-focus-line {
+  stroke: #101404;
+}
+
+.lime-theme.height-focus {
+  stroke: #000;
+  fill: #9CC222;
+}
+
+.lime-theme.elevation-polyline {
+  stroke: #566B13;
+}
+
+/* STEELBLUE THEME //////////////////////////////////////////////// */
+
+.steelblue-theme.elevation-control.elevation .background {
+  background-color: rgba(70, 130, 180, 0.2);
+}
+
+.steelblue-theme.elevation-control.elevation .axis line,
+.steelblue-theme.elevation-control.elevation .axis path {
+  stroke: #0D1821;
+}
+
+.steelblue-theme.elevation-control.elevation .mouse-drag {
+  fill: rgba(23, 74, 117, 0.4);
+}
+
+.steelblue-theme.elevation-control.elevation .elevation-toggle-icon {
+  background: url(../images/elevation-steelblue.png) no-repeat center center;
+}
+
+.steelblue-theme.elevation-control.elevation .area {
+  fill: #4682B4;
+}
+
+.steelblue-theme.elevation-control.elevation .mouse-focus-line {
+  stroke: #0D1821;
+}
+
+.steelblue-theme.height-focus {
+  stroke: #000;
+  fill: #4682B4;
+}
+
+.steelblue-theme.elevation-polyline {
+  stroke: #4682B4;
+}
+
+/* PURPLE THEME //////////////////////////////////////////////// */
+
+.purple-theme.elevation-control.elevation .background {
+  background-color: rgba(115, 44, 123, 0.2);
+}
+
+.purple-theme.elevation-control.elevation .axis line,
+.purple-theme.elevation-control.elevation .axis path {
+  stroke: #2D1130;
+}
+
+.purple-theme.elevation-control.elevation .mouse-drag {
+  fill: rgba(74, 14, 80, 0.4);
+}
+
+.purple-theme.elevation-control.elevation .elevation-toggle-icon {
+  background: url(../images/elevation-purple.png) no-repeat center center;
+}
+
+.purple-theme.elevation-control.elevation .area {
+  fill: #732C7B;
+}
+
+.purple-theme.elevation-control.elevation .mouse-focus-line {
+  stroke: #000;
+}
+
+.purple-theme.height-focus {
+  stroke: #000;
+  fill: #732C7B;
+}
+
+.purple-theme.elevation-polyline {
+  stroke: #732C7B;
+}
+
+/* YELLOW THEME //////////////////////////////////////////////// */
+
+.yellow-theme.elevation-control.elevation .area {
+  fill: #FF0;
+}
+
+.yellow-theme.elevation-polyline {
+  stroke: #FF0;
+}
+
+/* RED THEME //////////////////////////////////////////////// */
+
+.red-theme.elevation-control.elevation .area {
+  fill: #F00;
+  stroke: #000;
+}
+
+.red-theme.elevation-polyline {
+  stroke: #F00;
+}
+
+/* MAGENTA THEME //////////////////////////////////////////////// */
+
+.magenta-theme.elevation-control.elevation .background {
+  background-color: rgba(255, 255, 255, 0.47);
+}
+
+.magenta-theme.elevation-control.elevation .area {
+  fill: #FF005E;
+  stroke: #000;
+}
+
+.magenta-theme.elevation-polyline {
+  stroke: #FF005E;
+}
+
+/* LIGHTBLUE THEME //////////////////////////////////////////////// */
+
+.lightblue-theme.elevation-control.elevation .area {
+  fill: #3366CC;
+  stroke: #000;
+  stroke-width: 1.25;
+}
+
+.elevation-detached .lightblue-theme.elevation-control.elevation .area {
+  stroke: #3366CC;
+  fill-opacity: 0.45;
+}
+
+.lightblue-theme.height-focus {
+  stroke: #000;
+  fill: #FFFFFF;
+}
+
+.lightblue-theme.elevation-polyline {
+  stroke: #3366CC;
+}

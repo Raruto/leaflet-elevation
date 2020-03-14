@@ -26,6 +26,8 @@ _For a working example see one of the following demos:_
 - [gpx waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
 - [upload local gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
 - [dynamic runner](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
+- [i18n strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
+
 
 ---
 
@@ -50,8 +52,8 @@ _For a working example see one of the following demos:_
     <script src="https://unpkg.com/leaflet-ui@0.2.0/dist/leaflet-ui.js"></script>
 
     <!-- leaflet-elevation -->
-    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.css" />
-    <script src="https://unpkg.com/@raruto/leaflet-elevation@latest/leaflet-elevation.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css" />
+    <script src="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.js"></script>
     ...
     </head>
     ```
@@ -118,8 +120,8 @@ _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Inte
 
 **Compatibile with:**
 [![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.3.2-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
-[![leaflet-gpx 1.4 compatibile!](https://img.shields.io/badge/Leaflet%20GPX-1.4.0-1EB300.svg?style=flat)](https://github.com/mpetazzoni/leaflet-gpx)
-[![d3.js v4 compatibile!](https://img.shields.io/badge/d3.js-4.13-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
+[![leaflet-gpx 1.5 compatibile!](https://img.shields.io/badge/Leaflet%20GPX-1.5.0-1EB300.svg?style=flat)](https://github.com/mpetazzoni/leaflet-gpx)
+[![d3.js v5 compatibile!](https://img.shields.io/badge/d3.js-5.15-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
 
 ---
 
