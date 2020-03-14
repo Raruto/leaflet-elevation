@@ -114,13 +114,6 @@
     					})
     				},
     			},
-    			polyline_options: {
-    				className: '',
-    				color: '#566B13',
-    				opacity: 0.75,
-    				weight: 5,
-    				lineCap: 'round'
-    			},
     		},
     		height: 200,
     		heightFactor: 1,
@@ -146,6 +139,13 @@
     		}),
     		placeholder: false,
     		position: "topright",
+    		polyline: {
+    			className: 'elevation-polyline',
+    			color: '#000',
+    			opacity: 0.75,
+    			weight: 5,
+    			lineCap: 'round'
+    		},
     		reverseCoords: false,
     		skipNullZCoords: false,
     		theme: "lightblue-theme",
@@ -183,7 +183,7 @@
     		}
     		if (layer) {
     			if (layer._path) {
-    				L.DomUtil.addClass(layer._path, 'elevation-polyline ' + this.options.theme);
+    				L.DomUtil.addClass(layer._path, this.options.polyline.className + ' ' + this.options.theme);
     			}
     			layer
     				.on("mousemove", this._mousemoveLayerHandler, this)
@@ -370,13 +370,12 @@
     			data = JSON.parse(data);
     		}
 
+    		if (this.options.theme) {
+    			this.options.polyline.className += ' ' + this.options.theme;
+    		}
+
     		this.layer = this.geojson = L.geoJson(data, {
-    			style: function(feature) {
-    				return {
-    					color: '#566B13',
-    					className: 'elevation-polyline ' + this.options.theme,
-    				};
-    			}.bind(this),
+    			style: function(feature) { return this.options.polyline; }.bind(this),
     			onEachFeature: function(feature, layer) {
     				this.addData(feature, layer);
 
@@ -414,7 +413,11 @@
     	 */
     	loadGPX: function(data) {
     		var callback = function(data) {
-    			this.options.gpxOptions.polyline_options.className += 'elevation-polyline ' + this.options.theme;
+    			this.options.gpxOptions.polyline_options = L.extend({}, this.options.polyline, this.options.gpxOptions.polyline_options);
+
+    			if (this.options.theme) {
+    				this.options.gpxOptions.polyline_options.className += ' ' + this.options.theme;
+    			}
 
     			this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
 
@@ -1041,7 +1044,7 @@
     	_clearPath: function() {
     		this._hidePositionMarker();
     		for (var id in this._layers) {
-    			L.DomUtil.removeClass(this._layers[id]._path, "elevation-polyline");
+    			L.DomUtil.removeClass(this._layers[id]._path, this.options.polyline.className);
     			L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
     		}
     	},
