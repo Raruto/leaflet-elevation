@@ -1,4 +1,5 @@
 /examples
+/test
 .jshintrc
 .gitattributes
 _config.yml

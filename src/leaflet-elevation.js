@@ -145,10 +145,11 @@ L.Control.Elevation = L.Control.extend({
 				.on("mouseout", this._mouseoutHandler, this);
 		}
 
-		this.track_info = this.track_info || {};
-		this.track_info.distance = this._distance;
-		this.track_info.elevation_max = this._maxElevation;
-		this.track_info.elevation_min = this._minElevation;
+		this.track_info = L.extend({}, this.track_info, {
+			distance: this._distance,
+			elevation_max: this._maxElevation,
+			elevation_min: this._minElevation
+		});
 
 		this._layers = this._layers || {};
 		this._layers[L.Util.stamp(layer)] = layer;
@@ -229,17 +230,6 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	initialize: function(options) {
 		this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
-
-		// Aliases.
-		if (typeof options.detachedView !== "undefined") this.options.detached = options.detachedView;
-		if (typeof options.responsiveView !== "undefined") this.options.responsive = options.responsiveView;
-		if (typeof options.showTrackInfo !== "undefined") this.options.summary = options.showTrackInfo;
-		if (typeof options.summaryType !== "undefined") this.options.summary = options.summaryType;
-		if (typeof options.autohidePositionMarker !== "undefined") this.options.autohideMarker = options.autohidePositionMarker;
-		if (typeof options.followPositionMarker !== "undefined") this.options.followMarker = options.followPositionMarker;
-		if (typeof options.useLeafletMarker !== "undefined") this.options.marker = options.useLeafletMarker ? 'position-marker' : 'elevation-line';
-		if (typeof options.leafletMarkerIcon !== "undefined") this.options.markerIcon = options.leafletMarkerIcon;
-		if (typeof options.download !== "undefined") this.options.downloadLink = options.download;
 
 		// L.Util.setOptions(this, options);
 		this.options = this._deepMerge({}, this.options, options);
@@ -347,12 +337,13 @@ L.Control.Elevation = L.Control.extend({
 			onEachFeature: function(feature, layer) {
 				this.addData(feature, layer);
 
-				this.track_info = this.track_info || {};
-				this.track_info.type = "geojson";
-				this.track_info.name = data.name;
-				this.track_info.distance = this._distance;
-				this.track_info.elevation_max = this._maxElevation;
-				this.track_info.elevation_min = this._minElevation;
+				this.track_info = L.extend({}, this.track_info, {
+					type: "geojson",
+					name: data.name,
+					distance: this._distance,
+					elevation_max: this._maxElevation,
+					elevation_min: this._minElevation
+				});
 
 			}.bind(this),
 		});
@@ -399,12 +390,13 @@ L.Control.Elevation = L.Control.extend({
 			this.layer.once("addline", function(e) {
 				this.addData(e.line /*, this.layer*/ );
 
-				this.track_info = this.track_info || {};
-				this.track_info.type = "gpx";
-				this.track_info.name = this.layer.get_name();
-				this.track_info.distance = this._distance;
-				this.track_info.elevation_max = this._maxElevation;
-				this.track_info.elevation_min = this._minElevation;
+				this.track_info = L.extend({}, this.track_info, {
+					type: "gpx",
+					name: this.layer.get_name(),
+					distance: this._distance,
+					elevation_max: this._maxElevation,
+					elevation_min: this._minElevation
+				});
 
 				var evt = {
 					data: data,
@@ -506,7 +498,7 @@ L.Control.Elevation = L.Control.extend({
 
 		}.bind(this, map, container);
 		if (typeof d3 !== 'object' && this.options.lazyLoadJS) {
-			L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@4.13.0/build/d3.min.js', L.Control.Elevation._d3LazyLoader);
+			L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@5.15.0/dist/d3.min.js', L.Control.Elevation._d3LazyLoader);
 			L.Control.Elevation._d3LazyLoader.then(callback);
 		} else {
 			callback.call();
