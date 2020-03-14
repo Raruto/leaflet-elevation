@@ -275,8 +275,6 @@
     	 */
     	initialize: function(options) {
     		this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
-
-    		// L.Util.setOptions(this, options);
     		this.options = this._deepMerge({}, this.options, options);
 
     		this._draggingEnabled = !L.Browser.mobile;
