@@ -11,7 +11,7 @@ let plugin_name = plugin.name.replace("@raruto/", "");
 
 let input = plugin.module;
 let output = {
-	file: "dist/" + plugin_name + "-src.js",
+	file: "dist/" + plugin_name + ".js",
 	format: "umd",
 	sourcemap: true,
 	name: plugin_name,
@@ -27,18 +27,18 @@ let plugins = [
 ];
 
 export default [
-	//** "leaflet-elevation-src.js" **//
+	//** "leaflet-elevation.js" **//
 	{
 		input: input,
 		output: output,
 		plugins: plugins,
 	},
 
-	//** "leaflet-elevation.js" **//
+	//** "leaflet-elevation.min.js" **//
 	{
 		input: input,
 		output: Object.assign({}, output, {
-			file: "dist/" + plugin_name + ".js"
+			file: "dist/" + plugin_name + ".min.js"
 		}),
 		plugins: plugins.concat(terser()),
 	},
@@ -48,6 +48,30 @@ export default [
 		input: "src/" + plugin_name + ".css",
 		output: {
 			file: "dist/" + plugin_name + ".css",
+			format: 'es'
+		},
+		plugins: [
+			postcss({
+				extract: true,
+				inject: false,
+				minimize: false,
+				plugins: [
+					postcssImport({}),
+					postcssCopy({
+						basePath: 'node_modules',
+						dest: "dist",
+						template: "images/[path][name].[ext]",
+					})
+				]
+			})
+		]
+	},
+
+	//** "leaflet-elevation.min.css" **//
+	{
+		input: "src/" + plugin_name + ".css",
+		output: {
+			file: "dist/" + plugin_name + ".min.css",
 			format: 'es'
 		},
 		plugins: [
@@ -66,4 +90,5 @@ export default [
 			})
 		]
 	},
+
 ];
