@@ -883,6 +883,18 @@ L.Control.Elevation = L.Control.extend({
 			.style("font-weight", "700")
 			.attr('y', this._height() + this.options.margins.bottom - 11);
 
+		// autotoggle chart data on single click
+		legend.on('click', function() {
+			if (this._chartEnabled) {
+				this._clearChart();
+				this._clearPath();
+				this._chartEnabled = false;
+			} else {
+				this._resizeChart();
+				this._chartEnabled = true;
+			}
+		}.bind(this));
+
 	},
 
 	/**
@@ -1074,15 +1086,6 @@ L.Control.Elevation = L.Control.extend({
 			this._dragStartCoords = null;
 			this._gotDragged = false;
 			if (this._draggingEnabled) this._resetDrag();
-			// autotoggle chart data on single click
-			if (this.options.legend && this._chartEnabled) {
-				this._clearChart();
-				this._clearPath();
-				this._chartEnabled = false;
-			} else {
-				this._resizeChart();
-				this._chartEnabled = true;
-			}
 			return;
 		}
 
