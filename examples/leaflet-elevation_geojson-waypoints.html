@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+
+	<!-- Leaflet -->
+	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet-src.js"></script>
+	<script src="https://unpkg.com/d3@5.15.0/dist/d3.min.js"></script>
+
+	<!-- Leaflet-UI -->
+	<script src="https://unpkg.com/leaflet-ui@0.4.1/dist/leaflet-ui.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
+	<script src="../dist/leaflet-elevation.js"></script>
+
+	<style>
+		html,
+		body,
+		.leaflet-map,
+		.elevation-div {
+			padding: 0px;
+			margin: 0px;
+		}
+
+		.leaflet-map {
+			height: 55vh;
+			max-height: 100vh;
+		}
+
+		.elevation-div {
+			min-height: 25%;
+		}
+	</style>
+
+
+	<style>
+		.elevation-tooltip.leaflet-tooltip,
+		.elevation-popup .leaflet-popup-content {
+			text-align: center;
+			font-weight: 300;
+			width: 300px !important;
+			white-space: normal;
+			padding: 0;
+			margin: 0;
+			border-radius: 12px;
+		}
+
+		.elevation-tooltip>b:first-child,
+		.elevation-popup .leaflet-popup-content>b:first-child {
+			display: inline-block;
+			width: 100%;
+			text-align: center;
+			font-family: 'averia_seriflightitalic', 'Alexander', serif;
+			font-size: 20px;
+			font-weight: 700;
+			border-radius: 8px 8px 0px 0px;
+			border: 1px solid #bbb;
+			background: #303030;
+			color: #ccc;
+			text-shadow: -1px 0px 1px #000;
+			box-sizing: content-box;
+			margin-left: -1px;
+		}
+
+		.elevation-tooltip .wpt-link-image img,
+		.elevation-popup .leaflet-popup-content .wpt-link-image img {
+			height: 100%;
+			width: 300px;
+			max-height: 230px;
+			object-fit: cover;
+			display: block;
+		}
+
+		.elevation-tooltip .wpt-link-image,
+		.elevation-popup .leaflet-popup-content .wpt-link-image {
+			display: inline-block;
+		}
+
+		.elevation-tooltip .wpt-desc,
+		.elevation-popup .leaflet-popup-content .wpt-desc {
+			border-top: solid 1px #ccc;
+			margin-top: 5px;
+			padding-top: 5px;
+			color: #000;
+			font-weight: bold;
+			text-align: center;
+		}
+	</style>
+
+</head>
+
+<body>
+
+	<div id="map" class="leaflet-map"></div>
+
+	<script>
+		var opts = {
+			map: {
+				center: [45.4169, -121.7144],
+				zoom: 10,
+				mapTypeId: 'topo',
+				resizerControl: true,
+			},
+			elevationControl: {
+				url: "waypoints.geojson",
+				options: {
+					theme: "lightblue-theme",
+					collapsed: false,
+					detached: true,
+					useLeafletMarker: true,
+					summary: 'multiline',
+
+					/**
+					 * Custom waypoint icons
+					 *
+					 * @link https://github.com/mpetazzoni/leaflet-gpx#about-waypoints
+					 */
+
+					// gpxOptions: {
+					// 	marker_options: {
+					// 		wptIconUrls: {
+					// 			'Trail Head': 'http://maps.google.com/mapfiles/kml/shapes/hiker.png',
+					// 			'Summit': 'http://maps.google.com/mapfiles/kml/shapes/mountains.png'
+					// 		},
+					// 		iconSize: [30, 30],
+					// 		iconAnchor: [15, 15],
+					// 	}
+					// }
+				},
+			},
+		};
+
+		var map = new L.Map('map', opts.map);
+
+		var controlElevation = L.control.elevation(opts.elevationControl.options);
+
+		controlElevation.load(opts.elevationControl.url);
+
+		controlElevation.addTo(map);
+	</script>
+
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
+		 width="163"> </a>
+
+</body>
+
+</html>

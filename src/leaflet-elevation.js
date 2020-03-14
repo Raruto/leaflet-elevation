@@ -251,6 +251,16 @@ L.Control.Elevation = L.Control.extend({
 
 		if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
 		if (this.options.placeholder) this.options.loadData.lazy = this.options.loadData.defer = true;
+
+		this.on('waypoint_added', function(e) {
+			if (e.point._popup) {
+				e.point._popup.options.className = 'elevation-popup';
+				e.point._popup._content = decodeURI(e.point._popup._content);
+			}
+			if (e.point._popup && e.point._popup._content) {
+				e.point.bindTooltip(e.point._popup._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
+			}
+		});
 	},
 
 	/**
@@ -325,23 +335,33 @@ L.Control.Elevation = L.Control.extend({
 			data = JSON.parse(data);
 		}
 
-		if (this.options.theme) {
-			this.options.polyline.className += ' ' + this.options.theme;
-		}
-
 		this.layer = this.geojson = L.geoJson(data, {
-			style: function(feature) { return this.options.polyline; }.bind(this),
+			style: function(feature) {
+				var style = L.extend({}, this.options.polyline);
+				if (this.options.theme) {
+					style.className += ' ' + this.options.theme;
+				}
+				return style;
+			}.bind(this),
+			pointToLayer: function(feature, latlng) {
+				var marker = L.marker(latlng, { icon: this.options.gpxOptions.marker_options.wptIcons[''] });
+				var desc = feature.properties.desc ? feature.properties.desc : '';
+				var name = feature.properties.name ? feature.properties.name : '';
+				if (name || desc) {
+					marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
+				}
+				this.fire('waypoint_added', { point: marker, point_type: 'waypoint', element: latlng });
+				return marker;
+			}.bind(this),
 			onEachFeature: function(feature, layer) {
+				if (feature.geometry.type == 'Point') return;
+
 				this.addData(feature, layer);
 
 				this.track_info = L.extend({}, this.track_info, {
 					type: "geojson",
 					name: data.name,
-					distance: this._distance,
-					elevation_max: this._maxElevation,
-					elevation_min: this._minElevation
 				});
-
 			}.bind(this),
 		});
 		if (this._map) {
@@ -376,27 +396,14 @@ L.Control.Elevation = L.Control.extend({
 
 			this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
 
-			this.layer.on('loaded', function(e) {
-				this.fitBounds(e.target.getBounds());
-			}, this);
-			this.layer.on('addpoint', function(e) {
-				if (e.point._popup) {
-					e.point._popup.options.className = 'elevation-popup';
-					e.point._popup._content = decodeURI(e.point._popup._content);
-				}
-				if (e.point._popup && e.point._popup._content) {
-					e.point.bindTooltip(e.point._popup._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
-				}
-			});
+			this.layer.on('loaded', function(e) { this.fitBounds(e.target.getBounds()); }, this);
+			this.layer.on('addpoint', function(e) { this.fire("waypoint_added", e, true); }, this);
 			this.layer.once("addline", function(e) {
 				this.addData(e.line /*, this.layer*/ );
 
 				this.track_info = L.extend({}, this.track_info, {
 					type: "gpx",
 					name: this.layer.get_name(),
-					distance: this._distance,
-					elevation_max: this._maxElevation,
-					elevation_min: this._minElevation
 				});
 
 				var evt = {
