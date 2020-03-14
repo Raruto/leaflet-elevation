@@ -1,6 +1,6 @@
 # leaflet-elevation.js
 
-[![NPM version](https://img.shields.io/npm/v/@raruto/leaflet-elevation.svg)](https://www.npmjs.com/package/@raruto/leaflet-elevation)
+[![NPM version](https://img.shields.io/npm/v/@raruto/leaflet-elevation.svg?color=red)](https://www.npmjs.com/package/@raruto/leaflet-elevation)
 [![License](https://img.shields.io/badge/license-GPL%203-blue.svg?style=flat)](LICENSE)
 
 A Leaflet plugin that allows to add elevation profiles using d3js
