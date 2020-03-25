@@ -199,13 +199,7 @@
     		this._layers = this._layers || {};
     		this._layers[L.Util.stamp(layer)] = layer;
 
-    		var evt = {
-    			data: d,
-    			layer: layer,
-    			track_info: this.track_info,
-    		};
-    		if (this.fire) this.fire("eledata_added", evt, true);
-    		if (this._map) this._map.fire("eledata_added", evt, true);
+    		this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info }, true);
     	},
 
     	/**
@@ -224,13 +218,11 @@
     	 * Reset data and display
     	 */
     	clear: function() {
-
     		this._clearPath();
     		this._clearChart();
     		this._clearData();
 
-    		if (this.fire) this.fire("eledata_clear");
-    		if (this._map) this._map.fire("eledata_clear");
+    		this._fireEvt("eledata_clear");
     	},
 
     	/**
@@ -356,7 +348,7 @@
     	loadFile: function(url) {
     		this._downloadURL = url; // TODO: handle multiple urls?
     		try {
-    			var xhr = new XMLHttpRequest();
+    			let xhr = new XMLHttpRequest();
     			xhr.responseType = "text";
     			xhr.open('GET', url);
     			xhr.onload = function() {
@@ -382,16 +374,16 @@
 
     		this.layer = this.geojson = L.geoJson(data, {
     			style: function(feature) {
-    				var style = L.extend({}, this.options.polyline);
+    				let style = L.extend({}, this.options.polyline);
     				if (this.options.theme) {
     					style.className += ' ' + this.options.theme;
     				}
     				return style;
     			}.bind(this),
     			pointToLayer: function(feature, latlng) {
-    				var marker = L.marker(latlng, { icon: this.options.gpxOptions.marker_options.wptIcons[''] });
-    				var desc = feature.properties.desc ? feature.properties.desc : '';
-    				var name = feature.properties.name ? feature.properties.name : '';
+    				let marker = L.marker(latlng, { icon: this.options.gpxOptions.marker_options.wptIcons[''] });
+    				let desc = feature.properties.desc ? feature.properties.desc : '';
+    				let name = feature.properties.name ? feature.properties.name : '';
     				if (name || desc) {
     					marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
     				}
@@ -403,23 +395,13 @@
 
     				this.addData(feature, layer);
 
-    				this.track_info = L.extend({}, this.track_info, {
-    					type: "geojson",
-    					name: data.name,
-    				});
+    				this.track_info = L.extend({}, this.track_info, { type: "geojson", name: data.name });
     			}.bind(this),
     		});
     		if (this._map) {
     			this._map.once('layeradd', function(e) {
     				this.fitBounds(this.layer.getBounds());
-    				var evt = {
-    					data: data,
-    					layer: this.layer,
-    					name: this.track_info.name,
-    					track_info: this.track_info,
-    				};
-    				if (this.fire) this.fire("eledata_loaded", evt, true);
-    				if (this._map) this._map.fire("eledata_loaded", evt, true);
+    				this._fireEvt("eledata_loaded", { data: data, layer: this.layer, name: this.track_info.name, track_info: this.track_info }, true);
     			}, this);
 
     			this.layer.addTo(this._map);
@@ -432,48 +414,37 @@
     	 * Load raw GPX data.
     	 */
     	loadGPX: function(data) {
-    		var callback = function(data) {
-    			this.options.gpxOptions.polyline_options = L.extend({}, this.options.polyline, this.options.gpxOptions.polyline_options);
+    		L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS(
+    			'https://unpkg.com/leaflet-gpx@1.5.0/gpx.js',
+    			typeof L.GPX !== 'function',
+    			L.Control.Elevation._gpxLazyLoader
+    		).then(
+    			function(data) {
+    				this.options.gpxOptions.polyline_options = L.extend({}, this.options.polyline, this.options.gpxOptions.polyline_options);
 
-    			if (this.options.theme) {
-    				this.options.gpxOptions.polyline_options.className += ' ' + this.options.theme;
-    			}
+    				if (this.options.theme) {
+    					this.options.gpxOptions.polyline_options.className += ' ' + this.options.theme;
+    				}
 
-    			this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
+    				this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
 
-    			this.layer.on('loaded', function(e) { this.fitBounds(e.target.getBounds()); }, this);
-    			this.layer.on('addpoint', function(e) { this.fire("waypoint_added", e, true); }, this);
-    			this.layer.once("addline", function(e) {
-    				this.addData(e.line /*, this.layer*/ );
+    				this.layer.on('loaded', function(e) { this.fitBounds(e.target.getBounds()); }, this);
+    				this.layer.on('addpoint', function(e) { this.fire("waypoint_added", e, true); }, this);
+    				this.layer.once("addline", function(e) {
+    					this.addData(e.line /*, this.layer*/ );
 
-    				this.track_info = L.extend({}, this.track_info, {
-    					type: "gpx",
-    					name: this.layer.get_name(),
-    				});
+    					this.track_info = L.extend({}, this.track_info, { type: "gpx", name: this.layer.get_name() });
 
-    				var evt = {
-    					data: data,
-    					layer: this.layer,
-    					name: this.track_info.name,
-    					track_info: this.track_info,
-    				};
+    					this._fireEvt("eledata_loaded", { data: data, layer: this.layer, name: this.track_info.name, track_info: this.track_info }, true);
+    				}, this);
 
-    				if (this.fire) this.fire("eledata_loaded", evt, true);
-    				if (this._map) this._map.fire("eledata_loaded", evt, true);
-    			}, this);
-
-    			if (this._map) {
-    				this.layer.addTo(this._map);
-    			} else {
-    				console.warn("Undefined elevation map object");
-    			}
-    		}.bind(this, data);
-    		if (typeof L.GPX !== 'function' && this.options.lazyLoadJS) {
-    			L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS('https://unpkg.com/leaflet-gpx@1.5.0/gpx.js', L.Control.Elevation._gpxLazyLoader);
-    			L.Control.Elevation._gpxLazyLoader.then(callback);
-    		} else {
-    			callback.call();
-    		}
+    				if (this._map) {
+    					this.layer.addTo(this._map);
+    				} else {
+    					console.warn("Undefined elevation map object");
+    				}
+    			}.bind(this, data)
+    		);
     	},
 
     	/**
@@ -512,7 +483,7 @@
     	onAdd: function(map) {
     		this._map = map;
 
-    		var container = this._container = L.DomUtil.create("div", "elevation-control elevation");
+    		let container = this._container = L.DomUtil.create("div", "elevation-control elevation");
 
     		if (!this.options.detached) {
     			L.DomUtil.addClass(container, 'leaflet-control');
@@ -533,29 +504,30 @@
     			container.insertBefore(this.placeholder, container.firstChild);
     		}
 
-    		var callback = function(map, container) {
-    			this._initToggle(container);
-    			this._initChart(container);
+    		L.Control.Elevation._d3LazyLoader = this._lazyLoadJS(
+    			'https://unpkg.com/d3@5.15.0/dist/d3.min.js',
+    			typeof d3 !== 'object',
+    			L.Control.Elevation._d3LazyLoader
+    		).then(
+    			function(map, container) {
+    				this._initToggle(container);
+    				this._initChart(container);
 
-    			this._applyData();
+    				this._applyData();
 
-    			this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
-    			this._map.on('resize', this._resetView, this);
-    			this._map.on('resize', this._resizeChart, this);
-    			this._map.on('mousedown', this._resetDrag, this);
+    				this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
+    				this._map.on('resize', this._resetView, this);
+    				this._map.on('resize', this._resizeChart, this);
+    				this._map.on('mousedown', this._resetDrag, this);
 
-    			this._map.on('eledata_loaded', this._updateSummary, this);
+    				this._map.on('eledata_loaded', this._updateSummary, this);
 
-    			L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
-    			L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
+    				L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
+    				L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
 
-    		}.bind(this, map, container);
-    		if (typeof d3 !== 'object' && this.options.lazyLoadJS) {
-    			L.Control.Elevation._d3LazyLoader = this._lazyLoadJS('https://unpkg.com/d3@5.15.0/dist/d3.min.js', L.Control.Elevation._d3LazyLoader);
-    			L.Control.Elevation._d3LazyLoader.then(callback);
-    		} else {
-    			callback.call();
-    		}
+    			}.bind(this, map, container)
+    		);
+
     		return container;
     	},
 
@@ -592,8 +564,9 @@
     	 * Parsing data either from GPX or GeoJSON and update the diagram data
     	 */
     	_addData: function(d) {
-    		var geom = d && d.geometry && d.geometry;
-    		var i;
+    		let geom = d && d.geometry && d.geometry;
+    		let feat = d && d.type === "FeatureCollection";
+    		let gpx = d && d._latlngs;
 
     		if (geom) {
     			switch (geom.type) {
@@ -602,9 +575,7 @@
     					break;
 
     				case 'MultiLineString':
-    					for (i = 0; i < geom.coordinates.length; i++) {
-    						this._addGeoJSONData(geom.coordinates[i]);
-    					}
+    					geom.coordinates.forEach(coords => this._addGeoJSONData(coords));
     					break;
 
     				default:
@@ -612,14 +583,11 @@
     			}
     		}
 
-    		var feat = d && d.type === "FeatureCollection";
     		if (feat) {
-    			for (i = 0; i < d.features.length; i++) {
-    				this._addData(d.features[i]);
-    			}
+    			d.features.forEach(feature => this._addData(feature));
     		}
 
-    		if (d && d._latlngs) {
+    		if (gpx) {
     			this._addGPXdata(d._latlngs);
     		}
     	},
@@ -629,9 +597,7 @@
     	 */
     	_addGeoJSONData: function(coords) {
     		if (coords) {
-    			for (var i = 0; i < coords.length; i++) {
-    				this._addPoint(coords[i][1], coords[i][0], coords[i][2]);
-    			}
+    			coords.forEach(point => this._addPoint(point[1], point[0], point[2]));
     		}
     	},
 
@@ -640,9 +606,7 @@
     	 */
     	_addGPXdata: function(coords) {
     		if (coords) {
-    			for (var i = 0; i < coords.length; i++) {
-    				this._addPoint(coords[i].lat, coords[i].lng, coords[i].meta.ele);
-    			}
+    			coords.forEach(point => this._addPoint(point.lat, point.lng, point.meta.ele));
     		}
     	},
 
@@ -651,29 +615,29 @@
     	 */
     	_addPoint: function(x, y, z) {
     		if (this.options.reverseCoords) {
-    			var tmp = x;
+    			let tmp = x;
     			x = y;
     			y = tmp;
     		}
 
-    		var data = this._data || [];
-    		var eleMax = this._maxElevation || -Infinity;
-    		var eleMin = this._minElevation || +Infinity;
-    		var dist = this._distance || 0;
+    		let data = this._data || [];
+    		let eleMax = this._maxElevation || -Infinity;
+    		let eleMin = this._minElevation || +Infinity;
+    		let dist = this._distance || 0;
 
-    		var curr = new L.LatLng(x, y);
-    		var prev = data.length ? data[data.length - 1].latlng : curr;
+    		let curr = new L.LatLng(x, y);
+    		let prev = data.length ? data[data.length - 1].latlng : curr;
 
-    		var delta = curr.distanceTo(prev) * this._distanceFactor;
+    		let delta = curr.distanceTo(prev) * this._distanceFactor;
 
     		dist = dist + Math.round(delta / 1000 * 100000) / 100000;
 
     		// check and fix missing elevation data on last added point
     		if (!this.options.skipNullZCoords && data.length > 0) {
-    			var prevZ = data[data.length - 1].z;
+    			let prevZ = data[data.length - 1].z;
     			if (isNaN(prevZ)) {
-    				var lastZ = this._lastValidZ;
-    				var currZ = z * this._heightFactor;
+    				let lastZ = this._lastValidZ;
+    				let currZ = z * this._heightFactor;
     				if (!isNaN(lastZ) && !isNaN(currZ)) {
     					prevZ = (lastZ + currZ) / 2;
     				} else if (!isNaN(lastZ)) {
@@ -713,7 +677,7 @@
     	 * Generate "svg" chart container.
     	 */
     	_appendChart: function(svg) {
-    		var g = svg
+    		let g = svg
     			.append("g")
     			.attr("transform", "translate(" + this.options.margins.left + "," + this.options.margins.top + ")");
 
@@ -729,7 +693,7 @@
     	 * Adds the control to the given "detached" div.
     	 */
     	_appendElevationDiv: function(container) {
-    		var eleDiv = document.querySelector(this.options.elevationDiv);
+    		let eleDiv = document.querySelector(this.options.elevationDiv);
     		if (!eleDiv) {
     			eleDiv = L.DomUtil.create('div', 'leaflet-control elevation elevation-div');
     			this.options.elevationDiv = '#elevation-div_' + Math.random().toString(36).substr(2, 9);
@@ -839,7 +803,7 @@
     	 * Generate "mouse-focus" and "drag-rect".
     	 */
     	_appendFocusRect: function(g) {
-    		var focusRect = this._focusRect = g.append("rect")
+    		let focusRect = this._focusRect = g.append("rect")
     			.attr("width", this._width())
     			.attr("height", this._height())
     			.style("fill", "none")
@@ -878,7 +842,7 @@
     	 * Generate "mouse-focus".
     	 */
     	_appendMouseFocusG: function(g) {
-    		var focusG = this._focusG = g.append("g")
+    		let focusG = this._focusG = g.append("g")
     			.attr("class", "mouse-focus-group");
 
     		this._mousefocus = focusG.append('svg:line')
@@ -913,10 +877,10 @@
     	_appendLegend: function(g) {
     		if (!this.options.legend) return;
 
-    		var legend = this._legend = g.append('g')
+    		let legend = this._legend = g.append('g')
     			.attr("class", "legend");
 
-    		var altitude = this._altitudeLegend = this._legend.append('g')
+    		let altitude = this._altitudeLegend = this._legend.append('g')
     			.attr("class", "legend-altitude");
 
     		altitude.append("rect")
@@ -953,8 +917,8 @@
     	 * Generate "svg:line".
     	 */
     	_appendPositionMarker: function(pane) {
-    		var theme = this.options.theme;
-    		var heightG = pane.select("g");
+    		let theme = this.options.theme;
+    		let heightG = pane.select("g");
 
     		this._mouseHeightFocus = heightG.append('svg:line')
     			.attr("class", theme + " height-focus line")
@@ -981,13 +945,13 @@
     	_applyData: function() {
     		if (!this._data) return;
 
-    		var xdomain = d3.extent(this._data, function(d) {
+    		let xdomain = d3.extent(this._data, function(d) {
     			return d.dist;
     		});
-    		var ydomain = d3.extent(this._data, function(d) {
+    		let ydomain = d3.extent(this._data, function(d) {
     			return d.z;
     		});
-    		var opts = this.options;
+    		let opts = this.options;
 
     		if (opts.yAxisMin !== undefined && (opts.yAxisMin < ydomain[0] || opts.forceAxisBounds)) {
     			ydomain[0] = opts.yAxisMin;
@@ -1013,11 +977,9 @@
     			throw new Error("no data in parameters");
     		}
 
-    		var ext = new L.latLngBounds(data[0].latlng, data[0].latlng);
+    		let ext = new L.latLngBounds(data[0].latlng, data[0].latlng);
 
-    		data.forEach(function(item) {
-    			ext.extend(item.latlng);
-    		});
+    		data.forEach(item => ext.extend(item.latlng));
 
     		return ext;
     	},
@@ -1062,7 +1024,7 @@
     	 */
     	_clearPath: function() {
     		this._hidePositionMarker();
-    		for (var id in this._layers) {
+    		for (let id in this._layers) {
     			L.DomUtil.removeClass(this._layers[id]._path, this.options.polyline.className);
     			L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
     		}
@@ -1102,22 +1064,6 @@
     		return this._deepMerge(target, ...sources);
     	},
 
-    	/**
-    	 * Generate GPX / GeoJSON download event.
-    	 */
-    	_saveFile: function(fileUrl) {
-    		var d = document,
-    			a = d.createElement('a'),
-    			b = d.body;
-    		a.href = fileUrl;
-    		a.target = '_new';
-    		a.download = ""; // fileName
-    		a.style.display = 'none';
-    		b.appendChild(a);
-    		a.click();
-    		b.removeChild(a);
-    	},
-
     	/*
     	 * Handle drag operations.
     	 */
@@ -1141,8 +1087,8 @@
     			return;
     		}
 
-    		var item1 = this._findItemForX(this._dragStartCoords[0]),
-    			item2 = this._findItemForX(this._dragCurrentCoords[0]);
+    		let item1 = this._findItemForX(this._dragStartCoords[0]);
+    		let item2 = this._findItemForX(this._dragCurrentCoords[0]);
 
     		if (item1 == item2) return;
 
@@ -1153,14 +1099,7 @@
     		this._dragStartCoords = null;
     		this._gotDragged = false;
 
-    		var evt = {
-    			data: {
-    				dragstart: this._data[item1],
-    				dragend: this._data[item2]
-    			}
-    		};
-    		if (this.fire) this.fire("elechart_dragged", evt, true);
-    		if (this._map) this._map.fire("elechart_dragged", evt, true);
+    		this._fireEvt("elechart_dragged", { data: { dragstart: this._data[item1], dragend: this._data[item2] } }, true);
     	},
 
     	/*
@@ -1182,13 +1121,13 @@
     			return;
     		}
 
-    		var dragEndCoords = this._dragCurrentCoords = d3.mouse(this._focusRect.node());
+    		let dragEndCoords = this._dragCurrentCoords = d3.mouse(this._focusRect.node());
 
-    		var x1 = Math.min(this._dragStartCoords[0], dragEndCoords[0]),
-    			x2 = Math.max(this._dragStartCoords[0], dragEndCoords[0]);
+    		let x1 = Math.min(this._dragStartCoords[0], dragEndCoords[0]);
+    		let x2 = Math.max(this._dragStartCoords[0], dragEndCoords[0]);
 
     		if (!this._dragRectangle && !this._dragRectangleG) {
-    			var g = d3.select(this._container).select("svg").select("g");
+    			let g = d3.select(this._container).select("svg").select("g");
 
     			this._dragRectangleG = g.insert("g", ".mouse-focus-group");
 
@@ -1218,10 +1157,10 @@
     	 * Finds an item with the smallest delta in distance to the given latlng coords
     	 */
     	_findItemForLatLng: function(latlng) {
-    		var result = null,
-    			d = Infinity;
-    		this._data.forEach(function(item) {
-    			var dist = latlng.distanceTo(item.latlng);
+    		let result = null;
+    		let d = Infinity;
+    		this._data.forEach(item => {
+    			let dist = latlng.distanceTo(item.latlng);
     			if (dist < d) {
     				d = dist;
     				result = item;
@@ -1234,20 +1173,32 @@
     	 * Finds a data entry for a given x-coordinate of the diagram
     	 */
     	_findItemForX: function(x) {
-    		var bisect = d3.bisector(function(d) {
+    		let bisect = d3.bisector(function(d) {
     			return d.dist;
     		}).left;
-    		var xinvert = this._x.invert(x);
+    		let xinvert = this._x.invert(x);
     		return bisect(this._data, xinvert);
+    	},
+
+    	/**
+    	 * Fires an event of the specified type.
+    	 */
+    	_fireEvt: function(type, data, propagate) {
+    		if (this.fire) {
+    			this.fire(type, data, propagate);
+    		}
+    		if (this._map) {
+    			this._map.fire(type, data, propagate);
+    		}
     	},
 
     	/**
     	 * Make the map fit the route section between given indexes.
     	 */
     	_fitSection: function(index1, index2) {
-    		var start = Math.min(index1, index2);
-    		var end = Math.max(index1, index2);
-    		var ext = this._calculateFullExtent(this._data.slice(start, end));
+    		let start = Math.min(index1, index2);
+    		let end = Math.max(index1, index2);
+    		let ext = this._calculateFullExtent(this._data.slice(start, end));
     		this.fitBounds(ext);
     	},
 
@@ -1255,16 +1206,10 @@
     	 * Fromatting funciton using the given decimals and seperator
     	 */
     	_formatter: function(num, dec, sep) {
-    		var res;
-    		if (dec === 0) {
-    			res = Math.round(num) + "";
-    		} else {
-    			res = L.Util.formatNum(num, dec) + "";
-    		}
-    		var numbers = res.split(".");
+    		let res = L.Util.formatNum(num, dec).toString();
+    		let numbers = res.split(".");
     		if (numbers[1]) {
-    			var d = dec - numbers[1].length;
-    			for (; d > 0; d--) {
+    			for (let d = dec - numbers[1].length; d > 0; d--) {
     				numbers[1] += "0";
     			}
     			res = numbers.join(sep || ".");
@@ -1276,7 +1221,7 @@
     	 * Calculates chart height.
     	 */
     	_height: function() {
-    		var opts = this.options;
+    		let opts = this.options;
     		return opts.height - opts.margins.top - opts.margins.bottom;
     	},
 
@@ -1310,30 +1255,30 @@
     	 * Generate "svg" chart DOM element.
     	 */
     	_initChart: function() {
-    		var opts = this.options;
+    		let opts = this.options;
     		opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
     		opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
     		opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
 
     		if (opts.responsive) {
     			if (opts.detached) {
-    				var offWi = this.eleDiv.offsetWidth;
-    				var offHe = this.eleDiv.offsetHeight;
+    				let offWi = this.eleDiv.offsetWidth;
+    				let offHe = this.eleDiv.offsetHeight;
     				opts.width = offWi > 0 ? offWi : opts.width;
     				opts.height = (offHe - 20) > 0 ? offHe - 20 : opts.height; // 20 = horizontal scrollbar size.
     			} else {
     				opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
-    				var containerWidth = this._map._container.clientWidth;
+    				let containerWidth = this._map._container.clientWidth;
     				opts.width = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
     			}
     		}
 
-    		var x = this._x = d3.scaleLinear().range([0, this._width()]);
-    		var y = this._y = d3.scaleLinear().range([this._height(), 0]);
+    		let x = this._x = d3.scaleLinear().range([0, this._width()]);
+    		let y = this._y = d3.scaleLinear().range([this._height(), 0]);
 
-    		var interpolation = typeof opts.interpolation === 'function' ? opts.interpolation : d3[opts.interpolation];
+    		let interpolation = typeof opts.interpolation === 'function' ? opts.interpolation : d3[opts.interpolation];
 
-    		var area = this._area = d3.area().curve(interpolation)
+    		let area = this._area = d3.area().curve(interpolation)
     			.x(function(d) {
     				return (d.xDiagCoord = x(d.dist));
     			})
@@ -1341,7 +1286,7 @@
     			.y1(function(d) {
     				return y(d.z);
     			});
-    		var line = this._line = d3.line()
+    		let line = this._line = d3.line()
     			.x(function(d) {
     				return d3.mouse(svg.select("g"))[0];
     			})
@@ -1349,14 +1294,14 @@
     				return this._height();
     			});
 
-    		var container = d3.select(this._container);
+    		let container = d3.select(this._container);
 
-    		var svg = container.append("svg")
+    		let svg = container.append("svg")
     			.attr("class", "background")
     			.attr("width", opts.width)
     			.attr("height", opts.height);
 
-    		var summary = this.summaryDiv = container.append("div")
+    		let summary = this.summaryDiv = container.append("div")
     			.attr("class", "elevation-summary " + this.options.summary + "-summary").node();
 
     		this._appendChart(svg);
@@ -1384,8 +1329,8 @@
     		L.DomEvent.on(container, 'mousewheel', this._mousewheelHandler, this);
 
     		if (!this.options.detached) {
-    			var iconCssClass = "elevation-toggle " + this.options.controlButton.iconCssClass + (this.options.autohide ? "" : " close-button");
-    			var link = this._button = L.DomUtil.create('a', iconCssClass, container);
+    			let iconCssClass = "elevation-toggle " + this.options.controlButton.iconCssClass + (this.options.autohide ? "" : " close-button");
+    			let link = this._button = L.DomUtil.create('a', iconCssClass, container);
     			link.href = '#';
     			link.title = this.options.controlButton.title;
 
@@ -1445,7 +1390,7 @@
     			doc = doc.trim();
     			return doc.indexOf("<") == 0;
     		} else {
-    			var documentElement = (doc ? doc.ownerDocument || doc : 0).documentElement;
+    			let documentElement = (doc ? doc.ownerDocument || doc : 0).documentElement;
     			return documentElement ? documentElement.nodeName !== "HTML" : false;
     		}
     	},
@@ -1501,16 +1446,15 @@
     	/**
     	 * Async JS script download.
     	 */
-    	_lazyLoadJS: function(url, skip) {
-    		if (typeof skip == "undefined") {
-    			skip = false;
+    	_lazyLoadJS: function(url, skip, loader) {
+    		if (skip === false || !this.options.lazyLoadJS) {
+    			return Promise.resolve();
     		}
-    		if (skip instanceof Promise) {
-    			return skip;
+    		if (loader instanceof Promise) {
+    			return loader;
     		}
-    		return new Promise(function(resolve, reject) {
-    			if (skip) return resolve();
-    			var tag = document.createElement("script");
+    		return new Promise((resolve, reject) => {
+    			let tag = document.createElement("script");
     			tag.addEventListener('load', resolve, { once: true });
     			tag.src = url;
     			document.head.appendChild(tag);
@@ -1521,12 +1465,7 @@
     	 * Handles the moueseenter over the chart.
     	 */
     	_mouseenterHandler: function() {
-    		if (this.fire) {
-    			this.fire("elechart_enter", null, true);
-    		}
-    		if (this._map) {
-    			this._map.fire("elechart_enter", null, true);
-    		}
+    		this._fireEvt("elechart_enter", null, true);
     	},
 
     	/*
@@ -1536,9 +1475,9 @@
     		if (!this._data || this._data.length === 0 || !this._chartEnabled) {
     			return;
     		}
-    		var coords = d3.mouse(this._focusRect.node());
-    		var xCoord = coords[0];
-    		var item = this._data[this._findItemForX(xCoord)];
+    		let coords = d3.mouse(this._focusRect.node());
+    		let xCoord = coords[0];
+    		let item = this._data[this._findItemForX(xCoord)];
 
     		this._hidePositionMarker();
     		this._showDiagramIndicator(item, xCoord);
@@ -1549,17 +1488,8 @@
     			L.DomUtil.addClass(this._map._container, 'elechart-hover');
     		}
 
-    		var evt = {
-    			data: item
-    		};
-    		if (this.fire) {
-    			this.fire("elechart_change", evt, true);
-    			this.fire("elechart_hover", evt, true);
-    		}
-    		if (this._map) {
-    			this._map.fire("elechart_change", evt, true);
-    			this._map.fire("elechart_hover", evt, true);
-    		}
+    		this._fireEvt("elechart_change", { data: item }, true);
+    		this._fireEvt("elechart_hover", { data: item }, true);
     	},
 
     	/*
@@ -1569,10 +1499,10 @@
     		if (!this._data || this._data.length === 0) {
     			return;
     		}
-    		var latlng = e.latlng;
-    		var item = this._findItemForLatLng(latlng);
+    		let latlng = e.latlng;
+    		let item = this._findItemForLatLng(latlng);
     		if (item) {
-    			var xCoord = item.xDiagCoord;
+    			let xCoord = item.xDiagCoord;
 
     			this._hidePositionMarker();
     			this._showDiagramIndicator(item, xCoord);
@@ -1592,8 +1522,7 @@
     			L.DomUtil.removeClass(this._map._container, 'elechart-hover');
     		}
 
-    		if (this.fire) this.fire("elechart_leave", null, true);
-    		if (this._map) this._map.fire("elechart_leave", null, true);
+    		this._fireEvt("elechart_leave", null, true);
     	},
 
     	/*
@@ -1601,8 +1530,8 @@
     	 */
     	_mousewheelHandler: function(e) {
     		if (this._map.gestureHandling && this._map.gestureHandling._enabled) return;
-    		var ll = this._selectedItem ? this._selectedItem.latlng : this._map.getCenter();
-    		var z = e.deltaY > 0 ? this._map.getZoom() - 1 : this._map.getZoom() + 1;
+    		let ll = this._selectedItem ? this._selectedItem.latlng : this._map.getCenter();
+    		let z = e.deltaY > 0 ? this._map.getZoom() - 1 : this._map.getZoom() + 1;
     		this._resetDrag();
     		this._map.flyTo(ll, z);
 
@@ -1636,7 +1565,7 @@
     	_resizeChart: function() {
     		if (this.options.responsive) {
     			if (this.options.detached) {
-    				var newWidth = this.eleDiv.offsetWidth; // - 20;
+    				let newWidth = this.eleDiv.offsetWidth; // - 20;
 
     				if (newWidth <= 0) return;
 
@@ -1651,12 +1580,28 @@
     	},
 
     	/**
+    	 * Generate GPX / GeoJSON download event.
+    	 */
+    	_saveFile: function(fileUrl) {
+    		let d = document,
+    			a = d.createElement('a'),
+    			b = d.body;
+    		a.href = fileUrl;
+    		a.target = '_new';
+    		a.download = ""; // fileName
+    		a.style.display = 'none';
+    		b.appendChild(a);
+    		a.click();
+    		b.removeChild(a);
+    	},
+
+    	/**
     	 * Display distance and altitude level ("focus-rect").
     	 */
     	_showDiagramIndicator: function(item, xCoordinate) {
     		if (!this._chartEnabled) return;
 
-    		var opts = this.options;
+    		let opts = this.options;
     		this._focusG.style("visibility", "visible");
 
     		this._mousefocus.attr('x1', xCoordinate)
@@ -1665,7 +1610,7 @@
     			.attr('y2', this._height())
     			.classed('hidden', false);
 
-    		var alt = item.z,
+    		let alt = item.z,
     			dist = item.dist,
     			ll = item.latlng,
     			numY = opts.hoverNumber.formatter(alt, opts.hoverNumber.decimalsY),
@@ -1684,10 +1629,10 @@
     			.text(numY + " " + this._yLabel)
     			.attr("x", xCoordinate + 10);
 
-    		var focuslabeltext = this._focuslabeltext.node();
+    		let focuslabeltext = this._focuslabeltext.node();
     		if (this._isDomVisible(focuslabeltext)) {
-    			var bbox = focuslabeltext.getBBox();
-    			var padding = 2;
+    			let bbox = focuslabeltext.getBBox();
+    			let padding = 2;
 
     			this._focuslabelrect
     				.attr("x", bbox.x - padding)
@@ -1720,7 +1665,7 @@
     	 */
     	_setMapView: function(item) {
     		if (!this.options.followMarker || !this._map) return;
-    		var zoom = this._map.getZoom();
+    		let zoom = this._map.getZoom();
     		zoom = zoom < this._zFollow ? this._zFollow : zoom;
     		this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
     	},
@@ -1760,13 +1705,13 @@
     	 * Update distance and altitude level ("leaflet-marker").
     	 */
     	_updateHeightIndicator: function(item) {
-    		var opts = this.options;
+    		let opts = this.options;
 
-    		var numY = opts.hoverNumber.formatter(item.z, opts.hoverNumber.decimalsY),
-    			numX = opts.hoverNumber.formatter(item.dist, opts.hoverNumber.decimalsX);
+    		let numY = opts.hoverNumber.formatter(item.z, opts.hoverNumber.decimalsY);
+    		let numX = opts.hoverNumber.formatter(item.dist, opts.hoverNumber.decimalsX);
 
-    		var normalizedAlt = this._height() / this._maxElevation * item.z,
-    			normalizedY = item.y - normalizedAlt;
+    		let normalizedAlt = this._height() / this._maxElevation * item.z;
+    		let normalizedY = item.y - normalizedAlt;
 
     		this._mouseHeightFocus
     			.attr("x1", item.x)
@@ -1786,7 +1731,7 @@
     	 * Update position marker ("leaflet-marker").
     	 */
     	_updateLeafletMarker: function(item) {
-    		var ll = item.latlng;
+    		let ll = item.latlng;
 
     		if (!this._marker) {
     			this._marker = new L.Marker(ll, {
@@ -1814,8 +1759,8 @@
     	 * Update position marker ("leaflet-marker").
     	 */
     	_updatePositionMarker: function(item) {
-    		var point = this._map.latLngToLayerPoint(item.latlng);
-    		var layerpoint = {
+    		let point = this._map.latLngToLayerPoint(item.latlng);
+    		let layerpoint = {
     			dist: item.dist,
     			x: point.x,
     			y: point.y,
@@ -1824,7 +1769,7 @@
 
     		if (!this._mouseHeightFocus) {
     			L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
-    			var layerpane = d3.select(this._map.getContainer()).select(".leaflet-elevation-pane svg");
+    			let layerpane = d3.select(this._map.getContainer()).select(".leaflet-elevation-pane svg");
     			this._appendPositionMarker(layerpane);
     		}
 
@@ -1844,19 +1789,18 @@
     			d3.select(this.summaryDiv).html('<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
     		}
     		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
-    			var span = document.createElement('span');
+    			let span = document.createElement('span');
     			span.className = 'download';
-    			var save = document.createElement('a');
+    			let save = document.createElement('a');
     			save.innerHTML = "Download";
     			save.href = "#";
     			save.onclick = function(e) {
     				e.preventDefault();
-    				var evt = { confirm: this._saveFile.bind(this, this._downloadURL) };
-    				var type = this.options.downloadLink;
+    				let evt = { confirm: this._saveFile.bind(this, this._downloadURL) };
+    				let type = this.options.downloadLink;
     				if (type == 'modal') {
     					if (typeof CustomEvent === "function") document.dispatchEvent(new CustomEvent("eletrack_download", { detail: evt }));
-    					if (this.fire) this.fire('eletrack_download', evt);
-    					if (this._map) this._map.fire('eletrack_download', evt);
+    					this._fireEvt('eletrack_download', evt);
     				} else if (type == 'link' || type === true) {
     					evt.confirm();
     				}
@@ -1870,7 +1814,7 @@
     	 * Calculates chart width.
     	 */
     	_width: function() {
-    		var opts = this.options;
+    		let opts = this.options;
     		return opts.width - opts.margins.left - opts.margins.right;
     	},
 
