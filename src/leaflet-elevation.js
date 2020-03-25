@@ -482,7 +482,7 @@ L.Control.Elevation = L.Control.extend({
 				this._map.on('resize', this._resizeChart, this);
 				this._map.on('mousedown', this._resetDrag, this);
 
-				this._map.on('eledata_loaded', this._updateSummary, this);
+				this._map.on('eledata_added', this._updateSummary, this);
 
 				L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
 				L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
