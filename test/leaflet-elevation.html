@@ -56,7 +56,8 @@
 				resizerControl: true,
 			},
 			elevationControl: {
-				url: "../examples/via-emilia.gpx",
+				// url: "../examples/via-emilia.gpx",
+				url: "../examples/demo.geojson",
 				// url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
 				// url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
 				options: {
@@ -78,8 +79,8 @@
 		var controlElevation = L.control.elevation(opts.elevationControl.options);
 		var controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-		controlElevation.addTo(map);
 		controlElevation.load(opts.elevationControl.url);
+		controlElevation.addTo(map);
 
 		map.on('eledata_loaded', function(e) {
 			if (!controlLayer._map) controlLayer.addTo(map);

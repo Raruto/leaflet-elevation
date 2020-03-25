@@ -128,33 +128,40 @@ L.Control.Elevation = L.Control.extend({
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
 	 */
 	addData: function(d, layer) {
-		this._addData(d);
+		L.Control.Elevation._d3LazyLoader = this._lazyLoadJS(
+			'https://unpkg.com/d3@5.15.0/dist/d3.min.js',
+			typeof d3 !== 'object',
+			L.Control.Elevation._d3LazyLoader
+		).then(
+			function(d, layer) {
+				this._addData(d);
 
-		if (this._container) {
-			this._applyData();
-		}
-		if ((typeof layer === "undefined" || layer === null) && d.on) {
-			layer = d;
-		}
-		if (layer) {
-			if (layer._path) {
-				L.DomUtil.addClass(layer._path, this.options.polyline.className + ' ' + this.options.theme);
-			}
-			layer
-				.on("mousemove", this._mousemoveLayerHandler, this)
-				.on("mouseout", this._mouseoutHandler, this);
-		}
+				if (this._container) {
+					this._applyData();
+				}
+				if ((typeof layer === "undefined" || layer === null) && d.on) {
+					layer = d;
+				}
+				if (layer) {
+					if (layer._path) {
+						L.DomUtil.addClass(layer._path, this.options.polyline.className + ' ' + this.options.theme);
+					}
+					layer
+						.on("mousemove", this._mousemoveLayerHandler, this)
+						.on("mouseout", this._mouseoutHandler, this);
+				}
 
-		this.track_info = L.extend({}, this.track_info, {
-			distance: this._distance,
-			elevation_max: this._maxElevation,
-			elevation_min: this._minElevation
-		});
+				this.track_info = L.extend({}, this.track_info, {
+					distance: this._distance,
+					elevation_max: this._maxElevation,
+					elevation_min: this._minElevation
+				});
 
-		this._layers = this._layers || {};
-		this._layers[L.Util.stamp(layer)] = layer;
+				this._layers = this._layers || {};
+				this._layers[L.Util.stamp(layer)] = layer;
 
-		this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info }, true);
+				this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info }, true);
+			}.bind(this, d, layer));
 	},
 
 	/**
@@ -519,7 +526,7 @@ L.Control.Elevation = L.Control.extend({
 	 * Parsing data either from GPX or GeoJSON and update the diagram data
 	 */
 	_addData: function(d) {
-		let geom = d && d.geometry && d.geometry;
+		let geom = d && d.geometry;
 		let feat = d && d.type === "FeatureCollection";
 		let gpx = d && d._latlngs;
 
@@ -900,12 +907,8 @@ L.Control.Elevation = L.Control.extend({
 	_applyData: function() {
 		if (!this._data) return;
 
-		let xdomain = d3.extent(this._data, function(d) {
-			return d.dist;
-		});
-		let ydomain = d3.extent(this._data, function(d) {
-			return d.z;
-		});
+		let xdomain = d3.extent(this._data, d => d.dist);
+		let ydomain = d3.extent(this._data, d => d.z);
 		let opts = this.options;
 
 		if (opts.yAxisMin !== undefined && (opts.yAxisMin < ydomain[0] || opts.forceAxisBounds)) {
