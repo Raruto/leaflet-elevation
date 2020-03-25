@@ -577,9 +577,7 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	_addPoint: function(x, y, z) {
 		if (this.options.reverseCoords) {
-			let tmp = x;
-			x = y;
-			y = tmp;
+			[x, y] = [y, x];
 		}
 
 		let data = this._data || [];
