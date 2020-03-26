@@ -45,6 +45,67 @@
         };
     }, window));
 
+    const AxisRange = (props) => {
+    	if (!props.data) {
+    		let x = d3.scaleLinear().range([0, props.width]);
+    		let y = d3.scaleLinear().range([props.height, 0]);
+    		return [x, y];
+    	}
+
+    	let xdomain = d3.extent(props.data, d => d.dist);
+    	let ydomain = d3.extent(props.data, d => d.z);
+    	let opts = props.options;
+
+    	if (opts.yAxisMin !== undefined && (opts.yAxisMin < ydomain[0] || opts.forceAxisBounds)) {
+    		ydomain[0] = opts.yAxisMin;
+    	}
+    	if (opts.yAxisMax !== undefined && (opts.yAxisMax > ydomain[1] || opts.forceAxisBounds)) {
+    		ydomain[1] = opts.yAxisMax;
+    	}
+
+    	let x = props.x.domain(xdomain);
+    	let y = props.y.domain(ydomain);
+
+    	return [x, y];
+    };
+
+    const AreaPath = (props) => {
+    	if (!props.data) {
+    		let interpolation = typeof props.interpolation === 'function' ? props.interpolation : d3[props.interpolation];
+    		let area = d3.area().curve(interpolation)
+    			.x(d => (d.xDiagCoord = props.x(d.dist)))
+    			.y0(props.height)
+    			.y1(d => props.y(d.z));
+    		let path = d3.create("svg:path")
+    			.attr("class", "area");
+    		return [area, path];
+    	}
+
+    	props.path.datum(props.data).attr("d", props.area);
+
+    	return [props.path, props.area];
+    };
+
+    const Chart = (props) => {
+    	let container = d3.select(props.container);
+    	let svg = container.append("svg")
+    		.attr("class", "background")
+    		.attr("width", props.width)
+    		.attr("height", props.height);
+    	let g = svg
+    		.append("g")
+    		.attr("transform", "translate(" + props.options.margins.left + "," + props.options.margins.top + ")");
+    	return svg;
+    };
+
+    const Summary = (props) => {
+    	let container = d3.select(props.container);
+    	let summary = container.append("div")
+    		.attr("class", "elevation-summary " + props.summary + "-summary")
+    		.node();
+    	return summary;
+    };
+
     /*
      * Copyright (c) 2019, GPL-3.0+ Project, Raruto
      *
@@ -790,8 +851,7 @@
     	 * Generate "path".
     	 */
     	_appendAreaPath: function(g) {
-    		this._areapath = g.append("path")
-    			.attr("class", "area");
+    		g.append(() => this._areapath.node());
     	},
 
     	/**
@@ -950,21 +1010,20 @@
     	_applyData: function() {
     		if (!this._data) return;
 
-    		let xdomain = d3.extent(this._data, d => d.dist);
-    		let ydomain = d3.extent(this._data, d => d.z);
-    		let opts = this.options;
+    		let state = {
+    			x: this._x,
+    			y: this._y,
+    			area: this._area,
+    			path: this._areapath,
+    			width: this._width(),
+    			height: this._height(),
+    			data: this._data,
+    			options: this.options
+    		};
 
-    		if (opts.yAxisMin !== undefined && (opts.yAxisMin < ydomain[0] || opts.forceAxisBounds)) {
-    			ydomain[0] = opts.yAxisMin;
-    		}
-    		if (opts.yAxisMax !== undefined && (opts.yAxisMax > ydomain[1] || opts.forceAxisBounds)) {
-    			ydomain[1] = opts.yAxisMax;
-    		}
+    		[this._x, this._y] = AxisRange(state);
+    		[this._area, this._areapath] = AreaPath(state);
 
-    		this._x.domain(xdomain);
-    		this._y.domain(ydomain);
-    		this._areapath.datum(this._data)
-    			.attr("d", this._area);
     		this._updateAxis();
 
     		this._fullExtent = this._calculateFullExtent(this._data);
@@ -1274,38 +1333,27 @@
     			}
     		}
 
-    		let x = this._x = d3.scaleLinear().range([0, this._width()]);
-    		let y = this._y = d3.scaleLinear().range([this._height(), 0]);
+    		let [width, height] = [this._width(), this._height()];
 
-    		let interpolation = typeof opts.interpolation === 'function' ? opts.interpolation : d3[opts.interpolation];
+    		[this._x, this._y] = AxisRange({ width: width, height: height });
 
-    		let area = this._area = d3.area().curve(interpolation)
-    			.x(function(d) {
-    				return (d.xDiagCoord = x(d.dist));
-    			})
-    			.y0(this._height())
-    			.y1(function(d) {
-    				return y(d.z);
-    			});
-    		let line = this._line = d3.line()
-    			.x(function(d) {
-    				return d3.mouse(svg.select("g"))[0];
-    			})
-    			.y(function(d) {
-    				return this._height();
-    			});
+    		let state = {
+    			x: this._x,
+    			y: this._y,
+    			width: width,
+    			height: height,
+    			options: opts,
+    			interpolation: opts.interpolation,
+    			container: this._container
+    		};
 
-    		let container = d3.select(this._container);
+    		this._svg = Chart(L.extend({}, state, { width: opts.width, height: opts.height }));
 
-    		let svg = container.append("svg")
-    			.attr("class", "background")
-    			.attr("width", opts.width)
-    			.attr("height", opts.height);
+    		[this._area, this._areapath] = AreaPath(state);
 
-    		let summary = this.summaryDiv = container.append("div")
-    			.attr("class", "elevation-summary " + this.options.summary + "-summary").node();
+    		this.summaryDiv = Summary(L.extend({}, state, { className: this.options.summary }));
 
-    		this._appendChart(svg);
+    		this._appendChart(this._svg);
     		this._updateSummary();
 
     	},
