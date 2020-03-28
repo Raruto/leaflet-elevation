@@ -852,7 +852,7 @@ L.Control.Elevation = L.Control.extend({
 			.attr("opacity", 0.75);
 
 		altitude.append('text')
-			.text('Altitude')
+			.text(L._('Altitude'))
 			.attr("x", (this._width() / 2) + 5)
 			.attr("font-size", 10)
 			.style("text-decoration-thickness", "2px")
@@ -868,7 +868,7 @@ L.Control.Elevation = L.Control.extend({
 			} else {
 				this._resizeChart();
 				for (let id in this._layers) {
-					L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme );
+					L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
 				}
 				this._chartEnabled = true;
 			}
