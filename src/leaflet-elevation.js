@@ -867,6 +867,9 @@ L.Control.Elevation = L.Control.extend({
 				this._chartEnabled = false;
 			} else {
 				this._resizeChart();
+				for (let id in this._layers) {
+					L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme );
+				}
 				this._chartEnabled = true;
 			}
 		}.bind(this));
@@ -1129,11 +1132,10 @@ L.Control.Elevation = L.Control.extend({
 	 * Finds a data entry for a given x-coordinate of the diagram
 	 */
 	_findItemForX: function(x) {
-		let bisect = d3.bisector(function(d) {
-			return d.dist;
-		}).left;
+		let data = this._data ? this._data : [0, 1];
+		let bisect = d3.bisector(d => d.dist).left;
 		let xinvert = this._x.invert(x);
-		return bisect(this._data, xinvert);
+		return bisect(data, xinvert);
 	},
 
 	/**
@@ -1235,20 +1237,12 @@ L.Control.Elevation = L.Control.extend({
 		let interpolation = typeof opts.interpolation === 'function' ? opts.interpolation : d3[opts.interpolation];
 
 		let area = this._area = d3.area().curve(interpolation)
-			.x(function(d) {
-				return (d.xDiagCoord = x(d.dist));
-			})
+			.x(d => (d.xDiagCoord = x(d.dist)))
 			.y0(this._height())
-			.y1(function(d) {
-				return y(d.z);
-			});
+			.y1(d => y(d.z));
 		let line = this._line = d3.line()
-			.x(function(d) {
-				return d3.mouse(svg.select("g"))[0];
-			})
-			.y(function(d) {
-				return this._height();
-			});
+			.x(d => d3.mouse(svg.select("g"))[0])
+			.y(d => this._height());
 
 		let container = d3.select(this._container);
 
