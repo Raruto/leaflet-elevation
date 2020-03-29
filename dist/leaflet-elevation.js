@@ -95,6 +95,7 @@
     		},
     		detached: true,
     		distanceFactor: 1,
+    		dragging: !L.Browser.mobile,
     		downloadLink: 'link',
     		elevationDiv: "#elevation-div",
     		followMarker: true,
@@ -275,9 +276,6 @@
     	initialize: function(options) {
     		this.options = this._deepMerge({}, this.options, options);
 
-    		this._draggingEnabled = !L.Browser.mobile;
-    		this._chartEnabled = true;
-
     		if (this.options.imperial) {
     			this._distanceFactor = this.__mileFactor;
     			this._heightFactor = this.__footFactor;
@@ -290,6 +288,8 @@
     			this._yLabel = this.options.yLabel;
     		}
 
+    		this._chartEnabled = true;
+    		this._draggingEnabled = this.options.dragging;
     		this._zFollow = this.options.zFollow;
 
     		if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
