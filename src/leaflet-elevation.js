@@ -41,7 +41,7 @@ L.Control.Elevation = L.Control.extend({
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
 	options: {
-		autohide: true,
+		autohide: !L.Browser.mobile,
 		autohideMarker: true,
 		collapsed: false,
 		controlButton: {
@@ -50,6 +50,7 @@ L.Control.Elevation = L.Control.extend({
 		},
 		detached: true,
 		distanceFactor: 1,
+		dragging: !L.Browser.mobile,
 		downloadLink: 'link',
 		elevationDiv: "#elevation-div",
 		followMarker: true,
@@ -228,13 +229,9 @@ L.Control.Elevation = L.Control.extend({
 	 * Initialize chart control "options" and "container".
 	 */
 	initialize: function(options) {
-		this.options.autohide = typeof options.autohide !== "undefined" ? options.autohide : !L.Browser.mobile;
 		this.options = this._deepMerge({}, this.options, options);
 
-		this._draggingEnabled = !L.Browser.mobile;
-		this._chartEnabled = true;
-
-		if (options.imperial) {
+		if (this.options.imperial) {
 			this._distanceFactor = this.__mileFactor;
 			this._heightFactor = this.__footFactor;
 			this._xLabel = "mi";
@@ -246,6 +243,8 @@ L.Control.Elevation = L.Control.extend({
 			this._yLabel = this.options.yLabel;
 		}
 
+		this._chartEnabled = true;
+		this._draggingEnabled = this.options.dragging;
 		this._zFollow = this.options.zFollow;
 
 		if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
