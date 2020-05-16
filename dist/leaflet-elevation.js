@@ -1786,7 +1786,7 @@
     			let span = document.createElement('span');
     			span.className = 'download';
     			let save = document.createElement('a');
-    			save.innerHTML = "Download";
+    			save.innerHTML = L._('Download');
     			save.href = "#";
     			save.onclick = function(e) {
     				e.preventDefault();
