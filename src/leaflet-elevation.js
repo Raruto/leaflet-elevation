@@ -1251,7 +1251,7 @@ L.Control.Elevation = L.Control.extend({
 			.attr("height", opts.height);
 
 		let summary = this.summaryDiv = container.append("div")
-			.attr("class", "elevation-summary " + this.options.summary + "-summary").node();
+			.attr("class", "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : '')).node();
 
 		this._appendChart(svg);
 		this._updateSummary();
@@ -1732,20 +1732,18 @@ L.Control.Elevation = L.Control.extend({
 	 * Update chart summary.
 	 */
 	_updateSummary: function() {
-		if (this.options.summary && this.summaryDiv) {
-			this.track_info = this.track_info || {};
-			this.track_info.distance = this._distance || 0;
-			this.track_info.elevation_max = this._maxElevation || 0;
-			this.track_info.elevation_min = this._minElevation || 0;
-			d3.select(this.summaryDiv).html('<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>');
+		this.summaryDiv.innerHTML = '';
+		this.track_info = this.track_info || {};
+		this.track_info.distance = this._distance || 0;
+		this.track_info.elevation_max = this._maxElevation || 0;
+		this.track_info.elevation_min = this._minElevation || 0;
+
+		if (this.options.summary) {
+			this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>';
 		}
 		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
-			let span = document.createElement('span');
-			span.className = 'download';
-			let save = document.createElement('a');
-			save.innerHTML = L._('Download');
-			save.href = "#";
-			save.onclick = function(e) {
+			this.summaryDiv.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
+			this.summaryDiv.querySelector('.download a').onclick = function(e) {
 				e.preventDefault();
 				let evt = { confirm: this._saveFile.bind(this, this._downloadURL) };
 				let type = this.options.downloadLink;
@@ -1756,8 +1754,6 @@ L.Control.Elevation = L.Control.extend({
 					evt.confirm();
 				}
 			}.bind(this);
-
-			this.summaryDiv.appendChild(span).appendChild(save);
 		}
 	},
 
