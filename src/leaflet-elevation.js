@@ -843,9 +843,12 @@ L.Control.Elevation = L.Control.extend({
         this._focuslabelY = this._focuslabeltext.append("svg:tspan")
             .attr("class", "mouse-focus-label-y")
             .attr("dy", "-1em");
+        this._focuslabelS = this._focuslabeltext.append("svg:tspan")
+            .attr("class", "mouse-focus-label-y")
+            .attr("dy", "1.5em");
         this._focuslabelX = this._focuslabeltext.append("svg:tspan")
             .attr("class", "mouse-focus-label-x")
-            .attr("dy", "2em");
+            .attr("dy", "1.5em");
     },
 
     /**
@@ -1584,6 +1587,7 @@ L.Control.Elevation = L.Control.extend({
         let alt = item.z,
             dist = item.dist,
             ll = item.latlng,
+            slope = item.slope,
             numY = opts.hoverNumber.formatter(alt, opts.hoverNumber.decimalsY),
             numX = opts.hoverNumber.formatter(dist, opts.hoverNumber.decimalsX);
 
@@ -1593,11 +1597,15 @@ L.Control.Elevation = L.Control.extend({
             .style("font-weight", "700");
 
         this._focuslabelX
-            .text(numX + " " + this._xLabel)
+            .text(" " + numX + " " + this._xLabel + " ")
             .attr("x", xCoordinate + 10);
 
         this._focuslabelY
-            .text(numY + " " + this._yLabel)
+            .text(" " + numY + " " + this._yLabel + " ")
+            .attr("x", xCoordinate + 10);
+
+        this._focuslabelS
+            .text(" " + slope + '% ')
             .attr("x", xCoordinate + 10);
 
         let focuslabeltext = this._focuslabeltext.node();
@@ -1615,6 +1623,7 @@ L.Control.Elevation = L.Control.extend({
             if (xCoordinate >= this._width() / 2) {
                 this._focuslabelrect.attr("x", this._focuslabelrect.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
                 this._focuslabelX.attr("x", this._focuslabelX.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+                this._focuslabelS.attr("x", this._focuslabelS.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
                 this._focuslabelY.attr("x", this._focuslabelY.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
             }
         }
@@ -1733,6 +1742,7 @@ L.Control.Elevation = L.Control.extend({
         let point = this._map.latLngToLayerPoint(item.latlng);
         let layerpoint = {
             dist: item.dist,
+            slope: item.slope,
             x: point.x,
             y: point.y,
             z: item.z,
