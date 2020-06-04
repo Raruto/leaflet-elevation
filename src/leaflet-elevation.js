@@ -622,10 +622,14 @@ L.Control.Elevation = L.Control.extend({
             eleMax = eleMax < z ? z : eleMax;
             eleMin = eleMin > z ? z : eleMin;
             this._lastValidZ = z;
+            // diff height between actual and previous point
             diff = data.length > 0 ? z - data[data.length - 1].z : 0;
             if (diff > 0) tAsc += diff;
             if (diff < 0) tDes += diff * -1;
+            // slope in % = ( height / length ) * 100
             slope = diff !== 0 ? Math.round((diff / delta) * 100) : 0;
+            // apply slope to the previous point because we will 
+            // ascent or desent, so the slope is in the fist point
             if (data.length > 0) data[data.length - 1].slope = slope;
             sMax = slope > sMax ? slope : sMax;
             sMin = slope < sMin ? slope : sMin;
@@ -843,7 +847,7 @@ L.Control.Elevation = L.Control.extend({
         this._focuslabelY = this._focuslabeltext.append("svg:tspan")
             .attr("class", "mouse-focus-label-y")
             .attr("dy", "-1em");
-        this._focuslabelS = this._focuslabeltext.append("svg:tspan")
+        this._focuslabelSlope = this._focuslabeltext.append("svg:tspan")
             .attr("class", "mouse-focus-label-y")
             .attr("dy", "1.5em");
         this._focuslabelX = this._focuslabeltext.append("svg:tspan")
@@ -918,6 +922,9 @@ L.Control.Elevation = L.Control.extend({
             .attr("cy", 0);
 
         this._mouseHeightFocusLabel = heightG.append("svg:text")
+            .attr("class", theme + " height-focus-label")
+            .style("pointer-events", "none");
+        this._mouseSlopeFocusLabel = heightG.append("svg:text")
             .attr("class", theme + " height-focus-label")
             .style("pointer-events", "none");
     },
@@ -1222,6 +1229,7 @@ L.Control.Elevation = L.Control.extend({
         if (this._mouseHeightFocus) {
             this._mouseHeightFocus.style("visibility", "hidden");
             this._mouseHeightFocusLabel.style("visibility", "hidden");
+            this._mouseSlopeFocusLabel.style("visibility", "hidden");
         }
         if (this._pointG) {
             this._pointG.style("visibility", "hidden");
@@ -1592,20 +1600,20 @@ L.Control.Elevation = L.Control.extend({
             numX = opts.hoverNumber.formatter(dist, opts.hoverNumber.decimalsX);
 
         this._focuslabeltext
-            // .attr("x", xCoordinate)
+            //.attr("x", xCoordinate)
             .attr("y", this._y(item.z))
             .style("font-weight", "700");
 
         this._focuslabelX
-            .text(" " + numX + " " + this._xLabel + " ")
+            .text(`  ${numX} ${this._xLabel}  `)
             .attr("x", xCoordinate + 10);
 
         this._focuslabelY
-            .text(" " + numY + " " + this._yLabel + " ")
+            .text(`  ${numY} ${this._yLabel}  `)
             .attr("x", xCoordinate + 10);
 
-        this._focuslabelS
-            .text(" " + slope + '% ')
+        this._focuslabelSlope
+            .text(`  ${slope}%  `)
             .attr("x", xCoordinate + 10);
 
         let focuslabeltext = this._focuslabeltext.node();
@@ -1623,7 +1631,7 @@ L.Control.Elevation = L.Control.extend({
             if (xCoordinate >= this._width() / 2) {
                 this._focuslabelrect.attr("x", this._focuslabelrect.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
                 this._focuslabelX.attr("x", this._focuslabelX.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-                this._focuslabelS.attr("x", this._focuslabelS.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+                this._focuslabelSlope.attr("x", this._focuslabelSlope.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
                 this._focuslabelY.attr("x", this._focuslabelY.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
             }
         }
@@ -1702,8 +1710,15 @@ L.Control.Elevation = L.Control.extend({
 
         this._mouseHeightFocusLabel
             .attr("x", item.x)
-            .attr("y", normalizedY)
+            .attr("y", normalizedY - 5)
+            .attr("dy", "-1em")
             .text(numY + " " + this._yLabel)
+            .style("visibility", "visible");
+
+        this._mouseSlopeFocusLabel
+            .attr("x", item.x)
+            .attr("y", normalizedY - 5)
+            .text(item.slope + "%")
             .style("visibility", "visible");
     },
 
@@ -1773,7 +1788,10 @@ L.Control.Elevation = L.Control.extend({
         this.track_info.slope_min = this._sMin || 0;
 
         if (this.options.summary) {
-            this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>';
+            this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>\
+            <span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>\
+            <span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>\
+            <span class="ascent"><span class="summarylabel">' + L._("Ascent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.ascent) + '&nbsp;' + this._yLabel + '</span></span>';
         }
         if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
             this.summaryDiv.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
