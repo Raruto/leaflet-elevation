@@ -627,7 +627,7 @@ L.Control.Elevation = L.Control.extend({
             if (diff > 0) tAsc += diff;
             if (diff < 0) tDes += diff * -1;
             // slope in % = ( height / length ) * 100
-            slope = diff !== 0 ? Math.round((diff / delta) * 100) : 0;
+            slope = delta !== 0 ? Math.round((diff / delta) * 100) : 0;
             // apply slope to the previous point because we will 
             // ascent or desent, so the slope is in the fist point
             if (data.length > 0) data[data.length - 1].slope = slope;
