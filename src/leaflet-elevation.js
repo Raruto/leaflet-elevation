@@ -867,7 +867,9 @@ L.Control.Elevation = L.Control.extend({
 			} else {
 				this._resizeChart();
 				for (let id in this._layers) {
-					L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
+					if (this._layers[id]._path) {
+						L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
+					}
 				}
 				this._chartEnabled = true;
 			}
@@ -983,8 +985,10 @@ L.Control.Elevation = L.Control.extend({
 	_clearPath: function() {
 		this._hidePositionMarker();
 		for (let id in this._layers) {
-			L.DomUtil.removeClass(this._layers[id]._path, this.options.polyline.className);
-			L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
+			if (this._layers[id]._path) {
+				L.DomUtil.removeClass(this._layers[id]._path, this.options.polyline.className);
+				L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
+			}
 		}
 	},
 
@@ -1756,6 +1760,7 @@ L.Control.Elevation = L.Control.extend({
 			}.bind(this);
 		}
 	},
+
 
 	/**
 	 * Calculates chart width.
