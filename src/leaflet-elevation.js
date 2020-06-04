@@ -998,6 +998,10 @@ L.Control.Elevation = L.Control.extend({
         this._distance = null;
         this._maxElevation = null;
         this._minElevation = null;
+        this._sMax = null;
+        this._sMin = null;
+        this._tAsc = null;
+        this._tDes = null;
         this.track_info = null;
         this._layers = null;
         // if (this.layer) {
