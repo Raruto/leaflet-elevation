@@ -867,7 +867,9 @@ L.Control.Elevation = L.Control.extend({
             } else {
                 this._resizeChart();
                 for (let id in this._layers) {
-                    L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
+                    if (this._layers[id]._path) {
+                        L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
+                    }
                 }
                 this._chartEnabled = true;
             }
