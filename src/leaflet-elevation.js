@@ -567,7 +567,7 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	_addGPXdata: function(coords) {
 		if (coords) {
-			coords.forEach(point => this._addPoint(point.lat, point.lng, (point.alt || point.meta.ele)));
+			coords.forEach(point => this._addPoint(point.lat, point.lng, point.meta.ele));
 		}
 	},
 
