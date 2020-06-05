@@ -871,7 +871,7 @@
     			.attr("class", "mouse-focus-label-text");
     		this._focuslabelY = this._focuslabeltext.append("svg:tspan")
     			.attr("class", "mouse-focus-label-y")
-    			.attr("dy", "-1em");
+    			.attr("dy", "1em");
     		this._focuslabelX = this._focuslabeltext.append("svg:tspan")
     			.attr("class", "mouse-focus-label-x")
     			.attr("dy", "2em");
@@ -1615,35 +1615,30 @@
     			.classed('hidden', false);
 
     		let hoverNumber = this.options.hoverNumber;
-    		let tspanAlign = xCoordinate + 10;
-
-    		this._focuslabeltext
-    			//.attr("x", xCoordinate)
-    			.attr("y", this._y(item.z))
-    			.style("font-weight", "700");
+    		let yCoordinate = this._y(item.z);
 
     		this._focuslabelX.text(hoverNumber.formatter(item.dist, hoverNumber.decimalsX) + " " + this._xLabel);
     		this._focuslabelY.text(hoverNumber.formatter(item.z, hoverNumber.decimalsY) + " " + this._yLabel);
 
     		let focuslabeltext = this._focuslabeltext.node();
-    		if (this._isDomVisible(focuslabeltext)) {
-    			let bbox = focuslabeltext.getBBox();
-    			this._focuslabelrect
-    				.attr("x", tspanAlign - 5)
-    				.attr("y", bbox.y - 5)
-    				.attr("width", bbox.width + 10)
-    				.attr("height", bbox.height + 10);
+    		let bbox = focuslabeltext.getBBox();
+    		let xAlign = Math.abs(xCoordinate + (xCoordinate < this._width() / 2 ? 10 : -bbox.width - 10));
+    		let yAlign = Math.abs(yCoordinate + (yCoordinate < this._height() - bbox.height ? 0 : -bbox.height));
 
-    			// move focus label to left
-    			if (xCoordinate >= this._width() / 2) {
-    				tspanAlign = xCoordinate - bbox.width - 10;
-    				this._focuslabelrect.attr("x", tspanAlign - 5);
-    			}
-    		}
+    		this._focuslabeltext
+    			//.attr("x", xCoordinate)
+    			.style("font-weight", "700")
+    			.attr("y", yAlign);
 
     		d3.selectAll('tspan', this._focuslabeltext).each(function(d, i) {
-    			d3.select(this).attr("x", tspanAlign);
+    			d3.select(this).attr("x", xAlign);
     		});
+
+    		this._focuslabelrect
+    			.attr("x", Math.abs(xAlign - 5))
+    			.attr("y", Math.abs(yAlign - 5))
+    			.attr("width", bbox.width + 10)
+    			.attr("height", bbox.height + 10);
 
     	},
 
