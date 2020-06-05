@@ -166,6 +166,8 @@
     		yLabel: "m",
     		yTicks: undefined,
     		zFollow: 13,
+    		tooltip_slope: false,
+    		marker_slope: false,
     	},
     	__mileFactor: 0.621371,
     	__footFactor: 3.28084,
