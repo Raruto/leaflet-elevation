@@ -630,7 +630,7 @@
     		let dist = this._distance || 0;
 
     		let curr = new L.LatLng(x, y);
-    		let prev = data.length ? data[data.length - 1].latlng : curr;
+    		let prev = data.length > 0 ? data[data.length - 1].latlng : curr;
 
     		let delta = curr.distanceTo(prev) * this._distanceFactor;
 
@@ -675,6 +675,8 @@
     		this._distance = dist;
     		this._maxElevation = eleMax;
     		this._minElevation = eleMin;
+
+    		this._fireEvt("eledata_updated", { idx: data.length - 1 }, true);
     	},
 
     	/**
@@ -872,7 +874,7 @@
     			.attr("dy", "-1em");
     		this._focuslabelX = this._focuslabeltext.append("svg:tspan")
     			.attr("class", "mouse-focus-label-x")
-    			.attr("dy", "2em");
+    			.attr("dy", "1.5em");
     	},
 
     	/**
@@ -1015,6 +1017,10 @@
     		this._distance = null;
     		this._maxElevation = null;
     		this._minElevation = null;
+    		this._sMax = null;
+    		this._sMin = null;
+    		this._tAsc = null;
+    		this._tDes = null;
     		this.track_info = null;
     		this._layers = null;
     		// if (this.layer) {
@@ -1028,8 +1034,10 @@
     	_clearPath: function() {
     		this._hidePositionMarker();
     		for (let id in this._layers) {
-    			L.DomUtil.removeClass(this._layers[id]._path, this.options.polyline.className);
-    			L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
+    			if (this._layers[id]._path) {
+    				L.DomUtil.removeClass(this._layers[id]._path, this.options.polyline.className);
+    				L.DomUtil.removeClass(this._layers[id]._path, this.options.theme);
+    			}
     		}
     	},
 
@@ -1301,6 +1309,7 @@
     		this._appendChart(svg);
     		this._updateSummary();
 
+    		this._fireEvt("elechart_init", null, true);
     	},
 
     	/**
@@ -1482,8 +1491,8 @@
     			L.DomUtil.addClass(this._map._container, 'elechart-hover');
     		}
 
-    		this._fireEvt("elechart_change", { data: item }, true);
-    		this._fireEvt("elechart_hover", { data: item }, true);
+    		this._fireEvt("elechart_change", { data: item, xCoord: xCoord }, true);
+    		this._fireEvt("elechart_hover", { data: item, xCoord: xCoord }, true);
     	},
 
     	/*
@@ -1501,6 +1510,8 @@
     			this._hidePositionMarker();
     			this._showDiagramIndicator(item, xCoord);
     			this._showPositionMarker(item);
+
+    			this._fireEvt("elechart_change", { data: item, xCoord: xCoord }, true);
     		}
     	},
 
@@ -1595,7 +1606,6 @@
     	_showDiagramIndicator: function(item, xCoordinate) {
     		if (!this._chartEnabled) return;
 
-    		let opts = this.options;
     		this._focusG.style("visibility", "visible");
 
     		this._mousefocus.attr('x1', xCoordinate)
@@ -1604,43 +1614,36 @@
     			.attr('y2', this._height())
     			.classed('hidden', false);
 
-    		let alt = item.z,
-    			dist = item.dist,
-    			ll = item.latlng,
-    			numY = opts.hoverNumber.formatter(alt, opts.hoverNumber.decimalsY),
-    			numX = opts.hoverNumber.formatter(dist, opts.hoverNumber.decimalsX);
+    		let hoverNumber = this.options.hoverNumber;
+    		let tspanAlign = xCoordinate + 10;
 
     		this._focuslabeltext
-    			// .attr("x", xCoordinate)
+    			//.attr("x", xCoordinate)
     			.attr("y", this._y(item.z))
     			.style("font-weight", "700");
 
-    		this._focuslabelX
-    			.text(numX + " " + this._xLabel)
-    			.attr("x", xCoordinate + 10);
-
-    		this._focuslabelY
-    			.text(numY + " " + this._yLabel)
-    			.attr("x", xCoordinate + 10);
+    		this._focuslabelX.text(hoverNumber.formatter(item.dist, hoverNumber.decimalsX) + " " + this._xLabel);
+    		this._focuslabelY.text(hoverNumber.formatter(item.z, hoverNumber.decimalsY) + " " + this._yLabel);
 
     		let focuslabeltext = this._focuslabeltext.node();
     		if (this._isDomVisible(focuslabeltext)) {
     			let bbox = focuslabeltext.getBBox();
-    			let padding = 2;
-
     			this._focuslabelrect
-    				.attr("x", bbox.x - padding)
-    				.attr("y", bbox.y - padding)
-    				.attr("width", bbox.width + (padding * 2))
-    				.attr("height", bbox.height + (padding * 2));
+    				.attr("x", tspanAlign - 5)
+    				.attr("y", bbox.y - 5)
+    				.attr("width", bbox.width + 10)
+    				.attr("height", bbox.height + 10);
 
     			// move focus label to left
     			if (xCoordinate >= this._width() / 2) {
-    				this._focuslabelrect.attr("x", this._focuslabelrect.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-    				this._focuslabelX.attr("x", this._focuslabelX.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-    				this._focuslabelY.attr("x", this._focuslabelY.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+    				tspanAlign = xCoordinate - bbox.width - 10;
+    				this._focuslabelrect.attr("x", tspanAlign - 5);
     			}
     		}
+
+    		d3.selectAll('tspan', this._focuslabeltext).each(function(d, i) {
+    			d3.select(this).attr("x", tspanAlign);
+    		});
 
     	},
 
@@ -1782,7 +1785,9 @@
     		this.track_info.elevation_min = this._minElevation || 0;
 
     		if (this.options.summary) {
-    			this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + ' ' + this._xLabel + '</span></span><span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + ' ' + this._yLabel + '</span></span><span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + ' ' + this._yLabel + '</span></span>';
+    			this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>\
+			<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>\
+			<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
     		}
     		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
     			this.summaryDiv.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>';
@@ -1798,6 +1803,7 @@
     				}
     			}.bind(this);
     		}
+    		this._fireEvt("elechart_summary");
     	},
 
     	/**

@@ -583,12 +583,6 @@ L.Control.Elevation = L.Control.extend({
 		let eleMax = this._maxElevation || -Infinity;
 		let eleMin = this._minElevation || +Infinity;
 		let dist = this._distance || 0;
-		let tAsc = this._tAsc || 0; // Total Ascent
-		let tDes = this._tDes || 0; // Total Descent
-		let sMax = this._sMax || 0; // Slope Max
-		let sMin = this._sMin || 0; // Slope Min
-		let diff = 0;
-		let slope = 0;
 
 		let curr = new L.LatLng(x, y);
 		let prev = data.length > 0 ? data[data.length - 1].latlng : curr;
@@ -622,17 +616,6 @@ L.Control.Elevation = L.Control.extend({
 			eleMax = eleMax < z ? z : eleMax;
 			eleMin = eleMin > z ? z : eleMin;
 			this._lastValidZ = z;
-			// diff height between actual and previous point
-			diff = data.length > 0 ? z - data[data.length - 1].z : 0;
-			if (diff > 0) tAsc += diff;
-			if (diff < 0) tDes += diff * -1;
-			// slope in % = ( height / length ) * 100
-			slope = delta !== 0 ? Math.round((diff / delta) * 100) : 0;
-			// apply slope to the previous point because we will 
-			// ascent or desent, so the slope is in the fist point
-			if (data.length > 0) data[data.length - 1].slope = slope;
-			sMax = slope > sMax ? slope : sMax;
-			sMin = slope < sMin ? slope : sMin;
 		}
 
 		data.push({
@@ -640,7 +623,6 @@ L.Control.Elevation = L.Control.extend({
 			x: x,
 			y: y,
 			z: z,
-			slope: 0,
 			latlng: curr
 		});
 
@@ -648,10 +630,8 @@ L.Control.Elevation = L.Control.extend({
 		this._distance = dist;
 		this._maxElevation = eleMax;
 		this._minElevation = eleMin;
-		this._tAsc = tAsc;
-		this._tDes = tDes;
-		this._sMax = sMax;
-		this._sMin = sMin;
+
+		this._fireEvt("eledata_updated", { idx: data.length - 1 }, true);
 	},
 
 	/**
@@ -847,9 +827,6 @@ L.Control.Elevation = L.Control.extend({
 		this._focuslabelY = this._focuslabeltext.append("svg:tspan")
 			.attr("class", "mouse-focus-label-y")
 			.attr("dy", "-1em");
-		this._focuslabelSlope = this._focuslabeltext.append("svg:tspan")
-			.attr("class", "mouse-focus-label-y")
-			.attr("dy", "1.5em");
 		this._focuslabelX = this._focuslabeltext.append("svg:tspan")
 			.attr("class", "mouse-focus-label-x")
 			.attr("dy", "1.5em");
@@ -922,9 +899,6 @@ L.Control.Elevation = L.Control.extend({
 			.attr("cy", 0);
 
 		this._mouseHeightFocusLabel = heightG.append("svg:text")
-			.attr("class", theme + " height-focus-label")
-			.style("pointer-events", "none");
-		this._mouseSlopeFocusLabel = heightG.append("svg:text")
 			.attr("class", theme + " height-focus-label")
 			.style("pointer-events", "none");
 	},
@@ -1233,7 +1207,6 @@ L.Control.Elevation = L.Control.extend({
 		if (this._mouseHeightFocus) {
 			this._mouseHeightFocus.style("visibility", "hidden");
 			this._mouseHeightFocusLabel.style("visibility", "hidden");
-			this._mouseSlopeFocusLabel.style("visibility", "hidden");
 		}
 		if (this._pointG) {
 			this._pointG.style("visibility", "hidden");
@@ -1291,6 +1264,7 @@ L.Control.Elevation = L.Control.extend({
 		this._appendChart(svg);
 		this._updateSummary();
 
+		this._fireEvt("elechart_init", null, true);
 	},
 
 	/**
@@ -1474,8 +1448,8 @@ L.Control.Elevation = L.Control.extend({
 			L.DomUtil.addClass(this._map._container, 'elechart-hover');
 		}
 
-		this._fireEvt("elechart_change", { data: item }, true);
-		this._fireEvt("elechart_hover", { data: item }, true);
+		this._fireEvt("elechart_change", { data: item, xCoord: xCoord }, true);
+		this._fireEvt("elechart_hover", { data: item, xCoord: xCoord }, true);
 	},
 
 	/*
@@ -1493,6 +1467,8 @@ L.Control.Elevation = L.Control.extend({
 			this._hidePositionMarker();
 			this._showDiagramIndicator(item, xCoord);
 			this._showPositionMarker(item);
+
+			this._fireEvt("elechart_change", { data: item, xCoord: xCoord }, true);
 		}
 	},
 
@@ -1587,7 +1563,6 @@ L.Control.Elevation = L.Control.extend({
 	_showDiagramIndicator: function(item, xCoordinate) {
 		if (!this._chartEnabled) return;
 
-		let opts = this.options;
 		this._focusG.style("visibility", "visible");
 
 		this._mousefocus.attr('x1', xCoordinate)
@@ -1596,49 +1571,36 @@ L.Control.Elevation = L.Control.extend({
 			.attr('y2', this._height())
 			.classed('hidden', false);
 
-		let alt = item.z,
-			dist = item.dist,
-			ll = item.latlng,
-			slope = item.slope,
-			numY = opts.hoverNumber.formatter(alt, opts.hoverNumber.decimalsY),
-			numX = opts.hoverNumber.formatter(dist, opts.hoverNumber.decimalsX);
+		let hoverNumber = this.options.hoverNumber;
+		let tspanAlign = xCoordinate + 10;
 
 		this._focuslabeltext
 			//.attr("x", xCoordinate)
 			.attr("y", this._y(item.z))
 			.style("font-weight", "700");
 
-		this._focuslabelX
-			.text(`  ${numX} ${this._xLabel}  `)
-			.attr("x", xCoordinate + 10);
-
-		this._focuslabelY
-			.text(`  ${numY} ${this._yLabel}  `)
-			.attr("x", xCoordinate + 10);
-
-		this._focuslabelSlope
-			.text(`  ${slope}%  `)
-			.attr("x", xCoordinate + 10);
+		this._focuslabelX.text(hoverNumber.formatter(item.dist, hoverNumber.decimalsX) + " " + this._xLabel);
+		this._focuslabelY.text(hoverNumber.formatter(item.z, hoverNumber.decimalsY) + " " + this._yLabel);
 
 		let focuslabeltext = this._focuslabeltext.node();
 		if (this._isDomVisible(focuslabeltext)) {
 			let bbox = focuslabeltext.getBBox();
-			let padding = 2;
-
 			this._focuslabelrect
-				.attr("x", bbox.x - padding)
-				.attr("y", bbox.y - padding)
-				.attr("width", bbox.width + (padding * 2))
-				.attr("height", bbox.height + (padding * 2));
+				.attr("x", tspanAlign - 5)
+				.attr("y", bbox.y - 5)
+				.attr("width", bbox.width + 10)
+				.attr("height", bbox.height + 10);
 
 			// move focus label to left
 			if (xCoordinate >= this._width() / 2) {
-				this._focuslabelrect.attr("x", this._focuslabelrect.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-				this._focuslabelX.attr("x", this._focuslabelX.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-				this._focuslabelSlope.attr("x", this._focuslabelSlope.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-				this._focuslabelY.attr("x", this._focuslabelY.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+				tspanAlign = xCoordinate - bbox.width - 10;
+				this._focuslabelrect.attr("x", tspanAlign - 5);
 			}
 		}
+
+		d3.selectAll('tspan', this._focuslabeltext).each(function(d, i) {
+			d3.select(this).attr("x", tspanAlign);
+		});
 
 	},
 
@@ -1714,15 +1676,8 @@ L.Control.Elevation = L.Control.extend({
 
 		this._mouseHeightFocusLabel
 			.attr("x", item.x)
-			.attr("y", normalizedY - 5)
-			.attr("dy", "-1em")
+			.attr("y", normalizedY)
 			.text(numY + " " + this._yLabel)
-			.style("visibility", "visible");
-
-		this._mouseSlopeFocusLabel
-			.attr("x", item.x)
-			.attr("y", normalizedY - 5)
-			.text(item.slope + "%")
 			.style("visibility", "visible");
 	},
 
@@ -1761,7 +1716,6 @@ L.Control.Elevation = L.Control.extend({
 		let point = this._map.latLngToLayerPoint(item.latlng);
 		let layerpoint = {
 			dist: item.dist,
-			slope: item.slope,
 			x: point.x,
 			y: point.y,
 			z: item.z,
@@ -1786,16 +1740,11 @@ L.Control.Elevation = L.Control.extend({
 		this.track_info.distance = this._distance || 0;
 		this.track_info.elevation_max = this._maxElevation || 0;
 		this.track_info.elevation_min = this._minElevation || 0;
-		this.track_info.ascent = this._tAsc || 0;
-		this.track_info.descent = this._tDes || 0;
-		this.track_info.slope_max = this._sMax || 0;
-		this.track_info.slope_min = this._sMin || 0;
 
 		if (this.options.summary) {
 			this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>\
 			<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>\
-			<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>\
-			<span class="ascent"><span class="summarylabel">' + L._("Ascent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.ascent) + '&nbsp;' + this._yLabel + '</span></span>';
+			<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
 		}
 		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
 			this.summaryDiv.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
@@ -1811,6 +1760,7 @@ L.Control.Elevation = L.Control.extend({
 				}
 			}.bind(this);
 		}
+		this._fireEvt("elechart_summary");
 	},
 
 	/**
