@@ -676,7 +676,7 @@
     		this._maxElevation = eleMax;
     		this._minElevation = eleMin;
 
-    		this._fireEvt("eledata_updated", { idx: data.length - 1 }, true);
+    		this._fireEvt("eledata_updated", { index: data.length - 1 }, true);
     	},
 
     	/**

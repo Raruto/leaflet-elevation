@@ -19,10 +19,11 @@ L.Control.Elevation.addInitHook(function() {
 
 	this.on("eledata_updated", function(e) {
 		let data = this._data;
-		let z = data[e.idx].z;
+		let i = e.index;
+		let z = data[i].z;
 
-		let curr = data[e.idx].latlng;
-		let prev = e.idx > 0 ? data[e.idx - 1].latlng : curr;
+		let curr = data[i].latlng;
+		let prev = i > 0 ? data[i - 1].latlng : curr;
 
 		let delta = curr.distanceTo(prev) * this._distanceFactor;
 
@@ -36,19 +37,19 @@ L.Control.Elevation.addInitHook(function() {
 
 		if (!isNaN(z)) {
 			// diff height between actual and previous point
-			diff = e.idx > 0 ? z - data[e.idx - 1].z : 0;
+			diff = i > 0 ? z - data[i - 1].z : 0;
 			if (diff > 0) tAsc += diff;
 			if (diff < 0) tDes -= diff;
 			// slope in % = ( height / length ) * 100
 			slope = delta !== 0 ? Math.round((diff / delta) * 10000) / 100 : 0;
 			// apply slope to the previous point because we will
 			// ascent or desent, so the slope is in the fist point
-			if (e.idx > 0) data[e.idx - 1].slope = slope;
+			if (i > 0) data[i - 1].slope = slope;
 			sMax = slope > sMax ? slope : sMax;
 			sMin = slope < sMin ? slope : sMin;
 		}
 
-		data[e.idx].slope = slope;
+		data[i].slope = slope;
 
 		this.track_info = this.track_info || {};
 		this.track_info.ascent = this._tAsc = tAsc;
