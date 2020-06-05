@@ -121,8 +121,6 @@ L.Control.Elevation = L.Control.extend({
 		yLabel: "m",
 		yTicks: undefined,
 		zFollow: 13,
-		tooltip_slope: false,
-		marker_slope: false,
 	},
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
@@ -587,7 +585,7 @@ L.Control.Elevation = L.Control.extend({
 		let dist = this._distance || 0;
 
 		let curr = new L.LatLng(x, y);
-		let prev = data.length > 0 ? data[data.length - 1].latlng : curr;
+		let prev = data.length ? data[data.length - 1].latlng : curr;
 
 		let delta = curr.distanceTo(prev) * this._distanceFactor;
 

@@ -105,4 +105,11 @@ L.Control.Elevation.addInitHook(function() {
 			'</span></span>');
 	});
 
+	this.on("eledata_clear", function() {
+		this._sMax = null;
+		this._sMin = null;
+		this._tAsc = null;
+		this._tDes = null;
+	});
+
 });
