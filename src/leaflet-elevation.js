@@ -1212,7 +1212,6 @@ L.Control.Elevation = L.Control.extend({
 		if (this._focusG) {
 			this._focusG.style("visibility", "hidden");
 		}
-		this._fireEvt("marker_hide", null, true);
 	},
 
 	/**
@@ -1578,8 +1577,8 @@ L.Control.Elevation = L.Control.extend({
 
 		let focuslabeltext = this._focuslabeltext.node();
 		let bbox = focuslabeltext.getBBox();
-		let xAlign = Math.abs(xCoordinate + (xCoordinate < this._width() / 2 ? 10 : -bbox.width - 10));
-		let yAlign = Math.abs(yCoordinate + (yCoordinate < this._height() - bbox.height ? 0 : -bbox.height));
+		let xAlign = xCoordinate + (xCoordinate < this._width() / 2 ? 10 : -bbox.width - 10);
+		let yAlign = Math.max(yCoordinate - bbox.height, 0);
 
 		this._focuslabeltext
 			//.attr("x", xCoordinate)
@@ -1591,8 +1590,8 @@ L.Control.Elevation = L.Control.extend({
 		});
 
 		this._focuslabelrect
-			.attr("x", Math.abs(xAlign - 5))
-			.attr("y", Math.abs(yAlign - 5))
+			.attr("x", xAlign - 5)
+			.attr("y", yAlign - 5)
 			.attr("width", bbox.width + 10)
 			.attr("height", bbox.height + 10);
 

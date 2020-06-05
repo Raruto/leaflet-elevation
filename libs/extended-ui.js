@@ -104,10 +104,4 @@ L.Control.Elevation.addInitHook(function() {
 		this._tDes = null;
 	});
 
-	this.on("marker_hide", function() {
-		if (this._mouseSlopeFocusLabel) {
-			this._mouseSlopeFocusLabel.style("visibility", "hidden");
-		}
-	});
-
 });
