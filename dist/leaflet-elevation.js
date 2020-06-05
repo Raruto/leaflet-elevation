@@ -1711,12 +1711,12 @@
     			.style("visibility", "visible");
 
     		this._mouseHeightFocusLabel
-    			.attr("x", item.x)
+    			.attr("x", item.x + 5)
     			.attr("y", normalizedY)
     			.style("visibility", "visible");
 
     		this._mouseHeightFocusLabel.selectAll('tspan').each(function(d, i) {
-    			d3.select(this).attr("x", item.x);
+    			d3.select(this).attr("x", item.x + 5);
     		});
 
     		this._mouseHeightFocusLabelY

@@ -31,16 +31,10 @@
 	<script src="https://unpkg.com/leaflet@latest/dist/leaflet-src.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@latest/dist/leaflet-ui-src.js"></script>
 
-	<!-- D3 -->
-	<!-- <script src="https://unpkg.com/d3@5.15.0/dist/d3.min.js"></script> -->
-
-	<!-- leaflet-gpx -->
-	<!-- <script src="https://unpkg.com/leaflet-gpx@1.5.0/gpx.js"></script> -->
-
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
-	<script src="../dist/leaflet-elevation.js"></script>
-	<script src="../libs/extended-ui.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.1.2/dist/leaflet-elevation.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.1.2/dist/leaflet-elevation.js"></script>
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.1.2/libs/extended-ui.js"></script>
 
 </head>
 
@@ -57,10 +51,8 @@
 				resizerControl: true,
 			},
 			elevationControl: {
-				// url: "../examples/via-emilia.gpx",
-				url: "../examples/demo.geojson",
-				// url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
-				// url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+				url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
+				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
 				options: {
 					theme: "lightblue-theme",
 					collapsed: false,
