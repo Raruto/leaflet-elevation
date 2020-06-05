@@ -72,11 +72,6 @@ L.Control.Elevation.addInitHook(function() {
 
 		this._focuslabelSlope.text(item.slope + "%");
 
-		// move focus label to left
-		if (xCoordinate >= this._width() / 2) {
-			this._focuslabelSlope.attr("x", this._focuslabelY.attr("x"));
-		}
-
 		if (!this._mouseSlopeFocusLabel) {
 			let layerpane = d3.select(this._map.getContainer()).select(".leaflet-elevation-pane svg").select("g");
 
@@ -87,6 +82,8 @@ L.Control.Elevation.addInitHook(function() {
 
 		this._mouseHeightFocusLabel
 			.attr("dy", "-1.5em");
+		this._focuslabelX
+			.attr("dy", "1.5em");
 
 		this._mouseSlopeFocusLabel
 			.attr("x", this._mouseHeightFocusLabel.attr("x"))

@@ -874,7 +874,7 @@
     			.attr("dy", "-1em");
     		this._focuslabelX = this._focuslabeltext.append("svg:tspan")
     			.attr("class", "mouse-focus-label-x")
-    			.attr("dy", "1.5em");
+    			.attr("dy", "2em");
     	},
 
     	/**
