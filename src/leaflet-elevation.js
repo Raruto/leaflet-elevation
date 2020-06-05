@@ -1214,6 +1214,7 @@ L.Control.Elevation = L.Control.extend({
 		if (this._focusG) {
 			this._focusG.style("visibility", "hidden");
 		}
+		this._fireEvt("marker_hide", null, true);
 	},
 
 	/**
