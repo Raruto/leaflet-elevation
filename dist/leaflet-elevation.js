@@ -1623,7 +1623,7 @@
     		let focuslabeltext = this._focuslabeltext.node();
     		let bbox = focuslabeltext.getBBox();
     		let xAlign = xCoordinate + (xCoordinate < this._width() / 2 ? 10 : -bbox.width - 10);
-    		let yAlign = Math.max(yCoordinate - bbox.height, 0);
+    		let yAlign = Math.max(yCoordinate - bbox.height, L.Browser.webkit ? 0 : -Infinity);
 
     		this._focuslabeltext
     			//.attr("x", xCoordinate)
