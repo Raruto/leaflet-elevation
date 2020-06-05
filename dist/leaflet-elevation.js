@@ -1617,16 +1617,13 @@
     		let hoverNumber = this.options.hoverNumber;
     		let yCoordinate = this._y(item.z);
 
+    		this._focuslabelX.text(hoverNumber.formatter(item.dist, hoverNumber.decimalsX) + " " + this._xLabel);
+    		this._focuslabelY.text(hoverNumber.formatter(item.z, hoverNumber.decimalsY) + " " + this._yLabel);
+
     		let focuslabeltext = this._focuslabeltext.node();
     		let bbox = focuslabeltext.getBBox();
     		let xAlign = Math.abs(xCoordinate + (xCoordinate < this._width() / 2 ? 10 : -bbox.width - 10));
-    		let yAlign = Math.abs(yCoordinate + (yCoordinate < this._height() - bbox.height ? -5 : -bbox.height));
-
-    		this._focuslabelrect
-    			.attr("x", Math.abs(xAlign - 5))
-    			.attr("y", Math.abs(yAlign - 5))
-    			.attr("width", bbox.width + 10)
-    			.attr("height", bbox.height + 10);
+    		let yAlign = Math.abs(yCoordinate + (yCoordinate < this._height() - bbox.height ? 0 : -bbox.height));
 
     		this._focuslabeltext
     			//.attr("x", xCoordinate)
@@ -1637,8 +1634,11 @@
     			d3.select(this).attr("x", xAlign);
     		});
 
-    		this._focuslabelX.text(hoverNumber.formatter(item.dist, hoverNumber.decimalsX) + " " + this._xLabel);
-    		this._focuslabelY.text(hoverNumber.formatter(item.z, hoverNumber.decimalsY) + " " + this._yLabel);
+    		this._focuslabelrect
+    			.attr("x", Math.abs(xAlign - 5))
+    			.attr("y", Math.abs(yAlign - 5))
+    			.attr("width", bbox.width + 10)
+    			.attr("height", bbox.height + 10);
 
     	},
 
