@@ -882,7 +882,7 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	_appendPositionMarker: function(pane) {
 		let theme = this.options.theme;
-		let heightG = pane.select("g");
+		let heightG = pane.select("g").attr("class", "height-focus-group");
 
 		this._mouseHeightFocus = heightG.append('svg:line')
 			.attr("class", theme + " height-focus line")
@@ -891,8 +891,7 @@ L.Control.Elevation = L.Control.extend({
 			.attr("x1", 0)
 			.attr("y1", 0);
 
-		this._pointG = heightG.append("g");
-		this._pointG.append("svg:circle")
+		this._pointG = heightG.append("svg:circle")
 			.attr("class", theme + " height-focus circle-lower")
 			.attr("r", 6)
 			.attr("cx", 0)
@@ -901,6 +900,9 @@ L.Control.Elevation = L.Control.extend({
 		this._mouseHeightFocusLabel = heightG.append("svg:text")
 			.attr("class", theme + " height-focus-label")
 			.style("pointer-events", "none");
+
+		this._mouseHeightFocusLabelY = this._mouseHeightFocusLabel.append("svg:tspan")
+			.attr("class", "height-focus-y");
 	},
 
 	/**
@@ -972,10 +974,6 @@ L.Control.Elevation = L.Control.extend({
 		this._distance = null;
 		this._maxElevation = null;
 		this._minElevation = null;
-		this._sMax = null;
-		this._sMin = null;
-		this._tAsc = null;
-		this._tDes = null;
 		this.track_info = null;
 		this._layers = null;
 		// if (this.layer) {
@@ -1587,7 +1585,7 @@ L.Control.Elevation = L.Control.extend({
 			.style("font-weight", "700")
 			.attr("y", yAlign);
 
-		d3.selectAll('tspan', this._focuslabeltext).each(function(d, i) {
+		this._focuslabeltext.selectAll('tspan').each(function(d, i) {
 			d3.select(this).attr("x", xAlign);
 		});
 
@@ -1672,8 +1670,14 @@ L.Control.Elevation = L.Control.extend({
 		this._mouseHeightFocusLabel
 			.attr("x", item.x)
 			.attr("y", normalizedY)
-			.text(numY + " " + this._yLabel)
 			.style("visibility", "visible");
+
+		this._mouseHeightFocusLabel.selectAll('tspan').each(function(d, i) {
+			d3.select(this).attr("x", item.x);
+		});
+
+		this._mouseHeightFocusLabelY
+			.text(numY + " " + this._yLabel);
 	},
 
 	/**

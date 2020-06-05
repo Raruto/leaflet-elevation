@@ -73,24 +73,18 @@ L.Control.Elevation.addInitHook(function() {
 		this._focuslabelSlope.text(item.slope + "%");
 
 		if (!this._mouseSlopeFocusLabel) {
-			let layerpane = d3.select(this._map.getContainer()).select(".leaflet-elevation-pane svg").select("g");
-
-			this._mouseSlopeFocusLabel = layerpane.append("svg:text")
-				.attr("class", this.options.theme + " height-focus-label ")
-				.style("pointer-events", "none");
+			this._mouseSlopeFocusLabel = this._mouseHeightFocusLabel.append("svg:tspan")
+				.attr("class", "height-focus-slope ");
 		}
 
-		this._mouseHeightFocusLabel
+		this._mouseHeightFocusLabelY
 			.attr("dy", "-1.5em");
 		this._focuslabelX
 			.attr("dy", "1.5em");
 
 		this._mouseSlopeFocusLabel
-			.attr("x", this._mouseHeightFocusLabel.attr("x"))
-			.attr("y", this._mouseHeightFocusLabel.attr("y"))
-			.attr("dy", "-0.5em")
-			.text(Math.round(item.slope) + "%")
-			.style("visibility", "visible");
+			.attr("dy", "1.5em")
+			.text(Math.round(item.slope) + "%");
 
 	});
 
