@@ -121,6 +121,8 @@ L.Control.Elevation = L.Control.extend({
 		yLabel: "m",
 		yTicks: undefined,
 		zFollow: 13,
+		tooltip_slope: false,
+		marker_slope: false,
 	},
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
@@ -847,9 +849,13 @@ L.Control.Elevation = L.Control.extend({
 		this._focuslabelY = this._focuslabeltext.append("svg:tspan")
 			.attr("class", "mouse-focus-label-y")
 			.attr("dy", "-1em");
-		this._focuslabelSlope = this._focuslabeltext.append("svg:tspan")
-			.attr("class", "mouse-focus-label-y")
-			.attr("dy", "1.5em");
+		if (this.options.tooltip_slope) {
+			this._focuslabelSlope = this._focuslabeltext.append("svg:tspan")
+				.attr("class", "mouse-focus-label-y")
+				.attr("dy", "1.5em");
+		} else {
+			this._focuslabelSlope = null;
+		}
 		this._focuslabelX = this._focuslabeltext.append("svg:tspan")
 			.attr("class", "mouse-focus-label-x")
 			.attr("dy", "1.5em");
@@ -924,9 +930,13 @@ L.Control.Elevation = L.Control.extend({
 		this._mouseHeightFocusLabel = heightG.append("svg:text")
 			.attr("class", theme + " height-focus-label")
 			.style("pointer-events", "none");
-		this._mouseSlopeFocusLabel = heightG.append("svg:text")
-			.attr("class", theme + " height-focus-label")
-			.style("pointer-events", "none");
+		if (this.options.marker_slope) {
+			this._mouseSlopeFocusLabel = heightG.append("svg:text")
+				.attr("class", theme + " height-focus-label")
+				.style("pointer-events", "none");
+		} else {
+			this._mouseSlopeFocusLabel = null;
+		}
 	},
 
 	/**
@@ -1233,7 +1243,9 @@ L.Control.Elevation = L.Control.extend({
 		if (this._mouseHeightFocus) {
 			this._mouseHeightFocus.style("visibility", "hidden");
 			this._mouseHeightFocusLabel.style("visibility", "hidden");
-			this._mouseSlopeFocusLabel.style("visibility", "hidden");
+			if (this._mouseSlopeFocusLabel) {
+				this._mouseSlopeFocusLabel.style("visibility", "hidden");
+			}
 		}
 		if (this._pointG) {
 			this._pointG.style("visibility", "hidden");
@@ -1615,10 +1627,11 @@ L.Control.Elevation = L.Control.extend({
 		this._focuslabelY
 			.text(`  ${numY} ${this._yLabel}  `)
 			.attr("x", xCoordinate + 10);
-
-		this._focuslabelSlope
-			.text(`  ${slope}%  `)
-			.attr("x", xCoordinate + 10);
+		if (this._focuslabelSlope) {
+			this._focuslabelSlope
+				.text(`  ${slope}%  `)
+				.attr("x", xCoordinate + 10);
+		}
 
 		let focuslabeltext = this._focuslabeltext.node();
 		if (this._isDomVisible(focuslabeltext)) {
@@ -1635,7 +1648,7 @@ L.Control.Elevation = L.Control.extend({
 			if (xCoordinate >= this._width() / 2) {
 				this._focuslabelrect.attr("x", this._focuslabelrect.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
 				this._focuslabelX.attr("x", this._focuslabelX.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
-				this._focuslabelSlope.attr("x", this._focuslabelSlope.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
+				if (this._focuslabelSlope) this._focuslabelSlope.attr("x", this._focuslabelSlope.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
 				this._focuslabelY.attr("x", this._focuslabelY.attr("x") - this._focuslabelrect.attr("width") - (padding * 2) - 10);
 			}
 		}
@@ -1715,15 +1728,18 @@ L.Control.Elevation = L.Control.extend({
 		this._mouseHeightFocusLabel
 			.attr("x", item.x)
 			.attr("y", normalizedY - 5)
-			.attr("dy", "-1em")
 			.text(numY + " " + this._yLabel)
 			.style("visibility", "visible");
 
-		this._mouseSlopeFocusLabel
-			.attr("x", item.x)
-			.attr("y", normalizedY - 5)
-			.text(item.slope + "%")
-			.style("visibility", "visible");
+		if (this._mouseSlopeFocusLabel) {
+			this._mouseSlopeFocusLabel
+				.attr("x", item.x)
+				.attr("y", normalizedY - 5)
+				.text(item.slope + "%")
+				.style("visibility", "visible");
+
+			this._mouseHeightFocusLabel.attr("dy", "-1em");
+		}
 	},
 
 	/**
