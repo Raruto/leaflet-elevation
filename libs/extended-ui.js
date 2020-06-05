@@ -89,7 +89,7 @@ L.Control.Elevation.addInitHook(function() {
 	});
 
 	this.on("elechart_summary", function() {
-		this.summaryDiv.querySelector('.download').insertAdjacentHTML('beforebegin', '<span class="ascent"><span class="summarylabel">' + L._("Total Ascent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.ascent) + '&nbsp;' +
+		this.summaryDiv.querySelector('.minele').insertAdjacentHTML('afterend', '<span class="ascent"><span class="summarylabel">' + L._("Total Ascent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.ascent) + '&nbsp;' +
 			this._yLabel +
 			'</span></span>' + '<span class="descent"><span class="summarylabel">' + L._("Total Descent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel +
 			'</span></span>' + '<span class="minslope"><span class="summarylabel">' + L._("Min Slope: ") + '</span><span class="summaryvalue">' + this.track_info.slope_min + '&nbsp;' + '%' +
@@ -102,6 +102,12 @@ L.Control.Elevation.addInitHook(function() {
 		this._sMin = null;
 		this._tAsc = null;
 		this._tDes = null;
+	});
+
+	this.on("marker_hide", function() {
+		if (this._mouseSlopeFocusLabel) {
+			this._mouseSlopeFocusLabel.style("visibility", "hidden");
+		}
 	});
 
 });
