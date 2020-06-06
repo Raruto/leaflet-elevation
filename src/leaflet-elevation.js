@@ -1525,6 +1525,9 @@ L.Control.Elevation = L.Control.extend({
 	 * Hacky way for handling chart resize. Deletes it and redraw chart.
 	 */
 	_resizeChart: function() {
+		// prevent displaying chart on resize if hidden
+		if (this._container.style.display == "none") return;
+
 		if (this.options.responsive) {
 			if (this.options.detached) {
 				let newWidth = this.eleDiv.offsetWidth; // - 20;
@@ -1534,7 +1537,7 @@ L.Control.Elevation = L.Control.extend({
 				this.options.width = newWidth;
 				this.eleDiv.innerHTML = "";
 				this.eleDiv.appendChild(this.onAdd(this._map));
-			} else if (this._map) { // prevent `TypeError: this_.map is null` if control not yet in map.
+			} else {
 				this._map.removeControl(this._container);
 				this.addTo(this._map);
 			}
