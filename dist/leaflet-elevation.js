@@ -1577,7 +1577,7 @@
     				this.options.width = newWidth;
     				this.eleDiv.innerHTML = "";
     				this.eleDiv.appendChild(this.onAdd(this._map));
-    			} else {
+    			} else if (this._map) { // prevent `TypeError: this_.map is null` if control not yet in map.
     				this._map.removeControl(this._container);
     				this.addTo(this._map);
     			}
