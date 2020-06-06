@@ -16,6 +16,63 @@
  */
 
 L.Control.Elevation.addInitHook(function() {
+	this.options.margins.right = 50;
+
+	this.on("elechart_axis", function() {
+
+		if (!this._data) return;
+
+		let opts = this.options;
+
+		let interpolation = typeof opts.interpolation === 'function' ? opts.interpolation : d3[opts.interpolation];
+
+		let y = this._y2 = d3.scaleLinear().range([this._height(), 0]);
+		let x = this._x2 = d3.scaleLinear().range([0, this._width()]);
+
+		let area = this._area2 = d3.area().curve(interpolation)
+			.x(d => (x(d[opts.xAttr])))
+			.y0(this._height())
+			.y1(d => y(d["slope"]));
+
+		let xdomain = d3.extent(this._data, d => d[opts.xAttr]);
+		let ydomain = d3.extent(this._data, d => d["slope"]);
+
+		if (opts.yAxisMin !== undefined && (opts.yAxisMin < ydomain[0] || opts.forceAxisBounds)) {
+			ydomain[0] = opts.yAxisMin;
+		}
+		if (opts.yAxisMax !== undefined && (opts.yAxisMax > ydomain[1] || opts.forceAxisBounds)) {
+			ydomain[1] = opts.yAxisMax;
+		}
+
+		this._x2.domain(xdomain);
+		this._y2.domain(ydomain);
+		this._areapath2 = d3.select(this._container).select("svg > g").append("path")
+			// .attr("class", "area")
+			.datum(this._data)
+			.attr("d", this._area2)
+			.style("pointer-events", "none")
+			.attr("fill", "#732C7B")
+			.attr("stroke", "#000")
+			.attr("stroke-opacity", "0.5")
+			.attr("fill-opacity", "0.25");
+
+		d3.select(this._container).select("svg > g > g.axis")
+			.append("g")
+			.attr("class", "y axis")
+			.attr("transform", "translate(" + this._width() + ", 0)")
+			.call(
+				d3
+				.axisRight()
+				.tickPadding(15)
+				.scale(this._y2)
+				.ticks(this.options.yTicks)
+			)
+			.append("text")
+			.attr("x", 35)
+			.attr("y", 3)
+			.text("%");
+
+	});
 
 	this.on("eledata_updated", function(e) {
 		let data = this._data;

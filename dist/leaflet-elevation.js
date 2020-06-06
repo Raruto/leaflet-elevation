@@ -159,8 +159,10 @@
     		responsive: true,
     		summary: 'inline',
     		width: 600,
+    		xAttr: "dist",
     		xLabel: "km",
     		xTicks: undefined,
+    		yAttr: "z",
     		yAxisMax: undefined,
     		yAxisMin: undefined,
     		yLabel: "m",
@@ -958,9 +960,10 @@
     	_applyData: function() {
     		if (!this._data) return;
 
-    		let xdomain = d3.extent(this._data, d => d.dist);
-    		let ydomain = d3.extent(this._data, d => d.z);
     		let opts = this.options;
+
+    		let xdomain = d3.extent(this._data, d => d[opts.xAttr]);
+    		let ydomain = d3.extent(this._data, d => d[opts.yAttr]);
 
     		if (opts.yAxisMin !== undefined && (opts.yAxisMin < ydomain[0] || opts.forceAxisBounds)) {
     			ydomain[0] = opts.yAxisMin;
@@ -1184,8 +1187,9 @@
     	 * Finds a data entry for a given x-coordinate of the diagram
     	 */
     	_findItemForX: function(x) {
+    		let opts = this.options;
     		let data = this._data ? this._data : [0, 1];
-    		let bisect = d3.bisector(d => d.dist).left;
+    		let bisect = d3.bisector(d => d[opts.xAttr]).left;
     		let xinvert = this._x.invert(x);
     		return bisect(data, xinvert);
     	},
@@ -1289,9 +1293,9 @@
     		let interpolation = typeof opts.interpolation === 'function' ? opts.interpolation : d3[opts.interpolation];
 
     		let area = this._area = d3.area().curve(interpolation)
-    			.x(d => (d.xDiagCoord = x(d.dist)))
+    			.x(d => (d.xDiagCoord = x(d[opts.xAttr])))
     			.y0(this._height())
-    			.y1(d => y(d.z));
+    			.y1(d => y(d[opts.yAttr]));
     		let line = this._line = d3.line()
     			.x(d => d3.mouse(svg.select("g"))[0])
     			.y(d => this._height());
@@ -1614,11 +1618,12 @@
     			.attr('y2', this._height())
     			.classed('hidden', false);
 
-    		let hoverNumber = this.options.hoverNumber;
-    		let yCoordinate = this._y(item.z);
+    		let opts = this.options;
+    		let hoverNumber = opts.hoverNumber;
+    		let yCoordinate = this._y(item[opts.yAttr]);
 
-    		this._focuslabelX.text(hoverNumber.formatter(item.dist, hoverNumber.decimalsX) + " " + this._xLabel);
-    		this._focuslabelY.text(hoverNumber.formatter(item.z, hoverNumber.decimalsY) + " " + this._yLabel);
+    		this._focuslabelX.text(hoverNumber.formatter(item[opts.xAttr], hoverNumber.decimalsX) + " " + this._xLabel);
+    		this._focuslabelY.text(hoverNumber.formatter(item[opts.yAttr], hoverNumber.decimalsY) + " " + this._yLabel);
 
     		let focuslabeltext = this._focuslabeltext.node();
     		let bbox = focuslabeltext.getBBox();
@@ -1691,6 +1696,8 @@
     		this._appendYGrid(this._grid);
     		this._appendXaxis(this._axis);
     		this._appendYaxis(this._axis);
+
+    		this._fireEvt('elechart_axis');
     	},
 
     	/**
@@ -1699,8 +1706,8 @@
     	_updateHeightIndicator: function(item) {
     		let opts = this.options;
 
-    		let numY = opts.hoverNumber.formatter(item.z, opts.hoverNumber.decimalsY);
-    		let numX = opts.hoverNumber.formatter(item.dist, opts.hoverNumber.decimalsX);
+    		let numY = opts.hoverNumber.formatter(item[opts.yAttr], opts.hoverNumber.decimalsY);
+    		let numX = opts.hoverNumber.formatter(item[opts.xAttr], opts.hoverNumber.decimalsX);
 
     		let normalizedAlt = this._height() / this._maxElevation * item.z;
     		let normalizedY = item.y - normalizedAlt;
