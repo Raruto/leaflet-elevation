@@ -46,15 +46,17 @@ L.Control.Elevation.addInitHook(function() {
 
 		this._x2.domain(xdomain);
 		this._y2.domain(ydomain);
-		this._areapath2 = d3.select(this._container).select("svg > g").append("path")
+		this._areapath2 = d3.select(this._container).select("svg > g").insert("path", 'g.axis')
 			// .attr("class", "area")
 			.datum(this._data)
 			.attr("d", this._area2)
 			.style("pointer-events", "none")
-			.attr("fill", "#732C7B")
+			.attr("fill", "#F00")
 			.attr("stroke", "#000")
 			.attr("stroke-opacity", "0.5")
 			.attr("fill-opacity", "0.25");
+		// .on('mouseover', function() { d3.select(this).attr('fill-opacity', '0.75') })
+		// .on('mouseout', function() { d3.select(this).attr('fill-opacity', '0.25') });
 
 		d3.select(this._container).select("svg > g > g.axis")
 			.append("g")
@@ -63,7 +65,7 @@ L.Control.Elevation.addInitHook(function() {
 			.call(
 				d3
 				.axisRight()
-				.tickPadding(15)
+				.tickPadding(16)
 				.scale(this._y2)
 				.ticks(this.options.yTicks)
 			)
@@ -72,6 +74,66 @@ L.Control.Elevation.addInitHook(function() {
 			.attr("y", 3)
 			.text("%");
 
+		if (this.options.legend) {
+
+			let slope = this._slopeLegend = this._legend.append('g')
+				.attr("class", "legend-slope")
+				.attr("transform", "translate(50, 0)");
+
+			this._altitudeLegend
+				.attr("transform", "translate(-50, 0)");
+
+			slope.append("rect")
+				// .attr("class", "area")
+				.attr("fill", "#F00")
+				.attr("stroke", "#000")
+				.attr("stroke-opacity", "0.5")
+				.attr("fill-opacity", "0.25")
+				.attr("x", (this._width() / 2) - 50)
+				.attr("y", this._height() + this.options.margins.bottom - 17)
+				.attr("width", 50)
+				.attr("height", 5)
+				.attr("opacity", 0.75);
+
+			slope.append('text')
+				.text(L._('Slope'))
+				.attr("x", (this._width() / 2) + 5)
+				.attr("font-size", 10)
+				.style("text-decoration-thickness", "2px")
+				.style("font-weight", "700")
+				.attr('y', this._height() + this.options.margins.bottom - 11);
+
+			// autotoggle chart data on single click
+			this._slopeLegend.on('click', function() {
+				if (this._chart2Enabled) {
+					// this._clearChart();
+					this._resetDrag();
+					if (this._areapath2) {
+						// workaround for 'Error: Problem parsing d=""' in Webkit when empty data
+						// https://groups.google.com/d/msg/d3-js/7rFxpXKXFhI/HzIO_NPeDuMJ
+						//this._areapath.datum(this._data).attr("d", this._area);
+						this._areapath2.attr("d", "M0 0");
+
+						this._x2.domain([0, 1]);
+						this._y2.domain([0, 1]);
+						// this._updateAxis();
+					}
+					if (this._slopeLegend) {
+						this._slopeLegend.select('text').style("text-decoration-line", "line-through");
+					}
+					this._clearPath();
+					this._chart2Enabled = false;
+				} else {
+					this._resizeChart();
+					for (let id in this._layers) {
+						if (this._layers[id]._path) {
+							L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
+						}
+					}
+					this._chart2Enabled = true;
+				}
+			}.bind(this));
+		}
 	});
 
 	this.on("eledata_updated", function(e) {

@@ -908,7 +908,7 @@
     			.attr('y', this._height() + this.options.margins.bottom - 11);
 
     		// autotoggle chart data on single click
-    		legend.on('click', function() {
+    		this._altitudeLegend.on('click', function() {
     			if (this._chartEnabled) {
     				this._clearChart();
     				this._clearPath();
