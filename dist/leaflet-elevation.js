@@ -1568,7 +1568,7 @@
     	 * Hacky way for handling chart resize. Deletes it and redraw chart.
     	 */
     	_resizeChart: function() {
-    		// prevent displaying chart if hidden
+    		// prevent displaying chart on resize if hidden
     		if (this._container.style.display == "none") return;
 
     		if (this.options.responsive) {
