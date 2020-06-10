@@ -143,9 +143,9 @@ export const LegendItem = (props) => {
 		g.append("rect")
 			.attr("class", "area")
 			.attr("x", (props.width / 2) - 50)
-			.attr("y", props.height + props.margins.bottom - 17)
+			.attr("y", props.height + props.margins.bottom / 2)
 			.attr("width", 50)
-			.attr("height", 5)
+			.attr("height", 10)
 			.attr("opacity", 0.75);
 
 		g.append('text')
@@ -154,7 +154,8 @@ export const LegendItem = (props) => {
 			.attr("font-size", 10)
 			.style("text-decoration-thickness", "2px")
 			.style("font-weight", "700")
-			.attr('y', props.height + props.margins.bottom - 11);
+			.attr('y', props.height + props.margins.bottom / 2)
+			.attr('dy', "0.75em");
 
 		return g;
 	}

@@ -231,6 +231,8 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 
 		if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
 		if (this.options.placeholder) this.options.loadData.lazy = this.options.loadData.defer = true;
+
+		if (this.options.legend) this.options.margins.bottom += 30;
 	},
 
 	/**
@@ -561,13 +563,12 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 
 			let g = svg
 				.append("g")
-				.attr("transform", "translate(" + opts.margins.left + "," + opts.margins.top + ")");
-
-			g.call(this._appendGrid());
-			g.call(this._appendAxis());
-			g.call(this._appendAreaPath());
-			g.call(this._appendFocusable());
-			g.call(this._appendLegend());
+				.attr("transform", "translate(" + opts.margins.left + "," + opts.margins.top + ")")
+				.call(this._appendGrid())
+				.call(this._appendAxis())
+				.call(this._appendAreaPath())
+				.call(this._appendFocusable())
+				.call(this._appendLegend());
 
 			return svg;
 		};
@@ -612,10 +613,10 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 			width: this._width(),
 			height: this._height(),
 			scale: this._x,
-			ticks: this.options.xTicks,
+			ticks: this._xTicks,
 			label: this._xLabel,
-			labelX: 30,
-			labelY: this._width() + 6,
+			labelY: 25,
+			labelX: this._width() + 6,
 		});
 	},
 
@@ -629,7 +630,7 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 			width: this._width(),
 			height: this._height(),
 			scale: this._x,
-			ticks: this.options.xTicks,
+			ticks: this._xTicks,
 			tickFormat: "",
 		});
 	},
@@ -646,7 +647,7 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 			scale: this._y,
 			ticks: this.options.yTicks,
 			label: this._yLabel,
-			labelX: -30,
+			labelX: -25,
 			labelY: 3,
 		});
 	},
@@ -1015,6 +1016,8 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_initChart: function() {
 		let opts = this.options;
+		opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
+		opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
 
 		if (opts.responsive) {
 			if (opts.detached) {
@@ -1029,7 +1032,7 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 			}
 		}
 
-		let scale = this._initScale();
+		let scale = this._updateScale();
 
 		let container = d3.select(this._container)
 			.call(this._appendChart())
@@ -1046,16 +1049,6 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 		this._y = scale.y;
 
 		this._fireEvt("elechart_init", null, true);
-	},
-
-	_initScale: function() {
-		let opts = this.options;
-		opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
-		opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
-
-		this._updateScale();
-
-		return { x: this._x, y: this._y };
 	},
 
 	/**
@@ -1425,6 +1418,8 @@ var Elevation = L.Control.Elevation = L.Control.extend({
 			max: opts.yAxisMax,
 			forceBounds: opts.forceAxisBounds,
 		});
+
+		return { x: this._x, y: this._y };
 	},
 
 	/**

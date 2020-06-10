@@ -55,7 +55,7 @@ L.Control.Elevation.addInitHook(function() {
 			ticks: this.options.yTicks,
 			tickPadding: 16,
 			label: "%",
-			labelX: 30,
+			labelX: 25,
 			labelY: 3,
 		});
 
