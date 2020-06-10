@@ -1,21 +1,96 @@
-/*
- * Copyright (c) 2020, GPL-3.0+ Project, Gérald Niel, Raruto
- *
- *  This file is free software: you may copy, redistribute and/or modify it
- *  under the terms of the GNU General Public License as published by the
- *  Free Software Foundation, either version 2 of the License, or (at your
- *  option) any later version.
- *
- *  This file is distributed in the hope that it will be useful, but
- *  WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see .
- */
+import 'leaflet-i18n';
+import * as _ from './utils';
+import * as D3 from './components';
+import { Elevation } from './control';
 
-L.Control.Elevation.addInitHook(function() {
+Elevation.addInitHook(function() {
+
+	if (!this.options.slope) return;
+
+	let opts = this.options;
+	let slope = {};
+	opts.margins.right = 50;
+
+	this.on("elechart_init", function() {
+		slope.path = this._area.append('path')
+			.style("pointer-events", "none")
+			// TODO: add a class here.
+			.attr("fill", "#F00")
+			.attr("stroke", "#000")
+			.attr("stroke-opacity", "0.5")
+			.attr("fill-opacity", "0.25");
+	});
+
+	this.on("elechart_axis", function() {
+		slope.x = this._x;
+
+		slope.y = D3.Scale({
+			data: this._data,
+			range: [this._height(), 0],
+			attr: "slope",
+			min: -1,
+			max: +1,
+			forceBounds: opts.forceAxisBounds,
+		});
+
+		slope.axis = D3.Axis({
+			axis: "y",
+			position: "right",
+			width: this._width(),
+			height: this._height(),
+			scale: slope.y,
+			ticks: this.options.yTicks,
+			tickPadding: 16,
+			label: "%",
+			labelX: 25,
+			labelY: 3,
+		});
+
+		this._axis.call(slope.axis);
+	});
+
+	this.on("elechart_updated", function() {
+		slope.area = D3.Area({
+			interpolation: "curveStepAfter",
+			data: this._data,
+			name: 'Slope',
+			xAttr: opts.xAttr,
+			yAttr: "slope",
+			width: this._width(),
+			height: this._height(),
+			scaleX: slope.x,
+			scaleY: slope.y,
+		});
+
+		slope.path.call(slope.area);
+	});
+
+	this.on("elechart_legend", function() {
+		slope.legend = this._legend.append("g")
+			.call(
+				D3.LegendItem({
+					name: 'Slope',
+					width: this._width(),
+					height: this._height(),
+					margins: this.options.margins,
+				})
+			);
+
+		this._altitudeLegend
+			.attr("transform", "translate(-50, 0)");
+
+		slope.legend
+			.attr("transform", "translate(50, 0)");
+
+		slope.legend.select("rect")
+			.classed("area", false)
+			 // TODO: add a class here.
+			.attr("fill", "#F00")
+			.attr("stroke", "#000")
+			.attr("stroke-opacity", "0.5")
+			.attr("fill-opacity", "0.25");
+
+	});
 
 	this.on("eledata_updated", function(e) {
 		let data = this._data;
@@ -58,14 +133,12 @@ L.Control.Elevation.addInitHook(function() {
 		this.track_info.slope_min = this._sMin = sMin;
 	});
 
-	if (!this.options.extendedUI) return;
-
 	this.on("elechart_change", function(e) {
 		let item = e.data;
 		let xCoordinate = e.xCoord;
 
 		if (!this._focuslabelSlope || !this._focuslabelSlope.property('isConnected')) {
-			this._focuslabelSlope = this._focuslabeltext.insert("svg:tspan", ".mouse-focus-label-x")
+			this._focuslabelSlope = this._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
 				.attr("class", "mouse-focus-label-slope")
 				.attr("dy", "1.5em");
 		}
@@ -77,9 +150,9 @@ L.Control.Elevation.addInitHook(function() {
 				.attr("class", "height-focus-slope ");
 		}
 
-		this._mouseHeightFocusLabelY
+		this._mouseHeightFocusLabel.select('.height-focus-y')
 			.attr("dy", "-1.5em");
-		this._focuslabelX
+		this._focuslabel.select('.mouse-focus-label-x')
 			.attr("dy", "1.5em");
 
 		this._mouseSlopeFocusLabel
@@ -89,6 +162,11 @@ L.Control.Elevation.addInitHook(function() {
 	});
 
 	this.on("elechart_summary", function() {
+		this.track_info.ascent = this._tAsc || 0;
+		this.track_info.descent = this._tDes || 0;
+		this.track_info.slope_max = this._sMax || 0;
+		this.track_info.slope_min = this._sMin || 0;
+
 		this.summaryDiv.querySelector('.minele').insertAdjacentHTML('afterend', '<span class="ascent"><span class="summarylabel">' + L._("Total Ascent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.ascent) + '&nbsp;' +
 			this._yLabel +
 			'</span></span>' + '<span class="descent"><span class="summarylabel">' + L._("Total Descent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel +

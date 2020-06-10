@@ -598,43 +598,7 @@
         Scale: Scale
     });
 
-    /*
-     * Copyright (c) 2019, GPL-3.0+ Project, Raruto
-     *
-     *  This file is free software: you may copy, redistribute and/or modify it
-     *  under the terms of the GNU General Public License as published by the
-     *  Free Software Foundation, either version 2 of the License, or (at your
-     *  option) any later version.
-     *
-     *  This file is distributed in the hope that it will be useful, but
-     *  WITHOUT ANY WARRANTY; without even the implied warranty of
-     *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     *  General Public License for more details.
-     *
-     *  You should have received a copy of the GNU General Public License
-     *  along with this program.  If not, see .
-     *
-     * This file incorporates work covered by the following copyright and
-     * permission notice:
-     *
-     *     Copyright (c) 2013-2016, MIT License, Felix “MrMufflon” Bache
-     *
-     *     Permission to use, copy, modify, and/or distribute this software
-     *     for any purpose with or without fee is hereby granted, provided
-     *     that the above copyright notice and this permission notice appear
-     *     in all copies.
-     *
-     *     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
-     *     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
-     *     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
-     *     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
-     *     CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-     *     OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-     *     NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-     *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-     */
-
-    var Elevation = L.Control.Elevation = L.Control.extend({
+    const Elevation = L.Control.Elevation = L.Control.extend({
 
     	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
@@ -2046,11 +2010,9 @@
 
     });
 
-    L.control.elevation = (options) => new Elevation(options);
-
-    Elevation.Utils = _;
-    Elevation.Components = D3;
-
+    /**
+     * Attach here some useful elevation hooks.
+     */
     Elevation.addInitHook(function() {
 
     	this.on('waypoint_added', function(e) {
@@ -2138,9 +2100,229 @@
     			.attr("d", "M0 0");
     		if (this._path) ;
     	});
+    });
 
+    Elevation.addInitHook(function() {
+
+    	if (!this.options.slope) return;
+
+    	let opts = this.options;
+    	let slope = {};
+    	opts.margins.right = 50;
+
+    	this.on("elechart_init", function() {
+    		slope.path = this._area.append('path')
+    			.style("pointer-events", "none")
+    			// TODO: add a class here.
+    			.attr("fill", "#F00")
+    			.attr("stroke", "#000")
+    			.attr("stroke-opacity", "0.5")
+    			.attr("fill-opacity", "0.25");
+    	});
+
+    	this.on("elechart_axis", function() {
+    		slope.x = this._x;
+
+    		slope.y = Scale({
+    			data: this._data,
+    			range: [this._height(), 0],
+    			attr: "slope",
+    			min: -1,
+    			max: +1,
+    			forceBounds: opts.forceAxisBounds,
+    		});
+
+    		slope.axis = Axis({
+    			axis: "y",
+    			position: "right",
+    			width: this._width(),
+    			height: this._height(),
+    			scale: slope.y,
+    			ticks: this.options.yTicks,
+    			tickPadding: 16,
+    			label: "%",
+    			labelX: 25,
+    			labelY: 3,
+    		});
+
+    		this._axis.call(slope.axis);
+    	});
+
+    	this.on("elechart_updated", function() {
+    		slope.area = Area({
+    			interpolation: "curveStepAfter",
+    			data: this._data,
+    			name: 'Slope',
+    			xAttr: opts.xAttr,
+    			yAttr: "slope",
+    			width: this._width(),
+    			height: this._height(),
+    			scaleX: slope.x,
+    			scaleY: slope.y,
+    		});
+
+    		slope.path.call(slope.area);
+    	});
+
+    	this.on("elechart_legend", function() {
+    		slope.legend = this._legend.append("g")
+    			.call(
+    				LegendItem({
+    					name: 'Slope',
+    					width: this._width(),
+    					height: this._height(),
+    					margins: this.options.margins,
+    				})
+    			);
+
+    		this._altitudeLegend
+    			.attr("transform", "translate(-50, 0)");
+
+    		slope.legend
+    			.attr("transform", "translate(50, 0)");
+
+    		slope.legend.select("rect")
+    			.classed("area", false)
+    			 // TODO: add a class here.
+    			.attr("fill", "#F00")
+    			.attr("stroke", "#000")
+    			.attr("stroke-opacity", "0.5")
+    			.attr("fill-opacity", "0.25");
+
+    	});
+
+    	this.on("eledata_updated", function(e) {
+    		let data = this._data;
+    		let i = e.index;
+    		let z = data[i].z;
+
+    		let curr = data[i].latlng;
+    		let prev = i > 0 ? data[i - 1].latlng : curr;
+
+    		let delta = curr.distanceTo(prev) * this._distanceFactor;
+
+    		// Slope / Gain
+    		let tAsc = this._tAsc || 0; // Total Ascent
+    		let tDes = this._tDes || 0; // Total Descent
+    		let sMax = this._sMax || 0; // Slope Max
+    		let sMin = this._sMin || 0; // Slope Min
+    		let diff = 0;
+    		let slope = 0;
+
+    		if (!isNaN(z)) {
+    			// diff height between actual and previous point
+    			diff = i > 0 ? z - data[i - 1].z : 0;
+    			if (diff > 0) tAsc += diff;
+    			if (diff < 0) tDes -= diff;
+    			// slope in % = ( height / length ) * 100
+    			slope = delta !== 0 ? Math.round((diff / delta) * 10000) / 100 : 0;
+    			// apply slope to the previous point because we will
+    			// ascent or desent, so the slope is in the fist point
+    			if (i > 0) data[i - 1].slope = slope;
+    			sMax = slope > sMax ? slope : sMax;
+    			sMin = slope < sMin ? slope : sMin;
+    		}
+
+    		data[i].slope = slope;
+
+    		this.track_info = this.track_info || {};
+    		this.track_info.ascent = this._tAsc = tAsc;
+    		this.track_info.descent = this._tDes = tDes;
+    		this.track_info.slope_max = this._sMax = sMax;
+    		this.track_info.slope_min = this._sMin = sMin;
+    	});
+
+    	this.on("elechart_change", function(e) {
+    		let item = e.data;
+    		let xCoordinate = e.xCoord;
+
+    		if (!this._focuslabelSlope || !this._focuslabelSlope.property('isConnected')) {
+    			this._focuslabelSlope = this._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
+    				.attr("class", "mouse-focus-label-slope")
+    				.attr("dy", "1.5em");
+    		}
+
+    		this._focuslabelSlope.text(item.slope + "%");
+
+    		if (!this._mouseSlopeFocusLabel) {
+    			this._mouseSlopeFocusLabel = this._mouseHeightFocusLabel.append("svg:tspan")
+    				.attr("class", "height-focus-slope ");
+    		}
+
+    		this._mouseHeightFocusLabel.select('.height-focus-y')
+    			.attr("dy", "-1.5em");
+    		this._focuslabel.select('.mouse-focus-label-x')
+    			.attr("dy", "1.5em");
+
+    		this._mouseSlopeFocusLabel
+    			.attr("dy", "1.5em")
+    			.text(Math.round(item.slope) + "%");
+
+    	});
+
+    	this.on("elechart_summary", function() {
+    		this.track_info.ascent = this._tAsc || 0;
+    		this.track_info.descent = this._tDes || 0;
+    		this.track_info.slope_max = this._sMax || 0;
+    		this.track_info.slope_min = this._sMin || 0;
+
+    		this.summaryDiv.querySelector('.minele').insertAdjacentHTML('afterend', '<span class="ascent"><span class="summarylabel">' + L._("Total Ascent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.ascent) + '&nbsp;' +
+    			this._yLabel +
+    			'</span></span>' + '<span class="descent"><span class="summarylabel">' + L._("Total Descent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel +
+    			'</span></span>' + '<span class="minslope"><span class="summarylabel">' + L._("Min Slope: ") + '</span><span class="summaryvalue">' + this.track_info.slope_min + '&nbsp;' + '%' +
+    			'</span></span>' + '<span class="maxslope"><span class="summarylabel">' + L._("Max Slope: ") + '</span><span class="summaryvalue">' + this.track_info.slope_max + '&nbsp;' + '%' +
+    			'</span></span>');
+    	});
+
+    	this.on("eledata_clear", function() {
+    		this._sMax = null;
+    		this._sMin = null;
+    		this._tAsc = null;
+    		this._tDes = null;
+    	});
 
     });
+
+    /*
+     * Copyright (c) 2019, GPL-3.0+ Project, Raruto
+     *
+     *  This file is free software: you may copy, redistribute and/or modify it
+     *  under the terms of the GNU General Public License as published by the
+     *  Free Software Foundation, either version 2 of the License, or (at your
+     *  option) any later version.
+     *
+     *  This file is distributed in the hope that it will be useful, but
+     *  WITHOUT ANY WARRANTY; without even the implied warranty of
+     *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     *  General Public License for more details.
+     *
+     *  You should have received a copy of the GNU General Public License
+     *  along with this program.  If not, see .
+     *
+     * This file incorporates work covered by the following copyright and
+     * permission notice:
+     *
+     *     Copyright (c) 2013-2016, MIT License, Felix “MrMufflon” Bache
+     *
+     *     Permission to use, copy, modify, and/or distribute this software
+     *     for any purpose with or without fee is hereby granted, provided
+     *     that the above copyright notice and this permission notice appear
+     *     in all copies.
+     *
+     *     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+     *     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+     *     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+     *     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+     *     CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+     *     OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+     *     NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+     *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+     */
+
+    Elevation.Utils = _;
+    Elevation.Components = D3;
+
+    L.control.elevation = (options) => new Elevation(options);
 
 })));
 //# sourceMappingURL=leaflet-elevation.js.map

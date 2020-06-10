@@ -45,7 +45,7 @@ export default [
 
 	//** "leaflet-elevation.css" **//
 	{
-		input: "src/" + plugin_name + ".css",
+		input: input.replace(".js", ".css"),
 		output: {
 			file: "dist/" + plugin_name + ".css",
 			format: 'es'
@@ -69,7 +69,7 @@ export default [
 
 	//** "leaflet-elevation.min.css" **//
 	{
-		input: "src/" + plugin_name + ".css",
+		input: input.replace(".js", ".css"),
 		output: {
 			file: "dist/" + plugin_name + ".min.css",
 			format: 'es'

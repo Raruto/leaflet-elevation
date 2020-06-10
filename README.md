@@ -30,6 +30,7 @@ _For a working example see one of the following demos:_
 - [upload local gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
 - [dynamic runner](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
 - [i18n strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
+- [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
 
 ---
 
@@ -100,8 +101,11 @@ _For a working example see one of the following demos:_
         // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
         reverseCoords: false,
 
-        // Summary track info style: "line" || "multiline" || false,
+        // Summary track info style: "line" || "multiline" || false
         summary: 'multiline',
+
+        // Toggle the slope chart profile.
+        slope: true,
 
       };
 
