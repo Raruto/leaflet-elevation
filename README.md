@@ -12,25 +12,31 @@ A Leaflet plugin that allows to add elevation profiles using d3js
 ---
 
 _For a working example see one of the following demos:_
+
 - [loading .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation.html)
 - [loading .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
-- [loading string data](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
+- [loading strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
+- [loading geojson group](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
+- [loading local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
+
+- [custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
+- [custom summary](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-summary.html)
+- [close button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
+- [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
+- [i18n strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
+
 - [hoverable chart / hidden map](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-map.html)
 - [hoverable chart / hidden chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-chart.html)
-- [hoverable .gpx tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
-- [toggable .gpx tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
-- [toggable .gpx charts](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
-- [custom-theme colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
-- [custom-summary info](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-summary.html)
-- [close button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
-- [extended ui](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
-- [follow marker location](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
-- [gpx waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
-- [geojson waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
-- [upload local gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
+- [hoverable tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
+- [toggable tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
+- [toggable charts](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
+
+- [waypoint icons / gpx](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
+- [waypoint icons / geojson](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
+
+- [follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
 - [dynamic runner](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
-- [i18n strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
-- [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
+- [extended ui](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
 
 ---
 

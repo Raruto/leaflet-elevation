@@ -1,4 +1,5 @@
 {
+	"name": "waypoints.geojson",
 	"type": "FeatureCollection",
 	"features": [{
 			"type": "Feature",
