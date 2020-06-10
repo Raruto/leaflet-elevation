@@ -16,40 +16,15 @@
  */
 
 L.Control.Elevation.addInitHook(function() {
+
 	this.options.margins.right = 50;
 
-	this.on("elechart_axis", function() {
+	const D3 = L.Control.Elevation.Components;
+	let slope = window.slope = {};
+	let opts = this.options;
 
-		if (!this._data) return;
-
-		let opts = this.options;
-
-		let interpolation = typeof opts.interpolation === 'function' ? opts.interpolation : d3[opts.interpolation];
-
-		let y = this._y2 = d3.scaleLinear().range([this._height(), 0]);
-		let x = this._x2 = d3.scaleLinear().range([0, this._width()]);
-
-		let area = this._area2 = d3.area().curve(interpolation)
-			.x(d => (x(d[opts.xAttr])))
-			.y0(this._height())
-			.y1(d => y(d["slope"]));
-
-		let xdomain = d3.extent(this._data, d => d[opts.xAttr]);
-		let ydomain = d3.extent(this._data, d => d["slope"]);
-
-		if (opts.yAxisMin !== undefined && (opts.yAxisMin < ydomain[0] || opts.forceAxisBounds)) {
-			ydomain[0] = opts.yAxisMin;
-		}
-		if (opts.yAxisMax !== undefined && (opts.yAxisMax > ydomain[1] || opts.forceAxisBounds)) {
-			ydomain[1] = opts.yAxisMax;
-		}
-
-		this._x2.domain(xdomain);
-		this._y2.domain(ydomain);
-		this._areapath2 = d3.select(this._container).select("svg > g").insert("path", 'g.axis')
-			// .attr("class", "area")
-			.datum(this._data)
-			.attr("d", this._area2)
+	this.on("elechart_init", function() {
+		slope.path = this._area.append('path')
 			.style("pointer-events", "none")
 			.attr("fill", "#F00")
 			.attr("stroke", "#000")
@@ -57,83 +32,109 @@ L.Control.Elevation.addInitHook(function() {
 			.attr("fill-opacity", "0.25");
 		// .on('mouseover', function() { d3.select(this).attr('fill-opacity', '0.75') })
 		// .on('mouseout', function() { d3.select(this).attr('fill-opacity', '0.25') });
+	});
 
-		d3.select(this._container).select("svg > g > g.axis")
-			.append("g")
-			.attr("class", "y axis")
-			.attr("transform", "translate(" + this._width() + ", 0)")
+	this.on("elechart_axis", function() {
+		slope.x = this._x;
+
+		slope.y = D3.Scale({
+			data: this._data,
+			range: [this._height(), 0],
+			attr: "slope",
+			min: -1,
+			max: +1,
+			forceBounds: opts.forceAxisBounds,
+		});
+
+		slope.axis = D3.Axis({
+			axis: "y",
+			position: "right",
+			width: this._width(),
+			height: this._height(),
+			scale: slope.y,
+			ticks: this.options.yTicks,
+			tickPadding: 16,
+			label: "%",
+			labelX: 30,
+			labelY: 3,
+		});
+
+		this._axis.call(slope.axis);
+	});
+
+	this.on("elechart_updated", function() {
+		slope.area = D3.Area({
+			interpolation: "curveStepAfter",
+			data: this._data,
+			name: 'Slope',
+			xAttr: opts.xAttr,
+			yAttr: "slope",
+			width: this._width(),
+			height: this._height(),
+			scaleX: slope.x,
+			scaleY: slope.y,
+		});
+
+		slope.path.call(slope.area);
+	});
+
+	this.on("elechart_legend", function() {
+		slope.legend = this._legend.append("g")
 			.call(
-				d3
-				.axisRight()
-				.tickPadding(16)
-				.scale(this._y2)
-				.ticks(this.options.yTicks)
-			)
-			.append("text")
-			.attr("x", 35)
-			.attr("y", 3)
-			.text("%");
+				D3.LegendItem({
+					name: 'Slope',
+					width: this._width(),
+					height: this._height(),
+					margins: this.options.margins,
+				})
+			);
 
-		if (this.options.legend) {
+		this._altitudeLegend
+			.attr("transform", "translate(-50, 0)");
 
-			let slope = this._slopeLegend = this._legend.append('g')
-				.attr("class", "legend-slope")
-				.attr("transform", "translate(50, 0)");
+		slope.legend
+			.attr("transform", "translate(50, 0)");
 
-			this._altitudeLegend
-				.attr("transform", "translate(-50, 0)");
+		slope.legend.select("rect")
+			.classed("area", false)
+			// .attr("class", "area")
+			.attr("fill", "#F00")
+			.attr("stroke", "#000")
+			.attr("stroke-opacity", "0.5")
+			.attr("fill-opacity", "0.25");
 
-			slope.append("rect")
-				// .attr("class", "area")
-				.attr("fill", "#F00")
-				.attr("stroke", "#000")
-				.attr("stroke-opacity", "0.5")
-				.attr("fill-opacity", "0.25")
-				.attr("x", (this._width() / 2) - 50)
-				.attr("y", this._height() + this.options.margins.bottom - 17)
-				.attr("width", 50)
-				.attr("height", 5)
-				.attr("opacity", 0.75);
-
-			slope.append('text')
-				.text(L._('Slope'))
-				.attr("x", (this._width() / 2) + 5)
-				.attr("font-size", 10)
-				.style("text-decoration-thickness", "2px")
-				.style("font-weight", "700")
-				.attr('y', this._height() + this.options.margins.bottom - 11);
-
-			// autotoggle chart data on single click
-			this._slopeLegend.on('click', function() {
-				if (this._chart2Enabled) {
-					// this._clearChart();
-					this._resetDrag();
-					if (this._areapath2) {
-						// workaround for 'Error: Problem parsing d=""' in Webkit when empty data
-						// https://groups.google.com/d/msg/d3-js/7rFxpXKXFhI/HzIO_NPeDuMJ
-						//this._areapath.datum(this._data).attr("d", this._area);
-						this._areapath2.attr("d", "M0 0");
-
-						this._x2.domain([0, 1]);
-						this._y2.domain([0, 1]);
-						// this._updateAxis();
-					}
-					if (this._slopeLegend) {
-						this._slopeLegend.select('text').style("text-decoration-line", "line-through");
-					}
-					this._clearPath();
-					this._chart2Enabled = false;
-				} else {
-					this._resizeChart();
-					for (let id in this._layers) {
-						if (this._layers[id]._path) {
-							L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
-						}
-					}
-					this._chart2Enabled = true;
-				}
-			}.bind(this));
-		}
+		// autotoggle chart data on single click
+		// slope.legend.on('click', function() {
+		// 	if (this._chart2Enabled) {
+		// 		// this._clearChart();
+		// 		this._resetDrag();
+		// 		if (slope.path) {
+		// 			// workaround for 'Error: Problem parsing d=""' in Webkit when empty data
+		// 			// https://groups.google.com/d/msg/d3-js/7rFxpXKXFhI/HzIO_NPeDuMJ
+		// 			//this._areapath.datum(this._data).attr("d", this._area);
+		// 			slope.path.attr("d", "M0 0");
+		//
+		// 			// slope.x.domain([0, 1]);
+		// 			slope.y.domain([-1, +1]);
+		// 			this._updateAxis();
+		// 		}
+		// 		if (slope.legend) {
+		// 			slope.legend
+		// 				.select('text')
+		// 				.style("text-decoration-line", "line-through");
+		// 		}
+		// 		this._clearPath();
+		// 		this._chart2Enabled = false;
+		// 	} else {
+		// 		this._resizeChart();
+		// 		for (let id in this._layers) {
+		// 			if (this._layers[id]._path) {
+		// 				L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
+		// 			}
+		// 		}
+		// 		this._chart2Enabled = true;
+		// 	}
+		// }.bind(this));
 	});
 
 	this.on("eledata_updated", function(e) {
@@ -184,7 +185,7 @@ L.Control.Elevation.addInitHook(function() {
 		let xCoordinate = e.xCoord;
 
 		if (!this._focuslabelSlope || !this._focuslabelSlope.property('isConnected')) {
-			this._focuslabelSlope = this._focuslabeltext.insert("svg:tspan", ".mouse-focus-label-x")
+			this._focuslabelSlope = this._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
 				.attr("class", "mouse-focus-label-slope")
 				.attr("dy", "1.5em");
 		}
@@ -196,9 +197,9 @@ L.Control.Elevation.addInitHook(function() {
 				.attr("class", "height-focus-slope ");
 		}
 
-		this._mouseHeightFocusLabelY
+		this._mouseHeightFocusLabel.select('.height-focus-y')
 			.attr("dy", "-1.5em");
-		this._focuslabelX
+		this._focuslabel.select('.mouse-focus-label-x')
 			.attr("dy", "1.5em");
 
 		this._mouseSlopeFocusLabel
@@ -208,6 +209,11 @@ L.Control.Elevation.addInitHook(function() {
 	});
 
 	this.on("elechart_summary", function() {
+		this.track_info.ascent = this._tAsc || 0;
+		this.track_info.descent = this._tDes || 0;
+		this.track_info.slope_max = this._sMax || 0;
+		this.track_info.slope_min = this._sMin || 0;
+
 		this.summaryDiv.querySelector('.minele').insertAdjacentHTML('afterend', '<span class="ascent"><span class="summarylabel">' + L._("Total Ascent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.ascent) + '&nbsp;' +
 			this._yLabel +
 			'</span></span>' + '<span class="descent"><span class="summarylabel">' + L._("Total Descent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel +

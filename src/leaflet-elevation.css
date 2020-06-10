@@ -1,3 +1,7 @@
+.hidden {
+  visibility: hidden;
+}
+
 .leaflet-container {
   z-index: 0;
   /* prevent overlapping the .elevation-detached chart */
@@ -67,7 +71,7 @@
   pointer-events: none;
 }
 
-.elevation-control.elevation .mouse-focus-label {
+.elevation-control.elevation .mouse-focus-label-rect {
   fill: #000;
   fill-opacity: 0.75;
   pointer-events: none;

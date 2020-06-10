@@ -40,7 +40,7 @@
 	<!-- leaflet-elevation -->
 	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
 	<script src="../dist/leaflet-elevation.js"></script>
-	<script src="../libs/extended-ui.js"></script>
+	<script type="module" src="../libs/extended-ui.js"></script>
 
 </head>
 
@@ -48,7 +48,7 @@
 
 	<div id="map" class="leaflet-map"></div>
 
-	<script>
+	<script type="module">
 		var opts = {
 			map: {
 				center: [41.4583, 12.7059],
@@ -57,10 +57,10 @@
 				resizerControl: true,
 			},
 			elevationControl: {
-				url: "../examples/via-emilia.gpx",
+				// url: "../examples/via-emilia.gpx",
 				// url: "../examples/demo.geojson",
 				// url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
-				// url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
 				options: {
 					theme: "lightblue-theme",
 					collapsed: false,
@@ -77,7 +77,7 @@
 		};
 
 		var map = new L.Map('map', opts.map);
-		var controlElevation = L.control.elevation(opts.elevationControl.options);
+		var controlElevation = window.controlElevation = L.control.elevation(opts.elevationControl.options);
 		var controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
 		controlElevation.load(opts.elevationControl.url);

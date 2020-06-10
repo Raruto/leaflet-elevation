@@ -35,8 +35,10 @@
  */
 
 import 'leaflet-i18n';
+import * as _ from './utils';
+import * as D3 from './components';
 
-L.Control.Elevation = L.Control.extend({
+var Elevation = L.Control.Elevation = L.Control.extend({
 
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
@@ -76,7 +78,7 @@ L.Control.Elevation = L.Control.extend({
 		hoverNumber: {
 			decimalsX: 2,
 			decimalsY: 0,
-			formatter: undefined
+			formatter: _.formatter,
 		},
 		imperial: false,
 		interpolation: "curveLinear",
@@ -131,40 +133,18 @@ L.Control.Elevation = L.Control.extend({
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
 	 */
 	addData: function(d, layer) {
-		L.Control.Elevation._d3LazyLoader = this._lazyLoadJS(
+		if ((typeof layer === "undefined" || layer === null) && d.on) {
+			layer = d;
+		}
+		Elevation._d3LazyLoader = _.lazyLoader(
 			'https://unpkg.com/d3@5.15.0/dist/d3.min.js',
-			typeof d3 !== 'object',
-			L.Control.Elevation._d3LazyLoader
-		).then(
-			function(d, layer) {
-				this._addData(d);
-
-				if (this._container) {
-					this._applyData();
-				}
-				if ((typeof layer === "undefined" || layer === null) && d.on) {
-					layer = d;
-				}
-				if (layer) {
-					if (layer._path) {
-						L.DomUtil.addClass(layer._path, this.options.polyline.className + ' ' + this.options.theme);
-					}
-					layer
-						.on("mousemove", this._mousemoveLayerHandler, this)
-						.on("mouseout", this._mouseoutHandler, this);
-				}
-
-				this.track_info = L.extend({}, this.track_info, {
-					distance: this._distance,
-					elevation_max: this._maxElevation,
-					elevation_min: this._minElevation
-				});
-
-				this._layers = this._layers || {};
-				this._layers[L.Util.stamp(layer)] = layer;
-
-				this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info }, true);
-			}.bind(this, d, layer));
+			typeof d3 !== 'object' || !this.options.lazyLoadJS,
+			Elevation._d3LazyLoader
+		).then(() => {
+			this._addData(d);
+			this._addLayer(layer);
+			this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info }, true);
+		});
 	},
 
 	/**
@@ -231,7 +211,7 @@ L.Control.Elevation = L.Control.extend({
 	 * Initialize chart control "options" and "container".
 	 */
 	initialize: function(options) {
-		this.options = this._deepMerge({}, this.options, options);
+		this.options = _.deepMerge({}, this.options, options);
 
 		if (this.options.imperial) {
 			this._distanceFactor = this.__mileFactor;
@@ -251,16 +231,6 @@ L.Control.Elevation = L.Control.extend({
 
 		if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
 		if (this.options.placeholder) this.options.loadData.lazy = this.options.loadData.defer = true;
-
-		this.on('waypoint_added', function(e) {
-			if (e.point._popup) {
-				e.point._popup.options.className = 'elevation-popup';
-				e.point._popup._content = decodeURI(e.point._popup._content);
-			}
-			if (e.point._popup && e.point._popup._content) {
-				e.point.bindTooltip(e.point._popup._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
-			}
-		});
 	},
 
 	/**
@@ -286,9 +256,9 @@ L.Control.Elevation = L.Control.extend({
 			this.loadDefer(data, opts);
 		} else if (opts.lazy) {
 			this.loadLazy(data, opts);
-		} else if (this._isXMLDoc(data)) {
+		} else if (_.isXMLDoc(data)) {
 			this.loadGPX(data);
-		} else if (this._isJSONDoc(data)) {
+		} else if (_.isJSONDoc(data)) {
 			this.loadGeoJSON(data);
 		} else {
 			this.loadFile(data);
@@ -301,113 +271,39 @@ L.Control.Elevation = L.Control.extend({
 	loadDefer: function(data, opts) {
 		opts = L.extend({}, this.options.loadData, opts);
 		opts.defer = false;
-		if (document.readyState !== 'complete') window.addEventListener("load", L.bind(this.loadData, this, data, opts), { once: true });
-		else this.loadData(data, opts)
+		_.deferFunc(L.bind(this.loadData, this, data, opts));
 	},
 
 	/**
 	 * Load data from a remote url.
 	 */
 	loadFile: function(url) {
-		this._downloadURL = url; // TODO: handle multiple urls?
-		try {
-			let xhr = new XMLHttpRequest();
-			xhr.responseType = "text";
-			xhr.open('GET', url);
-			xhr.onload = function() {
-				if (xhr.status !== 200) {
-					throw "Error " + xhr.status + " while fetching remote file: " + url;
-				} else {
-					this.loadData(xhr.response, { lazy: false, defer: false });
-				}
-			}.bind(this);
-			xhr.send();
-		} catch (e) {
-			console.warn(e);
-		}
+		_.loadFile(url)
+			.then((data) => {
+				this._downloadURL = url; // TODO: handle multiple urls?
+				this.loadData(data, { lazy: false, defer: false });
+			})
+			.catch((err) => console.warn(err));
 	},
 
 	/**
 	 * Load raw GeoJSON data.
 	 */
 	loadGeoJSON: function(data) {
-		if (typeof data === "string") {
-			data = JSON.parse(data);
-		}
-
-		this.layer = this.geojson = L.geoJson(data, {
-			style: function(feature) {
-				let style = L.extend({}, this.options.polyline);
-				if (this.options.theme) {
-					style.className += ' ' + this.options.theme;
-				}
-				return style;
-			}.bind(this),
-			pointToLayer: function(feature, latlng) {
-				let marker = L.marker(latlng, { icon: this.options.gpxOptions.marker_options.wptIcons[''] });
-				let desc = feature.properties.desc ? feature.properties.desc : '';
-				let name = feature.properties.name ? feature.properties.name : '';
-				if (name || desc) {
-					marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
-				}
-				this.fire('waypoint_added', { point: marker, point_type: 'waypoint', element: latlng });
-				return marker;
-			}.bind(this),
-			onEachFeature: function(feature, layer) {
-				if (feature.geometry.type == 'Point') return;
-
-				this.addData(feature, layer);
-
-				this.track_info = L.extend({}, this.track_info, { type: "geojson", name: data.name });
-			}.bind(this),
-		});
-		if (this._map) {
-			this._map.once('layeradd', function(e) {
-				this.fitBounds(this.layer.getBounds());
-				this._fireEvt("eledata_loaded", { data: data, layer: this.layer, name: this.track_info.name, track_info: this.track_info }, true);
-			}, this);
-
-			this.layer.addTo(this._map);
-		} else {
-			console.warn("Undefined elevation map object");
-		}
+		_.GeoJSONLoader(data, this);
 	},
 
 	/**
 	 * Load raw GPX data.
 	 */
 	loadGPX: function(data) {
-		L.Control.Elevation._gpxLazyLoader = this._lazyLoadJS(
+		Elevation._gpxLazyLoader = _.lazyLoader(
 			'https://unpkg.com/leaflet-gpx@1.5.0/gpx.js',
-			typeof L.GPX !== 'function',
-			L.Control.Elevation._gpxLazyLoader
-		).then(
-			function(data) {
-				this.options.gpxOptions.polyline_options = L.extend({}, this.options.polyline, this.options.gpxOptions.polyline_options);
-
-				if (this.options.theme) {
-					this.options.gpxOptions.polyline_options.className += ' ' + this.options.theme;
-				}
-
-				this.layer = this.gpx = new L.GPX(data, this.options.gpxOptions);
-
-				this.layer.on('loaded', function(e) { this.fitBounds(e.target.getBounds()); }, this);
-				this.layer.on('addpoint', function(e) { this.fire("waypoint_added", e, true); }, this);
-				this.layer.once("addline", function(e) {
-					this.addData(e.line /*, this.layer*/ );
-
-					this.track_info = L.extend({}, this.track_info, { type: "gpx", name: this.layer.get_name() });
-
-					this._fireEvt("eledata_loaded", { data: data, layer: this.layer, name: this.track_info.name, track_info: this.track_info }, true);
-				}, this);
-
-				if (this._map) {
-					this.layer.addTo(this._map);
-				} else {
-					console.warn("Undefined elevation map object");
-				}
-			}.bind(this, data)
-		);
+			typeof L.GPX !== 'function' || !this.options.lazyLoadJS,
+			Elevation._gpxLazyLoader
+		).then(() => {
+			_.GPXLoader(data, this);
+		});
 	},
 
 	/**
@@ -415,28 +311,13 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	loadLazy: function(data, opts) {
 		opts = L.extend({}, this.options.loadData, opts);
-		opts.lazy = false;
-		let ticking = false;
-		let scrollFn = L.bind(function(data) {
-			if (!ticking) {
-				L.Util.requestAnimFrame(function() {
-					if (this._isVisible(this.placeholder)) {
-						window.removeEventListener('scroll', scrollFn);
-						this.loadData(data, opts);
-						this.once('eledata_loaded', function() {
-							if (this.placeholder && this.placeholder.parentNode) {
-								this.placeholder.parentNode.removeChild(this.placeholder);
-							}
-						}, this)
-					}
-					ticking = false;
-				}, this);
-				ticking = true;
-			}
-		}, this, data);
-		window.addEventListener('scroll', scrollFn);
-		if (this.placeholder) this.placeholder.addEventListener('mouseenter', scrollFn, { once: true });
-		scrollFn();
+		let elem = opts.lazy.parentNode ? opts.lazy : this.placeholder;
+		_.waitHolder(opts.lazy)
+			.then(() => {
+				opts.lazy = false;
+				this.loadData(data, opts)
+				this.once('eledata_loaded', () => opts.lazy.parentNode.removeChild(elem));
+			});
 	},
 
 	/**
@@ -467,29 +348,34 @@ L.Control.Elevation = L.Control.extend({
 			container.insertBefore(this.placeholder, container.firstChild);
 		}
 
-		L.Control.Elevation._d3LazyLoader = this._lazyLoadJS(
+		if (!map.getPane('elevationPane')) {
+			let pane = map.createPane('elevationPane');
+			pane.style.zIndex = 625; // This pane is above markers but below popups.
+			pane.style.pointerEvents = 'none';
+		}
+
+		Elevation._d3LazyLoader = _.lazyLoader(
 			'https://unpkg.com/d3@5.15.0/dist/d3.min.js',
-			typeof d3 !== 'object',
-			L.Control.Elevation._d3LazyLoader
-		).then(
-			function(map, container) {
-				this._initToggle(container);
-				this._initChart(container);
+			typeof d3 !== 'object' || !this.options.lazyLoadJS,
+			Elevation._d3LazyLoader
+		).then(() => {
+			this._initToggle(container);
+			this._initChart(container);
 
-				this._applyData();
+			this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
+			this._map.on('resize', this._resetView, this);
+			this._map.on('resize', this._resizeChart, this);
+			this._map.on('mousedown', this._resetDrag, this);
 
-				this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
-				this._map.on('resize', this._resetView, this);
-				this._map.on('resize', this._resizeChart, this);
-				this._map.on('mousedown', this._resetDrag, this);
+			L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
+			L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
 
-				this._map.on('eledata_added', this._updateSummary, this);
+			this.on('eledata_added', this._updateChart, this);
+			this.on('eledata_added', this._updateSummary, this);
 
-				L.DomEvent.on(this._map._container, 'mousewheel', this._resetDrag, this);
-				L.DomEvent.on(this._map._container, 'touchstart', this._resetDrag, this);
-
-			}.bind(this, map, container)
-		);
+			this._updateChart();
+			this._updateSummary();
+		});
 
 		return container;
 	},
@@ -500,6 +386,17 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	onRemove: function(map) {
 		this._container = null;
+
+		this._map.off('zoom viewreset zoomanim', this._hidePositionMarker, this);
+		this._map.off('resize', this._resetView, this);
+		this._map.off('resize', this._resizeChart, this);
+		this._map.off('mousedown', this._resetDrag, this);
+
+		L.DomEvent.off(this._map._container, 'mousewheel', this._resetDrag, this);
+		L.DomEvent.off(this._map._container, 'touchstart', this._resetDrag, this);
+
+		this.off('eledata_added', this._updateChart, this);
+		this.off('eledata_added', this._updateSummary, this);
 	},
 
 	/**
@@ -629,27 +526,51 @@ L.Control.Elevation = L.Control.extend({
 		});
 
 		this._data = data;
-		this._distance = dist;
-		this._maxElevation = eleMax;
-		this._minElevation = eleMin;
+		this.track_info = this.track_info || {};
+		this.track_info.distance = this._distance = dist;
+		this.track_info.elevation_max = this._maxElevation = eleMax;
+		this.track_info.elevation_min = this._minElevation = eleMin;
 
 		this._fireEvt("eledata_updated", { index: data.length - 1 }, true);
+	},
+
+	_addLayer: function(layer) {
+		if (layer) {
+			if (layer._path) {
+				L.DomUtil.addClass(layer._path, this.options.polyline.className + ' ' + this.options.theme);
+			}
+			layer
+				.on("mousemove", this._mousemoveLayerHandler, this)
+				.on("mouseout", this._mouseoutHandler, this);
+
+			this._layers = this._layers || {};
+			this._layers[L.Util.stamp(layer)] = layer;
+		}
 	},
 
 	/**
 	 * Generate "svg" chart container.
 	 */
-	_appendChart: function(svg) {
-		let g = svg
-			.append("g")
-			.attr("transform", "translate(" + this.options.margins.left + "," + this.options.margins.top + ")");
+	_appendChart: function() {
+		let opts = this.options;
+		return container => {
+			let svg = container.append("svg")
+				.attr("class", "background")
+				.attr("width", opts.width)
+				.attr("height", opts.height);
 
-		this._appendGrid(g);
-		this._appendAreaPath(g);
-		this._appendAxis(g);
-		this._appendFocusRect(g);
-		this._appendMouseFocusG(g);
-		this._appendLegend(g);
+			let g = svg
+				.append("g")
+				.attr("transform", "translate(" + opts.margins.left + "," + opts.margins.top + ")");
+
+			g.call(this._appendGrid());
+			g.call(this._appendAxis());
+			g.call(this._appendAreaPath());
+			g.call(this._appendFocusable());
+			g.call(this._appendLegend());
+
+			return svg;
+		};
 	},
 
 	/**
@@ -672,268 +593,205 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Generate "x-axis".
+	 * Generate "div" summary container.
 	 */
-	_appendXaxis: function(axis) {
-		axis
-			.append("g")
-			.attr("class", "x axis")
-			.attr("transform", "translate(0," + this._height() + ")")
-			.call(
-				d3
-				.axisBottom()
-				.scale(this._x)
-				.ticks(this.options.xTicks)
-			)
-			.append("text")
-			.attr("x", this._width() + 6)
-			.attr("y", 30)
-			.text(this._xLabel);
+	_appendSummary: function() {
+		return container => {
+			let summary = this.summaryDiv = container.append("div")
+				.attr("class", "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : '')).node();
+
+			this._updateSummary();
+			return summary;
+		};
+	},
+
+	_appendXaxis: function() {
+		return D3.Axis({
+			axis: "x",
+			position: "bottom",
+			width: this._width(),
+			height: this._height(),
+			scale: this._x,
+			ticks: this.options.xTicks,
+			label: this._xLabel,
+			labelX: 30,
+			labelY: this._width() + 6,
+		});
 	},
 
 	/**
 	 * Generate "x-grid".
 	 */
-	_appendXGrid: function(grid) {
-		grid.append("g")
-			.attr("class", "x grid")
-			.attr("transform", "translate(0," + this._height() + ")")
-			.call(
-				d3
-				.axisBottom()
-				.scale(this._x)
-				.ticks(this.options.xTicks)
-				.tickSize(-this._height())
-				.tickFormat("")
-			);
-
+	_appendXGrid: function() {
+		return D3.Grid({
+			axis: "x",
+			position: "bottom",
+			width: this._width(),
+			height: this._height(),
+			scale: this._x,
+			ticks: this.options.xTicks,
+			tickFormat: "",
+		});
 	},
 
 	/**
 	 * Generate "y-axis".
 	 */
-	_appendYaxis: function(axis) {
-		axis
-			.append("g")
-			.attr("class", "y axis")
-			.call(
-				d3
-				.axisLeft()
-				.scale(this._y)
-				.ticks(this.options.yTicks)
-			)
-			.append("text")
-			.attr("x", -30)
-			.attr("y", 3)
-			.text(this._yLabel);
+	_appendYaxis: function() {
+		return D3.Axis({
+			axis: "y",
+			position: "left",
+			width: this._width(),
+			height: this._height(),
+			scale: this._y,
+			ticks: this.options.yTicks,
+			label: this._yLabel,
+			labelX: -30,
+			labelY: 3,
+		});
 	},
 
 	/**
 	 * Generate "y-grid".
 	 */
-	_appendYGrid: function(grid) {
-		grid.append("g")
-			.attr("class", "y grid")
-			.call(
-				d3
-				.axisLeft()
-				.scale(this._y)
-				.ticks(this.options.yTicks)
-				.tickSize(-this._width())
-				.tickFormat("")
-			);
+	_appendYGrid: function() {
+		return D3.Grid({
+			axis: "y",
+			position: "left",
+			width: this._width(),
+			height: this._height(),
+			scale: this._y,
+			ticks: this.options.yTicks,
+			tickFormat: "",
+		});
 	},
 
 	/**
 	 * Generate "path".
 	 */
-	_appendAreaPath: function(g) {
-		this._areapath = g.append("path")
-			.attr("class", "area");
+	_appendAreaPath: function() {
+		return g => g.append('g')
+			.attr("class", "area")
+			.append('path');
 	},
 
 	/**
 	 * Generate "axis".
 	 */
-	_appendAxis: function(g) {
-		this._axis = g.append("g")
-			.attr("class", "axis");
-		this._appendXaxis(this._axis);
-		this._appendYaxis(this._axis);
+	_appendAxis: function() {
+		return g =>
+			g.append("g")
+			.attr("class", "axis")
+			.call(this._appendXaxis())
+			.call(this._appendYaxis());
+	},
+
+	_appendFocusable: function() {
+		return g => {
+			return g.append('g')
+				.attr("class", 'focus')
+				.call(this._appendFocusRect())
+				.call(this._appendMouseFocusG());
+		};
 	},
 
 	/**
 	 * Generate "mouse-focus" and "drag-rect".
 	 */
-	_appendFocusRect: function(g) {
-		let focusRect = this._focusRect = g.append("rect")
-			.attr("width", this._width())
-			.attr("height", this._height())
-			.style("fill", "none")
-			.style("stroke", "none")
-			.style("pointer-events", "all");
+	_appendFocusRect: function() {
+		return g => {
+			let focusRect = g.append("rect")
+				.call(
+					D3.FocusRect({
+						width: this._width(),
+						height: this._height()
+					})
+				);
 
-		if (L.Browser.mobile) {
+			if (L.Browser.mobile) {
+				focusRect
+					.on("touchmove.drag", this._dragHandler.bind(this))
+					.on("touchstart.drag", this._dragStartHandler.bind(this))
+					.on("touchstart.focus", this._mousemoveHandler.bind(this))
+					.on("touchmove.focus", this._mousemoveHandler.bind(this));
+				L.DomEvent.on(this._container, 'touchend', this._dragEndHandler, this);
+			}
+
 			focusRect
-				.on("touchmove.drag", this._dragHandler.bind(this))
-				.on("touchstart.drag", this._dragStartHandler.bind(this))
-				.on("touchstart.focus", this._mousemoveHandler.bind(this))
-				.on("touchmove.focus", this._mousemoveHandler.bind(this));
-			L.DomEvent.on(this._container, 'touchend', this._dragEndHandler, this);
-		}
+				.on("mousemove.drag", this._dragHandler.bind(this))
+				.on("mousedown.drag", this._dragStartHandler.bind(this))
+				.on("mouseenter.focus", this._mouseenterHandler.bind(this))
+				.on("mousemove.focus", this._mousemoveHandler.bind(this))
+				.on("mouseout.focus", this._mouseoutHandler.bind(this));
+			L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
 
-		focusRect
-			.on("mousemove.drag", this._dragHandler.bind(this))
-			.on("mousedown.drag", this._dragStartHandler.bind(this))
-			.on("mouseenter.focus", this._mouseenterHandler.bind(this))
-			.on("mousemove.focus", this._mousemoveHandler.bind(this))
-			.on("mouseout.focus", this._mouseoutHandler.bind(this));
-		L.DomEvent.on(this._container, 'mouseup', this._dragEndHandler, this);
+			return focusRect;
+		};
 	},
 
 	/**
 	 * Generate "grid".
 	 */
-	_appendGrid: function(g) {
-		this._grid = g.append("g")
-			.attr("class", "grid");
-		this._appendXGrid(this._grid);
-		this._appendYGrid(this._grid);
+	_appendGrid: function() {
+		return g =>
+			g.append("g")
+			.attr("class", "grid")
+			.call(this._appendXGrid())
+			.call(this._appendYGrid());
 	},
 
 	/**
 	 * Generate "mouse-focus".
 	 */
-	_appendMouseFocusG: function(g) {
-		let focusG = this._focusG = g.append("g")
-			.attr("class", "mouse-focus-group");
+	_appendMouseFocusG: function() {
+		return g => {
+			let focusG = this._focusG = g.append("g")
+				.attr("class", "mouse-focus-group hidden");
 
-		this._mousefocus = focusG.append('svg:line')
-			.attr('class', 'mouse-focus-line')
-			.attr('x2', '0')
-			.attr('y2', '0')
-			.attr('x1', '0')
-			.attr('y1', '0');
-
-		this._focuslabelrect = focusG.append("rect")
-			.attr('class', 'mouse-focus-label')
-			.attr("x", 0)
-			.attr("y", 0)
-			.attr("width", 0)
-			.attr("height", 0)
-			.attr("rx", 3)
-			.attr("ry", 3);
-
-		this._focuslabeltext = focusG.append("svg:text")
-			.attr("class", "mouse-focus-label-text");
-		this._focuslabelY = this._focuslabeltext.append("svg:tspan")
-			.attr("class", "mouse-focus-label-y")
-			.attr("dy", "1em");
-		this._focuslabelX = this._focuslabeltext.append("svg:tspan")
-			.attr("class", "mouse-focus-label-x")
-			.attr("dy", "2em");
+			this._focusline = focusG.append('svg:line')
+				.call(
+					D3.MouseFocusLine({
+						xCoord: 0,
+						height: this._height()
+					})
+				);;
+			this._focuslabel = focusG.append("g")
+				.call(
+					D3.MouseFocusLabel({
+						xCoord: 0,
+						yCoord: 0,
+						height: this._height(),
+						width: this._width(),
+						labelX: "",
+						labelY: "",
+					})
+				);
+			return focusG;
+		};
 	},
 
 	/**
 	 * Generate "legend".
 	 */
-	_appendLegend: function(g) {
-		if (!this.options.legend) return;
+	_appendLegend: function() {
+		return g => {
+			if (!this.options.legend) return;
 
-		let legend = this._legend = g.append('g')
-			.attr("class", "legend");
+			let legend = this._legend = g.append('g')
+				.attr("class", "legend");
 
-		let altitude = this._altitudeLegend = this._legend.append('g')
-			.attr("class", "legend-altitude");
+			this._fireEvt("elechart_legend");
 
-		altitude.append("rect")
-			.attr("class", "area")
-			.attr("x", (this._width() / 2) - 50)
-			.attr("y", this._height() + this.options.margins.bottom - 17)
-			.attr("width", 50)
-			.attr("height", 5)
-			.attr("opacity", 0.75);
+			let items = legend.selectAll('.legend-item')
+				.on('click', (d, i) => {
+					let target = items.nodes()[i];
+					let name = target.getAttribute('data-name');
+					let path = this._area.select('path[data-name="' + name + '"]').node();
+					this._fireEvt("elepath_toggle", { path: path, name: name, legend: target, });
+				});
 
-		altitude.append('text')
-			.text(L._('Altitude'))
-			.attr("x", (this._width() / 2) + 5)
-			.attr("font-size", 10)
-			.style("text-decoration-thickness", "2px")
-			.style("font-weight", "700")
-			.attr('y', this._height() + this.options.margins.bottom - 11);
-
-		// autotoggle chart data on single click
-		this._altitudeLegend.on('click', function() {
-			if (this._chartEnabled) {
-				this._clearChart();
-				this._clearPath();
-				this._chartEnabled = false;
-			} else {
-				this._resizeChart();
-				for (let id in this._layers) {
-					if (this._layers[id]._path) {
-						L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
-					}
-				}
-				this._chartEnabled = true;
-			}
-		}.bind(this));
-
-	},
-
-	/**
-	 * Generate "svg:line".
-	 */
-	_appendPositionMarker: function(pane) {
-		let theme = this.options.theme;
-		let heightG = pane.select("g").attr("class", "height-focus-group");
-
-		this._mouseHeightFocus = heightG.append('svg:line')
-			.attr("class", theme + " height-focus line")
-			.attr("x2", 0)
-			.attr("y2", 0)
-			.attr("x1", 0)
-			.attr("y1", 0);
-
-		this._pointG = heightG.append("svg:circle")
-			.attr("class", theme + " height-focus circle-lower")
-			.attr("r", 6)
-			.attr("cx", 0)
-			.attr("cy", 0);
-
-		this._mouseHeightFocusLabel = heightG.append("svg:text")
-			.attr("class", theme + " height-focus-label")
-			.style("pointer-events", "none");
-
-		this._mouseHeightFocusLabelY = this._mouseHeightFocusLabel.append("svg:tspan")
-			.attr("class", "height-focus-y");
-	},
-
-	/**
-	 * Calculates [x, y] domain and then update chart.
-	 */
-	_applyData: function() {
-		if (!this._data) return;
-
-		let opts = this.options;
-
-		let xdomain = d3.extent(this._data, d => d[opts.xAttr]);
-		let ydomain = d3.extent(this._data, d => d[opts.yAttr]);
-
-		if (opts.yAxisMin !== undefined && (opts.yAxisMin < ydomain[0] || opts.forceAxisBounds)) {
-			ydomain[0] = opts.yAxisMin;
-		}
-		if (opts.yAxisMax !== undefined && (opts.yAxisMax > ydomain[1] || opts.forceAxisBounds)) {
-			ydomain[1] = opts.yAxisMax;
-		}
-
-		this._x.domain(xdomain);
-		this._y.domain(ydomain);
-		this._areapath.datum(this._data)
-			.attr("d", this._area);
-		this._updateAxis();
-
-		this._fullExtent = this._calculateFullExtent(this._data);
+			return legend;
+		};
 	},
 
 	/*
@@ -956,19 +814,6 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	_clearChart: function() {
 		this._resetDrag();
-		if (this._areapath) {
-			// workaround for 'Error: Problem parsing d=""' in Webkit when empty data
-			// https://groups.google.com/d/msg/d3-js/7rFxpXKXFhI/HzIO_NPeDuMJ
-			//this._areapath.datum(this._data).attr("d", this._area);
-			this._areapath.attr("d", "M0 0");
-
-			this._x.domain([0, 1]);
-			this._y.domain([0, 1]);
-			this._updateAxis();
-		}
-		if (this._altitudeLegend) {
-			this._altitudeLegend.select('text').style("text-decoration-line", "line-through");
-		}
 	},
 
 	/*
@@ -981,9 +826,6 @@ L.Control.Elevation = L.Control.extend({
 		this._minElevation = null;
 		this.track_info = null;
 		this._layers = null;
-		// if (this.layer) {
-		// 	this.layer.removeFrom(this._map);
-		// }
 	},
 
 	/*
@@ -1007,30 +849,6 @@ L.Control.Elevation = L.Control.extend({
 			L.DomUtil.removeClass(this._container, 'elevation-expanded');
 			L.DomUtil.addClass(this._container, 'elevation-collapsed');
 		}
-	},
-
-	/**
-	 * Recursive deep merge objects.
-	 * Alternative to L.Util.setOptions(this, options).
-	 */
-	_deepMerge: function(target, ...sources) {
-		if (!sources.length) return target;
-		const source = sources.shift();
-		if (this._isObject(target) && this._isObject(source)) {
-			for (const key in source) {
-				if (this._isObject(source[key])) {
-					if (!target[key]) Object.assign(target, {
-						[key]: {}
-					});
-					this._deepMerge(target[key], source[key]);
-				} else {
-					Object.assign(target, {
-						[key]: source[key]
-					});
-				}
-			}
-		}
-		return this._deepMerge(target, ...sources);
 	},
 
 	/*
@@ -1086,30 +904,19 @@ L.Control.Elevation = L.Control.extend({
 	 * Draws the currently dragged rectangle over the chart.
 	 */
 	_drawDragRectangle: function() {
-		if (!this._dragStartCoords || !this._draggingEnabled) {
-			return;
-		}
-
-		let dragEndCoords = this._dragCurrentCoords = d3.mouse(this._focusRect.node());
-
-		let x1 = Math.min(this._dragStartCoords[0], dragEndCoords[0]);
-		let x2 = Math.max(this._dragStartCoords[0], dragEndCoords[0]);
-
-		if (!this._dragRectangle && !this._dragRectangleG) {
-			let g = d3.select(this._container).select("svg").select("g");
-
-			this._dragRectangleG = g.insert("g", ".mouse-focus-group");
-
-			this._dragRectangle = this._dragRectangleG.append("rect")
-				.attr("width", x2 - x1)
-				.attr("height", this._height())
-				.attr("x", x1)
+		if (!this._dragStartCoords || !this._draggingEnabled) return;
+		if (!this._dragRectangle) {
+			this._dragRectangle = this._focus.insert("rect", ".mouse-focus-group")
 				.attr('class', 'mouse-drag')
 				.style("pointer-events", "none");
-		} else {
-			this._dragRectangle.attr("width", x2 - x1)
-				.attr("x", x1);
 		}
+		this._dragRectangle.call(
+			D3.DragRectangle({
+				dragStartCoords: this._dragStartCoords,
+				dragEndCoords: this._dragCurrentCoords = d3.mouse(this._focusRect.node()),
+				height: this._height(),
+			})
+		);
 	},
 
 	/*
@@ -1171,21 +978,6 @@ L.Control.Elevation = L.Control.extend({
 		this.fitBounds(ext);
 	},
 
-	/*
-	 * Fromatting funciton using the given decimals and seperator
-	 */
-	_formatter: function(num, dec, sep) {
-		let res = L.Util.formatNum(num, dec).toString();
-		let numbers = res.split(".");
-		if (numbers[1]) {
-			for (let d = dec - numbers[1].length; d > 0; d--) {
-				numbers[1] += "0";
-			}
-			res = numbers.join(sep || ".");
-		}
-		return res;
-	},
-
 	/**
 	 * Calculates chart height.
 	 */
@@ -1205,18 +997,16 @@ L.Control.Elevation = L.Control.extend({
 		this._selectedItem = null;
 
 		if (this._marker) {
-			if (this._map) this._map.removeLayer(this._marker);
-			this._marker = null;
+			this._marker.remove();
 		}
-		if (this._mouseHeightFocus) {
-			this._mouseHeightFocus.style("visibility", "hidden");
-			this._mouseHeightFocusLabel.style("visibility", "hidden");
+		if (this._heightG) {
+			this._heightG.classed("hidden", true);
 		}
 		if (this._pointG) {
-			this._pointG.style("visibility", "hidden");
+			this._pointG.classed("hidden", true);
 		}
 		if (this._focusG) {
-			this._focusG.style("visibility", "hidden");
+			this._focusG.classed("hidden", true);
 		}
 	},
 
@@ -1225,9 +1015,6 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	_initChart: function() {
 		let opts = this.options;
-		opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
-		opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
-		opts.hoverNumber.formatter = opts.hoverNumber.formatter || this._formatter;
 
 		if (opts.responsive) {
 			if (opts.detached) {
@@ -1242,33 +1029,33 @@ L.Control.Elevation = L.Control.extend({
 			}
 		}
 
-		let x = this._x = d3.scaleLinear().range([0, this._width()]);
-		let y = this._y = d3.scaleLinear().range([this._height(), 0]);
+		let scale = this._initScale();
 
-		let interpolation = typeof opts.interpolation === 'function' ? opts.interpolation : d3[opts.interpolation];
+		let container = d3.select(this._container)
+			.call(this._appendChart())
+			.call(this._appendSummary());
 
-		let area = this._area = d3.area().curve(interpolation)
-			.x(d => (d.xDiagCoord = x(d[opts.xAttr])))
-			.y0(this._height())
-			.y1(d => y(d[opts.yAttr]));
-		let line = this._line = d3.line()
-			.x(d => d3.mouse(svg.select("g"))[0])
-			.y(d => this._height());
-
-		let container = d3.select(this._container);
-
-		let svg = container.append("svg")
-			.attr("class", "background")
-			.attr("width", opts.width)
-			.attr("height", opts.height);
-
-		let summary = this.summaryDiv = container.append("div")
-			.attr("class", "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : '')).node();
-
-		this._appendChart(svg);
-		this._updateSummary();
+		let svg = this._svg = container.select('svg');
+		this._grid = svg.select('.grid');
+		this._area = svg.select('.area');
+		this._path = svg.select('.area path');
+		this._axis = svg.select('.axis');
+		this._focus = svg.select('.focus');
+		this._focusRect = svg.select('rect');
+		this._x = scale.x;
+		this._y = scale.y;
 
 		this._fireEvt("elechart_init", null, true);
+	},
+
+	_initScale: function() {
+		let opts = this.options;
+		opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
+		opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
+
+		this._updateScale();
+
+		return { x: this._x, y: this._y };
 	},
 
 	/**
@@ -1316,113 +1103,6 @@ L.Control.Elevation = L.Control.extend({
 		} else {
 			// TODO: handle autohide when detached=true
 		}
-	},
-
-	/**
-	 * Check object type.
-	 */
-	_isObject: function(item) {
-		return (item && typeof item === 'object' && !Array.isArray(item));
-	},
-
-	/**
-	 * Check JSON object type.
-	 */
-	_isJSONDoc: function(doc, lazy) {
-		lazy = typeof lazy === "undefined" ? true : lazy;
-		if (typeof doc === "string" && lazy) {
-			doc = doc.trim();
-			return doc.indexOf("{") == 0 || doc.indexOf("[") == 0;
-		} else {
-			try {
-				JSON.parse(doc.toString());
-			} catch (e) {
-				if (typeof doc === "object" && lazy) return true;
-				console.warn(e);
-				return false;
-			}
-			return true;
-		}
-	},
-
-	/**
-	 * Check XML object type.
-	 */
-	_isXMLDoc: function(doc, lazy) {
-		lazy = typeof lazy === "undefined" ? true : lazy;
-		if (typeof doc === "string" && lazy) {
-			doc = doc.trim();
-			return doc.indexOf("<") == 0;
-		} else {
-			let documentElement = (doc ? doc.ownerDocument || doc : 0).documentElement;
-			return documentElement ? documentElement.nodeName !== "HTML" : false;
-		}
-	},
-
-	/**
-	 * Check DOM element visibility.
-	 */
-	_isDomVisible: function(elem) {
-		return !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
-	},
-
-	/**
-	 * Check DOM element viewport visibility.
-	 */
-	_isVisible: function(elem) {
-		if (!elem) return false;
-
-		let styles = window.getComputedStyle(elem);
-
-		function isVisibleByStyles(elem, styles) {
-			return styles.visibility !== 'hidden' && styles.display !== 'none';
-		}
-
-		function isAboveOtherElements(elem, styles) {
-			let boundingRect = elem.getBoundingClientRect();
-			let left = boundingRect.left + 1;
-			let right = boundingRect.right - 1;
-			let top = boundingRect.top + 1;
-			let bottom = boundingRect.bottom - 1;
-			let above = true;
-
-			let pointerEvents = elem.style.pointerEvents;
-
-			if (styles['pointer-events'] == 'none') elem.style.pointerEvents = 'auto';
-
-			if (document.elementFromPoint(left, top) !== elem) above = false;
-			if (document.elementFromPoint(right, top) !== elem) above = false;
-
-			// Only for completely visible elements
-			// if (document.elementFromPoint(left, bottom) !== elem) above = false;
-			// if (document.elementFromPoint(right, bottom) !== elem) above = false;
-
-			elem.style.pointerEvents = pointerEvents;
-
-			return above;
-		}
-
-		if (!isVisibleByStyles(elem, styles)) return false;
-		if (!isAboveOtherElements(elem, styles)) return false;
-		return true;
-	},
-
-	/**
-	 * Async JS script download.
-	 */
-	_lazyLoadJS: function(url, skip, loader) {
-		if (skip === false || !this.options.lazyLoadJS) {
-			return Promise.resolve();
-		}
-		if (loader instanceof Promise) {
-			return loader;
-		}
-		return new Promise((resolve, reject) => {
-			let tag = document.createElement("script");
-			tag.addEventListener('load', resolve, { once: true });
-			tag.src = url;
-			document.head.appendChild(tag);
-		});
 	},
 
 	/*
@@ -1507,9 +1187,8 @@ L.Control.Elevation = L.Control.extend({
 	 * Removes the drag rectangle and zoms back to the total extent of the data.
 	 */
 	_resetDrag: function() {
-		if (this._dragRectangleG) {
-			this._dragRectangleG.remove();
-			this._dragRectangleG = null;
+		if (this._dragRectangle) {
+			this._dragRectangle.remove();;
 			this._dragRectangle = null;
 			this._hidePositionMarker();
 		}
@@ -1546,62 +1225,34 @@ L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Generate GPX / GeoJSON download event.
-	 */
-	_saveFile: function(fileUrl) {
-		let d = document,
-			a = d.createElement('a'),
-			b = d.body;
-		a.href = fileUrl;
-		a.target = '_new';
-		a.download = ""; // fileName
-		a.style.display = 'none';
-		b.appendChild(a);
-		a.click();
-		b.removeChild(a);
-	},
-
-	/**
 	 * Display distance and altitude level ("focus-rect").
 	 */
 	_showDiagramIndicator: function(item, xCoordinate) {
 		if (!this._chartEnabled) return;
 
-		this._focusG.style("visibility", "visible");
-
-		this._mousefocus.attr('x1', xCoordinate)
-			.attr('y1', 0)
-			.attr('x2', xCoordinate)
-			.attr('y2', this._height())
-			.classed('hidden', false);
-
 		let opts = this.options;
-		let hoverNumber = opts.hoverNumber;
+		let formatter = opts.hoverNumber.formatter;
+		let [fx, fy] = [opts.hoverNumber.decimalsX, opts.hoverNumber.decimalsY];
 		let yCoordinate = this._y(item[opts.yAttr]);
 
-		this._focuslabelX.text(hoverNumber.formatter(item[opts.xAttr], hoverNumber.decimalsX) + " " + this._xLabel);
-		this._focuslabelY.text(hoverNumber.formatter(item[opts.yAttr], hoverNumber.decimalsY) + " " + this._yLabel);
+		this._focusG.classed("hidden", false);
 
-		let focuslabeltext = this._focuslabeltext.node();
-		let bbox = focuslabeltext.getBBox();
-		let xAlign = xCoordinate + (xCoordinate < this._width() / 2 ? 10 : -bbox.width - 10);
-		let yAlign = Math.max(yCoordinate - bbox.height, L.Browser.webkit ? 0 : -Infinity);
-
-		this._focuslabeltext
-			//.attr("x", xCoordinate)
-			.style("font-weight", "700")
-			.attr("y", yAlign);
-
-		this._focuslabeltext.selectAll('tspan').each(function(d, i) {
-			d3.select(this).attr("x", xAlign);
-		});
-
-		this._focuslabelrect
-			.attr("x", xAlign - 5)
-			.attr("y", yAlign - 5)
-			.attr("width", bbox.width + 10)
-			.attr("height", bbox.height + 10);
-
+		this._focusline.call(
+			D3.MouseFocusLine({
+				xCoord: xCoordinate,
+				height: this._height()
+			})
+		);
+		this._focuslabel.call(
+			D3.MouseFocusLabel({
+				xCoord: xCoordinate,
+				yCoord: yCoordinate,
+				height: this._height(),
+				width: this._width(),
+				labelX: formatter(item[opts.xAttr], fx) + " " + this._xLabel,
+				labelY: formatter(item[opts.yAttr], fy) + " " + this._yLabel,
+			})
+		);
 	},
 
 	/**
@@ -1629,13 +1280,6 @@ L.Control.Elevation = L.Control.extend({
 	 */
 	_showPositionMarker: function(item) {
 		this._selectedItem = item;
-
-		if (this._map && !this._map.getPane('elevationPane')) {
-			this._map.createPane('elevationPane');
-			this._map.getPane('elevationPane').style.zIndex = 625; // This pane is above markers but below popups.
-			this._map.getPane('elevationPane').style.pointerEvents = 'none';
-		}
-
 		if (this.options.marker == 'elevation-line') {
 			this._updatePositionMarker(item);
 		} else if (this.options.marker == 'position-marker') {
@@ -1647,96 +1291,137 @@ L.Control.Elevation = L.Control.extend({
 	 * Update chart axis.
 	 */
 	_updateAxis: function() {
-		this._grid.selectAll("g").remove();
-		this._axis.selectAll("g").remove();
-		this._appendXGrid(this._grid);
-		this._appendYGrid(this._grid);
-		this._appendXaxis(this._axis);
-		this._appendYaxis(this._axis);
+		this._grid.selectAll('g').remove();
+		this._axis.selectAll('g').remove();
+		this._grid
+			.call(this._appendXGrid())
+			.call(this._appendYGrid());
+		this._axis
+			.call(this._appendXaxis())
+			.call(this._appendYaxis());
 
 		this._fireEvt('elechart_axis');
 	},
 
 	/**
-	 * Update distance and altitude level ("leaflet-marker").
+	 * Calculates [x, y] domain and then update chart.
 	 */
-	_updateHeightIndicator: function(item) {
+	_updateChart: function() {
+		if (!this._data || !this._container) return;
+
+		this._updateScale();
+		this._updateAxis();
+		this._updateAreaPath();
+
+		this._fullExtent = this._calculateFullExtent(this._data);
+
+		this._fireEvt('elechart_updated');
+	},
+
+	_updateAreaPath: function() {
 		let opts = this.options;
-
-		let numY = opts.hoverNumber.formatter(item[opts.yAttr], opts.hoverNumber.decimalsY);
-		let numX = opts.hoverNumber.formatter(item[opts.xAttr], opts.hoverNumber.decimalsX);
-
-		let normalizedAlt = this._height() / this._maxElevation * item.z;
-		let normalizedY = item.y - normalizedAlt;
-
-		this._mouseHeightFocus
-			.attr("x1", item.x)
-			.attr("x2", item.x)
-			.attr("y1", item.y)
-			.attr("y2", normalizedY)
-			.style("visibility", "visible");
-
-		this._mouseHeightFocusLabel
-			.attr("x", item.x + 5)
-			.attr("y", normalizedY)
-			.style("visibility", "visible");
-
-		this._mouseHeightFocusLabel.selectAll('tspan').each(function(d, i) {
-			d3.select(this).attr("x", item.x + 5);
-		});
-
-		this._mouseHeightFocusLabelY
-			.text(numY + " " + this._yLabel);
+		this._path
+			.call(
+				D3.Area({
+					interpolation: opts.interpolation,
+					data: this._data,
+					name: 'Altitude',
+					xAttr: opts.xAttr,
+					yAttr: opts.yAttr,
+					width: this._width(),
+					height: this._height(),
+					scaleX: this._x,
+					scaleY: this._y,
+				})
+			);
 	},
 
 	/**
 	 * Update position marker ("leaflet-marker").
 	 */
 	_updateLeafletMarker: function(item) {
-		let ll = item.latlng;
-
 		if (!this._marker) {
-			this._marker = new L.Marker(ll, {
-				icon: this.options.markerIcon,
-				zIndexOffset: 1000000,
-			});
-			this._marker.addTo(this._map, {
-				pane: 'elevationPane',
-			});
+			this._marker = L.marker(item.latlng, { icon: this.options.markerIcon, zIndexOffset: 1000000 })
+				.addTo(this._map, { pane: 'elevationPane' });
 		} else {
-			this._marker.setLatLng(ll);
+			this._marker.setLatLng(item.latlng);
 		}
-	},
-
-	/**
-	 * Update focus point ("leaflet-marker").
-	 */
-	_updatePointG: function(item) {
-		this._pointG
-			.attr("transform", "translate(" + item.x + "," + item.y + ")")
-			.style("visibility", "visible");
 	},
 
 	/**
 	 * Update position marker ("leaflet-marker").
 	 */
 	_updatePositionMarker: function(item) {
-		let point = this._map.latLngToLayerPoint(item.latlng);
-		let layerpoint = {
-			dist: item.dist,
-			x: point.x,
-			y: point.y,
-			z: item.z,
-		};
+		let opts = this.options;
+		let point = L.extend({}, item, this._map.latLngToLayerPoint(item.latlng));
 
-		if (!this._mouseHeightFocus) {
-			L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
-			let layerpane = d3.select(this._map.getContainer()).select(".leaflet-elevation-pane svg");
-			this._appendPositionMarker(layerpane);
+		let formatter = opts.hoverNumber.formatter;
+		let fy = opts.hoverNumber.decimalsY;
+
+		let normalizedAlt = this._height() / this._maxElevation * point.z;
+		let normalizedY = point.y - normalizedAlt;
+
+		if (!this._heightG) {
+			let renderer = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
+			let pane = d3.select(renderer.getPane()).select("svg");
+			let g = this._heightG = pane.select("g").attr("class", "height-focus-group");
+			this._mouseHeightFocus = g.append('svg:line');
+			this._pointG = g.append("svg:circle");
+			this._mouseHeightFocusLabel = g.append("svg:text");
 		}
 
-		this._updatePointG(layerpoint);
-		this._updateHeightIndicator(layerpoint);
+		this._heightG.classed("hidden", false);
+		this._pointG.classed("hidden", false);
+
+		this._pointG
+			.call(
+				D3.HeightFocusPoint({
+					theme: this.options.theme,
+					xCoord: point.x,
+					yCoord: point.y,
+				}));
+
+		this._mouseHeightFocus
+			.call(
+				D3.HeightFocusLine({
+					theme: this.options.theme,
+					xCoord: point.x,
+					yCoord: point.y,
+					length: normalizedY
+				})
+			);
+
+		this._mouseHeightFocusLabel
+			.call(
+				D3.HeightFocusLabel({
+					theme: this.options.theme,
+					xCoord: point.x,
+					yCoord: normalizedY,
+					label: formatter(point[opts.yAttr], fy) + " " + this._yLabel
+				})
+			);
+	},
+
+	_updateScale: function() {
+		let opts = this.options;
+
+		this._x = D3.Scale({
+			data: this._data,
+			range: [0, this._width()],
+			attr: opts.xAttr,
+			min: opts.xAxisMin,
+			max: opts.xAxisMax,
+			forceBounds: opts.forceAxisBounds,
+		});
+
+		this._y = D3.Scale({
+			data: this._data,
+			range: [this._height(), 0],
+			attr: opts.yAttr,
+			min: opts.yAxisMin,
+			max: opts.yAxisMax,
+			forceBounds: opts.forceAxisBounds,
+		});
 	},
 
 	/**
@@ -1750,25 +1435,15 @@ L.Control.Elevation = L.Control.extend({
 		this.track_info.elevation_min = this._minElevation || 0;
 
 		if (this.options.summary) {
-			this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>\
-			<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>\
-			<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
+			this._fireEvt("elechart_summary");
 		}
 		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
 			this.summaryDiv.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
-			this.summaryDiv.querySelector('.download a').onclick = function(e) {
+			this.summaryDiv.querySelector('.download a').onclick = (e) => {
 				e.preventDefault();
-				let evt = { confirm: this._saveFile.bind(this, this._downloadURL) };
-				let type = this.options.downloadLink;
-				if (type == 'modal') {
-					if (typeof CustomEvent === "function") document.dispatchEvent(new CustomEvent("eletrack_download", { detail: evt }));
-					this._fireEvt('eletrack_download', evt);
-				} else if (type == 'link' || type === true) {
-					evt.confirm();
-				}
-			}.bind(this);
-		}
-		this._fireEvt("elechart_summary");
+				this._fireEvt('eletrack_download', { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this._downloadURL) });
+			};
+		};
 	},
 
 
@@ -1782,6 +1457,103 @@ L.Control.Elevation = L.Control.extend({
 
 });
 
-L.control.elevation = function(options) {
-	return new L.Control.Elevation(options);
-};
+L.control.elevation = (options) => new Elevation(options);
+
+Elevation.Utils = _;
+Elevation.Components = D3;
+
+Elevation.addInitHook(function() {
+
+	this.on('waypoint_added', function(e) {
+		let p = e.point,
+			pop = p._popup;
+		if (pop) {
+			pop.options.className = 'elevation-popup';
+		}
+		if (pop._content) {
+			pop._content = decodeURI(pop._content);
+			p.bindTooltip(pop._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
+		}
+	});
+
+	this.on('elepath_toggle', function(e) {
+		let path = e.path;
+
+		let enabled = L.DomUtil.hasClass(path, 'hidden');
+		let text = d3.select(e.legend).select('text');
+
+		if (enabled) {
+			L.DomUtil.removeClass(path, 'hidden');
+			text.style("text-decoration-line", "")
+		} else {
+			L.DomUtil.setClass(path, 'hidden');
+			text.style("text-decoration-line", "line-through")
+		}
+
+		this._chartEnabled = this._area.selectAll('path:not(.hidden)').nodes().length != 0;
+
+		// autotoggle chart data on single click
+		if (!this._chartEnabled) {;
+			this._resetDrag();
+			this._clearPath();
+		} else {
+			// this._resizeChart();
+			for (let id in this._layers) {
+				if (this._layers[id]._path) {
+					L.DomUtil.addClass(this._layers[id]._path, this.options.polyline.className + ' ' + this.options.theme);
+				}
+			}
+		}
+	});
+
+	this.on("elechart_legend", function() {
+		this._altitudeLegend = this._legend.append('g')
+			.call(
+				D3.LegendItem({
+					name: 'Altitude',
+					width: this._width(),
+					height: this._height(),
+					margins: this.options.margins,
+				})
+			);
+	});
+
+	this.on("elechart_summary", function() {
+		this.summaryDiv.innerHTML +=
+			'<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>' +
+			'<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>' +
+			'<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
+	});
+
+	this.on("eletrack_download", function(e) {
+		if (e.downloadLink == 'modal' && typeof CustomEvent === "function") {
+			document.dispatchEvent(new CustomEvent("eletrack_download", { detail: e }));
+		} else if (e.downloadLink == 'link' || e.downloadLink === true) {
+			e.confirm();
+		}
+	});
+
+	this.on('eledata_loaded', function(e) {
+		let layer = e.layer;
+		if (this._map) {
+			this._map.once('layeradd', function(e) {
+				this.fitBounds(layer.getBounds());
+			}, this);
+			layer.addTo(this._map);
+		} else {
+			console.warn("Undefined elevation map object");
+		}
+	});
+
+	this.on('eledata_clear', function() {
+		this._area.selectAll('path')
+			.attr("d", "M0 0");
+		if (this._path) {
+			// this._x.domain([0, 1]);
+			// this._y.domain([0, 1]);
+			// this._updateAxis();
+		}
+	});
+
+
+});

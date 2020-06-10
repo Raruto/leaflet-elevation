@@ -1,0 +1,281 @@
+/**
+ * Recursive deep merge objects.
+ * Alternative to L.Util.setOptions(this, options).
+ */
+export function deepMerge(target, ...sources) {
+	if (!sources.length) return target;
+	const source = sources.shift();
+	if (isObject(target) && isObject(source)) {
+		for (const key in source) {
+			if (isObject(source[key])) {
+				if (!target[key]) Object.assign(target, {
+					[key]: {}
+				});
+				deepMerge(target[key], source[key]);
+			} else {
+				Object.assign(target, {
+					[key]: source[key]
+				});
+			}
+		}
+	}
+	return deepMerge(target, ...sources);
+}
+
+/**
+ * Wait for document load before execute function.
+ */
+export function deferFunc(f) {
+	if (document.readyState !== 'complete') window.addEventListener("load", f, { once: true });
+	else f();
+}
+
+/*
+ * Formatting funciton using the given decimals and seperator.
+ */
+export function formatter(num, dec, sep) {
+	let res = L.Util.formatNum(num, dec).toString();
+	let numbers = res.split(".");
+	if (numbers[1]) {
+		for (let d = dec - numbers[1].length; d > 0; d--) {
+			numbers[1] += "0";
+		}
+		res = numbers.join(sep || ".");
+	}
+	return res;
+}
+
+/**
+ * Simple GeoJSON data loader.
+ */
+export function GeoJSONLoader(data, control) {
+	if (typeof data === "string") {
+		data = JSON.parse(data);
+	}
+	control = control || this;
+
+	let layer = L.geoJson(data, {
+		style: (feature) => {
+			let style = L.extend({}, control.options.polyline);
+			if (control.options.theme) {
+				style.className += ' ' + control.options.theme;
+			}
+			return style;
+		},
+		pointToLayer: (feature, latlng) => {
+			let marker = L.marker(latlng, { icon: control.options.gpxOptions.marker_options.wptIcons[''] });
+			let desc = feature.properties.desc ? feature.properties.desc : '';
+			let name = feature.properties.name ? feature.properties.name : '';
+			if (name || desc) {
+				marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
+			}
+			control.fire('waypoint_added', { point: marker, point_type: 'waypoint', element: latlng });
+			return marker;
+		},
+		onEachFeature: (feature, layer) => {
+			if (feature.geometry.type == 'Point') return;
+
+			control.addData(feature, layer);
+
+			control.track_info = L.extend({}, control.track_info, { type: "geojson", name: data.name });
+		},
+	});
+
+	control._fireEvt("eledata_loaded", { data: data, layer: layer, name: control.track_info.name, track_info: control.track_info }, true);
+
+	return layer;
+}
+
+/**
+ * Simple GPX data loader.
+ */
+export function GPXLoader(data, control) {
+	control = control || this;
+
+	control.options.gpxOptions.polyline_options = L.extend({}, control.options.polyline, control.options.gpxOptions.polyline_options);
+
+	if (control.options.theme) {
+		control.options.gpxOptions.polyline_options.className += ' ' + control.options.theme;
+	}
+
+	let layer = new L.GPX(data, control.options.gpxOptions);
+
+	// similar to L.GeoJSON.pointToLayer
+	layer.on('addpoint', (e) => {
+		control.fire("waypoint_added", e, true);
+	});
+
+	// similar to L.GeoJSON.onEachFeature
+	layer.once("addline", (e) => {
+		control.addData(e.line /*, layer*/ );
+		control.track_info = L.extend({}, control.track_info, { type: "gpx", name: layer.get_name() });
+	});
+
+	// unlike the L.GeoJSON, L.GPX parsing is async
+	layer.once('loaded', (e) => {
+		control._fireEvt("eledata_loaded", { data: data, layer: layer, name: control.track_info.name, track_info: control.track_info }, true);
+	});
+
+	return layer;
+}
+
+/**
+ * Check DOM element visibility.
+ */
+export function isDomVisible(elem) {
+	return !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
+}
+
+/**
+ * Check object type.
+ */
+export function isObject(item) {
+	return (item && typeof item === 'object' && !Array.isArray(item));
+}
+
+/**
+ * Check DOM element viewport visibility.
+ */
+export function isVisible(elem) {
+	if (!elem) return false;
+
+	let styles = window.getComputedStyle(elem);
+
+	function isVisibleByStyles(elem, styles) {
+		return styles.visibility !== 'hidden' && styles.display !== 'none';
+	}
+
+	function isAboveOtherElements(elem, styles) {
+		let boundingRect = elem.getBoundingClientRect();
+		let left = boundingRect.left + 1;
+		let right = boundingRect.right - 1;
+		let top = boundingRect.top + 1;
+		let bottom = boundingRect.bottom - 1;
+		let above = true;
+
+		let pointerEvents = elem.style.pointerEvents;
+
+		if (styles['pointer-events'] == 'none') elem.style.pointerEvents = 'auto';
+
+		if (document.elementFromPoint(left, top) !== elem) above = false;
+		if (document.elementFromPoint(right, top) !== elem) above = false;
+
+		// Only for completely visible elements
+		// if (document.elementFromPoint(left, bottom) !== elem) above = false;
+		// if (document.elementFromPoint(right, bottom) !== elem) above = false;
+
+		elem.style.pointerEvents = pointerEvents;
+
+		return above;
+	}
+
+	if (!isVisibleByStyles(elem, styles)) return false;
+	if (!isAboveOtherElements(elem, styles)) return false;
+	return true;
+}
+
+/**
+ * Check JSON object type.
+ */
+export function isJSONDoc(doc, lazy) {
+	lazy = typeof lazy === "undefined" ? true : lazy;
+	if (typeof doc === "string" && lazy) {
+		doc = doc.trim();
+		return doc.indexOf("{") == 0 || doc.indexOf("[") == 0;
+	} else {
+		try {
+			JSON.parse(doc.toString());
+		} catch (e) {
+			if (typeof doc === "object" && lazy) return true;
+			console.warn(e);
+			return false;
+		}
+		return true;
+	}
+}
+
+/**
+ * Check XML object type.
+ */
+export function isXMLDoc(doc, lazy) {
+	lazy = typeof lazy === "undefined" ? true : lazy;
+	if (typeof doc === "string" && lazy) {
+		doc = doc.trim();
+		return doc.indexOf("<") == 0;
+	} else {
+		let documentElement = (doc ? doc.ownerDocument || doc : 0).documentElement;
+		return documentElement ? documentElement.nodeName !== "HTML" : false;
+	}
+}
+
+/**
+ * Async JS script download.
+ */
+export function lazyLoader(url, skip, loader) {
+	if (skip === false) {
+		return Promise.resolve();
+	}
+	if (loader instanceof Promise) {
+		return loader;
+	}
+	return new Promise((resolve, reject) => {
+		let tag = document.createElement("script");
+		tag.addEventListener('load', resolve, { once: true });
+		tag.src = url;
+		document.head.appendChild(tag);
+	});
+}
+
+/**
+ * Download data from a remote url.
+ */
+export function loadFile(url, success) {
+	return new Promise((resolve, reject) => {
+		let xhr = new XMLHttpRequest();
+		xhr.responseType = "text";
+		xhr.open('GET', url);
+		xhr.onload = () => resolve(xhr.response);
+		xhr.onerror = () => reject("Error " + xhr.status + " while fetching remote file: " + url);
+		xhr.send();
+	});
+}
+
+/**
+ * Generate download data event.
+ */
+export function saveFile(dataURI, fileName) {
+	let d = document,
+		a = d.createElement('a'),
+		b = d.body;
+	a.href = dataURI;
+	a.target = '_new';
+	a.download = fileName || "";
+	a.style.display = 'none';
+	b.appendChild(a);
+	a.click();
+	b.removeChild(a);
+}
+
+/**
+ * Wait for element visible before execute function.
+ */
+export function waitHolder(elem) {
+	return new Promise((resolve, reject) => {
+		let ticking = false;
+		let scrollFn = () => {
+			if (!ticking) {
+				L.Util.requestAnimFrame(() => {
+					if (isVisible(elem)) {
+						window.removeEventListener('scroll', scrollFn);
+						resolve();
+					}
+					ticking = false;
+				});
+				ticking = true;
+			}
+		};
+		window.addEventListener('scroll', scrollFn);
+		if (elem) elem.addEventListener('mouseenter', scrollFn, { once: true });
+		scrollFn();
+	});
+}
