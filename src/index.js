@@ -37,10 +37,12 @@
 import 'leaflet-i18n';
 import * as _ from './utils';
 import * as D3 from './components';
+import { Chart } from './chart';
 import { Elevation } from './control';
 import './slope';
 
 Elevation.Utils = _;
 Elevation.Components = D3;
+Elevation.Chart = Chart;
 
 L.control.elevation = (options) => new Elevation(options);

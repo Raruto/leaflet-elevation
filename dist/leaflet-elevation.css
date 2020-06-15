@@ -26,10 +26,6 @@
 .elevation-control.elevation .background {
   background-color: rgba(70, 130, 180, 0.2);
   border-radius: 5px;
-  -moz-border-radius: 5px;
-  -ms-border-radius: 5px;
-  -o-border-radius: 5px;
-  -webkit-border-radius: 5px;
   overflow: visible;
   display: block;
 }
@@ -89,7 +85,6 @@
 .elevation-control.elevation .elevation-toggle {
   cursor: pointer;
   box-shadow: 0 1px 7px rgba(0, 0, 0, 0.4);
-  -webkit-border-radius: 5px;
   border-radius: 5px;
   width: 36px;
   height: 36px;
@@ -157,12 +152,11 @@
 }
 
 .elevation-control.elevation .elevation-toggle-icon {
-  background: url(../images/elevation.png) no-repeat center center;
+  background: url(../images/elevation.svg) no-repeat center center;
 }
 
 .elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button {
   background: transparent url(../images/remove.svg) no-repeat center center;
-  background-size: 14px 14px;
   position: absolute;
   right: 5px;
   top: 5px;
@@ -242,7 +236,7 @@
 }
 
 .lime-theme.elevation-control.elevation .elevation-toggle-icon {
-  background: url(../images/elevation-lime.png) no-repeat center center;
+  background: url(../images/elevation-lime.svg) no-repeat center center;
 }
 
 .lime-theme.elevation-control.elevation .area {
@@ -278,7 +272,7 @@
 }
 
 .steelblue-theme.elevation-control.elevation .elevation-toggle-icon {
-  background: url(../images/elevation-steelblue.png) no-repeat center center;
+  background: url(../images/elevation-steelblue.svg) no-repeat center center;
 }
 
 .steelblue-theme.elevation-control.elevation .area {
@@ -314,7 +308,7 @@
 }
 
 .purple-theme.elevation-control.elevation .elevation-toggle-icon {
-  background: url(../images/elevation-purple.png) no-repeat center center;
+  background: url(../images/elevation-purple.svg) no-repeat center center;
 }
 
 .purple-theme.elevation-control.elevation .area {

@@ -244,13 +244,8 @@ export function loadFile(url, success) {
  * Generate download data event.
  */
 export function saveFile(dataURI, fileName) {
-	let d = document,
-		a = d.createElement('a'),
-		b = d.body;
-	a.href = dataURI;
-	a.target = '_new';
-	a.download = fileName || "";
-	a.style.display = 'none';
+	let a = create('a', '', { href: dataURI, target: '_new', download: fileName || "", style: "display:none;" });
+	let b = document.body;
 	b.appendChild(a);
 	a.click();
 	b.removeChild(a);
@@ -278,4 +273,85 @@ export function waitHolder(elem) {
 		if (elem) elem.addEventListener('mouseenter', scrollFn, { once: true });
 		scrollFn();
 	});
+}
+
+/**
+ * A little bit safier than L.DomUtil.addClass
+ */
+export function addClass(targetNode, className) {
+	each(className.split(" "), s => { if (targetNode && className) L.DomUtil.addClass(targetNode, s); });
+}
+
+/**
+ * A little bit safier than L.DomUtil.removeClass()
+ */
+export function removeClass(targetNode, className) {
+	each(className.split(" "), s => { if (targetNode && className) L.DomUtil.removeClass(targetNode, s); });
+}
+
+export function style(targetNode, name, value) {
+	if (typeof value === "undefined") return L.DomUtil.getStyle(targetNode, name);
+	else return targetNode.style.setProperty(name, value);
+}
+
+/**
+ * A little bit shorter than L.DomUtil.create()
+ */
+export function create(tagName, className, attributes, parent) {
+	let elem = L.DomUtil.create(tagName, className || "");
+	if (attributes) setAttributes(elem, attributes);
+	if (parent) append(parent, elem);
+	return elem;
+}
+
+/**
+ * Same as node.appendChild()
+ */
+export function append(parent, child) {
+	return parent.appendChild(child);
+}
+
+/**
+ * Same as node.insertAdjacentElement()
+ */
+export function insert(parent, child, position) {
+	return parent.insertAdjacentElement(position, child);
+}
+
+/**
+ * Loop for node.setAttribute()
+ */
+export function setAttributes(elem, attrs) {
+	for (let k in attrs) { elem.setAttribute(k, attrs[k]); }
+}
+
+/**
+ * Same as node.querySelector().
+ */
+export function select(selector, context) {
+	return (context || document).querySelector(selector);
+}
+
+/**
+ * Alias for L.DomEvent.on.
+ */
+export const on = L.DomEvent.on;
+
+/**
+ * Alias for L.DomEvent.off.
+ */
+export const off = L.DomEvent.off;
+
+/**
+ * Alias for L.DomUtil.hasClass.
+ */
+export const hasClass = L.DomUtil.hasClass;
+
+
+export function randomId() {
+	return Math.random().toString(36).substr(2, 9);
+}
+
+export function each(obj, fn) {
+	for (let i in obj) fn(obj[i]);
 }

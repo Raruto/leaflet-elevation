@@ -1,18 +1,23 @@
-export const Area = (props) => {
+export const Area = ({
+	data,
+	name,
+	xAttr,
+	yAttr,
+	scaleX,
+	scaleY,
+	height,
+	interpolation = "curveLinear",
+}) => {
 	return path => {
-		let interpolation = props.interpolation || "curveLinear";
-
-		if (typeof props.interpolation !== 'function') {
-			interpolation = d3[props.interpolation];
-		}
+		if (typeof interpolation === 'string') interpolation = d3[interpolation];
 
 		let area = d3.area().curve(interpolation)
-			.x(d => (d.xDiagCoord = props.scaleX(d[props.xAttr])))
-			.y0(props.height)
-			.y1(d => props.scaleY(d[props.yAttr]));
+			.x(d => (d.xDiagCoord = scaleX(d[xAttr])))
+			.y0(height)
+			.y1(d => scaleY(d[yAttr]));
 
-		if (props.data) path.datum(props.data).attr("d", area);
-		if (props.name) path.attr('data-name', props.name);
+		if (data) path.datum(data).attr("d", area);
+		if (name) path.attr('data-name', name);
 
 		return area;
 	};
@@ -24,66 +29,78 @@ export const AreaPath = (props) => {
 		.call(Area(props));
 };
 
-export const Axis = (props) => {
+export const Axis = ({
+	type = "axis",
+	tickSize = 6,
+	tickPadding = 3,
+	position,
+	height,
+	width,
+	axis,
+	scale,
+	ticks,
+	tickFormat,
+	label,
+	labelX,
+	labelY
+}) => {
 	return g => {
-		props = L.extend({ type: "axis", tickSize: 6, tickPadding: 3 }, props);
-
 		let [w, h] = [0, 0];
-		if (props.axis == "x" && props.position == "top") {
-			[w, h] = [0, 0];
-		} else if (props.axis == "x" && props.position == "bottom") {
-			[w, h] = [0, props.height];
-		} else if (props.axis == "y" && props.position == "left") {
-			[w, h] = [0, 0];
-		} else if (props.axis == "y" && props.position == "right") {
-			[w, h] = [props.width, 0];
+		if (position == "bottom") h = height;
+		if (position == "right") w = width;
+
+		if (axis == "x" && type == "grid") {
+			tickSize = -height;
+		} else if (axis == "y" && type == "grid") {
+			tickSize = -width;
 		}
 
-		if (props.axis == "x" && props.type == "grid") {
-			props.tickSize = -props.height;
-		} else if (props.axis == "y" && props.type == "grid") {
-			props.tickSize = -props.width;
-		}
+		let axisScale = d3["axis" + position.replace(/\b\w/g, l => l.toUpperCase())]()
+			.scale(scale)
+			.ticks(ticks)
+			.tickPadding(tickPadding)
+			.tickSize(tickSize)
+			.tickFormat(tickFormat);
 
-		let scale = d3["axis" + props.position.replace(/\b\w/g, l => l.toUpperCase())]()
-			.scale(props.scale)
-			.ticks(props.ticks)
-			.tickPadding(props.tickPadding)
-			.tickSize(props.tickSize)
-			.tickFormat(props.tickFormat);
-
-		let axis = g.append("g")
-			.attr("class", [props.axis, props.type, props.position].join(" "))
+		let axisGroup = g.append("g")
+			.attr("class", [axis, type, position].join(" "))
 			.attr("transform", "translate(" + w + "," + h + ")")
-			.call(scale);
+			.call(axisScale);
 
-		if (props.label) {
-			axis.append("text")
-				.attr("x", props.labelX)
-				.attr("y", props.labelY)
-				.text(props.label);
+		if (label) {
+			axisGroup.append("text")
+				.attr("x", labelX)
+				.attr("y", labelY)
+				.text(label);
 		}
 
-		return axis;
+		return axisGroup;
 	};
 };
 
-export const DragRectangle = (props) => {
+export const DragRectangle = ({
+	dragStartCoords,
+	dragEndCoords,
+	height,
+}) => {
 	return rect => {
-		let x1 = Math.min(props.dragStartCoords[0], props.dragEndCoords[0]);
-		let x2 = Math.max(props.dragStartCoords[0], props.dragEndCoords[0]);
+		let x1 = Math.min(dragStartCoords[0], dragEndCoords[0]);
+		let x2 = Math.max(dragStartCoords[0], dragEndCoords[0]);
 
 		return rect
 			.attr("width", x2 - x1)
-			.attr("height", props.height)
+			.attr("height", height)
 			.attr("x", x1);
 	};
 };
 
-export const FocusRect = (props) => {
+export const FocusRect = ({
+	width,
+	height,
+}) => {
 	return rect => rect
-		.attr("width", props.width)
-		.attr("height", props.height)
+		.attr("width", width)
+		.attr("height", height)
 		.style("fill", "none")
 		.style("stroke", "none")
 		.style("pointer-events", "all");
@@ -94,83 +111,111 @@ export const Grid = (props) => {
 	return Axis(props);
 };
 
-export const HeightFocusLine = (props) => {
+export const HeightFocusLine = ({
+	theme,
+	xCoord = 0,
+	yCoord = 0,
+	length = 0,
+}) => {
 	return line => line
-		.attr("class", props.theme + " height-focus line")
-		.attr("x1", props.xCoord || 0)
-		.attr("x2", props.xCoord || 0)
-		.attr("y1", props.yCoord || 0)
-		.attr("y2", props.length || 0);
+		.attr("class", theme + " height-focus line")
+		.attr("x1", xCoord)
+		.attr("x2", xCoord)
+		.attr("y1", yCoord)
+		.attr("y2", length);
 };
 
-export const HeightFocusLabel = (props) => {
+export const HeightFocusLabel = ({
+	theme,
+	xCoord = 0,
+	yCoord = 0,
+	label,
+}) => {
 	return text => {
 		text
-			.attr("class", props.theme + " height-focus-label")
+			.attr("class", theme + " height-focus-label")
 			.style("pointer-events", "none")
-			.attr("x", props.xCoord + 5 || 0)
-			.attr("y", props.yCoord || 0);
+			.attr("x", xCoord + 5)
+			.attr("y", yCoord);
 
 		let y = text.select(".height-focus-y");
 		if (!y.node()) y = text.append("svg:tspan");
 
 		y
 			.attr("class", "height-focus-y")
-			.text(props.label);
+			.text(label);
 
-		text.selectAll('tspan').attr("x", props.xCoord + 5 || 0);
+		text.selectAll('tspan').attr("x", xCoord + 5);
 
 		return text;
 	};
 };
 
-export const HeightFocusPoint = (props) => {
+export const HeightFocusPoint = ({
+	theme,
+	xCoord = 0,
+	yCoord = 0,
+}) => {
 	return circle => circle
-		.attr("class", props.theme + " height-focus circle-lower")
-		.attr("transform", "translate(" + (props.xCoord || 0) + "," + (props.yCoord || 0) + ")")
+		.attr("class", theme + " height-focus circle-lower")
+		.attr("transform", "translate(" + xCoord + "," + yCoord + ")")
 		.attr("r", 6)
 		.attr("cx", 0)
 		.attr("cy", 0);
 };
 
 
-export const LegendItem = (props) => {
+export const LegendItem = ({
+	name,
+	width,
+	height,
+	margins = {},
+}) => {
 	return g => {
 		g
-			.attr("class", "legend-item legend-" + props.name.toLowerCase())
-			.attr("data-name", props.name);
+			.attr("class", "legend-item legend-" + name.toLowerCase())
+			.attr("data-name", name);
 
 		g.append("rect")
 			.attr("class", "area")
-			.attr("x", (props.width / 2) - 50)
-			.attr("y", props.height + props.margins.bottom / 2)
+			.attr("x", (width / 2) - 50)
+			.attr("y", height + margins.bottom / 2)
 			.attr("width", 50)
 			.attr("height", 10)
 			.attr("opacity", 0.75);
 
 		g.append('text')
-			.text(L._(props.name))
-			.attr("x", (props.width / 2) + 5)
+			.text(L._(name))
+			.attr("x", (width / 2) + 5)
 			.attr("font-size", 10)
 			.style("text-decoration-thickness", "2px")
 			.style("font-weight", "700")
-			.attr('y', props.height + props.margins.bottom / 2)
+			.attr('y', height + margins.bottom / 2)
 			.attr('dy', "0.75em");
 
 		return g;
 	}
 };
 
-export const MouseFocusLine = (props) => {
+export const MouseFocusLine = ({
+	xCoord = 0,
+	height,
+}) => {
 	return line => line
 		.attr('class', 'mouse-focus-line')
-		.attr('x2', props.xCoord)
+		.attr('x2', xCoord)
 		.attr('y2', 0)
-		.attr('x1', props.xCoord)
-		.attr('y1', props.height);
+		.attr('x1', xCoord)
+		.attr('y1', height);
 };
 
-export const MouseFocusLabel = (props) => {
+export const MouseFocusLabel = ({
+	xCoord,
+	yCoord,
+	labelX = "",
+	labelY = "",
+	width,
+}) => {
 	return g => {
 
 		g.attr('class', 'mouse-focus-label');
@@ -185,16 +230,17 @@ export const MouseFocusLabel = (props) => {
 		if (!y.node()) y = text.append("svg:tspan");
 		if (!x.node()) x = text.append("svg:tspan");
 
-		if (props.labelY) y.text(props.labelY);
-		if (props.labelX) x.text(props.labelX);
+		y.text(labelY);
+		x.text(labelX);
 
 		// Sets focus-label-text position to the left / right of the mouse-focus-line
-		let bbox = text.node().getBBox();
 		let xAlign = 0;
 		let yAlign = 0;
+		let bbox = { width: 0, height: 0 };
+		try { bbox = text.node().getBBox(); } catch (e) { return g; }
 
-		if (props.xCoord) xAlign = props.xCoord + (props.xCoord < props.width / 2 ? 10 : -bbox.width - 10);
-		if (props.yCoord) yAlign = Math.max(props.yCoord - bbox.height, L.Browser.webkit ? 0 : -Infinity);
+		if (xCoord) xAlign = xCoord + (xCoord < width / 2 ? 10 : -bbox.width - 10);
+		if (yCoord) yAlign = Math.max(yCoord - bbox.height, L.Browser.webkit ? 0 : -Infinity);
 
 		rect
 			.attr("class", "mouse-focus-label-rect")
@@ -221,15 +267,32 @@ export const MouseFocusLabel = (props) => {
 	};
 };
 
-export const Scale = (props) => {
-	let domain = props.data ? d3.extent(props.data, d => d[props.attr]) : [0, 1];
-	if (props.hasOwnProperty('min') && (props.min < domain[0] || props.forceBounds)) {
-		domain[0] = props.min;
+export const Scale = ({
+	data,
+	attr,
+	min,
+	forceBounds,
+	range,
+}) => {
+	let domain = data ? d3.extent(data, d => d[attr]) : [0, 1];
+	if (typeof min !== "undefined" && (min < domain[0] || forceBounds)) {
+		domain[0] = min;
 	}
-	if (props.hasOwnProperty('max') && (props.max > domain[1] || props.forceBounds)) {
-		domain[1] = props.max;
+	if (typeof max !== "undefined" && (max > domain[1] || forceBounds)) {
+		domain[1] = max;
 	}
 	return d3.scaleLinear()
-		.range(props.range)
+		.range(range)
 		.domain(domain);
+};
+
+export const Bisect = ({
+	data = [0, 1],
+	scale,
+	x,
+	attr
+}) => {
+	return d3
+		.bisector(d => d[attr])
+		.left(data, scale.invert(x));
 };

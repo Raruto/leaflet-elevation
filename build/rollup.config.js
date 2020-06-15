@@ -5,6 +5,7 @@ import postcss from 'rollup-plugin-postcss';
 import postcssImport from 'postcss-import';
 import postcssCopy from 'postcss-copy';
 import rollupGitVersion from 'rollup-plugin-git-version';
+import babel from '@rollup/plugin-babel';
 
 let plugin = require('../package.json');
 let plugin_name = plugin.name.replace("@raruto/", "");
@@ -23,7 +24,8 @@ let plugins = [
 	commonJS({
 		include: '../node_modules/**'
 	}),
-	rollupGitVersion()
+	rollupGitVersion(),
+	babel({ babelHelpers: 'bundled' }),
 ];
 
 export default [
