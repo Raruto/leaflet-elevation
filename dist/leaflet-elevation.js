@@ -1340,7 +1340,27 @@
       }
     });
 
-    var Summary = L.Class.extend({});
+    var Summary = L.Class.extend({
+      initialize: function initialize(options) {
+        var opts = this.options = options;
+
+        var summary = this._summary = create("div", "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : ''), {
+          style: 'max-width:' + this.options.width + 'px'
+        });
+      },
+      render: function render() {
+        var _this = this;
+
+        return function (container) {
+          return container.append(function () {
+            return _this._summary;
+          });
+        };
+      },
+      reset: function reset() {
+        this._summary.innerHTML = '';
+      }
+    });
 
     var Options = {
       autohide: !L.Browser.mobile,
@@ -1413,6 +1433,7 @@
       summary: 'inline',
       slope: false,
       sDeltaMax: false,
+      sInterpolation: "curveStepAfter",
       sRange: false,
       width: 600,
       xAttr: "dist",
@@ -1698,9 +1719,9 @@
 
           on(_this5._map._container, 'touchstart', _this5._resetDrag, _this5);
 
-          _this5.on('eledata_added', _this5._updateChart, _this5);
+          _this5.on('eledata_loaded eledata_added', _this5._updateChart, _this5);
 
-          _this5.on('eledata_added', _this5._updateSummary, _this5);
+          _this5.on('eledata_loaded eledata_added', _this5._updateSummary, _this5);
 
           _this5._updateChart();
 
@@ -1728,8 +1749,8 @@
 
         off(this._map._container, 'touchstart', this._resetDrag, this);
 
-        this.off('eledata_added', this._updateChart, this);
-        this.off('eledata_added', this._updateSummary, this);
+        this.off('eledata_loaded eledata_added', this._updateChart, this);
+        this.off('eledata_loaded eledata_added', this._updateSummary, this);
       },
 
       /**
@@ -1913,23 +1934,6 @@
         return this.eleDiv;
       },
 
-      /**
-       * Generate "div" summary container.
-       */
-      _appendSummary: function _appendSummary() {
-        var _this9 = this;
-
-        return function (container) {
-          var summary = _this9.summaryDiv = container.append("div").attr("class", "elevation-summary " + (_this9.options.summary ? _this9.options.summary + "-summary" : '')).node(); // let summary = this.summaryDiv = _.create('div', "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : ''), container);
-
-          style(_this9.summaryDiv, 'max-width', _this9.options.width + "px");
-
-          _this9._updateSummary();
-
-          return summary;
-        };
-      },
-
       /*
        * Reset chart.
        */
@@ -1953,12 +1957,12 @@
        * Reset path.
        */
       _clearPath: function _clearPath() {
-        var _this10 = this;
+        var _this9 = this;
 
         this._hidePositionMarker();
 
         each(this._layers, function (l) {
-          return removeClass(l._path, _this10.options.polyline.className + ' ' + _this10.options.theme);
+          return removeClass(l._path, _this9.options.polyline.className + ' ' + _this9.options.theme);
         });
       },
 
@@ -2053,7 +2057,8 @@
         }
 
         var chart = this._chart = new Chart(opts);
-        var container = d3.select(this._container).call(this._chart.render()).call(this._appendSummary());
+        var summary = this._summary = new Summary(opts);
+        var container = d3.select(this._container).call(chart.render()).call(summary.render());
         this._svg = chart._svg;
         this._grid = chart._grid;
         this._area = chart._area;
@@ -2064,8 +2069,9 @@
         this._x = chart._x;
         this._y = chart._y;
         this._legend = chart._legend;
-        this._focuslabel = this._chart._focuslabel;
-        this._focusline = this._chart._focusline;
+        this._focuslabel = chart._focuslabel;
+        this._focusline = chart._focusline;
+        this.summaryDiv = summary._summary;
         chart.on('reset_drag', this._hidePositionMarker, this);
         chart.on('mouse_enter', this._fireEvt.bind('elechart_enter'), this);
         chart.on('dragged', this._fireEvt.bind("elechart_dragged"), this);
@@ -2076,6 +2082,7 @@
       },
       _initMarker: function _initMarker(container) {
         this._marker = new Marker(this.options);
+        this._mouseHeightFocusLabel = this._marker._mouseHeightFocusLabel;
       },
 
       /**
@@ -2289,8 +2296,6 @@
             maxElevation: this._maxElevation,
             options: this.options
           });
-
-          this._mouseHeightFocusLabel = this._marker._mouseHeightFocusLabel;
         }
       },
 
@@ -2316,13 +2321,14 @@
        * Update chart summary.
        */
       _updateSummary: function _updateSummary() {
-        var _this11 = this;
+        var _this10 = this;
 
-        this.summaryDiv.innerHTML = '';
         this.track_info = this.track_info || {};
         this.track_info.distance = this._distance || 0;
         this.track_info.elevation_max = this._maxElevation || 0;
         this.track_info.elevation_min = this._minElevation || 0;
+
+        this._summary.reset();
 
         if (this.options.summary) {
           this._fireEvt("elechart_summary");
@@ -2335,9 +2341,9 @@
           select('.download a', this.summaryDiv).onclick = function (e) {
             e.preventDefault();
 
-            _this11._fireEvt('eletrack_download', {
-              downloadLink: _this11.options.downloadLink,
-              confirm: saveFile.bind(_this11, _this11._downloadURL)
+            _this10._fireEvt('eletrack_download', {
+              downloadLink: _this10.options.downloadLink,
+              confirm: saveFile.bind(_this10, _this10._downloadURL)
             });
           };
         }
@@ -2375,7 +2381,7 @@
         }
       });
       this.on('elepath_toggle', function (e) {
-        var _this12 = this;
+        var _this11 = this;
 
         var path = e.path;
 
@@ -2403,7 +2409,7 @@
         } else {
           // this._resizeChart();
           each(this._layers, function (l) {
-            return addClass(l._path, _this12.options.polyline.className + ' ' + _this12.options.theme);
+            return addClass(l._path, _this11.options.polyline.className + ' ' + _this11.options.theme);
           });
         }
       });
@@ -2412,33 +2418,22 @@
 
         this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
       });
-      this.on("elechart_legend", function () {
-        this._altitudeLegend = this._legend.append('g').call(LegendItem({
-          name: 'Altitude',
-          width: this._width(),
-          height: this._height(),
-          margins: this.options.margins
-        }));
-      });
       this.on("elechart_updated", function () {
-        var _this13 = this;
+        var _this12 = this;
 
         // TODO: maybe should i listen for this inside chart.js?
         this._legend.selectAll('.legend-item').on('click', function (d, i, n) {
           var target = n[i];
           var name = target.getAttribute('data-name');
 
-          var path = _this13._area.select('path[data-name="' + name + '"]').node();
+          var path = _this12._area.select('path[data-name="' + name + '"]').node();
 
-          _this13._fireEvt("elepath_toggle", {
+          _this12._fireEvt("elepath_toggle", {
             path: path,
             name: name,
             legend: target
           });
         });
-      });
-      this.on("elechart_summary", function () {
-        this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>' + '<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>' + '<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
       });
       this.on("eletrack_download", function (e) {
         if (e.downloadLink == 'modal' && typeof CustomEvent === "function") {
@@ -2466,6 +2461,20 @@
         this._area.selectAll('path').attr("d", "M0 0");
 
         if (this._path) ;
+      });
+    });
+
+    Elevation.addInitHook(function () {
+      this.on("elechart_legend", function () {
+        this._altitudeLegend = this._legend.append('g').call(LegendItem({
+          name: 'Altitude',
+          width: this._width(),
+          height: this._height(),
+          margins: this.options.margins
+        }));
+      });
+      this.on("elechart_summary", function () {
+        this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>' + '<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>' + '<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
       });
     });
 
@@ -2515,7 +2524,7 @@
         });
         this.on("elechart_updated", function () {
           slope.area = Area({
-            interpolation: "curveStepAfter",
+            interpolation: opts.sInterpolation,
             data: this._data,
             name: 'Slope',
             xAttr: opts.xAttr,
@@ -2565,8 +2574,7 @@
 
         if (!isNaN(z)) {
           var deltaZ = i > 0 ? z - data[i - 1].z : 0;
-          if (deltaZ > 0) tAsc += deltaZ;
-          if (deltaZ < 0) tDes -= deltaZ; // slope in % = ( height / length ) * 100
+          if (deltaZ > 0) tAsc += deltaZ;else if (deltaZ < 0) tDes -= deltaZ; // slope in % = ( height / length ) * 100
 
           slope = delta !== 0 ? deltaZ / delta * 100 : 0;
         }
@@ -2581,7 +2589,8 @@
         }
 
         if (this.options.sRange) {
-          slope = L.Util.wrapNum(slope, this.options.sRange, true);
+          var range = this.options.sRange;
+          if (slope < range[0]) slope = range[0];else if (slope > range[1]) slope = range[1];
         }
 
         slope = L.Util.formatNum(slope, 2);

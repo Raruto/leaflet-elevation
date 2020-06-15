@@ -71,6 +71,7 @@ export var Options = {
 	summary: 'inline',
 	slope: false,
 	sDeltaMax: false,
+	sInterpolation: "curveStepAfter",
 	sRange: false,
 	width: 600,
 	xAttr: "dist",

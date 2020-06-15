@@ -248,8 +248,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			_.on(this._map._container, 'mousewheel', this._resetDrag, this);
 			_.on(this._map._container, 'touchstart', this._resetDrag, this);
 
-			this.on('eledata_added', this._updateChart, this);
-			this.on('eledata_added', this._updateSummary, this);
+			this.on('eledata_loaded eledata_added', this._updateChart, this);
+			this.on('eledata_loaded eledata_added', this._updateSummary, this);
 
 			this._updateChart();
 			this._updateSummary();
@@ -273,8 +273,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		_.off(this._map._container, 'mousewheel', this._resetDrag, this);
 		_.off(this._map._container, 'touchstart', this._resetDrag, this);
 
-		this.off('eledata_added', this._updateChart, this);
-		this.off('eledata_added', this._updateSummary, this);
+		this.off('eledata_loaded eledata_added', this._updateChart, this);
+		this.off('eledata_loaded eledata_added', this._updateSummary, this);
 	},
 
 	/**
@@ -438,22 +438,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		return this.eleDiv;
 	},
 
-	/**
-	 * Generate "div" summary container.
-	 */
-	_appendSummary: function() {
-		return container => {
-			let summary = this.summaryDiv = container.append("div")
-				.attr("class", "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : '')).node();
-			// let summary = this.summaryDiv = _.create('div', "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : ''), container);
-
-			_.style(this.summaryDiv, 'max-width', this.options.width + "px");
-
-			this._updateSummary();
-			return summary;
-		};
-	},
-
 	/*
 	 * Reset chart.
 	 */
@@ -568,10 +552,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		let chart = this._chart = new Chart(opts);
+		let summary = this._summary = new Summary(opts);
 
 		let container = d3.select(this._container)
-			.call(this._chart.render())
-			.call(this._appendSummary());
+			.call(chart.render())
+			.call(summary.render());
 
 		this._svg = chart._svg;
 		this._grid = chart._grid;
@@ -583,8 +568,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._x = chart._x;
 		this._y = chart._y;
 		this._legend = chart._legend;
-		this._focuslabel = this._chart._focuslabel;
-		this._focusline = this._chart._focusline;
+		this._focuslabel = chart._focuslabel;
+		this._focusline = chart._focusline;
+		this.summaryDiv = summary._summary;
 
 		chart.on('reset_drag', this._hidePositionMarker, this);
 		chart.on('mouse_enter', this._fireEvt.bind('elechart_enter'), this);
@@ -598,6 +584,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	_initMarker: function(container) {
 		this._marker = new Marker(this.options);
+		this._mouseHeightFocusLabel = this._marker._mouseHeightFocusLabel;
 	},
 
 	/**
@@ -776,7 +763,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_showPositionMarker: function(item) {
 		if (this.options.marker) {
 			this._marker.update({ item: item, map: this._map, maxElevation: this._maxElevation, options: this.options });
-			this._mouseHeightFocusLabel = this._marker._mouseHeightFocusLabel;
 		}
 	},
 
@@ -801,11 +787,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Update chart summary.
 	 */
 	_updateSummary: function() {
-		this.summaryDiv.innerHTML = '';
 		this.track_info = this.track_info || {};
 		this.track_info.distance = this._distance || 0;
 		this.track_info.elevation_max = this._maxElevation || 0;
 		this.track_info.elevation_min = this._minElevation || 0;
+
+		this._summary.reset();
 
 		if (this.options.summary) {
 			this._fireEvt("elechart_summary");
@@ -878,18 +865,6 @@ Elevation.addInitHook(function() {
 		this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
 	});
 
-	this.on("elechart_legend", function() {
-		this._altitudeLegend = this._legend.append('g')
-			.call(
-				D3.LegendItem({
-					name: 'Altitude',
-					width: this._width(),
-					height: this._height(),
-					margins: this.options.margins,
-				})
-			);
-	});
-
 	this.on("elechart_updated", function() {
 		// TODO: maybe should i listen for this inside chart.js?
 		this._legend.selectAll('.legend-item')
@@ -899,14 +874,6 @@ Elevation.addInitHook(function() {
 				let path = this._area.select('path[data-name="' + name + '"]').node();
 				this._fireEvt("elepath_toggle", { path: path, name: name, legend: target });
 			});
-	});
-
-
-	this.on("elechart_summary", function() {
-		this.summaryDiv.innerHTML +=
-			'<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>' +
-			'<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>' +
-			'<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
 	});
 
 	this.on("eletrack_download", function(e) {

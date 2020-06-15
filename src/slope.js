@@ -62,7 +62,7 @@ Elevation.addInitHook(function() {
 
 		this.on("elechart_updated", function() {
 			slope.area = D3.Area({
-				interpolation: "curveStepAfter",
+				interpolation: opts.sInterpolation,
 				data: this._data,
 				name: 'Slope',
 				xAttr: opts.xAttr,
@@ -124,7 +124,7 @@ Elevation.addInitHook(function() {
 		if (!isNaN(z)) {
 			let deltaZ = i > 0 ? z - data[i - 1].z : 0;
 			if (deltaZ > 0) tAsc += deltaZ;
-			if (deltaZ < 0) tDes -= deltaZ;
+			else if (deltaZ < 0) tDes -= deltaZ;
 			// slope in % = ( height / length ) * 100
 			slope = delta !== 0 ? (deltaZ / delta) * 100 : 0;
 		}
@@ -138,7 +138,9 @@ Elevation.addInitHook(function() {
 		}
 
 		if (this.options.sRange) {
-			slope = L.Util.wrapNum(slope, this.options.sRange, true);
+			let range = this.options.sRange;
+			if (slope < range[0]) slope = range[0];
+			else if (slope > range[1]) slope = range[1];
 		}
 
 		slope = L.Util.formatNum(slope, 2);
