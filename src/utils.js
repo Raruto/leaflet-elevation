@@ -81,7 +81,9 @@ export function GeoJSONLoader(data, control) {
 		},
 	});
 
-	control._fireEvt("eledata_loaded", { data: data, layer: layer, name: control.track_info.name, track_info: control.track_info }, true);
+	L.Control.Elevation._d3LazyLoader.then(() => {
+		control._fireEvt("eledata_loaded", { data: data, layer: layer, name: control.track_info.name, track_info: control.track_info })
+	});
 
 	return layer;
 }
@@ -102,18 +104,20 @@ export function GPXLoader(data, control) {
 
 	// similar to L.GeoJSON.pointToLayer
 	layer.on('addpoint', (e) => {
-		control.fire("waypoint_added", e, true);
+		control.fire("waypoint_added", e);
 	});
 
 	// similar to L.GeoJSON.onEachFeature
-	layer.once("addline", (e) => {
+	layer.on("addline", (e) => {
 		control.addData(e.line /*, layer*/ );
 		control.track_info = L.extend({}, control.track_info, { type: "gpx", name: layer.get_name() });
 	});
 
 	// unlike the L.GeoJSON, L.GPX parsing is async
 	layer.once('loaded', (e) => {
-		control._fireEvt("eledata_loaded", { data: data, layer: layer, name: control.track_info.name, track_info: control.track_info }, true);
+		L.Control.Elevation._d3LazyLoader.then(() => {
+			control._fireEvt("eledata_loaded", { data: data, layer: layer, name: control.track_info.name, track_info: control.track_info });
+		});
 	});
 
 	return layer;
@@ -353,5 +357,5 @@ export function randomId() {
 }
 
 export function each(obj, fn) {
-	for (let i in obj) fn(obj[i]);
+	for (let i in obj) fn(obj[i], i);
 }

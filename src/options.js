@@ -42,6 +42,12 @@ export var Options = {
 		defer: false,
 		lazy: false,
 	},
+	margins: {
+		top: 10,
+		right: 20,
+		bottom: 30,
+		left: 50
+	},
 	marker: 'elevation-line',
 	markerIcon: L.divIcon({
 		className: 'elevation-position-marker',
@@ -61,15 +67,11 @@ export var Options = {
 	reverseCoords: false,
 	skipNullZCoords: false,
 	theme: "lightblue-theme",
-	margins: {
-		top: 10,
-		right: 20,
-		bottom: 30,
-		left: 50
-	},
 	responsive: true,
 	summary: 'inline',
 	slope: false,
+	sDeltaMax: false,
+	sRange: false,
 	width: 600,
 	xAttr: "dist",
 	xLabel: "km",

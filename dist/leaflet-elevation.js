@@ -176,12 +176,14 @@
         }
       });
 
-      control._fireEvt("eledata_loaded", {
-        data: data,
-        layer: layer,
-        name: control.track_info.name,
-        track_info: control.track_info
-      }, true);
+      L.Control.Elevation._d3LazyLoader.then(function () {
+        control._fireEvt("eledata_loaded", {
+          data: data,
+          layer: layer,
+          name: control.track_info.name,
+          track_info: control.track_info
+        });
+      });
 
       return layer;
     }
@@ -200,10 +202,10 @@
       var layer = new L.GPX(data, control.options.gpxOptions); // similar to L.GeoJSON.pointToLayer
 
       layer.on('addpoint', function (e) {
-        control.fire("waypoint_added", e, true);
+        control.fire("waypoint_added", e);
       }); // similar to L.GeoJSON.onEachFeature
 
-      layer.once("addline", function (e) {
+      layer.on("addline", function (e) {
         control.addData(e.line
         /*, layer*/
         );
@@ -214,12 +216,14 @@
       }); // unlike the L.GeoJSON, L.GPX parsing is async
 
       layer.once('loaded', function (e) {
-        control._fireEvt("eledata_loaded", {
-          data: data,
-          layer: layer,
-          name: control.track_info.name,
-          track_info: control.track_info
-        }, true);
+        L.Control.Elevation._d3LazyLoader.then(function () {
+          control._fireEvt("eledata_loaded", {
+            data: data,
+            layer: layer,
+            name: control.track_info.name,
+            track_info: control.track_info
+          });
+        });
       });
       return layer;
     }
@@ -477,7 +481,7 @@
     }
     function each(obj, fn) {
       for (var i in obj) {
-        fn(obj[i]);
+        fn(obj[i], i);
       }
     }
 
@@ -1226,7 +1230,8 @@
         } else if (this.options.marker == 'position-marker') {
           this._marker = L.marker([0, 0], {
             icon: this.options.markerIcon,
-            zIndexOffset: 1000000
+            zIndexOffset: 1000000,
+            interactive: false
           });
         }
       },
@@ -1379,6 +1384,12 @@
         defer: false,
         lazy: false
       },
+      margins: {
+        top: 10,
+        right: 20,
+        bottom: 30,
+        left: 50
+      },
       marker: 'elevation-line',
       markerIcon: L.divIcon({
         className: 'elevation-position-marker',
@@ -1398,15 +1409,11 @@
       reverseCoords: false,
       skipNullZCoords: false,
       theme: "lightblue-theme",
-      margins: {
-        top: 10,
-        right: 20,
-        bottom: 30,
-        left: 50
-      },
       responsive: true,
       summary: 'inline',
       slope: false,
+      sDeltaMax: false,
+      sRange: false,
       width: 600,
       xAttr: "dist",
       xLabel: "km",
@@ -2554,23 +2561,32 @@
 
         var sMin = this._sMin || 0; // Slope Min
 
-        var diff = 0;
         var slope = 0;
 
         if (!isNaN(z)) {
-          // diff height between actual and previous point
-          diff = i > 0 ? z - data[i - 1].z : 0;
-          if (diff > 0) tAsc += diff;
-          if (diff < 0) tDes -= diff; // slope in % = ( height / length ) * 100
+          var deltaZ = i > 0 ? z - data[i - 1].z : 0;
+          if (deltaZ > 0) tAsc += deltaZ;
+          if (deltaZ < 0) tDes -= deltaZ; // slope in % = ( height / length ) * 100
 
-          slope = delta !== 0 ? Math.round(diff / delta * 10000) / 100 : 0; // apply slope to the previous point because we will
-          // ascent or desent, so the slope is in the fist point
-
-          if (i > 0) data[i - 1].slope = slope;
-          sMax = slope > sMax ? slope : sMax;
-          sMin = slope < sMin ? slope : sMin;
+          slope = delta !== 0 ? deltaZ / delta * 100 : 0;
         }
 
+        if (this.options.sDeltaMax) {
+          var deltaS = i > 0 ? slope - data[i - 1].slope : 0;
+          var maxDeltaS = this.options.sDeltaMax;
+
+          if (Math.abs(deltaS) > maxDeltaS) {
+            slope = data[i - 1].slope + maxDeltaS * Math.sign(deltaS);
+          }
+        }
+
+        if (this.options.sRange) {
+          slope = L.Util.wrapNum(slope, this.options.sRange, true);
+        }
+
+        slope = L.Util.formatNum(slope, 2);
+        sMax = slope > sMax ? slope : sMax;
+        sMin = slope < sMin ? slope : sMin;
         data[i].slope = slope;
         this.track_info = this.track_info || {};
         this.track_info.ascent = this._tAsc = tAsc;

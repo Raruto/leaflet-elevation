@@ -119,22 +119,32 @@ Elevation.addInitHook(function() {
 		let tDes = this._tDes || 0; // Total Descent
 		let sMax = this._sMax || 0; // Slope Max
 		let sMin = this._sMin || 0; // Slope Min
-		let diff = 0;
 		let slope = 0;
 
 		if (!isNaN(z)) {
-			// diff height between actual and previous point
-			diff = i > 0 ? z - data[i - 1].z : 0;
-			if (diff > 0) tAsc += diff;
-			if (diff < 0) tDes -= diff;
+			let deltaZ = i > 0 ? z - data[i - 1].z : 0;
+			if (deltaZ > 0) tAsc += deltaZ;
+			if (deltaZ < 0) tDes -= deltaZ;
 			// slope in % = ( height / length ) * 100
-			slope = delta !== 0 ? Math.round((diff / delta) * 10000) / 100 : 0;
-			// apply slope to the previous point because we will
-			// ascent or desent, so the slope is in the fist point
-			if (i > 0) data[i - 1].slope = slope;
-			sMax = slope > sMax ? slope : sMax;
-			sMin = slope < sMin ? slope : sMin;
+			slope = delta !== 0 ? (deltaZ / delta) * 100 : 0;
 		}
+
+		if (this.options.sDeltaMax) {
+			let deltaS = i > 0 ? slope - data[i - 1].slope : 0;
+			let maxDeltaS = this.options.sDeltaMax;
+			if (Math.abs(deltaS) > maxDeltaS) {
+				slope = data[i - 1].slope + maxDeltaS * Math.sign(deltaS);
+			}
+		}
+
+		if (this.options.sRange) {
+			slope = L.Util.wrapNum(slope, this.options.sRange, true);
+		}
+
+		slope = L.Util.formatNum(slope, 2);
+
+		sMax = slope > sMax ? slope : sMax;
+		sMin = slope < sMin ? slope : sMin;
 
 		data[i].slope = slope;
 

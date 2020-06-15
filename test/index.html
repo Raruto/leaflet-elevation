@@ -31,6 +31,8 @@
 	<script src="https://unpkg.com/leaflet@latest/dist/leaflet-src.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@latest/dist/leaflet-ui-src.js"></script>
 
+	<script src='https://unpkg.com/@tmcw/togeojson@4.1.0/dist/togeojson.umd.js'></script>
+
 	<!-- D3 -->
 	<script src="https://unpkg.com/d3@5.15.0/dist/d3.js"></script>
 
@@ -58,16 +60,19 @@
 			elevationControl: {
 				// url: "../examples/via-emilia.gpx",
 				// url: "../examples/demo.geojson",
-				url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
-				// url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+				// url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
+				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
 				options: {
 					theme: "lightblue-theme",
 					collapsed: false,
-					// autohide: false,
+					autohide: false,
+					position: "bottomleft",
 					detached: true,
 					summary: "inline",
 					// slope: "summary",
 					slope: true,
+					legend: false,
+					marker: 'position-marker',
 				},
 			},
 			layersControl: {
