@@ -811,7 +811,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this.summaryDiv.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
 			_.select('.download a', this.summaryDiv).onclick = (e) => {
 				e.preventDefault();
-				this._fireEvt('eletrack_download', { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this._downloadURL) });
+				this._fireEvt('eletrack_download', { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this, this._downloadURL) });
 			};
 		};
 	},

@@ -2326,7 +2326,7 @@
 
             _this11._fireEvt('eletrack_download', {
               downloadLink: _this11.options.downloadLink,
-              confirm: saveFile.bind(_this11._downloadURL)
+              confirm: saveFile.bind(_this11, _this11._downloadURL)
             });
           };
         }
