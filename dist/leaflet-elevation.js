@@ -1226,7 +1226,8 @@
         } else if (this.options.marker == 'position-marker') {
           this._marker = L.marker([0, 0], {
             icon: this.options.markerIcon,
-            zIndexOffset: 1000000
+            zIndexOffset: 1000000,
+            interactive: false
           });
         }
       },
