@@ -94,7 +94,7 @@
 .elevation-summary {
   font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
   font-size: 12px;
-  margin-left: 45px;
+  margin: 0 auto;
 }
 
 .leaflet-control-container .elevation-summary {
@@ -107,6 +107,10 @@
     -1px -1px 0 #FFF,
     1px -1px 0 #FFF,
     -1px 1px 0 #FFF;
+}
+
+.elevation-detached .elevation-summary {
+  margin: 0 45px;
 }
 
 .elevation-summary.multiline-summary {

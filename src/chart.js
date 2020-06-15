@@ -478,7 +478,7 @@ export var Chart = L.Class.extend({
 	},
 
 	_hideDiagramIndicator: function() {
-		this._focusG.classed("hidden", false);
+		this._focusG.classed("hidden", true);
 	},
 });
 

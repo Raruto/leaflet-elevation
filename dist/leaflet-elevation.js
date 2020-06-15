@@ -1193,7 +1193,7 @@
         }));
       },
       _hideDiagramIndicator: function _hideDiagramIndicator() {
-        this._focusG.classed("hidden", false);
+        this._focusG.classed("hidden", true);
       }
     });
     Chart.addInitHook(function () {
@@ -1915,6 +1915,8 @@
         return function (container) {
           var summary = _this9.summaryDiv = container.append("div").attr("class", "elevation-summary " + (_this9.options.summary ? _this9.options.summary + "-summary" : '')).node(); // let summary = this.summaryDiv = _.create('div', "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : ''), container);
 
+          style(_this9.summaryDiv, 'max-width', _this9.options.width + "px");
+
           _this9._updateSummary();
 
           return summary;
@@ -2173,6 +2175,8 @@
       _mouseoutHandler: function _mouseoutHandler() {
         if (!this.options.detached) {
           this._hidePositionMarker();
+
+          this._chart._hideDiagramIndicator();
         }
 
         if (this._map) {
@@ -2296,7 +2300,7 @@
 
         this._fireEvt("elechart_axis");
 
-        this._fireEvt("elechart_legend");
+        if (this.options.legend) this._fireEvt("elechart_legend");
 
         this._fireEvt('elechart_updated');
       },

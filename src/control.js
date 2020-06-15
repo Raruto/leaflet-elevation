@@ -447,6 +447,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				.attr("class", "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : '')).node();
 			// let summary = this.summaryDiv = _.create('div', "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : ''), container);
 
+			_.style(this.summaryDiv, 'max-width', this.options.width + "px");
+
 			this._updateSummary();
 			return summary;
 		};
@@ -687,6 +689,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_mouseoutHandler: function() {
 		if (!this.options.detached) {
 			this._hidePositionMarker();
+			this._chart._hideDiagramIndicator();
 		}
 
 		if (this._map) {
@@ -789,7 +792,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._y = this._chart._y;
 
 		this._fireEvt("elechart_axis");
-		this._fireEvt("elechart_legend");
+		if (this.options.legend) this._fireEvt("elechart_legend");
 
 		this._fireEvt('elechart_updated');
 	},
