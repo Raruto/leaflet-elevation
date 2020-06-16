@@ -1509,9 +1509,12 @@
 
         this._chart._resetDrag();
 
-        this._layers.eachLayer(function (l) {
-          return removeClass(l._path, _this2.options.polyline.className + ' ' + _this2.options.theme);
-        });
+        if (this._layers) {
+          // this fix `TypeError: this._layers is undefined` when bidding external layer
+          this._layers.eachLayer(function (l) {
+            return removeClass(l._path, _this2.options.polyline.className + ' ' + _this2.options.theme);
+          });
+        }
 
         this._data = null;
         this._distance = null;
@@ -2380,9 +2383,11 @@
 
         } else {
           // this._resizeChart();
-          this._layers.eachLayer(function (l) {
-            return addClass(l._path, _this11.options.polyline.className + ' ' + _this11.options.theme);
-          });
+          if (this._layers) {
+            this._layers.eachLayer(function (l) {
+              return addClass(l._path, _this11.options.polyline.className + ' ' + _this11.options.theme);
+            });
+          }
         }
       });
       this.on("elechart_dragged", function (e) {

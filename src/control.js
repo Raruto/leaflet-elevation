@@ -54,7 +54,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	clear: function() {
 		this._marker.remove();
 		this._chart._resetDrag();
-		this._layers.eachLayer(l => _.removeClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
+
+		if (this._layers) { // this fix `TypeError: this._layers is undefined` when bidding external layer
+			this._layers.eachLayer(l => _.removeClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
+		}
 
 		this._data = null;
 		this._distance = null;
@@ -834,7 +837,9 @@ Elevation.addInitHook(function() {
 			// this._clearPath();
 		} else {
 			// this._resizeChart();
-			this._layers.eachLayer(l => _.addClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
+			if (this._layers) {
+				this._layers.eachLayer(l => _.addClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
+			}
 		}
 	});
 
