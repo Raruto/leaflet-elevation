@@ -54,8 +54,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	clear: function() {
 		this._marker.remove();
 		this._chart._resetDrag();
-
-		_.each(this._layers, l => _.removeClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
+		this._layers.eachLayer(l => _.removeClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
 
 		this._data = null;
 		this._distance = null;
@@ -422,8 +421,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				.on("mousemove", this._mousemoveLayerHandler, this)
 				.on("mouseout", this._mouseoutHandler, this);
 
-			this._layers = this._layers || {};
-			this._layers[L.Util.stamp(layer)] = layer;
+			this._layers = this._layers || L.layerGroup();
+			this._layers.addLayer(layer)
 		}
 	},
 
@@ -834,7 +833,7 @@ Elevation.addInitHook(function() {
 			// this._clearPath();
 		} else {
 			// this._resizeChart();
-			_.each(this._layers, l => _.addClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
+			this._layers.eachLayer(l => _.addClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
 		}
 	});
 

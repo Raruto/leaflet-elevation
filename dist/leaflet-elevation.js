@@ -1509,7 +1509,7 @@
 
         this._chart._resetDrag();
 
-        each(this._layers, function (l) {
+        this._layers.eachLayer(function (l) {
           return removeClass(l._path, _this2.options.polyline.className + ' ' + _this2.options.theme);
         });
 
@@ -1912,8 +1912,9 @@
           addClass(layer._path, this.options.polyline.className + ' ' + this.options.theme);
 
           layer.on("mousemove", this._mousemoveLayerHandler, this).on("mouseout", this._mouseoutHandler, this);
-          this._layers = this._layers || {};
-          this._layers[L.Util.stamp(layer)] = layer;
+          this._layers = this._layers || L.layerGroup();
+
+          this._layers.addLayer(layer);
         }
       },
 
@@ -2378,7 +2379,7 @@
 
         } else {
           // this._resizeChart();
-          each(this._layers, function (l) {
+          this._layers.eachLayer(function (l) {
             return addClass(l._path, _this11.options.polyline.className + ' ' + _this11.options.theme);
           });
         }
