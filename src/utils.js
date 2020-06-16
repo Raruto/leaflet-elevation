@@ -293,6 +293,10 @@ export function removeClass(targetNode, className) {
 	each(className.split(" "), s => { if (targetNode && className) L.DomUtil.removeClass(targetNode, s); });
 }
 
+export function toggleClass(targetNode, className, conditional) {
+	return (conditional ? addClass : removeClass).call(null, targetNode, className)
+}
+
 export function style(targetNode, name, value) {
 	if (typeof value === "undefined") return L.DomUtil.getStyle(targetNode, name);
 	else return targetNode.style.setProperty(name, value);

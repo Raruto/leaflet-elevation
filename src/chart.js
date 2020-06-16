@@ -389,8 +389,8 @@ export var Chart = L.Class.extend({
 			return;
 		}
 
-		let start = this._findItemForX(this._dragStartCoords[0]);
-		let end = this._findItemForX(this._dragCurrentCoords[0]);
+		let start = this._findIndexForXCoord(this._dragStartCoords[0]);
+		let end = this._findIndexForXCoord(this._dragCurrentCoords[0]);
 
 		if (start == end) return;
 
@@ -413,7 +413,7 @@ export var Chart = L.Class.extend({
 	_mousemoveHandler: function(d, i, ctx) {
 		let coords = d3.mouse(this._focusRect.node());
 		let xCoord = coords[0];
-		let item = this._data[this._findItemForX(xCoord)];
+		let item = this._data[this._findIndexForXCoord(xCoord)];
 
 		this.fire("mouse_move", { item: item, xCoord: xCoord });
 	},
@@ -428,10 +428,19 @@ export var Chart = L.Class.extend({
 	/*
 	 * Finds a data entry for a given x-coordinate of the diagram
 	 */
-	_findItemForX: function(x) {
+	_findIndexForXCoord: function(x) {
 		return d3
 			.bisector(d => d[this.options.xAttr])
 			.left(this._data || [0, 1], this._x.invert(x));
+	},
+
+	/*
+	 * Finds a data entry for a given latlng of the map
+	 */
+	_findIndexForLatLng: function(latlng) {
+		return d3
+			.bisector(d => d.latlng)
+			.left(this._data, latlng)
 	},
 
 	/*
@@ -482,9 +491,9 @@ export var Chart = L.Class.extend({
 	},
 });
 
-Chart.addInitHook(function() {
-	this.on('mouse_move', function(e) {
-		if (e.item) this._showDiagramIndicator(e.item, e.xCoord);
-	});
-
-});
+// Chart.addInitHook(function() {
+// 	this.on('mouse_move', function(e) {
+// 		if (e.item) this._showDiagramIndicator(e.item, e.xCoord);
+// 	});
+//
+// });

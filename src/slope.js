@@ -150,7 +150,6 @@ Elevation.addInitHook(function() {
 
 		data[i].slope = slope;
 
-		this.track_info = this.track_info || {};
 		this.track_info.ascent = this._tAsc = tAsc;
 		this.track_info.descent = this._tDes = tDes;
 		this.track_info.slope_max = this._sMax = sMax;
