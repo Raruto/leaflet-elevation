@@ -52,9 +52,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Reset data and display
 	 */
 	clear: function() {
-		this._clearPath();
-		this._clearChart();
-		this._clearData();
+		this._marker.remove();
+		this._chart._resetDrag();
+
+		_.each(this._layers, l => _.removeClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
+
+		this._data = null;
+		this._distance = null;
+		this.track_info = null;
+		this._layers = null;
 
 		this._fireEvt("eledata_clear");
 	},
@@ -240,16 +246,16 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._initChart(container);
 			this._initMarker(container);
 
-			this._map.on('zoom viewreset zoomanim', this._hidePositionMarker, this);
-			this._map.on('resize', this._resetView, this);
-			this._map.on('resize', this._resizeChart, this);
-			this._map.on('mousedown', this._resetDrag, this);
+			map.on('zoom viewreset zoomanim', this._hideMarker, this);
+			map.on('resize', this._resetView, this);
+			map.on('resize', this._resizeChart, this);
+			map.on('mousedown', this._resetDrag, this);
 
-			_.on(this._map._container, 'mousewheel', this._resetDrag, this);
-			_.on(this._map._container, 'touchstart', this._resetDrag, this);
+			_.on(map._container, 'mousewheel', this._resetDrag, this);
+			_.on(map._container, 'touchstart', this._resetDrag, this);
 
-			this.on('eledata_loaded eledata_added', this._updateChart, this);
-			this.on('eledata_loaded eledata_added', this._updateSummary, this);
+			this.on('eledata_added eledata_loaded', this._updateChart, this);
+			this.on('eledata_added eledata_loaded', this._updateSummary, this);
 
 			this._updateChart();
 			this._updateSummary();
@@ -265,16 +271,16 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	onRemove: function(map) {
 		this._container = null;
 
-		this._map.off('zoom viewreset zoomanim', this._hidePositionMarker, this);
-		this._map.off('resize', this._resetView, this);
-		this._map.off('resize', this._resizeChart, this);
-		this._map.off('mousedown', this._resetDrag, this);
+		map.off('zoom viewreset zoomanim', this._hideMarker, this);
+		map.off('resize', this._resetView, this);
+		map.off('resize', this._resizeChart, this);
+		map.off('mousedown', this._resetDrag, this);
 
-		_.off(this._map._container, 'mousewheel', this._resetDrag, this);
-		_.off(this._map._container, 'touchstart', this._resetDrag, this);
+		_.off(map._container, 'mousewheel', this._resetDrag, this);
+		_.off(map._container, 'touchstart', this._resetDrag, this);
 
-		this.off('eledata_loaded eledata_added', this._updateChart, this);
-		this.off('eledata_loaded eledata_added', this._updateSummary, this);
+		this.off('eledata_added eledata_loaded', this._updateChart, this);
+		this.off('eledata_added eledata_loaded', this._updateSummary, this);
 	},
 
 	/**
@@ -439,33 +445,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/*
-	 * Reset chart.
-	 */
-	_clearChart: function() {
-		this._resetDrag();
-	},
-
-	/*
-	 * Reset data.
-	 */
-	_clearData: function() {
-		this._data = null;
-		this._distance = null;
-		this._maxElevation = null;
-		this._minElevation = null;
-		this.track_info = null;
-		this._layers = null;
-	},
-
-	/*
-	 * Reset path.
-	 */
-	_clearPath: function() {
-		this._hidePositionMarker();
-		_.each(this._layers, l => _.removeClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
-	},
-
-	/*
 	 * Collapse current chart control.
 	 */
 	_collapse: function() {
@@ -524,7 +503,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	/*
 	 * Hides the position/height indicator marker drawn onto the map
 	 */
-	_hidePositionMarker: function() {
+	_hideMarker: function() {
 		if (this.options.autohideMarker) {
 			this._marker.remove();
 		}
@@ -572,7 +551,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._focusline = chart._focusline;
 		this.summaryDiv = summary._summary;
 
-		chart.on('reset_drag', this._hidePositionMarker, this);
+		chart.on('reset_drag', this._hideMarker, this);
 		chart.on('mouse_enter', this._fireEvt.bind('elechart_enter'), this);
 		chart.on('dragged', this._fireEvt.bind("elechart_dragged"), this);
 		chart.on('mouse_move', this._mousemoveHandler, this);
@@ -583,7 +562,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	_initMarker: function(container) {
-		this._marker = new Marker(this.options);
+		this._marker = (new Marker(this.options)).addTo(this._map);
+
 		this._mouseHeightFocusLabel = this._marker._mouseHeightFocusLabel;
 	},
 
@@ -639,7 +619,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		let xCoord = e.xCoord;
 		let item = this._data[this._findItemForX(xCoord)];
 
-		this._showPositionMarker(item);
+		this._updateMarker(item);
 		this._setMapView(item);
 
 		if (this._map) {
@@ -664,7 +644,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 			if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
 
-			this._showPositionMarker(item);
+			this._updateMarker(item);
 
 			this._fireEvt("elechart_change", { data: item, xCoord: xCoord });
 		}
@@ -675,7 +655,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_mouseoutHandler: function() {
 		if (!this.options.detached) {
-			this._hidePositionMarker();
+			this._hideMarker();
 			this._chart._hideDiagramIndicator();
 		}
 
@@ -702,7 +682,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_resetDrag: function() {
 		this._chart._resetDrag();
-		this._hidePositionMarker();
+		this._hideMarker();
 	},
 
 	/**
@@ -711,7 +691,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_resetView: function() {
 		if (this._map && this._map._isFullscreen) return;
 		this._resetDrag();
-		this._hidePositionMarker();
+		this._hideMarker();
 		this.fitBounds();
 	},
 
@@ -757,15 +737,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
 	},
 
-	/*
-	 * Shows the position/height indicator marker drawn onto the map
-	 */
-	_showPositionMarker: function(item) {
-		if (this.options.marker) {
-			this._marker.update({ item: item, map: this._map, maxElevation: this._maxElevation, options: this.options });
-		}
-	},
-
 	/**
 	 * Calculates [x, y] domain and then update chart.
 	 */
@@ -781,6 +752,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this.options.legend) this._fireEvt("elechart_legend");
 
 		this._fireEvt('elechart_updated');
+	},
+
+	/*
+	 * Update the position/height indicator marker drawn onto the map
+	 */
+	_updateMarker: function(item) {
+		this._marker.update({ item: item, maxElevation: this._maxElevation, options: this.options });
 	},
 
 	/**
@@ -853,7 +831,7 @@ Elevation.addInitHook(function() {
 		// autotoggle chart data on single click
 		if (!this._chartEnabled) {;
 			this._resetDrag();
-			this._clearPath();
+			// this._clearPath();
 		} else {
 			// this._resizeChart();
 			_.each(this._layers, l => _.addClass(l._path, this.options.polyline.className + ' ' + this.options.theme));
@@ -861,7 +839,7 @@ Elevation.addInitHook(function() {
 	});
 
 	this.on("elechart_dragged", function(e) {
-		this._hidePositionMarker();
+		this._hideMarker();
 		this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
 	});
 

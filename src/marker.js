@@ -27,6 +27,7 @@ export var Marker = L.Class.extend({
 		} else if (this.options.marker == 'position-marker') {
 			this._marker = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
 		}
+		return this;
 	},
 
 	addTo: function(map) {
@@ -46,6 +47,7 @@ export var Marker = L.Class.extend({
 		} else if (this.options.marker == 'position-marker') {
 			this._marker.addTo(map, { pane: 'elevationPane' });
 		}
+		return this;
 	},
 
 	/**

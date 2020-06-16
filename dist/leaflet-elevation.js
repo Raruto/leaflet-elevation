@@ -1234,6 +1234,8 @@
             interactive: false
           });
         }
+
+        return this;
       },
       addTo: function addTo(map) {
         var _this = this;
@@ -1268,6 +1270,8 @@
             pane: 'elevationPane'
           });
         }
+
+        return this;
       },
 
       /**
@@ -1499,11 +1503,20 @@
        * Reset data and display
        */
       clear: function clear() {
-        this._clearPath();
+        var _this2 = this;
 
-        this._clearChart();
+        this._marker.remove();
 
-        this._clearData();
+        this._chart._resetDrag();
+
+        each(this._layers, function (l) {
+          return removeClass(l._path, _this2.options.polyline.className + ' ' + _this2.options.theme);
+        });
+
+        this._data = null;
+        this._distance = null;
+        this.track_info = null;
+        this._layers = null;
 
         this._fireEvt("eledata_clear");
       },
@@ -1624,12 +1637,12 @@
        * Load data from a remote url.
        */
       loadFile: function loadFile$1(url) {
-        var _this2 = this;
+        var _this3 = this;
 
         loadFile(url).then(function (data) {
-          _this2._downloadURL = url; // TODO: handle multiple urls?
+          _this3._downloadURL = url; // TODO: handle multiple urls?
 
-          _this2.loadData(data, {
+          _this3.loadData(data, {
             lazy: false,
             defer: false
           });
@@ -1649,10 +1662,10 @@
        * Load raw GPX data.
        */
       loadGPX: function loadGPX(data) {
-        var _this3 = this;
+        var _this4 = this;
 
         Elevation._gpxLazyLoader = lazyLoader(this.__LGPX, typeof L.GPX !== 'function' || !this.options.lazyLoadJS, Elevation._gpxLazyLoader).then(function () {
-          return GPXLoader(data, _this3);
+          return GPXLoader(data, _this4);
         });
       },
 
@@ -1660,7 +1673,7 @@
        * Wait for chart container visible before download data.
        */
       loadLazy: function loadLazy(data, opts) {
-        var _this4 = this;
+        var _this5 = this;
 
         opts = L.extend({}, this.options.loadData, opts);
         var elem = opts.lazy.parentNode ? opts.lazy : this.placeholder;
@@ -1668,9 +1681,9 @@
         waitHolder(opts.lazy).then(function () {
           opts.lazy = false;
 
-          _this4.loadData(data, opts);
+          _this5.loadData(data, opts);
 
-          _this4.once('eledata_loaded', function () {
+          _this5.once('eledata_loaded', function () {
             return opts.lazy.parentNode.removeChild(elem);
           });
         });
@@ -1681,7 +1694,7 @@
        * Called on control.addTo(map).
        */
       onAdd: function onAdd(map) {
-        var _this5 = this;
+        var _this6 = this;
 
         this._map = map;
 
@@ -1701,31 +1714,28 @@
         }
 
         Elevation._d3LazyLoader = lazyLoader(this.__D3, (typeof d3 === "undefined" ? "undefined" : _typeof(d3)) !== 'object' || !this.options.lazyLoadJS, Elevation._d3LazyLoader).then(function () {
-          _this5._initToggle(container);
+          _this6._initToggle(container);
 
-          _this5._initChart(container);
+          _this6._initChart(container);
 
-          _this5._initMarker(container);
+          _this6._initMarker(container);
 
-          _this5._map.on('zoom viewreset zoomanim', _this5._hidePositionMarker, _this5);
+          map.on('zoom viewreset zoomanim', _this6._hideMarker, _this6);
+          map.on('resize', _this6._resetView, _this6);
+          map.on('resize', _this6._resizeChart, _this6);
+          map.on('mousedown', _this6._resetDrag, _this6);
 
-          _this5._map.on('resize', _this5._resetView, _this5);
+          on(map._container, 'mousewheel', _this6._resetDrag, _this6);
 
-          _this5._map.on('resize', _this5._resizeChart, _this5);
+          on(map._container, 'touchstart', _this6._resetDrag, _this6);
 
-          _this5._map.on('mousedown', _this5._resetDrag, _this5);
+          _this6.on('eledata_added eledata_loaded', _this6._updateChart, _this6);
 
-          on(_this5._map._container, 'mousewheel', _this5._resetDrag, _this5);
+          _this6.on('eledata_added eledata_loaded', _this6._updateSummary, _this6);
 
-          on(_this5._map._container, 'touchstart', _this5._resetDrag, _this5);
+          _this6._updateChart();
 
-          _this5.on('eledata_loaded eledata_added', _this5._updateChart, _this5);
-
-          _this5.on('eledata_loaded eledata_added', _this5._updateSummary, _this5);
-
-          _this5._updateChart();
-
-          _this5._updateSummary();
+          _this6._updateSummary();
         });
         return container;
       },
@@ -1736,21 +1746,17 @@
        */
       onRemove: function onRemove(map) {
         this._container = null;
+        map.off('zoom viewreset zoomanim', this._hideMarker, this);
+        map.off('resize', this._resetView, this);
+        map.off('resize', this._resizeChart, this);
+        map.off('mousedown', this._resetDrag, this);
 
-        this._map.off('zoom viewreset zoomanim', this._hidePositionMarker, this);
+        off(map._container, 'mousewheel', this._resetDrag, this);
 
-        this._map.off('resize', this._resetView, this);
+        off(map._container, 'touchstart', this._resetDrag, this);
 
-        this._map.off('resize', this._resizeChart, this);
-
-        this._map.off('mousedown', this._resetDrag, this);
-
-        off(this._map._container, 'mousewheel', this._resetDrag, this);
-
-        off(this._map._container, 'touchstart', this._resetDrag, this);
-
-        this.off('eledata_loaded eledata_added', this._updateChart, this);
-        this.off('eledata_loaded eledata_added', this._updateSummary, this);
+        this.off('eledata_added eledata_loaded', this._updateChart, this);
+        this.off('eledata_added eledata_loaded', this._updateSummary, this);
       },
 
       /**
@@ -1778,7 +1784,7 @@
        * Parsing data either from GPX or GeoJSON and update the diagram data
        */
       _addData: function _addData(d) {
-        var _this6 = this;
+        var _this7 = this;
 
         var geom = d && d.geometry;
         var feat = d && d.type === "FeatureCollection";
@@ -1793,7 +1799,7 @@
 
             case 'MultiLineString':
               each(geom.coordinates, function (coords) {
-                return _this6._addGeoJSONData(coords);
+                return _this7._addGeoJSONData(coords);
               });
 
               break;
@@ -1805,7 +1811,7 @@
 
         if (feat) {
           each(d.features, function (feature) {
-            return _this6._addData(feature);
+            return _this7._addData(feature);
           });
         }
 
@@ -1818,10 +1824,10 @@
        * Parsing of GeoJSON data lines and their elevation in z-coordinate
        */
       _addGeoJSONData: function _addGeoJSONData(coords) {
-        var _this7 = this;
+        var _this8 = this;
 
         each(coords, function (point) {
-          return _this7._addPoint(point[1], point[0], point[2]);
+          return _this8._addPoint(point[1], point[0], point[2]);
         });
       },
 
@@ -1829,10 +1835,10 @@
        * Parsing function for GPX data and their elevation in z-coordinate
        */
       _addGPXData: function _addGPXData(coords) {
-        var _this8 = this;
+        var _this9 = this;
 
         each(coords, function (point) {
-          return _this8._addPoint(point.lat, point.lng, point.meta.ele);
+          return _this9._addPoint(point.lat, point.lng, point.meta.ele);
         });
       },
 
@@ -1935,38 +1941,6 @@
       },
 
       /*
-       * Reset chart.
-       */
-      _clearChart: function _clearChart() {
-        this._resetDrag();
-      },
-
-      /*
-       * Reset data.
-       */
-      _clearData: function _clearData() {
-        this._data = null;
-        this._distance = null;
-        this._maxElevation = null;
-        this._minElevation = null;
-        this.track_info = null;
-        this._layers = null;
-      },
-
-      /*
-       * Reset path.
-       */
-      _clearPath: function _clearPath() {
-        var _this9 = this;
-
-        this._hidePositionMarker();
-
-        each(this._layers, function (l) {
-          return removeClass(l._path, _this9.options.polyline.className + ' ' + _this9.options.theme);
-        });
-      },
-
-      /*
        * Collapse current chart control.
        */
       _collapse: function _collapse() {
@@ -2029,7 +2003,7 @@
       /*
        * Hides the position/height indicator marker drawn onto the map
        */
-      _hidePositionMarker: function _hidePositionMarker() {
+      _hideMarker: function _hideMarker() {
         if (this.options.autohideMarker) {
           this._marker.remove();
         }
@@ -2072,7 +2046,7 @@
         this._focuslabel = chart._focuslabel;
         this._focusline = chart._focusline;
         this.summaryDiv = summary._summary;
-        chart.on('reset_drag', this._hidePositionMarker, this);
+        chart.on('reset_drag', this._hideMarker, this);
         chart.on('mouse_enter', this._fireEvt.bind('elechart_enter'), this);
         chart.on('dragged', this._fireEvt.bind("elechart_dragged"), this);
         chart.on('mouse_move', this._mousemoveHandler, this);
@@ -2081,7 +2055,7 @@
         this._fireEvt("elechart_init");
       },
       _initMarker: function _initMarker(container) {
-        this._marker = new Marker(this.options);
+        this._marker = new Marker(this.options).addTo(this._map);
         this._mouseHeightFocusLabel = this._marker._mouseHeightFocusLabel;
       },
 
@@ -2141,7 +2115,7 @@
 
         var item = this._data[this._findItemForX(xCoord)];
 
-        this._showPositionMarker(item);
+        this._updateMarker(item);
 
         this._setMapView(item);
 
@@ -2174,7 +2148,7 @@
           var xCoord = item.xDiagCoord;
           if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
 
-          this._showPositionMarker(item);
+          this._updateMarker(item);
 
           this._fireEvt("elechart_change", {
             data: item,
@@ -2188,7 +2162,7 @@
        */
       _mouseoutHandler: function _mouseoutHandler() {
         if (!this.options.detached) {
-          this._hidePositionMarker();
+          this._hideMarker();
 
           this._chart._hideDiagramIndicator();
         }
@@ -2221,7 +2195,7 @@
       _resetDrag: function _resetDrag() {
         this._chart._resetDrag();
 
-        this._hidePositionMarker();
+        this._hideMarker();
       },
 
       /**
@@ -2232,7 +2206,7 @@
 
         this._resetDrag();
 
-        this._hidePositionMarker();
+        this._hideMarker();
 
         this.fitBounds();
       },
@@ -2285,20 +2259,6 @@
         });
       },
 
-      /*
-       * Shows the position/height indicator marker drawn onto the map
-       */
-      _showPositionMarker: function _showPositionMarker(item) {
-        if (this.options.marker) {
-          this._marker.update({
-            item: item,
-            map: this._map,
-            maxElevation: this._maxElevation,
-            options: this.options
-          });
-        }
-      },
-
       /**
        * Calculates [x, y] domain and then update chart.
        */
@@ -2315,6 +2275,17 @@
         if (this.options.legend) this._fireEvt("elechart_legend");
 
         this._fireEvt('elechart_updated');
+      },
+
+      /*
+       * Update the position/height indicator marker drawn onto the map
+       */
+      _updateMarker: function _updateMarker(item) {
+        this._marker.update({
+          item: item,
+          maxElevation: this._maxElevation,
+          options: this.options
+        });
       },
 
       /**
@@ -2403,9 +2374,8 @@
 
         if (!this._chartEnabled) {
 
-          this._resetDrag();
+          this._resetDrag(); // this._clearPath();
 
-          this._clearPath();
         } else {
           // this._resizeChart();
           each(this._layers, function (l) {
@@ -2414,7 +2384,7 @@
         }
       });
       this.on("elechart_dragged", function (e) {
-        this._hidePositionMarker();
+        this._hideMarker();
 
         this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
       });
@@ -2475,6 +2445,10 @@
       });
       this.on("elechart_summary", function () {
         this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>' + '<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>' + '<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
+      });
+      this.on("eledata_clear", function () {
+        this._maxElevation = null;
+        this._minElevation = null;
       });
     });
 

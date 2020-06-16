@@ -24,4 +24,9 @@ Elevation.addInitHook(function() {
 			'<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
 	});
 
+	this.on("eledata_clear", function() {
+		this._maxElevation = null;
+		this._minElevation = null;
+	});
+
 });
