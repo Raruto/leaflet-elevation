@@ -20,10 +20,10 @@ export var Marker = L.Class.extend({
 		}
 
 		if (this.options.marker == 'elevation-line') {
-			let g = this._heightG = d3.create("g").attr("class", "height-focus-group");
-			this._mouseHeightFocus = d3.create('svg:line');
-			this._pointG = d3.create("svg:circle");
-			this._mouseHeightFocusLabel = d3.create("svg:text");
+			// this._container = d3.create("g").attr("class", "height-focus-group");
+			this._focusline = d3.create('svg:line');
+			this._focusmarker = d3.create("svg:circle");
+			this._focuslabel = d3.create("svg:text");
 		} else if (this.options.marker == 'position-marker') {
 			this._marker = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
 		}
@@ -32,18 +32,12 @@ export var Marker = L.Class.extend({
 
 	addTo: function(map) {
 		this._map = map;
-		let pane, renderer;
-		if (!map.getPane('elevationPane')) {
-			pane = this._pane = map.createPane('elevationPane');
-			pane.style.zIndex = 625; // This pane is above markers but below popups.
-			pane.style.pointerEvents = 'none';
-		}
 		if (this.options.marker == 'elevation-line') {
-			renderer = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
-			let g = this._heightG = d3.select(renderer.getPane()).select("svg > g").attr("class", "height-focus-group");
-			g.append(() => this._mouseHeightFocus.node());
-			g.append(() => this._pointG.node());
-			g.append(() => this._mouseHeightFocusLabel.node());
+			let g = this._container = d3.select(map.getPane('elevationPane')).select("svg > g")
+				.attr("class", "height-focus-group");
+			g.append(() => this._focusline.node());
+			g.append(() => this._focusmarker.node());
+			g.append(() => this._focuslabel.node());
 		} else if (this.options.marker == 'position-marker') {
 			this._marker.addTo(map, { pane: 'elevationPane' });
 		}
@@ -55,10 +49,9 @@ export var Marker = L.Class.extend({
 	 */
 	update: function(props) {
 		if (props.options) this.options = props.options;
+		if (!this._map) this.addTo(props.map);
 
 		let opts = this.options;
-
-		if (!this._map) this.addTo(props.map);
 
 		this._latlng = props.item.latlng;
 
@@ -66,40 +59,36 @@ export var Marker = L.Class.extend({
 
 		if (this.options.marker == 'elevation-line') {
 
-			let formatter = opts.hoverNumber.formatter;
-			let fy = opts.hoverNumber.decimalsY;
-
 			let normalizedAlt = this._height() / props.maxElevation * point.z;
 			let normalizedY = point.y - normalizedAlt;
 
-			this._heightG.classed("hidden", false);
-			this._pointG.classed("hidden", false);
+			this._container.classed("hidden", false);
 
-			this._pointG
+			this._focusmarker
 				.call(
-					D3.HeightFocusPoint({
-						theme: this.options.theme,
+					D3.HeightFocusMarker({
+						theme: opts.theme,
 						xCoord: point.x,
 						yCoord: point.y,
 					}));
 
-			this._mouseHeightFocus
+			this._focusline
 				.call(
 					D3.HeightFocusLine({
-						theme: this.options.theme,
+						theme: opts.theme,
 						xCoord: point.x,
 						yCoord: point.y,
 						length: normalizedY
 					})
 				);
 
-			this._mouseHeightFocusLabel
+			this._focuslabel
 				.call(
 					D3.HeightFocusLabel({
-						theme: this.options.theme,
+						theme: opts.theme,
 						xCoord: point.x,
 						yCoord: normalizedY,
-						label: formatter(point[opts.yAttr], fy) + " " + this._yLabel
+						label: _.formatNum(point[opts.yAttr], opts.decimalsY) + " " + this._yLabel
 					})
 				);
 		} else if (this.options.marker == 'position-marker') {
@@ -113,8 +102,7 @@ export var Marker = L.Class.extend({
 	 */
 	remove: function() {
 		if (this.options.marker == 'elevation-line') {
-			if (this._heightG) this._heightG.classed("hidden", true);
-			if (this._pointG) this._pointG.classed("hidden", true);
+			if (this._container) this._container.classed("hidden", true);
 		} else if (this.options.marker == 'position-marker') {
 			_.addClass(this._marker.getElement(), 'hidden');
 		}

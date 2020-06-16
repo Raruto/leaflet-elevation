@@ -42,7 +42,7 @@ Elevation.addInitHook(function() {
 	});
 
 	this.on("elechart_legend", function() {
-		this._altitudeLegend = this._legend.append('g')
+		this._altitudeLegend = this._chart._legend.append('g')
 			.call(
 				D3.LegendItem({
 					name: 'Altitude',

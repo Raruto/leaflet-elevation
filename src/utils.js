@@ -31,18 +31,10 @@ export function deferFunc(f) {
 }
 
 /*
- * Formatting funciton using the given decimals and seperator.
+ * Similar to L.Util.formatNum
  */
-export function formatter(num, dec, sep) {
-	let res = L.Util.formatNum(num, dec).toString();
-	let numbers = res.split(".");
-	if (numbers[1]) {
-		for (let d = dec - numbers[1].length; d > 0; d--) {
-			numbers[1] += "0";
-		}
-		res = numbers.join(sep || ".");
-	}
-	return res;
+export function formatNum(num, dec, sep) {
+	return num.toFixed(dec).toString().split(".").join(sep || ".");
 }
 
 /**

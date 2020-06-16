@@ -6,22 +6,18 @@ export var Chart = L.Class.extend({
 
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
-	initialize: function(options) {
-		let opts = this.options = options;
+	initialize: function(opts) {
+		this.options = opts;
 
 		this._data = [];
 		this._draggingEnabled = opts.dragging;
 
-		if (this.options.imperial) {
-			// this._distanceFactor = this.__mileFactor;
-			// this._heightFactor = this.__footFactor;
+		if (opts.imperial) {
 			this._xLabel = "mi";
 			this._yLabel = "ft";
 		} else {
-			// this._distanceFactor = this.options.distanceFactor;
-			// this._heightFactor = this.options.heightFactor;
-			this._xLabel = this.options.xLabel;
-			this._yLabel = this.options.yLabel;
+			this._xLabel = opts.xLabel;
+			this._yLabel = opts.yLabel;
 		}
 
 		this._xTicks = opts.xTicks;
@@ -29,7 +25,7 @@ export var Chart = L.Class.extend({
 
 		let scale = this._updateScale();
 
-		let svg = this._svg = d3.create("svg")
+		let svg = this._container = d3.create("svg")
 			.attr("class", "background")
 			.attr("width", opts.width)
 			.attr("height", opts.height);
@@ -67,7 +63,17 @@ export var Chart = L.Class.extend({
 	},
 
 	render: function() {
-		return container => container.append(() => this._svg.node());
+		return container => container.append(() => this._container.node());
+	},
+
+	clear: function() {
+		this._resetDrag();
+		this._area.selectAll('path').attr("d", "M0 0");
+		if (this._path) {
+			// this._x.domain([0, 1]);
+			// this._y.domain([0, 1]);
+			// this._updateAxis();
+		}
 	},
 
 	_updateScale: function() {
@@ -251,7 +257,7 @@ export var Chart = L.Class.extend({
 					.on("touchmove.drag", this._dragHandler.bind(this))
 					.on("touchstart.focus", this._mousemoveHandler.bind(this))
 					.on("touchmove.focus", this._mousemoveHandler.bind(this));
-				L.DomEvent.on(this._svg.node(), 'touchend', this._dragEndHandler, this);
+				L.DomEvent.on(this._container.node(), 'touchend', this._dragEndHandler, this);
 			}
 
 			focusRect
@@ -260,7 +266,7 @@ export var Chart = L.Class.extend({
 				.on("mouseenter.focus", this._mouseenterHandler.bind(this))
 				.on("mousemove.focus", this._mousemoveHandler.bind(this))
 				.on("mouseout.focus", this._mouseoutHandler.bind(this));
-			L.DomEvent.on(this._svg.node(), 'mouseup', this._dragEndHandler, this);
+			L.DomEvent.on(this._container.node(), 'mouseup', this._dragEndHandler, this);
 
 			return focusRect;
 		};
@@ -461,12 +467,10 @@ export var Chart = L.Class.extend({
 	_showDiagramIndicator: function(item, xCoordinate) {
 		// if (!this._chartEnabled) return;
 
-		this._focusG.classed("hidden", false);
-
 		let opts = this.options;
-		let formatter = opts.hoverNumber.formatter;
-		let [fx, fy] = [opts.hoverNumber.decimalsX, opts.hoverNumber.decimalsY];
 		let yCoordinate = this._y(item[opts.yAttr]);
+
+		this._focusG.classed("hidden", false);
 
 		this._focusline.call(
 			D3.MouseFocusLine({
@@ -480,8 +484,8 @@ export var Chart = L.Class.extend({
 				yCoord: yCoordinate,
 				height: this._height(),
 				width: this._width(),
-				labelX: formatter(item[opts.xAttr], fx) + " " + this._xLabel,
-				labelY: formatter(item[opts.yAttr], fy) + " " + this._yLabel,
+				labelX: _.formatNum(item[opts.xAttr], opts.decimalsX) + " " + this._xLabel,
+				labelY: _.formatNum(item[opts.yAttr], opts.decimalsY) + " " + this._yLabel,
 			})
 		);
 	},

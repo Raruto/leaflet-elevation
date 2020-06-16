@@ -14,7 +14,7 @@ Elevation.addInitHook(function() {
 	if (this.options.slope != "summary") {
 
 		this.on("elechart_init", function() {
-			slope.path = this._area.append('path')
+			slope.path = this._chart._area.append('path')
 				.style("pointer-events", "none")
 				// TODO: add a class here.
 				.attr("fill", "#F00")
@@ -24,7 +24,7 @@ Elevation.addInitHook(function() {
 		});
 
 		this.on("elechart_axis", function() {
-			slope.x = this._x;
+			slope.x = this._chart._x;
 
 			// slope.x = D3.Scale({
 			// 	data: this._data,
@@ -57,7 +57,7 @@ Elevation.addInitHook(function() {
 				labelY: 3,
 			});
 
-			this._axis.call(slope.axis);
+			this._chart._axis.call(slope.axis);
 		});
 
 		this.on("elechart_updated", function() {
@@ -77,7 +77,7 @@ Elevation.addInitHook(function() {
 		});
 
 		this.on("elechart_legend", function() {
-			slope.legend = this._legend.append("g")
+			slope.legend = this._chart._legend.append("g")
 				.call(
 					D3.LegendItem({
 						name: 'Slope',
@@ -129,6 +129,7 @@ Elevation.addInitHook(function() {
 			slope = delta !== 0 ? (deltaZ / delta) * 100 : 0;
 		}
 
+		// Try to smooth "crazy" slope values.
 		if (this.options.sDeltaMax) {
 			let deltaS = i > 0 ? slope - data[i - 1].slope : 0;
 			let maxDeltaS = this.options.sDeltaMax;
@@ -137,6 +138,7 @@ Elevation.addInitHook(function() {
 			}
 		}
 
+		// Range of acceptable slope values.
 		if (this.options.sRange) {
 			let range = this.options.sRange;
 			if (slope < range[0]) slope = range[0];
@@ -159,31 +161,32 @@ Elevation.addInitHook(function() {
 	this.on("elechart_change", function(e) {
 		let item = e.data;
 		let xCoordinate = e.xCoord;
+		let chart = this._chart;
 
-		if (this._focuslabel) {
-			if (!this._focuslabelSlope || !this._focuslabelSlope.property('isConnected')) {
-				this._focuslabelSlope = this._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
+		if (chart._focuslabel) {
+			if (!chart._focuslabelSlope || !chart._focuslabelSlope.property('isConnected')) {
+				chart._focuslabelSlope = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
 					.attr("class", "mouse-focus-label-slope")
 					.attr("dy", "1.5em");
 			}
 
-			this._focuslabelSlope.text(item.slope + "%");
+			chart._focuslabelSlope.text(item.slope + "%");
 
-			this._focuslabel.select('.mouse-focus-label-x')
+			chart._focuslabel.select('.mouse-focus-label-x')
 				.attr("dy", "1.5em");
 		}
 
-		if (this._mouseHeightFocusLabel) {
-			if (!this._mouseSlopeFocusLabel) {
-				this._mouseSlopeFocusLabel = this._mouseHeightFocusLabel.append("svg:tspan")
+		if (chart._mouseHeightFocusLabel) {
+			if (!chart._mouseSlopeFocusLabel) {
+				chart._mouseSlopeFocusLabel = chart._mouseHeightFocusLabel.append("svg:tspan")
 					.attr("class", "height-focus-slope ");
 			}
 
-			this._mouseSlopeFocusLabel
+			chart._mouseSlopeFocusLabel
 				.attr("dy", "1.5em")
 				.text(Math.round(item.slope) + "%");
 
-			this._mouseHeightFocusLabel.select('.height-focus-y')
+			chart._mouseHeightFocusLabel.select('.height-focus-y')
 				.attr("dy", "-1.5em");
 		}
 	});

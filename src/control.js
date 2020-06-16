@@ -43,7 +43,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	addTo: function(map) {
 		if (this.options.detached) {
 			let eleDiv = this._initElevationDiv();
-			if (!eleDiv.isConnected) _.insert(map._container, eleDiv, 'afterend');
+			if (!eleDiv.isConnected) _.insert(map.getContainer(), eleDiv, 'afterend');
 			_.append(eleDiv, this.onAdd(map));
 		} else {
 			L.Control.prototype.addTo.call(this, map);
@@ -56,7 +56,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	clear: function() {
 		this._marker.remove();
-		this._chart._resetDrag();
+		this._chart.clear();
 		this._layers.clearLayers();
 
 		this._data = [];
@@ -242,8 +242,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			typeof d3 !== 'object' || !this.options.lazyLoadJS,
 			Elevation._d3LazyLoader
 		).then(() => {
-			this._initToggle(container);
+			this._initButton(container);
 			this._initChart(container);
+			this._initSummary(container);
 			this._initMarker(map);
 			this._initLayer(map);
 
@@ -253,8 +254,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				.on('resize', this._resizeChart, this)
 				.on('mousedown', this._resetDrag, this);
 
-			_.on(map._container, 'mousewheel', this._resetDrag, this);
-			_.on(map._container, 'touchstart', this._resetDrag, this);
+			_.on(map.getContainer(), 'mousewheel', this._resetDrag, this);
+			_.on(map.getContainer(), 'touchstart', this._resetDrag, this);
 
 			this
 				.on('eledata_added eledata_loaded', this._updateChart, this)
@@ -280,8 +281,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.off('resize', this._resizeChart, this)
 			.off('mousedown', this._resetDrag, this);
 
-		_.off(map._container, 'mousewheel', this._resetDrag, this);
-		_.off(map._container, 'touchstart', this._resetDrag, this);
+		_.off(map.getContainer(), 'mousewheel', this._resetDrag, this);
+		_.off(map.getContainer(), 'touchstart', this._resetDrag, this);
 
 		this
 			.off('eledata_added eledata_loaded', this._updateChart, this)
@@ -470,7 +471,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	/**
 	 * Generate "svg" chart DOM element.
 	 */
-	_initChart: function() {
+	_initChart: function(container) {
 		let opts = this.options;
 		opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
 		opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
@@ -483,40 +484,25 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				opts.height = (offHe - 20) > 0 ? offHe - 20 : opts.height; // 20 = horizontal scrollbar size.
 			} else {
 				opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
-				let containerWidth = this._map._container.clientWidth;
+				let containerWidth = this._map.getContainer().clientWidth;
 				opts.width = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
 			}
 		}
 
 		let chart = this._chart = new Chart(opts);
-		let summary = this._summary = new Summary(opts);
 
-		let container = d3.select(this._container)
+		d3
+			.select(container)
 			.call(chart.render())
-			.call(summary.render());
-
-		this._svg = chart._svg;
-		this._grid = chart._grid;
-		this._area = chart._area;
-		this._path = chart._path;
-		this._axis = chart._axis;
-		this._focus = chart._focus;
-		this._focusRect = chart._focusRect;
-		this._x = chart._x;
-		this._y = chart._y;
-		this._legend = chart._legend;
-		this._focuslabel = chart._focuslabel;
-		this._focusline = chart._focusline;
-		this.summaryDiv = summary._summary;
 
 		chart
 			.on('reset_drag', this._hideMarker, this)
 			.on('mouse_enter', this._fireEvt.bind('elechart_enter'), this)
-			.on('dragged', this._fireEvt.bind("elechart_dragged"), this)
+			.on('dragged', this._dragendHandler, this)
 			.on('mouse_move', this._mousemoveHandler, this)
 			.on('mouse_out', this._mouseoutHandler, this);
-		// chart.on('legend', this._fireEvt.bind('elechart_legend'), this);
 
+		this._fireEvt("elechart_axis");
 		if (this.options.legend) this._fireEvt("elechart_legend");
 
 		this._fireEvt("elechart_init");
@@ -535,15 +521,22 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	_initMarker: function(map) {
-		this._marker = (new Marker(this.options)).addTo(map);
+		let pane = map.getPane('elevationPane');
+		if (!pane) {
+			pane = this._pane = map.createPane('elevationPane');
+			pane.style.zIndex = 625; // This pane is above markers but below popups.
+			pane.style.pointerEvents = 'none';
+		}
+		if (this._renderer) this._renderer.remove()
+		this._renderer = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
 
-		this._mouseHeightFocusLabel = this._marker._mouseHeightFocusLabel;
+		this._marker = (new Marker(this.options));
 	},
 
 	/**
 	 * Inspired by L.Control.Layers
 	 */
-	_initToggle: function(container) {
+	_initButton: function(container) {
 		//Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
 		container.setAttribute('aria-haspopup', true);
 
@@ -582,6 +575,23 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	_initSummary: function(container) {
+		let summary = this._summary = new Summary({ summary: this.options.summary });
+
+		d3
+			.select(container)
+			.call(summary.render());
+
+		this.summaryDiv = this._summary._container;
+	},
+
+	_dragendHandler: function(e) {
+		this._hideMarker();
+		this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
+
+		this._fireEvt("elechart_dragged");
+	},
+
 	/*
 	 * Handles the moueseover the chart and displays distance and altitude level.
 	 */
@@ -592,13 +602,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		let xCoord = e.xCoord;
 		let item = this._findItemForX(xCoord);
 
-		if(this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
+		if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
 
 		this._updateMarker(item);
 		this._setMapView(item);
 
 		if (this._map) {
-			_.addClass(this._map._container, 'elechart-hover');
+			_.addClass(this._map.getContainer(), 'elechart-hover');
 		}
 
 		this._fireEvt("elechart_change", { data: item, xCoord: xCoord });
@@ -635,7 +645,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		if (this._map) {
-			_.removeClass(this._map._container, 'elechart-hover');
+			_.removeClass(this._map.getContainer(), 'elechart-hover');
 		}
 
 		this._fireEvt("elechart_leave");
@@ -732,7 +742,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Update the position/height indicator marker drawn onto the map
 	 */
 	_updateMarker: function(item) {
-		this._marker.update({ item: item, maxElevation: this._maxElevation, options: this.options });
+		this._marker.update({
+			map: this._map,
+			item: item,
+			maxElevation: this._maxElevation,
+			options: this.options
+		});
 	},
 
 	/**
@@ -797,7 +812,7 @@ Elevation.addInitHook(function() {
 		_.style(rect, "fill-opacity", enable ? "" : "0")
 		_.toggleClass(path, 'hidden', !enable);
 
-		this._chartEnabled = this._area.selectAll('path:not(.hidden)').nodes().length != 0;
+		this._chartEnabled = this._chart._area.selectAll('path:not(.hidden)').nodes().length != 0;
 		this._layers.eachLayer(l => _.toggleClass(l.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
 
 		if (!this._chartEnabled) {
@@ -806,18 +821,13 @@ Elevation.addInitHook(function() {
 		}
 	});
 
-	this.on("elechart_dragged", function(e) {
-		this._hideMarker();
-		this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
-	});
-
 	this.on("elechart_updated", function() {
 		// TODO: maybe should i listen for this inside chart.js?
-		this._legend.selectAll('.legend-item')
+		this._chart._legend.selectAll('.legend-item')
 			.on('click', (d, i, n) => {
 				let target = n[i];
 				let name = target.getAttribute('data-name');
-				let path = this._area.select('path[data-name="' + name + '"]').node();
+				let path = this._chart._area.select('path[data-name="' + name + '"]').node();
 				this._fireEvt("elepath_toggle", { path: path, name: name, legend: target });
 			});
 	});
@@ -842,13 +852,4 @@ Elevation.addInitHook(function() {
 		}
 	});
 
-	this.on('eledata_clear', function() {
-		this._area.selectAll('path')
-			.attr("d", "M0 0");
-		if (this._path) {
-			// this._x.domain([0, 1]);
-			// this._y.domain([0, 1]);
-			// this._updateAxis();
-		}
-	});
 });

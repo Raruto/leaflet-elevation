@@ -111,22 +111,11 @@
       });else f();
     }
     /*
-     * Formatting funciton using the given decimals and seperator.
+     * Similar to L.Util.formatNum
      */
 
-    function formatter(num, dec, sep) {
-      var res = L.Util.formatNum(num, dec).toString();
-      var numbers = res.split(".");
-
-      if (numbers[1]) {
-        for (var d = dec - numbers[1].length; d > 0; d--) {
-          numbers[1] += "0";
-        }
-
-        res = numbers.join(sep || ".");
-      }
-
-      return res;
+    function formatNum(num, dec, sep) {
+      return num.toFixed(dec).toString().split(".").join(sep || ".");
     }
     /**
      * Simple GeoJSON data loader.
@@ -492,7 +481,7 @@
         __proto__: null,
         deepMerge: deepMerge,
         deferFunc: deferFunc,
-        formatter: formatter,
+        formatNum: formatNum,
         GeoJSONLoader: GeoJSONLoader,
         GPXLoader: GPXLoader,
         isDomVisible: isDomVisible,
@@ -635,7 +624,7 @@
         return text;
       };
     };
-    var HeightFocusPoint = function HeightFocusPoint(_ref7) {
+    var HeightFocusMarker = function HeightFocusMarker(_ref7) {
       var theme = _ref7.theme,
           _ref7$xCoord = _ref7.xCoord,
           xCoord = _ref7$xCoord === void 0 ? 0 : _ref7$xCoord,
@@ -751,7 +740,7 @@
         Grid: Grid,
         HeightFocusLine: HeightFocusLine,
         HeightFocusLabel: HeightFocusLabel,
-        HeightFocusPoint: HeightFocusPoint,
+        HeightFocusMarker: HeightFocusMarker,
         LegendItem: LegendItem,
         MouseFocusLine: MouseFocusLine,
         MouseFocusLabel: MouseFocusLabel,
@@ -761,21 +750,17 @@
 
     var Chart = L.Class.extend({
       includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
-      initialize: function initialize(options) {
-        var opts = this.options = options;
+      initialize: function initialize(opts) {
+        this.options = opts;
         this._data = [];
         this._draggingEnabled = opts.dragging;
 
-        if (this.options.imperial) {
-          // this._distanceFactor = this.__mileFactor;
-          // this._heightFactor = this.__footFactor;
+        if (opts.imperial) {
           this._xLabel = "mi";
           this._yLabel = "ft";
         } else {
-          // this._distanceFactor = this.options.distanceFactor;
-          // this._heightFactor = this.options.heightFactor;
-          this._xLabel = this.options.xLabel;
-          this._yLabel = this.options.yLabel;
+          this._xLabel = opts.xLabel;
+          this._yLabel = opts.yLabel;
         }
 
         this._xTicks = opts.xTicks;
@@ -783,7 +768,7 @@
 
         var scale = this._updateScale();
 
-        var svg = this._svg = d3.create("svg").attr("class", "background").attr("width", opts.width).attr("height", opts.height);
+        var svg = this._container = d3.create("svg").attr("class", "background").attr("width", opts.width).attr("height", opts.height);
         var g = svg.append("g").attr("transform", "translate(" + opts.margins.left + "," + opts.margins.top + ")").call(this._appendGrid()).call(this._appendAxis()).call(this._appendAreaPath()).call(this._appendFocusable()).call(this._appendLegend());
         this._grid = svg.select('.grid');
         this._area = svg.select('.area');
@@ -812,9 +797,16 @@
 
         return function (container) {
           return container.append(function () {
-            return _this._svg.node();
+            return _this._container.node();
           });
         };
+      },
+      clear: function clear() {
+        this._resetDrag();
+
+        this._area.selectAll('path').attr("d", "M0 0");
+
+        if (this._path) ;
       },
       _updateScale: function _updateScale() {
         var opts = this.options;
@@ -985,11 +977,11 @@
 
           if (L.Browser.mobile) {
             focusRect.on("touchstart.drag", _this5._dragStartHandler.bind(_this5)).on("touchmove.drag", _this5._dragHandler.bind(_this5)).on("touchstart.focus", _this5._mousemoveHandler.bind(_this5)).on("touchmove.focus", _this5._mousemoveHandler.bind(_this5));
-            L.DomEvent.on(_this5._svg.node(), 'touchend', _this5._dragEndHandler, _this5);
+            L.DomEvent.on(_this5._container.node(), 'touchend', _this5._dragEndHandler, _this5);
           }
 
           focusRect.on("mousedown.drag", _this5._dragStartHandler.bind(_this5)).on("mousemove.drag", _this5._dragHandler.bind(_this5)).on("mouseenter.focus", _this5._mouseenterHandler.bind(_this5)).on("mousemove.focus", _this5._mousemoveHandler.bind(_this5)).on("mouseout.focus", _this5._mouseoutHandler.bind(_this5));
-          L.DomEvent.on(_this5._svg.node(), 'mouseup', _this5._dragEndHandler, _this5);
+          L.DomEvent.on(_this5._container.node(), 'mouseup', _this5._dragEndHandler, _this5);
           return focusRect;
         };
       },
@@ -1185,15 +1177,11 @@
        */
       _showDiagramIndicator: function _showDiagramIndicator(item, xCoordinate) {
         // if (!this._chartEnabled) return;
-        this._focusG.classed("hidden", false);
-
         var opts = this.options;
-        var formatter = opts.hoverNumber.formatter;
-        var _ref = [opts.hoverNumber.decimalsX, opts.hoverNumber.decimalsY],
-            fx = _ref[0],
-            fy = _ref[1];
 
         var yCoordinate = this._y(item[opts.yAttr]);
+
+        this._focusG.classed("hidden", false);
 
         this._focusline.call(MouseFocusLine({
           xCoord: xCoordinate,
@@ -1205,8 +1193,8 @@
           yCoord: yCoordinate,
           height: this._height(),
           width: this._width(),
-          labelX: formatter(item[opts.xAttr], fx) + " " + this._xLabel,
-          labelY: formatter(item[opts.yAttr], fy) + " " + this._yLabel
+          labelX: formatNum(item[opts.xAttr], opts.decimalsX) + " " + this._xLabel,
+          labelY: formatNum(item[opts.yAttr], opts.decimalsY) + " " + this._yLabel
         }));
       },
       _hideDiagramIndicator: function _hideDiagramIndicator() {
@@ -1236,10 +1224,10 @@
         }
 
         if (this.options.marker == 'elevation-line') {
-          var g = this._heightG = d3.create("g").attr("class", "height-focus-group");
-          this._mouseHeightFocus = d3.create('svg:line');
-          this._pointG = d3.create("svg:circle");
-          this._mouseHeightFocusLabel = d3.create("svg:text");
+          // this._container = d3.create("g").attr("class", "height-focus-group");
+          this._focusline = d3.create('svg:line');
+          this._focusmarker = d3.create("svg:circle");
+          this._focuslabel = d3.create("svg:text");
         } else if (this.options.marker == 'position-marker') {
           this._marker = L.marker([0, 0], {
             icon: this.options.markerIcon,
@@ -1254,29 +1242,17 @@
         var _this = this;
 
         this._map = map;
-        var pane, renderer;
-
-        if (!map.getPane('elevationPane')) {
-          pane = this._pane = map.createPane('elevationPane');
-          pane.style.zIndex = 625; // This pane is above markers but below popups.
-
-          pane.style.pointerEvents = 'none';
-        }
 
         if (this.options.marker == 'elevation-line') {
-          renderer = L.svg({
-            pane: "elevationPane"
-          }).addTo(this._map); // default leaflet svg renderer
-
-          var g = this._heightG = d3.select(renderer.getPane()).select("svg > g").attr("class", "height-focus-group");
+          var g = this._container = d3.select(map.getPane('elevationPane')).select("svg > g").attr("class", "height-focus-group");
           g.append(function () {
-            return _this._mouseHeightFocus.node();
+            return _this._focusline.node();
           });
           g.append(function () {
-            return _this._pointG.node();
+            return _this._focusmarker.node();
           });
           g.append(function () {
-            return _this._mouseHeightFocusLabel.node();
+            return _this._focuslabel.node();
           });
         } else if (this.options.marker == 'position-marker') {
           this._marker.addTo(map, {
@@ -1292,39 +1268,35 @@
        */
       update: function update(props) {
         if (props.options) this.options = props.options;
-        var opts = this.options;
         if (!this._map) this.addTo(props.map);
+        var opts = this.options;
         this._latlng = props.item.latlng;
         var point = L.extend({}, props.item, this._map.latLngToLayerPoint(this._latlng));
 
         if (this.options.marker == 'elevation-line') {
-          var formatter = opts.hoverNumber.formatter;
-          var fy = opts.hoverNumber.decimalsY;
           var normalizedAlt = this._height() / props.maxElevation * point.z;
           var normalizedY = point.y - normalizedAlt;
 
-          this._heightG.classed("hidden", false);
+          this._container.classed("hidden", false);
 
-          this._pointG.classed("hidden", false);
-
-          this._pointG.call(HeightFocusPoint({
-            theme: this.options.theme,
+          this._focusmarker.call(HeightFocusMarker({
+            theme: opts.theme,
             xCoord: point.x,
             yCoord: point.y
           }));
 
-          this._mouseHeightFocus.call(HeightFocusLine({
-            theme: this.options.theme,
+          this._focusline.call(HeightFocusLine({
+            theme: opts.theme,
             xCoord: point.x,
             yCoord: point.y,
             length: normalizedY
           }));
 
-          this._mouseHeightFocusLabel.call(HeightFocusLabel({
-            theme: this.options.theme,
+          this._focuslabel.call(HeightFocusLabel({
+            theme: opts.theme,
             xCoord: point.x,
             yCoord: normalizedY,
-            label: formatter(point[opts.yAttr], fy) + " " + this._yLabel
+            label: formatNum(point[opts.yAttr], opts.decimalsY) + " " + this._yLabel
           }));
         } else if (this.options.marker == 'position-marker') {
           removeClass(this._marker.getElement(), 'hidden');
@@ -1338,8 +1310,7 @@
        */
       remove: function remove() {
         if (this.options.marker == 'elevation-line') {
-          if (this._heightG) this._heightG.classed("hidden", true);
-          if (this._pointG) this._pointG.classed("hidden", true);
+          if (this._container) this._container.classed("hidden", true);
         } else if (this.options.marker == 'position-marker') {
           addClass(this._marker.getElement(), 'hidden');
         }
@@ -1358,24 +1329,24 @@
     });
 
     var Summary = L.Class.extend({
-      initialize: function initialize(options) {
-        var opts = this.options = options;
+      initialize: function initialize(opts) {
+        this.options = opts;
 
-        var summary = this._summary = create("div", "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : ''), {
-          style: 'max-width:' + this.options.width + 'px'
-        });
+        var summary = this._container = create("div", "elevation-summary " + (opts.summary ? opts.summary + "-summary" : ''));
+
+        style(summary, 'max-width', opts.width ? opts.width + 'px' : '');
       },
       render: function render() {
         var _this = this;
 
         return function (container) {
           return container.append(function () {
-            return _this._summary;
+            return _this._container;
           });
         };
       },
       reset: function reset() {
-        this._summary.innerHTML = '';
+        this._container.innerHTML = '';
       }
     });
 
@@ -1385,6 +1356,8 @@
       collapsed: false,
       detached: true,
       distanceFactor: 1,
+      decimalsX: 2,
+      decimalsY: 0,
       dragging: !L.Browser.mobile,
       downloadLink: 'link',
       elevationDiv: "#elevation-div",
@@ -1408,11 +1381,6 @@
       },
       height: 200,
       heightFactor: 1,
-      hoverNumber: {
-        decimalsX: 2,
-        decimalsY: 0,
-        formatter: formatter
-      },
       imperial: false,
       interpolation: "curveLinear",
       lazyLoadJS: true,
@@ -1449,9 +1417,9 @@
       responsive: true,
       summary: 'inline',
       slope: false,
-      sDeltaMax: false,
+      sDeltaMax: undefined,
       sInterpolation: "curveStepAfter",
-      sRange: false,
+      sRange: undefined,
       width: 600,
       xAttr: "dist",
       xLabel: "km",
@@ -1505,7 +1473,7 @@
         if (this.options.detached) {
           var eleDiv = this._initElevationDiv();
 
-          if (!eleDiv.isConnected) insert(map._container, eleDiv, 'afterend');
+          if (!eleDiv.isConnected) insert(map.getContainer(), eleDiv, 'afterend');
 
           append(eleDiv, this.onAdd(map));
         } else {
@@ -1521,7 +1489,7 @@
       clear: function clear() {
         this._marker.remove();
 
-        this._chart._resetDrag();
+        this._chart.clear();
 
         this._layers.clearLayers();
 
@@ -1724,9 +1692,11 @@
         }
 
         Elevation._d3LazyLoader = lazyLoader(this.__D3, (typeof d3 === "undefined" ? "undefined" : _typeof(d3)) !== 'object' || !this.options.lazyLoadJS, Elevation._d3LazyLoader).then(function () {
-          _this5._initToggle(container);
+          _this5._initButton(container);
 
           _this5._initChart(container);
+
+          _this5._initSummary(container);
 
           _this5._initMarker(map);
 
@@ -1734,9 +1704,9 @@
 
           map.on('zoom viewreset zoomanim', _this5._hideMarker, _this5).on('resize', _this5._resetView, _this5).on('resize', _this5._resizeChart, _this5).on('mousedown', _this5._resetDrag, _this5);
 
-          on(map._container, 'mousewheel', _this5._resetDrag, _this5);
+          on(map.getContainer(), 'mousewheel', _this5._resetDrag, _this5);
 
-          on(map._container, 'touchstart', _this5._resetDrag, _this5);
+          on(map.getContainer(), 'touchstart', _this5._resetDrag, _this5);
 
           _this5.on('eledata_added eledata_loaded', _this5._updateChart, _this5).on('eledata_added eledata_loaded', _this5._updateSummary, _this5);
 
@@ -1755,9 +1725,9 @@
         this._container = null;
         map.off('zoom viewreset zoomanim', this._hideMarker, this).off('resize', this._resetView, this).off('resize', this._resizeChart, this).off('mousedown', this._resetDrag, this);
 
-        off(map._container, 'mousewheel', this._resetDrag, this);
+        off(map.getContainer(), 'mousewheel', this._resetDrag, this);
 
-        off(map._container, 'touchstart', this._resetDrag, this);
+        off(map.getContainer(), 'touchstart', this._resetDrag, this);
 
         this.off('eledata_added eledata_loaded', this._updateChart, this).off('eledata_added eledata_loaded', this._updateSummary, this);
       },
@@ -1967,7 +1937,7 @@
       /**
        * Generate "svg" chart DOM element.
        */
-      _initChart: function _initChart() {
+      _initChart: function _initChart(container) {
         var opts = this.options;
         opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
         opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
@@ -1980,28 +1950,18 @@
             opts.height = offHe - 20 > 0 ? offHe - 20 : opts.height; // 20 = horizontal scrollbar size.
           } else {
             opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
-            var containerWidth = this._map._container.clientWidth;
+
+            var containerWidth = this._map.getContainer().clientWidth;
+
             opts.width = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
           }
         }
 
         var chart = this._chart = new Chart(opts);
-        var summary = this._summary = new Summary(opts);
-        var container = d3.select(this._container).call(chart.render()).call(summary.render());
-        this._svg = chart._svg;
-        this._grid = chart._grid;
-        this._area = chart._area;
-        this._path = chart._path;
-        this._axis = chart._axis;
-        this._focus = chart._focus;
-        this._focusRect = chart._focusRect;
-        this._x = chart._x;
-        this._y = chart._y;
-        this._legend = chart._legend;
-        this._focuslabel = chart._focuslabel;
-        this._focusline = chart._focusline;
-        this.summaryDiv = summary._summary;
-        chart.on('reset_drag', this._hideMarker, this).on('mouse_enter', this._fireEvt.bind('elechart_enter'), this).on('dragged', this._fireEvt.bind("elechart_dragged"), this).on('mouse_move', this._mousemoveHandler, this).on('mouse_out', this._mouseoutHandler, this); // chart.on('legend', this._fireEvt.bind('elechart_legend'), this);
+        d3.select(container).call(chart.render());
+        chart.on('reset_drag', this._hideMarker, this).on('mouse_enter', this._fireEvt.bind('elechart_enter'), this).on('dragged', this._dragendHandler, this).on('mouse_move', this._mousemoveHandler, this).on('mouse_out', this._mouseoutHandler, this);
+
+        this._fireEvt("elechart_axis");
 
         if (this.options.legend) this._fireEvt("elechart_legend");
 
@@ -2020,14 +1980,27 @@
         });
       },
       _initMarker: function _initMarker(map) {
-        this._marker = new Marker(this.options).addTo(map);
-        this._mouseHeightFocusLabel = this._marker._mouseHeightFocusLabel;
+        var pane = map.getPane('elevationPane');
+
+        if (!pane) {
+          pane = this._pane = map.createPane('elevationPane');
+          pane.style.zIndex = 625; // This pane is above markers but below popups.
+
+          pane.style.pointerEvents = 'none';
+        }
+
+        if (this._renderer) this._renderer.remove();
+        this._renderer = L.svg({
+          pane: "elevationPane"
+        }).addTo(this._map); // default leaflet svg renderer
+
+        this._marker = new Marker(this.options);
       },
 
       /**
        * Inspired by L.Control.Layers
        */
-      _initToggle: function _initToggle(container) {
+      _initButton: function _initButton(container) {
         //Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
         container.setAttribute('aria-haspopup', true);
 
@@ -2067,6 +2040,20 @@
           }
         }
       },
+      _initSummary: function _initSummary(container) {
+        var summary = this._summary = new Summary({
+          summary: this.options.summary
+        });
+        d3.select(container).call(summary.render());
+        this.summaryDiv = this._summary._container;
+      },
+      _dragendHandler: function _dragendHandler(e) {
+        this._hideMarker();
+
+        this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
+
+        this._fireEvt("elechart_dragged");
+      },
 
       /*
        * Handles the moueseover the chart and displays distance and altitude level.
@@ -2087,7 +2074,7 @@
         this._setMapView(item);
 
         if (this._map) {
-          addClass(this._map._container, 'elechart-hover');
+          addClass(this._map.getContainer(), 'elechart-hover');
         }
 
         this._fireEvt("elechart_change", {
@@ -2135,7 +2122,7 @@
         }
 
         if (this._map) {
-          removeClass(this._map._container, 'elechart-hover');
+          removeClass(this._map.getContainer(), 'elechart-hover');
         }
 
         this._fireEvt("elechart_leave");
@@ -2247,6 +2234,7 @@
        */
       _updateMarker: function _updateMarker(item) {
         this._marker.update({
+          map: this._map,
           item: item,
           maxElevation: this._maxElevation,
           options: this.options
@@ -2334,7 +2322,7 @@
 
         toggleClass(path, 'hidden', !enable);
 
-        this._chartEnabled = this._area.selectAll('path:not(.hidden)').nodes().length != 0;
+        this._chartEnabled = this._chart._area.selectAll('path:not(.hidden)').nodes().length != 0;
 
         this._layers.eachLayer(function (l) {
           return toggleClass(l.getElement(), _this11.options.polyline.className + ' ' + _this11.options.theme, _this11._chartEnabled);
@@ -2346,20 +2334,15 @@
           this._marker.remove();
         }
       });
-      this.on("elechart_dragged", function (e) {
-        this._hideMarker();
-
-        this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
-      });
       this.on("elechart_updated", function () {
         var _this12 = this;
 
         // TODO: maybe should i listen for this inside chart.js?
-        this._legend.selectAll('.legend-item').on('click', function (d, i, n) {
+        this._chart._legend.selectAll('.legend-item').on('click', function (d, i, n) {
           var target = n[i];
           var name = target.getAttribute('data-name');
 
-          var path = _this12._area.select('path[data-name="' + name + '"]').node();
+          var path = _this12._chart._area.select('path[data-name="' + name + '"]').node();
 
           _this12._fireEvt("elepath_toggle", {
             path: path,
@@ -2389,11 +2372,6 @@
         } else {
           console.warn("Undefined elevation map object");
         }
-      });
-      this.on('eledata_clear', function () {
-        this._area.selectAll('path').attr("d", "M0 0");
-
-        if (this._path) ;
       });
     });
 
@@ -2435,7 +2413,7 @@
         this.track_info.elevation_min = this._minElevation = eleMin;
       });
       this.on("elechart_legend", function () {
-        this._altitudeLegend = this._legend.append('g').call(LegendItem({
+        this._altitudeLegend = this._chart._legend.append('g').call(LegendItem({
           name: 'Altitude',
           width: this._width(),
           height: this._height(),
@@ -2459,11 +2437,11 @@
 
       if (this.options.slope != "summary") {
         this.on("elechart_init", function () {
-          slope.path = this._area.append('path').style("pointer-events", "none") // TODO: add a class here.
+          slope.path = this._chart._area.append('path').style("pointer-events", "none") // TODO: add a class here.
           .attr("fill", "#F00").attr("stroke", "#000").attr("stroke-opacity", "0.5").attr("fill-opacity", "0.25");
         });
         this.on("elechart_axis", function () {
-          slope.x = this._x; // slope.x = D3.Scale({
+          slope.x = this._chart._x; // slope.x = D3.Scale({
           // 	data: this._data,
           // 	range: [0, this._width()],
           // 	attr: opts.xAttr,
@@ -2493,7 +2471,7 @@
             labelY: 3
           });
 
-          this._axis.call(slope.axis);
+          this._chart._axis.call(slope.axis);
         });
         this.on("elechart_updated", function () {
           slope.area = Area({
@@ -2510,7 +2488,7 @@
           slope.path.call(slope.area);
         });
         this.on("elechart_legend", function () {
-          slope.legend = this._legend.append("g").call(LegendItem({
+          slope.legend = this._chart._legend.append("g").call(LegendItem({
             name: 'Slope',
             width: this._width(),
             height: this._height(),
@@ -2550,7 +2528,8 @@
           if (deltaZ > 0) tAsc += deltaZ;else if (deltaZ < 0) tDes -= deltaZ; // slope in % = ( height / length ) * 100
 
           slope = delta !== 0 ? deltaZ / delta * 100 : 0;
-        }
+        } // Try to smooth "crazy" slope values.
+
 
         if (this.options.sDeltaMax) {
           var deltaS = i > 0 ? slope - data[i - 1].slope : 0;
@@ -2559,7 +2538,8 @@
           if (Math.abs(deltaS) > maxDeltaS) {
             slope = data[i - 1].slope + maxDeltaS * Math.sign(deltaS);
           }
-        }
+        } // Range of acceptable slope values.
+
 
         if (this.options.sRange) {
           var range = this.options.sRange;
@@ -2578,25 +2558,26 @@
       this.on("elechart_change", function (e) {
         var item = e.data;
         var xCoordinate = e.xCoord;
+        var chart = this._chart;
 
-        if (this._focuslabel) {
-          if (!this._focuslabelSlope || !this._focuslabelSlope.property('isConnected')) {
-            this._focuslabelSlope = this._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x").attr("class", "mouse-focus-label-slope").attr("dy", "1.5em");
+        if (chart._focuslabel) {
+          if (!chart._focuslabelSlope || !chart._focuslabelSlope.property('isConnected')) {
+            chart._focuslabelSlope = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x").attr("class", "mouse-focus-label-slope").attr("dy", "1.5em");
           }
 
-          this._focuslabelSlope.text(item.slope + "%");
+          chart._focuslabelSlope.text(item.slope + "%");
 
-          this._focuslabel.select('.mouse-focus-label-x').attr("dy", "1.5em");
+          chart._focuslabel.select('.mouse-focus-label-x').attr("dy", "1.5em");
         }
 
-        if (this._mouseHeightFocusLabel) {
-          if (!this._mouseSlopeFocusLabel) {
-            this._mouseSlopeFocusLabel = this._mouseHeightFocusLabel.append("svg:tspan").attr("class", "height-focus-slope ");
+        if (chart._mouseHeightFocusLabel) {
+          if (!chart._mouseSlopeFocusLabel) {
+            chart._mouseSlopeFocusLabel = chart._mouseHeightFocusLabel.append("svg:tspan").attr("class", "height-focus-slope ");
           }
 
-          this._mouseSlopeFocusLabel.attr("dy", "1.5em").text(Math.round(item.slope) + "%");
+          chart._mouseSlopeFocusLabel.attr("dy", "1.5em").text(Math.round(item.slope) + "%");
 
-          this._mouseHeightFocusLabel.select('.height-focus-y').attr("dy", "-1.5em");
+          chart._mouseHeightFocusLabel.select('.height-focus-y').attr("dy", "-1.5em");
         }
       });
       this.on("elechart_summary", function () {

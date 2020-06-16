@@ -151,7 +151,7 @@ export const HeightFocusLabel = ({
 	};
 };
 
-export const HeightFocusPoint = ({
+export const HeightFocusMarker = ({
 	theme,
 	xCoord = 0,
 	yCoord = 0,

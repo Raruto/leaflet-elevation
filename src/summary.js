@@ -3,19 +3,19 @@ import * as _ from './utils';
 import * as D3 from './components';
 
 export var Summary = L.Class.extend({
-	initialize: function(options) {
-		let opts = this.options = options;
+	initialize: function(opts) {
+		this.options = opts;
 
-		let summary = this._summary = _.create("div", "elevation-summary " + (this.options.summary ? this.options.summary + "-summary" : ''), {
-			style: 'max-width:' + this.options.width + 'px'
-		});
+		let summary = this._container = _.create("div", "elevation-summary " + (opts.summary ? opts.summary + "-summary" : ''));
+		_.style(summary, 'max-width', opts.width ? opts.width + 'px' : '');
 	},
 
 	render: function() {
-		return container => container.append(() => this._summary);
+		return container => container.append(() => this._container);
 	},
 
-	reset: function(){
-		this._summary.innerHTML = '';
+	reset: function() {
+		this._container.innerHTML = '';
 	}
+
 });
