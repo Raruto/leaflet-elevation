@@ -1678,7 +1678,7 @@
         opts = L.extend({}, this.options.loadData, opts);
         var elem = opts.lazy.parentNode ? opts.lazy : this.placeholder;
 
-        waitHolder(opts.lazy).then(function () {
+        waitHolder(elem).then(function () {
           opts.lazy = false;
 
           _this5.loadData(data, opts);
@@ -1853,18 +1853,19 @@
         }
 
         var data = this._data || [];
+        var i = data.length;
         var eleMax = this._maxElevation || -Infinity;
         var eleMin = this._minElevation || +Infinity;
         var dist = this._distance || 0;
         var curr = new L.LatLng(x, y);
-        var prev = data.length ? data[data.length - 1].latlng : curr;
+        var prev = i > 0 ? data[i - 1].latlng : curr;
 
         var delta = curr.distanceTo(prev) * this._distanceFactor;
 
         dist = dist + Math.round(delta / 1000 * 100000) / 100000; // check and fix missing elevation data on last added point
 
-        if (!this.options.skipNullZCoords && data.length > 0) {
-          var prevZ = data[data.length - 1].z;
+        if (!this.options.skipNullZCoords && i > 0) {
+          var prevZ = data[i - 1].z;
 
           if (isNaN(prevZ)) {
             var lastZ = this._lastValidZ;
@@ -1878,7 +1879,7 @@
               prevZ = currZ;
             }
 
-            if (!isNaN(prevZ)) data[data.length - 1].z = prevZ;else data.splice(data.length - 1, 1);
+            if (!isNaN(prevZ)) data[i - 1].z = prevZ;else data.splice(i - 1, 1);
           }
         }
 
@@ -1904,7 +1905,7 @@
         this.track_info.elevation_min = this._minElevation = eleMin;
 
         this._fireEvt("eledata_updated", {
-          index: data.length - 1
+          index: i
         });
       },
       _addLayer: function _addLayer(layer) {

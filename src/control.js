@@ -210,7 +210,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	loadLazy: function(data, opts) {
 		opts = L.extend({}, this.options.loadData, opts);
 		let elem = opts.lazy.parentNode ? opts.lazy : this.placeholder;
-		_.waitHolder(opts.lazy)
+		_.waitHolder(elem)
 			.then(() => {
 				opts.lazy = false;
 				this.loadData(data, opts)
@@ -358,20 +358,21 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		let data = this._data || [];
+		let i = data.length;
 		let eleMax = this._maxElevation || -Infinity;
 		let eleMin = this._minElevation || +Infinity;
 		let dist = this._distance || 0;
 
 		let curr = new L.LatLng(x, y);
-		let prev = data.length ? data[data.length - 1].latlng : curr;
+		let prev = i > 0 ? data[i - 1].latlng : curr;
 
 		let delta = curr.distanceTo(prev) * this._distanceFactor;
 
 		dist = dist + Math.round(delta / 1000 * 100000) / 100000;
 
 		// check and fix missing elevation data on last added point
-		if (!this.options.skipNullZCoords && data.length > 0) {
-			let prevZ = data[data.length - 1].z;
+		if (!this.options.skipNullZCoords && i > 0) {
+			let prevZ = data[i - 1].z;
 			if (isNaN(prevZ)) {
 				let lastZ = this._lastValidZ;
 				let currZ = z * this._heightFactor;
@@ -382,8 +383,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				} else if (!isNaN(currZ)) {
 					prevZ = currZ;
 				}
-				if (!isNaN(prevZ)) data[data.length - 1].z = prevZ;
-				else data.splice(data.length - 1, 1);
+				if (!isNaN(prevZ)) data[i - 1].z = prevZ;
+				else data.splice(i - 1, 1);
 			}
 		}
 
@@ -410,7 +411,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this.track_info.elevation_max = this._maxElevation = eleMax;
 		this.track_info.elevation_min = this._minElevation = eleMin;
 
-		this._fireEvt("eledata_updated", { index: data.length - 1 });
+		this._fireEvt("eledata_updated", { index: i });
 	},
 
 	_addLayer: function(layer) {
