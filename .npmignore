@@ -1,5 +1,7 @@
+/build
 /examples
 /test
 .jshintrc
 .gitattributes
+.babelrc
 _config.yml
