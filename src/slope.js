@@ -197,12 +197,10 @@ Elevation.addInitHook(function() {
 		this.track_info.slope_max = this._sMax || 0;
 		this.track_info.slope_min = this._sMin || 0;
 
-		this.summaryDiv.querySelector('.minele').insertAdjacentHTML('afterend', '<span class="ascent"><span class="summarylabel">' + L._("Total Ascent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.ascent) + '&nbsp;' +
-			this._yLabel +
-			'</span></span>' + '<span class="descent"><span class="summarylabel">' + L._("Total Descent: ") + '</span><span class="summaryvalue">' + Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel +
-			'</span></span>' + '<span class="minslope"><span class="summarylabel">' + L._("Min Slope: ") + '</span><span class="summaryvalue">' + this.track_info.slope_min + '&nbsp;' + '%' +
-			'</span></span>' + '<span class="maxslope"><span class="summarylabel">' + L._("Max Slope: ") + '</span><span class="summaryvalue">' + this.track_info.slope_max + '&nbsp;' + '%' +
-			'</span></span>');
+		this._summary.append("ascent", L._("Total Ascent: "), Math.round(this.track_info.ascent) + '&nbsp;' + this._yLabel);
+		this._summary.append("descent", L._("Total Descent: "), Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel);
+		this._summary.append("minslope", L._("Min Slope: "), Math.round(this.track_info.slope_min) + '&nbsp;' + '%');
+		this._summary.append("maxslope", L._("Max Slope: "), Math.round(this.track_info.slope_max) + '&nbsp;' + '%');
 	});
 
 	this.on("eledata_clear", function() {

@@ -34,8 +34,8 @@ export var Chart = L.Class.extend({
 			.append("g")
 			.attr("transform", "translate(" + opts.margins.left + "," + opts.margins.top + ")")
 			.call(this._appendGrid())
+			.call(this._appendArea())
 			.call(this._appendAxis())
-			.call(this._appendAreaPath())
 			.call(this._appendFocusable())
 			.call(this._appendLegend());
 
@@ -57,7 +57,7 @@ export var Chart = L.Class.extend({
 
 		this._updateScale();
 		this._updateAxis();
-		this._updateAreaPath();
+		this._updateArea();
 
 		return this;
 	},
@@ -116,7 +116,7 @@ export var Chart = L.Class.extend({
 		// this.fire('axis_updated');
 	},
 
-	_updateAreaPath: function() {
+	_updateArea: function() {
 		let opts = this.options;
 		this._path
 			.call(
@@ -223,7 +223,7 @@ export var Chart = L.Class.extend({
 	/**
 	 * Generate "path".
 	 */
-	_appendAreaPath: function() {
+	_appendArea: function() {
 		return g => g.append('g')
 			.attr("class", "area")
 			.append('path');

@@ -34,8 +34,7 @@ Elevation.addInitHook(function() {
 	this.on("elechart_summary", function() {
 		this.track_info.distance = this._distance || 0;
 
-		this.summaryDiv.innerHTML +=
-			'<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>';
+		this._summary.append("totlen", L._("Total Length: "), this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel);
 	});
 
 	this.on("eledata_clear", function() {
