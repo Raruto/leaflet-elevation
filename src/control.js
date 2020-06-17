@@ -11,6 +11,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
 	options: Options,
+	track_info: {},
 	_data: [],
 	_layers: L.featureGroup(),
 	_chartEnabled: true,
@@ -60,7 +61,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._layers.clearLayers();
 
 		this._data = [];
-		this._distance = 0;
 		this.track_info = {};
 
 		this._fireEvt("eledata_clear");
@@ -113,18 +113,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	initialize: function(options) {
 		this.options = _.deepMerge({}, this.options, options);
-
-		if (this.options.imperial) {
-			this._distanceFactor = this.__mileFactor;
-			this._heightFactor = this.__footFactor;
-			this._xLabel = "mi";
-			this._yLabel = "ft";
-		} else {
-			this._distanceFactor = this.options.distanceFactor;
-			this._heightFactor = this.options.heightFactor;
-			this._xLabel = this.options.xLabel;
-			this._yLabel = this.options.yLabel;
-		}
 
 		this._zFollow = this.options.zFollow;
 
@@ -366,28 +354,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		let data = this._data || [];
 		let i = data.length;
-		let dist = this._distance || 0;
-
-		let curr = new L.LatLng(x, y);
-		let prev = i > 0 ? data[i - 1].latlng : curr;
-
-		let delta = curr.distanceTo(prev) * this._distanceFactor;
-
-		dist = dist + Math.round(delta / 1000 * 100000) / 100000;
-
-		z = z * this._heightFactor;
 
 		data.push({
-			dist: dist,
 			x: x,
 			y: y,
 			z: z,
-			latlng: curr
+			latlng: new L.LatLng(x, y),
 		});
 
 		this._data = data;
-		this.track_info = this.track_info || {};
-		this.track_info.distance = this._distance = dist;
 
 		this._fireEvt("eledata_updated", { index: i });
 	},
@@ -754,11 +729,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Update chart summary.
 	 */
 	_updateSummary: function() {
-		this.track_info = this.track_info || {};
-		this.track_info.distance = this._distance || 0;
-		this.track_info.elevation_max = this._maxElevation || 0;
-		this.track_info.elevation_min = this._minElevation || 0;
-
 		this._summary.reset();
 
 		if (this.options.summary) {

@@ -1435,6 +1435,7 @@
     var Elevation = L.Control.Elevation = L.Control.extend({
       includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
       options: Options,
+      track_info: {},
       _data: [],
       _layers: L.featureGroup(),
       _chartEnabled: true,
@@ -1494,7 +1495,6 @@
         this._layers.clearLayers();
 
         this._data = [];
-        this._distance = 0;
         this.track_info = {};
 
         this._fireEvt("eledata_clear");
@@ -1549,19 +1549,6 @@
        */
       initialize: function initialize(options) {
         this.options = deepMerge({}, this.options, options);
-
-        if (this.options.imperial) {
-          this._distanceFactor = this.__mileFactor;
-          this._heightFactor = this.__footFactor;
-          this._xLabel = "mi";
-          this._yLabel = "ft";
-        } else {
-          this._distanceFactor = this.options.distanceFactor;
-          this._heightFactor = this.options.heightFactor;
-          this._xLabel = this.options.xLabel;
-          this._yLabel = this.options.yLabel;
-        }
-
         this._zFollow = this.options.zFollow;
         if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
         if (this.options.placeholder) this.options.loadData.lazy = this.options.loadData.defer = true;
@@ -1827,24 +1814,13 @@
 
         var data = this._data || [];
         var i = data.length;
-        var dist = this._distance || 0;
-        var curr = new L.LatLng(x, y);
-        var prev = i > 0 ? data[i - 1].latlng : curr;
-
-        var delta = curr.distanceTo(prev) * this._distanceFactor;
-
-        dist = dist + Math.round(delta / 1000 * 100000) / 100000;
-        z = z * this._heightFactor;
         data.push({
-          dist: dist,
           x: x,
           y: y,
           z: z,
-          latlng: curr
+          latlng: new L.LatLng(x, y)
         });
         this._data = data;
-        this.track_info = this.track_info || {};
-        this.track_info.distance = this._distance = dist;
 
         this._fireEvt("eledata_updated", {
           index: i
@@ -2247,11 +2223,6 @@
       _updateSummary: function _updateSummary() {
         var _this10 = this;
 
-        this.track_info = this.track_info || {};
-        this.track_info.distance = this._distance || 0;
-        this.track_info.elevation_max = this._maxElevation || 0;
-        this.track_info.elevation_min = this._minElevation || 0;
-
         this._summary.reset();
 
         if (this.options.summary) {
@@ -2376,10 +2347,49 @@
     });
 
     Elevation.addInitHook(function () {
+      if (this.options.imperial) {
+        this._distanceFactor = this.__mileFactor;
+        this._xLabel = "mi";
+      } else {
+        this._distanceFactor = this.options.distanceFactor;
+        this._xLabel = this.options.xLabel;
+      }
+
       this.on("eledata_updated", function (e) {
         var data = this._data;
         var i = e.index;
-        var z = data[i].z;
+        var dist = this._distance || 0;
+        var curr = data[i].latlng;
+        var prev = i > 0 ? data[i - 1].latlng : curr;
+
+        var delta = curr.distanceTo(prev) * this._distanceFactor;
+
+        dist = dist + Math.round(delta / 1000 * 100000) / 100000;
+        data[i].dist = dist;
+        this.track_info.distance = this._distance = dist;
+      });
+      this.on("elechart_summary", function () {
+        this.track_info.distance = this._distance || 0;
+        this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>';
+      });
+      this.on("eledata_clear", function () {
+        this._distance = 0;
+      });
+    });
+
+    Elevation.addInitHook(function () {
+      if (this.options.imperial) {
+        this._heightFactor = this.__footFactor;
+        this._yLabel = "ft";
+      } else {
+        this._heightFactor = this.options.heightFactor;
+        this._yLabel = this.options.yLabel;
+      }
+
+      this.on("eledata_updated", function (e) {
+        var data = this._data;
+        var i = e.index;
+        var z = data[i].z * this._heightFactor;
         var eleMax = this._maxElevation || -Infinity;
         var eleMin = this._minElevation || +Infinity; // check and fix missing elevation data on last added point
 
@@ -2388,7 +2398,7 @@
 
           if (isNaN(prevZ)) {
             var lastZ = this._lastValidZ;
-            var currZ = z * this._heightFactor;
+            var currZ = z;
 
             if (!isNaN(lastZ) && !isNaN(currZ)) {
               prevZ = (lastZ + currZ) / 2;
@@ -2409,6 +2419,7 @@
           this._lastValidZ = z;
         }
 
+        data[i].z = z;
         this.track_info.elevation_max = this._maxElevation = eleMax;
         this.track_info.elevation_min = this._minElevation = eleMin;
       });
@@ -2421,7 +2432,9 @@
         }));
       });
       this.on("elechart_summary", function () {
-        this.summaryDiv.innerHTML += '<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>' + '<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>' + '<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
+        this.track_info.elevation_max = this._maxElevation || 0;
+        this.track_info.elevation_min = this._minElevation || 0;
+        this.summaryDiv.innerHTML += '<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>' + '<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
       });
       this.on("eledata_clear", function () {
         this._maxElevation = null;

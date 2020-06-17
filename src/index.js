@@ -39,6 +39,7 @@ import * as _ from './utils';
 import * as D3 from './components';
 import { Chart } from './chart';
 import { Elevation } from './control';
+import './distance';
 import './altitude';
 import './slope';
 

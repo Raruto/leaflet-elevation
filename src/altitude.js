@@ -5,10 +5,18 @@ import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
 
+	if (this.options.imperial) {
+		this._heightFactor = this.__footFactor;
+		this._yLabel = "ft";
+	} else {
+		this._heightFactor = this.options.heightFactor;
+		this._yLabel = this.options.yLabel;
+	}
+
 	this.on("eledata_updated", function(e) {
 		let data = this._data;
 		let i = e.index;
-		let z = data[i].z;
+		let z = data[i].z * this._heightFactor;
 
 		let eleMax = this._maxElevation || -Infinity;
 		let eleMin = this._minElevation || +Infinity;
@@ -18,7 +26,7 @@ Elevation.addInitHook(function() {
 			let prevZ = data[i - 1].z;
 			if (isNaN(prevZ)) {
 				let lastZ = this._lastValidZ;
-				let currZ = z * this._heightFactor;
+				let currZ = z;
 				if (!isNaN(lastZ) && !isNaN(currZ)) {
 					prevZ = (lastZ + currZ) / 2;
 				} else if (!isNaN(lastZ)) {
@@ -37,6 +45,8 @@ Elevation.addInitHook(function() {
 			this._lastValidZ = z;
 		}
 
+		data[i].z = z;
+
 		this.track_info.elevation_max = this._maxElevation = eleMax;
 		this.track_info.elevation_min = this._minElevation = eleMin;
 	});
@@ -54,8 +64,10 @@ Elevation.addInitHook(function() {
 	});
 
 	this.on("elechart_summary", function() {
+		this.track_info.elevation_max = this._maxElevation || 0;
+		this.track_info.elevation_min = this._minElevation || 0;
+
 		this.summaryDiv.innerHTML +=
-			'<span class="totlen"><span class="summarylabel">' + L._("Total Length: ") + '</span><span class="summaryvalue">' + this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel + '</span></span>' +
 			'<span class="maxele"><span class="summarylabel">' + L._("Max Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>' +
 			'<span class="minele"><span class="summarylabel">' + L._("Min Elevation: ") + '</span><span class="summaryvalue">' + this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel + '</span></span>';
 	});
