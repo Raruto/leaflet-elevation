@@ -3,3 +3,4 @@ npm-debug.log
 build/*.min.js
 src/*.min.js
 src/*.min.css
+dist/
