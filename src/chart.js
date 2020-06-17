@@ -444,9 +444,16 @@ export var Chart = L.Class.extend({
 	 * Finds a data entry for a given latlng of the map
 	 */
 	_findIndexForLatLng: function(latlng) {
-		return d3
-			.bisector(d => d.latlng)
-			.left(this._data, latlng)
+		let result = null;
+		let d = Infinity;
+		this._data.forEach((item, index) => {
+			let dist = latlng.distanceTo(item.latlng);
+			if (dist < d) {
+				d = dist;
+				result = index;
+			}
+		});
+		return result;
 	},
 
 	/*
