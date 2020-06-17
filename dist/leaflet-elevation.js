@@ -1974,7 +1974,7 @@
           var layer = e.layer;
           var toggleClass = e.type == 'layeradd' ? addClass : removeClass;
           var toggleEvt = layer[e.type == 'layeradd' ? "on" : "off"].bind(layer);
-          toggleClass(layer.getElement(), _this9.options.polyline.className + ' ' + _this9.options.theme);
+          toggleClass(layer.getElement && layer.getElement(), _this9.options.polyline.className + ' ' + _this9.options.theme);
           toggleEvt("mousemove", _this9._mousemoveLayerHandler, _this9);
           toggleEvt("mouseout", _this9._mouseoutHandler, _this9);
         });
@@ -2325,7 +2325,7 @@
         this._chartEnabled = this._chart._area.selectAll('path:not(.hidden)').nodes().length != 0;
 
         this._layers.eachLayer(function (l) {
-          return toggleClass(l.getElement(), _this11.options.polyline.className + ' ' + _this11.options.theme, _this11._chartEnabled);
+          return toggleClass(l.getElement && l.getElement(), _this11.options.polyline.className + ' ' + _this11.options.theme, _this11._chartEnabled);
         });
 
         if (!this._chartEnabled) {

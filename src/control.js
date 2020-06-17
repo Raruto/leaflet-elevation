@@ -514,7 +514,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				let layer = e.layer
 				let toggleClass = e.type == 'layeradd' ? _.addClass : _.removeClass;
 				let toggleEvt = layer[e.type == 'layeradd' ? "on" : "off"].bind(layer);
-				toggleClass(layer.getElement(), this.options.polyline.className + ' ' + this.options.theme);
+				toggleClass(layer.getElement && layer.getElement(), this.options.polyline.className + ' ' + this.options.theme);
 				toggleEvt("mousemove", this._mousemoveLayerHandler, this)
 				toggleEvt("mouseout", this._mouseoutHandler, this);
 			});
@@ -813,7 +813,7 @@ Elevation.addInitHook(function() {
 		_.toggleClass(path, 'hidden', !enable);
 
 		this._chartEnabled = this._chart._area.selectAll('path:not(.hidden)').nodes().length != 0;
-		this._layers.eachLayer(l => _.toggleClass(l.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
+		this._layers.eachLayer(l => _.toggleClass(l.getElement && l.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
 
 		if (!this._chartEnabled) {
 			this._chart._hideDiagramIndicator();
