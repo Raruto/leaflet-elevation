@@ -162,6 +162,7 @@ Elevation.addInitHook(function() {
 		let item = e.data;
 		let xCoordinate = e.xCoord;
 		let chart = this._chart;
+		let marker = this._marker;
 
 		if (chart._focuslabel) {
 			if (!chart._focuslabelSlope || !chart._focuslabelSlope.property('isConnected')) {
@@ -176,9 +177,9 @@ Elevation.addInitHook(function() {
 				.attr("dy", "1.5em");
 		}
 
-		if (chart._mouseHeightFocusLabel) {
+		if (marker._focuslabel) {
 			if (!chart._mouseSlopeFocusLabel) {
-				chart._mouseSlopeFocusLabel = chart._mouseHeightFocusLabel.append("svg:tspan")
+				chart._mouseSlopeFocusLabel = marker._focuslabel.append("svg:tspan")
 					.attr("class", "height-focus-slope ");
 			}
 
@@ -186,7 +187,7 @@ Elevation.addInitHook(function() {
 				.attr("dy", "1.5em")
 				.text(Math.round(item.slope) + "%");
 
-			chart._mouseHeightFocusLabel.select('.height-focus-y')
+			marker._focuslabel.select('.height-focus-y')
 				.attr("dy", "-1.5em");
 		}
 	});

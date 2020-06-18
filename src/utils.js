@@ -275,14 +275,14 @@ export function waitHolder(elem) {
  * A little bit safier than L.DomUtil.addClass
  */
 export function addClass(targetNode, className) {
-	each(className.split(" "), s => { if (targetNode && className) L.DomUtil.addClass(targetNode, s); });
+	if (targetNode) className.split(" ").every(s => s && L.DomUtil.addClass(targetNode, s));
 }
 
 /**
  * A little bit safier than L.DomUtil.removeClass()
  */
 export function removeClass(targetNode, className) {
-	each(className.split(" "), s => { if (targetNode && className) L.DomUtil.removeClass(targetNode, s); });
+	if (targetNode) className.split(" ").every(s => s && L.DomUtil.removeClass(targetNode, s));
 }
 
 export function toggleClass(targetNode, className, conditional) {

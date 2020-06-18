@@ -352,19 +352,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			[x, y] = [y, x];
 		}
 
-		let data = this._data || [];
-		let i = data.length;
-
-		data.push({
+		this._data.push({
 			x: x,
 			y: y,
 			z: z,
-			latlng: new L.LatLng(x, y),
+			latlng: L.latLng(x, y, z),
 		});
 
-		this._data = data;
-
-		this._fireEvt("eledata_updated", { index: i });
+		this._fireEvt("eledata_updated", { index: this._data.length - 1 });
 	},
 
 	_addLayer: function(layer) {
@@ -505,7 +500,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this._renderer) this._renderer.remove()
 		this._renderer = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
 
-		this._marker = (new Marker(this.options));
+		this._marker = new Marker(this.options);
 	},
 
 	/**
