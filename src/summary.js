@@ -20,6 +20,7 @@ export var Summary = L.Class.extend({
 
 	append: function(className, label, value) {
 		this._container.innerHTML += `<span class="${className}"><span class="summarylabel">${label}</span><span class="summaryvalue">${value}</span></span>`;
+		return this;
 	},
 
 });

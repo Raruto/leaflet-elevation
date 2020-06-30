@@ -198,10 +198,11 @@ Elevation.addInitHook(function() {
 		this.track_info.slope_max = this._sMax || 0;
 		this.track_info.slope_min = this._sMin || 0;
 
-		this._summary.append("ascent", L._("Total Ascent: "), Math.round(this.track_info.ascent) + '&nbsp;' + this._yLabel);
-		this._summary.append("descent", L._("Total Descent: "), Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel);
-		this._summary.append("minslope", L._("Min Slope: "), Math.round(this.track_info.slope_min) + '&nbsp;' + '%');
-		this._summary.append("maxslope", L._("Max Slope: "), Math.round(this.track_info.slope_max) + '&nbsp;' + '%');
+		this._summary
+			.append("ascent", L._("Total Ascent: "), Math.round(this.track_info.ascent) + '&nbsp;' + this._yLabel)
+			.append("descent", L._("Total Descent: "), Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel)
+			.append("minslope", L._("Min Slope: "), Math.round(this.track_info.slope_min) + '&nbsp;' + '%')
+			.append("maxslope", L._("Max Slope: "), Math.round(this.track_info.slope_max) + '&nbsp;' + '%');
 	});
 
 	this.on("eledata_clear", function() {

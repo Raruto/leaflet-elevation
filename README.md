@@ -11,7 +11,7 @@ A Leaflet plugin that allows to add elevation profiles using d3js
 
 ---
 
-_For a working example see one of the following examples:_
+_For a working example see one of the following demos:_
 
 - [loading .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation.html)
 - [loading .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
