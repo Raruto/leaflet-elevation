@@ -115,11 +115,17 @@ _For a working example see one of the following demos:_
         // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
         reverseCoords: false,
 
+        // Slope chart profile: true || "summary" || false
+        slope: false,
+
         // Summary track info style: "line" || "multiline" || false
         summary: 'multiline',
 
-        // Toggle the slope chart profile.
-        slope: true,
+        // Toggle chart ruler filter.
+        ruler: true,
+
+        // Toggle chart legend filter.
+        legend: true,
 
       };
 
