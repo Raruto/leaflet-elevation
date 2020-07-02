@@ -61,7 +61,13 @@ export var Options = {
 		weight: 5,
 		lineCap: 'round'
 	},
+	polylineSegments: {
+		className: 'elevation-polyline-segments',
+		color: '#F00',
+		interactive: false,
+	},
 	reverseCoords: false,
+	ruler: true,
 	skipNullZCoords: false,
 	theme: "lightblue-theme",
 	responsive: true,

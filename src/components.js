@@ -267,6 +267,51 @@ export const MouseFocusLabel = ({
 	};
 };
 
+export const Ruler = ({
+	height,
+	width,
+}) => {
+	return g => {
+
+		g.data([{
+				"x": 0,
+				"y": height,
+			}])
+			.attr("transform", d => "translate(" + d.x + "," + d.y + ")");
+
+		g.append("line")
+			.attr("class", "horizontal-drag-line")
+			.attr("x1", 0)
+			.attr("x2", width);
+
+		g.append("text")
+			.attr("class", "horizontal-drag-label")
+			.attr("text-anchor", "end")
+			.attr("x", width - 8)
+			.attr("y", -8)
+
+		g.selectAll()
+			.data([{
+				"type": d3.symbolTriangle,
+				"x": width + 7,
+				"y": 0,
+				"angle": -90,
+				"size": 50
+			}])
+			.enter()
+			.append("path")
+			.attr("class", "horizontal-drag-symbol")
+			.attr("d",
+				d3.symbol()
+				.type(d => d.type)
+				.size(d => d.size)
+			)
+			.attr("transform", d => "translate(" + d.x + "," + d.y + ") rotate(" + d.angle + ")");
+
+		return g;
+	}
+};
+
 export const Scale = ({
 	data,
 	attr,

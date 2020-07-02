@@ -234,6 +234,7 @@ export var Chart = L.Class.extend({
 			return g.append('g')
 				.attr("class", 'focus')
 				.call(this._appendFocusRect())
+				.call(this._appendRuler())
 				.call(this._appendMouseFocusG());
 		};
 	},
@@ -324,6 +325,57 @@ export var Chart = L.Class.extend({
 
 			return legend;
 		};
+	},
+
+	/**
+	 * Generate "ruler".
+	 */
+	_appendRuler: function() {
+		const dragstart = function(d) {
+			this._hideDiagramIndicator();
+			d3.select(".horizontal-drag-label").classed('hidden', false);
+		}
+
+		const dragend = function(d) {
+			let y = d3.select('.horizontal-drag-group').node().transform.baseVal.consolidate().matrix.f;
+			d3.select(".horizontal-drag-label").classed('hidden', y >= this._height() || y <= 0)
+		};
+
+		const dragged = function(d) {
+			let yMax = this._height();
+			let yCoord = d3.mouse(this._container.node())[1];
+			let y = yCoord > 0 ? (yCoord < yMax ? yCoord : yMax) : 0;
+			let z = this._y.invert(y);
+			let formatNum = d3.format(".0f");
+
+			d3.select(".horizontal-drag-group")
+				.attr("transform", d => "translate(" + d.x + "," + y + ")")
+				.classed('active', y < yMax);
+
+			d3.select(".horizontal-drag-label")
+				.text(formatNum(z) + " " + this._yLabel);
+
+			this.fire('ruler_filter', { coords: yCoord < yMax && yCoord > 0 ? this._findCoordsForY(yCoord) : [] });
+		}
+
+		return g => {
+			if (!this.options.ruler) return g;
+
+			this._dragG = g.append('g')
+				.attr('class', 'horizontal-drag-group')
+				.call(
+					D3.Ruler({ height: this._height(), width: this._width() })
+				)
+				.call(
+					d3.drag()
+					.on("start", dragstart.bind(this))
+					.on("drag", dragged.bind(this))
+					.on("end", dragend.bind(this))
+				);
+
+			return g;
+		};
+
 	},
 
 	/**
@@ -429,6 +481,39 @@ export var Chart = L.Class.extend({
 	 */
 	_mouseoutHandler: function() {
 		this.fire("mouse_out");
+	},
+
+	/*
+	 * Finds data entries above a given y-elevation value and returns geo-coordinates
+	 */
+	_findCoordsForY: function(y) {
+		let data = this._data;
+		let z = this._y.invert(y);
+
+		// save indexes of elevation values above the horizontal line
+		const list = data.reduce((array, item, index) => {
+			if (item.z >= z) array.push(index);
+			return array;
+		}, []);
+
+		let start = 0;
+		let next;
+
+		// split index list into blocks of coordinates
+		const coords = list.reduce((array, _, curr) => {
+			next = curr + 1;
+			if (list[next] !== list[curr] + 1 || next === list.length) {
+				array.push(
+					list
+					.slice(start, next)
+					.map(i => data[i].latlng)
+				);
+				start = next;
+			}
+			return array;
+		}, []);
+
+		return coords;
 	},
 
 	/*

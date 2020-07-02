@@ -61,6 +61,31 @@
   paint-order: stroke fill;
 }
 
+.elevation-control.elevation .horizontal-drag-line {
+  stroke: transparent;
+  cursor: row-resize;
+  stroke-width: 2;
+  stroke-dasharray: 5;
+}
+
+.elevation-control.elevation .active .horizontal-drag-line {
+  stroke: #2D1130;
+}
+
+.elevation-control.elevation .horizontal-drag-label {
+  font-weight: 700;
+  fill: #000;
+  paint-order: stroke;
+  stroke: #FFF;
+  stroke-width: 2px;
+  pointer-events: none;
+}
+
+.elevation-control.elevation .horizontal-drag-group {
+  cursor: row-resize;
+  color: #000;
+}
+
 .elevation-control.elevation .mouse-focus-line {
   stroke: #0D1821;
   stroke-width: 1;

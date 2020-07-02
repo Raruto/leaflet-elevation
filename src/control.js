@@ -14,6 +14,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	track_info: {},
 	_data: [],
 	_layers: L.featureGroup(),
+	_markedSegments: L.polyline([]),
 	_chartEnabled: true,
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
@@ -120,6 +121,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this.options.placeholder) this.options.loadData.lazy = this.options.loadData.defer = true;
 
 		if (this.options.legend) this.options.margins.bottom += 30;
+
+		if (this.options.theme) this.options.polylineSegments.className += ' ' + this.options.theme;
+
+		this._markedSegments.setStyle(this.options.polylineSegments);
 	},
 
 	/**
@@ -470,7 +475,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.on('mouse_enter', this._fireEvt.bind('elechart_enter'), this)
 			.on('dragged', this._dragendHandler, this)
 			.on('mouse_move', this._mousemoveHandler, this)
-			.on('mouse_out', this._mouseoutHandler, this);
+			.on('mouse_out', this._mouseoutHandler, this)
+			.on('ruler_filter', this._rulerFilterHandler, this);
 
 		this._fireEvt("elechart_axis");
 		if (this.options.legend) this._fireEvt("elechart_legend");
@@ -670,6 +676,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this.addTo(this._map);
 			}
 		}
+		this._updateMapSegments();
+	},
+
+	/**
+	 * Handles the drag event over the ruler filter.
+	 */
+	_rulerFilterHandler: function(e) {
+		this._updateMapSegments(e.coords);
 	},
 
 	/**
@@ -718,6 +732,16 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			maxElevation: this._maxElevation,
 			options: this.options
 		});
+	},
+
+	/**
+	 * Highlight track segments on the map.
+	 */
+	_updateMapSegments: function(coords) {
+		this._markedSegments.setLatLngs(coords || []);
+		if (this._map && !this._map.hasLayer(this._markedSegments)) {
+			this._markedSegments.addTo(this._map);
+		}
 	},
 
 	/**
