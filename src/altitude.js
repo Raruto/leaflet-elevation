@@ -34,8 +34,8 @@ Elevation.addInitHook(function() {
 				} else if (!isNaN(currZ)) {
 					prevZ = currZ;
 				}
-				if (!isNaN(prevZ)) data[i - 1].z = prevZ;
-				else data.splice(i - 1, 1);
+				if (!isNaN(prevZ)) return data.splice(i - 1, 1);
+				data[i - 1].z = prevZ;
 			}
 		}
 		// skip point if it has not elevation
