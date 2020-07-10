@@ -841,4 +841,59 @@ Elevation.addInitHook(function() {
 		}
 	});
 
+	// Basic canvas renderer support.
+	let oldProto = L.Canvas.prototype._fillStroke;
+	let control = this;
+	L.Canvas.include({
+		_fillStroke: function(ctx, layer) {
+			if (control._layers.hasLayer(layer)) {
+				let theme = control.options.theme.replace('-theme', '');
+				let options = layer.options;
+				options.stroke = true;
+
+				switch (theme) {
+					case 'lightblue':
+						options.color = '#3366CC';
+						break;
+					case 'magenta':
+						options.color = '#FF005E';
+						break;
+					case 'red':
+						options.color = '#F00';
+						break;
+					case 'yellow':
+						options.color = '#FF0';
+						break;
+					case 'purple':
+						options.color = '#732C7B';
+						break;
+					case 'steelblue':
+						options.color = '#4682B4';
+						break;
+					case 'lime':
+						options.color = '#566B13';
+						break;
+					default:
+						if (theme) options.color = theme;
+						else options.stroke = false;
+						break
+				}
+
+				oldProto.call(this, ctx, layer);
+
+				if (options.stroke && options.weight !== 0) {
+					let oldVal = ctx.globalCompositeOperation || 'source-over';
+					ctx.globalCompositeOperation = 'destination-over'
+					ctx.strokeStyle = '#FFF';
+					ctx.lineWidth = options.weight * 1.75;
+					ctx.stroke();
+					ctx.globalCompositeOperation = oldVal;
+				}
+
+			} else {
+				oldProto.call(this, ctx, layer);
+			}
+		}
+	});
+
 });
