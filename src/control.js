@@ -208,7 +208,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.then(() => {
 				opts.lazy = false;
 				this.loadData(data, opts)
-				this.once('eledata_loaded', () => opts.lazy.parentNode.removeChild(elem));
+				this.once('eledata_loaded', () => this.placeholder.parentNode.removeChild(elem));
 			});
 	},
 
@@ -227,7 +227,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		if (this.options.placeholder && !this._data.length) {
 			this.placeholder = _.create('img', 'elevation-placeholder', typeof this.options.placeholder === 'string' ? { src: this.options.placeholder, alt: '' } : this.options.placeholder);
-			_.insert(container, this.placeholder, 'beforebegin');
+			_.insert(container, this.placeholder, 'afterbegin');
 		}
 
 		Elevation._d3LazyLoader = _.lazyLoader(
