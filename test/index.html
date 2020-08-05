@@ -25,16 +25,19 @@
 			height: 25%;
 			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
 		}
+		.elevation-div svg {
+			touch-action: auto;
+		}
 	</style>
 
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@latest/dist/leaflet-src.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@latest/dist/leaflet-ui-src.js"></script>
 
-	<script src='https://unpkg.com/@tmcw/togeojson@4.1.0/dist/togeojson.umd.js'></script>
+	<!-- <script src='https://unpkg.com/@tmcw/togeojson@4.1.0/dist/togeojson.umd.js'></script> -->
 
 	<!-- D3 -->
-	<script src="https://unpkg.com/d3@5.15.0/dist/d3.js"></script>
+	<!-- <script src="https://unpkg.com/d3@5.15.0/dist/d3.js"></script> -->
 
 	<!-- leaflet-gpx -->
 	<!-- <script src="https://unpkg.com/leaflet-gpx@1.5.0/gpx.js"></script> -->
@@ -74,9 +77,11 @@
 					// slope: "summary",
 					slope: true,
 					legend: true,
-					followMarker: false,
+					followMarker: true,
+					// zFollow: 13,
 					ruler: true,
 					// marker: 'position-marker',
+					// dragging: true,
 				},
 			},
 			layersControl: {

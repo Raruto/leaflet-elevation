@@ -702,8 +702,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_setMapView: function(item) {
 		if (!this.options.followMarker || !this._map) return;
 		let zoom = this._map.getZoom();
-		zoom = zoom < this._zFollow ? this._zFollow : zoom;
-		this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
+		if("number" === typeof this._zFollow) {
+			zoom = zoom < this._zFollow ? this._zFollow : zoom;
+			this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
+		} else if (!this._map.getBounds().contains(item.latlng)) {
+			this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
+		}
 	},
 
 	/**

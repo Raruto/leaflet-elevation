@@ -85,5 +85,5 @@ export var Options = {
 	yAxisMin: undefined,
 	yLabel: "m",
 	yTicks: undefined,
-	zFollow: 13,
+	zFollow: false,
 };
