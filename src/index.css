@@ -28,7 +28,7 @@
   border-radius: 5px;
   overflow: visible;
   display: block;
-  touch-action: auto;
+  touch-action: none;
 }
 
 .elevation-control.elevation .axis line,
