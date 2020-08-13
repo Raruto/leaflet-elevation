@@ -702,7 +702,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_setMapView: function(item) {
 		if (!this.options.followMarker || !this._map) return;
 		let zoom = this._map.getZoom();
-		if("number" === typeof this._zFollow) {
+		if ("number" === typeof this._zFollow) {
 			zoom = zoom < this._zFollow ? this._zFollow : zoom;
 			this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
 		} else if (!this._map.getBounds().contains(item.latlng)) {
@@ -834,14 +834,21 @@ Elevation.addInitHook(function() {
 	});
 
 	this.on('eledata_loaded', function(e) {
+		let map = this._map;
 		let layer = e.layer;
-		if (this._map) {
-			this._map.once('layeradd', function(e) {
-				this.fitBounds(layer.getBounds());
-			}, this);
-			layer.addTo(this._map);
-		} else {
+		if (!map) {
 			console.warn("Undefined elevation map object");
+			return;
+		}
+		map.once('layeradd', function(e) {
+			this.fitBounds(layer.getBounds());
+		}, this);
+		layer.addTo(map);
+		if (L.GeometryUtil && map.almostOver && map.almostOver.enabled() && !L.Browser.mobile) {
+			map.almostOver.addLayer(layer);
+			map
+				.on('almost:move', (e) => this._mousemoveLayerHandler(e))
+				.on('almost:out', (e) => this._mouseoutHandler(e));
 		}
 	});
 
