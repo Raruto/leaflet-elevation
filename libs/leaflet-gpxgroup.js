@@ -104,6 +104,7 @@ L.GPX.include(L.Mixin.Selectable);
 
 L.GpxGroup = L.Class.extend({
   options: {
+    async: true,
     highlight: {
       color: '#ff0',
       opacity: 1,
@@ -201,7 +202,7 @@ L.GpxGroup = L.Class.extend({
     };
 
     var route = new L.GPX(data, {
-      async: true,
+      async: this.options.async,
       marker_options: marker_style,
       polyline_options: line_style
     });

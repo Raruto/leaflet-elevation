@@ -17,48 +17,15 @@
 		}
 	</style>
 
-	<!-- D3.js -->
-	<script src="https://unpkg.com/d3@4.13.0/build/d3.min.js" charset="utf-8"></script>
-
 	<!-- Leaflet (JS/CSS) -->
-	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.2/dist/leaflet.css" />
-	<script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
-	<!-- leaflet-geometryutil -->
-	<script src="https://unpkg.com/leaflet-geometryutil@0.9.1/src/leaflet.geometryutil.js"></script>
-
-	<!-- leaflet-distance-marker -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@0.3.9/libs/leaflet-distance-marker.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@0.3.9/libs/leaflet-distance-marker.min.js"></script>
-
-	<!-- leaflet-gpx -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
-
-	<!-- leaflet-gpxgroup -->
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@0.3.9/libs/leaflet-gpxgroup.min.js"></script>
-
-	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com//@raruto/leaflet-elevation@0.3.4/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@0.3.9/leaflet-elevation.min.js"></script>
-
-	<!-- leaflet-minimap -->
-	<link rel="stylesheet" href="https://unpkg.com/leaflet-minimap@3.6.1/dist/Control.MiniMap.min.css" />
-	<script src="https://unpkg.com/leaflet-minimap@3.6.1/dist/Control.MiniMap.min.js"></script>
-
-	<!-- leaflet-locatecontrol -->
-	<link rel="stylesheet" href="https://unpkg.com/leaflet.locatecontrol@0.67.0/dist/L.Control.Locate.min.css" />
-	<script src="https://unpkg.com/leaflet.locatecontrol@0.67.0/dist/L.Control.Locate.min.js"></script>
-
-	<!-- leaflet-pegman -->
-	<link rel="stylesheet" href="https://unpkg.com/leaflet-pegman@0.0.8/leaflet-pegman.css" />
-	<script src="https://unpkg.com/leaflet-pegman@0.0.8/leaflet-pegman.js"></script>
+	<!-- Leaflet-UI -->
+	<script src="https://unpkg.com/leaflet-ui@0.4.6/dist/leaflet-ui.js"></script>
 
 	<style>
-		.leaflet-control-locate a {
-			background-image: url(https://unpkg.com/@raruto/leaflet-elevation@0.3.9/images/elevation-locate.png);
-		}
 
-		.leaflet-control-layers-list {
+		.leaflet-right .leaflet-control-layers-list {
 			max-width: 250px;
 			max-height: 25vh;
 			overflow: auto;
@@ -77,17 +44,6 @@
 			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
 		}
 
-		.data-summary {
-			font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
-			font-size: 12px;
-			position: absolute;
-			bottom: 0;
-			left: 45px;
-		}
-
-		.data-summary .summaryvalue {
-			font-weight: bold;
-		}
 		.chart-placeholder {
 			top: 20%;
 			position: absolute;
@@ -108,98 +64,37 @@
 	<div id="map"></div>
 	<div id="elevation-div" class="leaflet-control elevation"><p class="chart-placeholder">move mouse over a track...</p></div>
 
-	<div id="data-summary" class="data-summary"><span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">0</span></span> &mdash; <span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">0</span></span>
-		&mdash; <span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">0</span></span></div>
-
 	<script>
 		var opts = {
 			map: {
 				center: [41.4583, 12.7059],
 				zoom: 5,
-				zoomControl: false,
-			},
-			zoomControl: {
-				position: 'bottomright',
-			},
-			otmLayer: {
-				url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-				options: {
-					maxZoom: 17,
-					attribution: 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-				},
-			},
-			osmLayer: {
-				url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-				options: {
-					maxZoom: 19,
-					attribution: 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-				}
-			},
-			satelliteLayer: {
-				url: 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-				options: {
-					maxZoom: 18,
-					attribution: '&copy; <a href="http://www.esri.com/">Esri</a>',
-				},
-			},
-			layersControl: {
-				options: {
-					position: 'topleft',
-					collapsed: false,
-				},
-			},
-			scaleControl: {
-				options: {
-					width: 200,
-					position: 'bottomright',
-					imperial: false,
-				},
-			},
-			miniMapControl: {
-				options: {
-					position: 'bottomleft',
-					toggleDisplay: false,
-					width: 75,
-					height: 75,
-					aimingRectOptions: {
-						color: '#2d2d2d',
-						weight: 0.1,
-					},
-					shadowRectOptions: {
-						color: '#000000',
-						weight: 0.5,
-						opacity: 0,
-						fillOpacity: 0,
-					},
-				},
-			},
-			pegmanControl: {
-				options: {
-					position: 'bottomright',
-					clickableStreetViewLayer: true,
-					theme: "leaflet-pegman-v3-small",
-				},
-			},
-			locateControl: {
-				options: {
-					position: "bottomright",
-				},
+				mapTypeId: 'topo',
+				fullscreenControl: false,
+				searchControl: false,
+				loadingControl: false,
+				plugins: [
+					"leaflet-geometryutil@0.9.1/src/leaflet.geometryutil.js",
+					"@raruto/leaflet-elevation@1.3.6/dist/leaflet-elevation.min.css",
+					"@raruto/leaflet-elevation@1.3.6/dist/leaflet-elevation.min.js",
+					"@raruto/leaflet-elevation@1.3.6/libs/leaflet-gpxgroup.min.js",
+					"@raruto/leaflet-elevation@1.3.6/libs/leaflet-distance-marker.min.css",
+					"@raruto/leaflet-elevation@1.3.6/libs/leaflet-distance-marker.min.js",
+				],
 			},
 			points: {
-				options: {
-					icon: {
-						iconUrl: 'https://unpkg.com/@raruto/leaflet-elevation@0.3.9/images/elevation-poi.png',
-						iconSize: [12, 12],
-					},
+				icon: {
+					iconUrl: 'https://unpkg.com/@raruto/leaflet-elevation@1.3.5/images/elevation-poi.png',
+					iconSize: [12, 12],
 				},
 			},
 			elevation: {
-				options: {
-					theme: 'yellow-theme',
-					// width: 500,
-					detachedView: true,
-					elevationDiv: '#elevation-div',
-				},
+				theme: "yellow-theme",
+				detachedView: true,
+				elevationDiv: '#elevation-div',
+				followPositionMarker: true,
+				zFollow: 15,
+				legend: false,
 			},
 		};
 
@@ -251,64 +146,32 @@
 		];
 
 		var map = L.map('map', opts.map);
+		var routes;
 
-		var baseLayers = {};
+		map.on('plugins_loaded', function(e) {
 
-		baseLayers["ESRI World Imagery"] = L.tileLayer(opts.satelliteLayer.url, opts.satelliteLayer.options);
-		baseLayers["OpenTopoMap"] = new L.TileLayer(opts.otmLayer.url, opts.otmLayer.options);
-		baseLayers["OpenStreetMap"] = new L.TileLayer(opts.osmLayer.url, opts.osmLayer.options);
+			routes = L.gpxGroup(tracks, {
+				points: points,
+				points_options: opts.points,
+				elevation: true,
+				elevation_options: opts.elevation,
+				legend: true,
+				distanceMarkers: false,
+			});
 
-		var controlZoom = new L.Control.Zoom(opts.zoomControl);
-		var controlLayer = L.control.layers(baseLayers, null, opts.layersControl.options);
-		var controlScale = L.control.scale(opts.scaleControl.options);
-		var controlMiniMap = new L.Control.MiniMap(new L.TileLayer(opts.osmLayer.url, opts.osmLayer.options), opts.miniMapControl.options);
-		var controlPegman = new L.Control.Pegman(opts.pegmanControl.options);
-		var controlLocate = L.control.locate(opts.locateControl.options);
+			map.on('eledata_added eledata_clear', function(e) {
+				var p = document.querySelector(".chart-placeholder");
+				if(p) {
+					p.style.display = e.type=='eledata_added' ? 'none' : '';
+				}
+			});
 
-		var routes = L.gpxGroup(tracks, {
-			points: points,
-			points_options: opts.points.options,
-			elevation: true,
-			elevation_options: {
-				theme: "yellow-theme",
-				detachedView: true,
-				elevationDiv: '#elevation-div',
-				followPositionMarker: true,
-				zFollow: 15,
-			},
-			legend: true,
-			distanceMarkers: false,
+			routes.addTo(map);
+
+			map.attributionControl.addAttribution('Map Data: &copy; <a href="https://github.com/adoroszlai">Attila Doroszlai</a> (<a href="https://github.com/adoroszlai/joebed/blob/gh-pages/LICENSE.md">MIT License</a>)');
+
 		});
 
-		map.on('eledata_added eledata_clear', function(e) {
-			var p = document.querySelector(".chart-placeholder");
-			if(p) {
-				p.style.display = e.type=='eledata_added' ? 'none' : '';
-			}
-		});
-
-		map.on('eledata_added', function(e) {
-			var q = document.querySelector.bind(document);
-			var track = e.track_info;
-
-			//controlLayer.addOverlay(e.layer, e.name);
-			q('.totlen .summaryvalue').innerHTML = track.distance.toFixed(2) + " km";
-			q('.maxele .summaryvalue').innerHTML = track.elevation_max.toFixed(2) + " m";
-			q('.minele .summaryvalue').innerHTML = track.elevation_min.toFixed(2) + " m";
-		});
-
-		controlLayer.addTo(map);
-		controlScale.addTo(map);
-		controlZoom.addTo(map);
-		controlPegman.addTo(map);
-		controlLocate.addTo(map);
-		controlMiniMap.addTo(map);
-
-		routes.addTo(map);
-
-		map.addLayer(baseLayers["OpenTopoMap"]);
-
-		map.attributionControl.addAttribution('Map Data: &copy; <a href="https://github.com/adoroszlai">Attila Doroszlai</a> (<a href="https://github.com/adoroszlai/joebed/blob/gh-pages/LICENSE.md">MIT License</a>)');
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"

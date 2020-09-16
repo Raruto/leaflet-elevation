@@ -57,9 +57,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Reset data and display
 	 */
 	clear: function() {
-		this._marker.remove();
-		this._chart.clear();
-		this._layers.clearLayers();
+		if(this._marker) this._marker.remove();
+		if(this._chart) this._chart.clear();
+		if(this._layers) this._layers.clearLayers();
 
 		this._data = [];
 		this.track_info = {};
