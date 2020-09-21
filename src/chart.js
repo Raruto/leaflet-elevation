@@ -333,12 +333,12 @@ export var Chart = L.Class.extend({
 	_appendRuler: function() {
 		const dragstart = function(d) {
 			this._hideDiagramIndicator();
-			d3.select(".horizontal-drag-label").classed('hidden', false);
+			this._container.select(".horizontal-drag-label").classed('hidden', false);
 		}
 
 		const dragend = function(d) {
-			let y = d3.select('.horizontal-drag-group').node().transform.baseVal.consolidate().matrix.f;
-			d3.select(".horizontal-drag-label").classed('hidden', y >= this._height() || y <= 0)
+			let y = this._container.select('.horizontal-drag-group').node().transform.baseVal.consolidate().matrix.f;
+			this._container.select(".horizontal-drag-label").classed('hidden', y >= this._height() || y <= 0)
 		};
 
 		const dragged = function(d) {
@@ -348,11 +348,11 @@ export var Chart = L.Class.extend({
 			let z = this._y.invert(y);
 			let formatNum = d3.format(".0f");
 
-			d3.select(".horizontal-drag-group")
+			this._container.select(".horizontal-drag-group")
 				.attr("transform", d => "translate(" + d.x + "," + y + ")")
 				.classed('active', y < yMax);
 
-			d3.select(".horizontal-drag-label")
+			this._container.select(".horizontal-drag-label")
 				.text(formatNum(z) + " " + this._yLabel);
 
 			this.fire('ruler_filter', { coords: yCoord < yMax && yCoord > 0 ? this._findCoordsForY(yCoord) : [] });
