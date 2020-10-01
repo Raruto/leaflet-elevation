@@ -344,14 +344,22 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Parsing of GeoJSON data lines and their elevation in z-coordinate
 	 */
 	_addGeoJSONData: function(coords) {
-		_.each(coords, point => this._addPoint(point[1], point[0], point[2]));
+		_.each(coords, point => {
+			this._addPoint(point[1], point[0], point[2]);
+			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
+		});
+		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
 	},
 
 	/*
 	 * Parsing function for GPX data and their elevation in z-coordinate
 	 */
 	_addGPXData: function(coords) {
-		_.each(coords, point => this._addPoint(point.lat, point.lng, point.meta.ele));
+		_.each(coords, point => {
+			this._addPoint(point.lat, point.lng, point.meta.ele);
+			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
+		});
+		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
 	},
 
 	/*
