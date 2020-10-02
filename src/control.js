@@ -11,11 +11,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
 	options: Options,
-	// track_info: {},
-	// _data: [],
-	// _layers: L.featureGroup(),
-	// _markedSegments: L.polyline([]),
-	// _chartEnabled: true,
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
 	__D3: 'https://unpkg.com/d3@5.15.0/dist/d3.min.js',

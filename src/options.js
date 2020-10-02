@@ -73,6 +73,7 @@ export var Options = {
 	responsive: true,
 	summary: 'inline',
 	slope: false,
+	time: false,
 	sDeltaMax: undefined,
 	sInterpolation: "curveStepAfter",
 	sRange: undefined,

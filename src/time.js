@@ -8,13 +8,10 @@ Elevation.addInitHook(function() {
 	if (!this.options.time) return;
 
 	if (!this.options.formatTime) {
-		this.options.formatTime = function(time) {
-			return (new Date(time).toLocaleString()).replaceAll('/', '-').replaceAll(',', ' ');
-		};
+		this.options.formatTime = (time) => new Date(time).toLocaleString().replaceAll('/', '-').replaceAll(',', ' ');
 	}
 
 	this.on("elechart_change", function(e) {
-
 		let chart = this._chart;
 		let item = e.data;
 
@@ -26,7 +23,6 @@ Elevation.addInitHook(function() {
 						.attr("class", "mouse-focus-label-time")
 						.attr("dy", "1.5em");
 				}
-
 				chart._focuslabelTime.text(this.options.formatTime(item.t));
 				chart._focuslabel.select('.mouse-focus-label-x').attr("dy", "1.5em");
 			}
