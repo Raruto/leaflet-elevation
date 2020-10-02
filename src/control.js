@@ -118,6 +118,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._markedSegments = L.polyline([]);
 		this._chartEnabled = true,
 
+		this.track_info = {};
+
 		this.options = _.deepMerge({}, this.options, options);
 
 		this._zFollow = this.options.zFollow;

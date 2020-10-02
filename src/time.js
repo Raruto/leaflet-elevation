@@ -9,14 +9,7 @@ Elevation.addInitHook(function() {
 
 	if (!this.options.formatTime) {
 		this.options.formatTime = function(time) {
-			var u = new Date(time);
-			return ('0' + u.getDate()).slice(-2) +
-				'-' + ('0' + u.getMonth()).slice(-2) +
-				'-' + u.getUTCFullYear() +
-				' ' + ('0' + u.getHours()).slice(-2) +
-				':' + ('0' + u.getMinutes()).slice(-2) +
-				':' + ('0' + u.getSeconds()).slice(-2)
-			//+'.' + (u.getMilliseconds() / 1000).toFixed(3).slice(2, 5)
+			return (new Date(time).toLocaleString()).replaceAll('/', '-').replaceAll(',', ' ');
 		};
 	}
 
