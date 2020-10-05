@@ -66,8 +66,9 @@
 				preferCanvas: true,
 			},
 			elevationControl: {
+				url: 'multi.gpx',
 				// url: "../examples/via-emilia.gpx",
-				url: "../examples/demo.geojson",
+				// url: "../examples/demo.geojson",
 				// url: "../examples/waypoints.gpx",
 				// url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
 				// url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
@@ -79,6 +80,7 @@
 					detached: true,
 					summary: "inline",
 					// slope: "summary",
+					time: true,
 					slope: true,
 					legend: true,
 					followMarker: true,
@@ -102,10 +104,24 @@
 		controlElevation.load(opts.elevationControl.url);
 		controlElevation.addTo(map);
 
-		map.on('eledata_loaded', function(e) {
-			if (!controlLayer._map) controlLayer.addTo(map);
-			controlLayer.addOverlay(e.layer, e.name);
-		});
+		// map.on('eledata_loaded', function(e) {
+		// 	if (!controlLayer._map) controlLayer.addTo(map);
+		// 		controlElevation._gaps = controlElevation._data.reduce(function(array, item ) {
+		// 		if (item.trkEnd) array.push([]);
+		// 		if (array.length && (item.trkStart || item.trkEnd)) array[array.length-1].push(item);
+		// 		return array;
+		// 	}, []);
+		// 	controlLayer.addOverlay(e.layer, e.name);
+		// });
+		//
+		// controlElevation.on('eletrack_added', function(e) {
+		// 	this._data[0].trkStart = true;
+		// 	this._data[this._data.length-1].trkEnd = true;
+		// 	this.once('eledata_updated', function(e){
+		// 		this._data[this._data.length-1].trkStart = true;
+		// 	});
+		// 	console.log(this._data[this._data.length-1], e);
+		// });
 	</script>
 
 	<script>

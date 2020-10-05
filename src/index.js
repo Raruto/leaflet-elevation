@@ -41,6 +41,7 @@ import { Chart } from './chart';
 import { Elevation } from './control';
 import './distance';
 import './altitude';
+import './time';
 import './slope';
 
 Elevation.Utils = _;

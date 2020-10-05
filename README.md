@@ -119,6 +119,9 @@ _For a working example see one of the following demos:_
         // Slope chart profile: true || "summary" || false
         slope: false,
 
+        // Time stamp labels.
+        time: false,
+
         // Summary track info style: "line" || "multiline" || false
         summary: 'multiline',
 

@@ -11,11 +11,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
 	options: Options,
-	// track_info: {},
-	// _data: [],
-	// _layers: L.featureGroup(),
-	// _markedSegments: L.polyline([]),
-	// _chartEnabled: true,
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
 	__D3: 'https://unpkg.com/d3@5.15.0/dist/d3.min.js',
@@ -117,6 +112,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._layers = L.featureGroup();
 		this._markedSegments = L.polyline([]);
 		this._chartEnabled = true,
+
+		this.track_info = {};
 
 		this.options = _.deepMerge({}, this.options, options);
 
@@ -344,14 +341,22 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Parsing of GeoJSON data lines and their elevation in z-coordinate
 	 */
 	_addGeoJSONData: function(coords) {
-		_.each(coords, point => this._addPoint(point[1], point[0], point[2]));
+		_.each(coords, point => {
+			this._addPoint(point[1], point[0], point[2]);
+			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
+		});
+		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
 	},
 
 	/*
 	 * Parsing function for GPX data and their elevation in z-coordinate
 	 */
 	_addGPXData: function(coords) {
-		_.each(coords, point => this._addPoint(point.lat, point.lng, point.meta.ele));
+		_.each(coords, point => {
+			this._addPoint(point.lat, point.lng, point.meta.ele);
+			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
+		});
+		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
 	},
 
 	/*
