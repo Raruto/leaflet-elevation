@@ -24,10 +24,8 @@ Elevation.addInitHook(function() {
 						.attr("dy", "1.5em");
 				}
 				chart._focuslabelTime.text(this.options.formatTime(item.t));
-				chart._focuslabel.select('.mouse-focus-label-x').attr("dy", "1.5em");
 			}
 		}
-
 	});
 
 	this.on('elepoint_added', function(e) {
