@@ -74,6 +74,7 @@ export var Options = {
 	summary: 'inline',
 	slope: false,
 	time: false,
+	timeFormat: false,
 	sDeltaMax: undefined,
 	sInterpolation: "curveStepAfter",
 	sRange: undefined,
