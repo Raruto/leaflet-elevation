@@ -22,7 +22,7 @@ Elevation.addInitHook(function () {
 				data: this._data,
 				range: [this._height(), 0],
 				attr: "speed",
-				min: -1,
+				min: 0,
 				max: +1,
 				forceBounds: opts.forceAxisBounds
 			});
@@ -86,9 +86,12 @@ Elevation.addInitHook(function () {
 			var deltatime = currtime - prevtime;
 			var speed = 0;
 			if (!isNaN(z)) {
-				//TODO add Options: speed Limit
 				//TODO add Summary: Speed Average && Max
 				speed = (delta > 0 && deltatime > 0) ? ( delta / deltatime )*3.6 : 0;
+				if (this.options.sLimit) {
+					var sLimit = this.options.sLimit;
+					speed = (sLimit) ? ((sLimit > speed) ? speed : sLimit) : speed;
+				}	
 			} 
 			speed = L.Util.formatNum(speed,2);
 			this._data[e.index].speed = speed;
