@@ -2,6 +2,10 @@
   visibility: hidden;
 }
 
+.legend {
+  cursor: pointer;
+}
+
 .leaflet-container {
   z-index: 0;
   /* prevent overlapping the .elevation-detached chart */
