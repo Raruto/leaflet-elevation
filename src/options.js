@@ -73,6 +73,8 @@ export var Options = {
 	responsive: true,
 	summary: 'inline',
 	slope: false,
+	speed: false,
+	sLimit: undefined,
 	time: false,
 	timeFormat: false,
 	sDeltaMax: undefined,
