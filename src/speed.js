@@ -76,7 +76,9 @@ Elevation.addInitHook(function () {
 	
 	this.on('elepoint_added', function(e) {
 		if (e.point.meta) {
-			//this._data[e.index].t = e.point.meta.time; // if not time hook
+			if (!this.options.time){
+				this._data[e.index].t = e.point.meta.time; 
+			}
 			var z = this._data[e.index].z;
 			var curr = this._data[e.index].latlng;
 			var currtime = +this._data[e.index].t /1000;
@@ -103,21 +105,20 @@ Elevation.addInitHook(function () {
         var chart = this._chart;
         var marker = this._marker;
 
-		if (chart._focuslabel) {
-			if (!chart._focuslabelSpeed || !chart._focuslabelSpeed.property('isConnected')) {
-				chart._focuslabelSpeed = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x").attr("class", "mouse-focus-label-speed").attr("dy", "1.5em");
-			}
-			chart._focuslabelSpeed.text(item.speed + " " + L._("km/h"));
-			chart._focuslabel.select('.mouse-focus-label-x').attr("dy", "1.5em");
+	if (chart._focuslabel) {
+		if (!chart._focuslabelSpeed || !chart._focuslabelSpeed.property('isConnected')) {
+			chart._focuslabelSpeed = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x").attr("class", "mouse-focus-label-speed").attr("dy", "1.5em");
+		}
+		chart._focuslabelSpeed.text(item.speed + " " + L._("km/h"));
+		chart._focuslabel.select('.mouse-focus-label-x').attr("dy", "1.5em");
         }
 
         if (marker._focuslabel) {
-			if (!chart._mouseSpeedFocusLabel) {
-				chart._mouseSpeedFocusLabel = marker._focuslabel.append("svg:tspan").attr("class", "height-focus-speed ");
-			}
-			chart._mouseSpeedFocusLabel.attr("dy", "1.5em").text(Math.round(item.speed) + " " + L._("km/h"));
-			marker._focuslabel.select('.height-focus-y').attr("dy", "-1.5em");
-		  
+		if (!chart._mouseSpeedFocusLabel) {
+			chart._mouseSpeedFocusLabel = marker._focuslabel.append("svg:tspan").attr("class", "height-focus-speed ");
+		}
+		chart._mouseSpeedFocusLabel.attr("dy", "1.5em").text(Math.round(item.speed) + " " + L._("km/h"));
+		marker._focuslabel.select('.height-focus-y').attr("dy", "-1.5em");	  
         }		
     });
 });
