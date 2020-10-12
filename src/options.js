@@ -76,6 +76,7 @@ export var Options = {
 	speed: false,
 	sLimit: undefined,
 	time: false,
+	timeFactor: 3600,
 	timeFormat: false,
 	sDeltaMax: undefined,
 	sInterpolation: "curveStepAfter",
