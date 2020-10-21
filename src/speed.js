@@ -114,18 +114,18 @@ Elevation.addInitHook(function() {
 
 		let deltaT = currT - prevT;
 
-		let sMax = this._maxSpeed || 0; // Speed Max
-		let sMin = this._minSpeed || 0; // Speed Min
+		let sMax = this._maxSpeed || -Infinity; // Speed Max
+		let sMin = this._minSpeed || +Infinity; // Speed Min
 		let sAvg = this._avgSpeed || 0; // Speed Avg
 		let speed = 0;
 
 		if (deltaT > 0) {
-			let currX = data[i].latlng;
-			let prevX = i > 0 ? data[i - 1].latlng : currX;
+			let curr = data[i].latlng;
+			let prev = i > 0 ? data[i - 1].latlng : curr;
 
-			let deltaX = currX.distanceTo(prevX) * this._distanceFactor;
+			let delta = curr.distanceTo(prev) * this._distanceFactor;
 
-			speed = Math.abs((deltaX / deltaT) * this._timeFactor);
+			speed = Math.abs((delta / deltaT) * this._timeFactor);
 		}
 
 		// Try to smooth "crazy" speed values.
