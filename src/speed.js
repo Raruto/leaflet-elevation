@@ -44,9 +44,9 @@ Elevation.addInitHook(function() {
 				height: this._height(),
 				scale: speed.y,
 				ticks: this.options.yTicks,
-				tickPadding: this.options.slope ? 36 : 18,
+				tickPadding: this.options.slope === true ? 36 : 18,
 				label: speed.label,
-				labelX: this.options.slope ? 50 : 35,
+				labelX: this.options.slope === true ? 50 : 35,
 				labelY: 3
 			});
 
@@ -78,7 +78,7 @@ Elevation.addInitHook(function() {
 						margins: this.options.margins
 					}));
 
-			if (this.options.slope) {
+			if (this.options.slope === true) {
 				this._altitudeLegend
 					.attr("transform", "translate(-100, 0)");
 
