@@ -53,7 +53,7 @@ Elevation.addInitHook(function() {
 			this._chart._axis.call(speed.axis);
 		});
 
-		this.on("elechart_updated", function() {
+		this.on("elechart_area", function() {
 			speed.area = D3.Area({
 				interpolation: opts.sInterpolation,
 				data: this._data,

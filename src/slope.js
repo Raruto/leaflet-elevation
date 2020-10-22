@@ -60,7 +60,7 @@ Elevation.addInitHook(function() {
 			this._chart._axis.call(slope.axis);
 		});
 
-		this.on("elechart_updated", function() {
+		this.on("elechart_area", function() {
 			slope.area = D3.Area({
 				interpolation: opts.sInterpolation,
 				data: this._data,
