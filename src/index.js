@@ -42,8 +42,8 @@ import { Elevation } from './control';
 import './distance';
 import './altitude';
 import './time';
-import './speed';
 import './slope';
+import './speed';
 import './acceleration';
 
 Elevation.Utils = _;
