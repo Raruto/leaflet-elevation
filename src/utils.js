@@ -37,6 +37,43 @@ export function formatNum(num, dec, sep) {
 	return num.toFixed(dec).toString().split(".").join(sep || ".");
 }
 
+export function formatTime(t) {
+	const SEC = 1000;
+	const MIN = SEC * 60;
+	const HOUR = MIN * 60;
+	const DAY = HOUR * 24;
+
+	let s = '';
+
+	if (t >= DAY) {
+		s += Math.floor(t / DAY) + 'd ';
+		t = t % DAY;
+	}
+
+	if (t >= HOUR) {
+		s += Math.floor(t / HOUR) + ':';
+		t = t % HOUR;
+	}
+
+	if (t >= MIN) {
+		s += Math.floor(t / MIN).toString().padStart(2, 0) + "'";
+		t = t % MIN;
+	}
+
+	if (t >= SEC) {
+		s += Math.floor(t / SEC).toString().padStart(2, 0);
+		t = t % SEC;
+	}
+
+	let msec = Math.round(Math.floor(t) * 1000) / 1000;
+	if (msec) s += '.' + msec.toString().replace(/0+$/, '');
+
+  if (!s) s = "0.0";
+	s += '"';
+
+	return s;
+}
+
 /**
  * Simple GeoJSON data loader.
  */

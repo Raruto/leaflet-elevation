@@ -2,6 +2,10 @@
   visibility: hidden;
 }
 
+.legend {
+  cursor: pointer;
+}
+
 .leaflet-container {
   z-index: 0;
   /* prevent overlapping the .elevation-detached chart */
@@ -34,7 +38,7 @@
 .elevation-control.elevation .axis line,
 .elevation-control.elevation .axis path {
   stroke: #2D1130;
-  stroke-width: 2;
+  stroke-width: 1;
   fill: none;
 }
 
@@ -65,12 +69,12 @@
 .elevation-control.elevation .horizontal-drag-line {
   stroke: transparent;
   cursor: row-resize;
-  stroke-width: 2;
+  stroke-width: 1.1;
   stroke-dasharray: 5;
 }
 
 .elevation-control.elevation .active .horizontal-drag-line {
-  stroke: #2D1130;
+  stroke: #000;
 }
 
 .elevation-control.elevation .horizontal-drag-label {
@@ -97,11 +101,14 @@
   fill: #000;
   fill-opacity: 0.75;
   pointer-events: none;
+  stroke-width: 1;
+  stroke: #444;
 }
 
 .elevation-control.elevation .mouse-focus-label-text {
   fill: #FFF;
   pointer-events: none;
+  font-size: 10px;
 }
 
 .elevation-control.elevation .mouse-drag {
@@ -208,7 +215,7 @@
 
 .leaflet-elevation-pane .height-focus-label,
 .leaflet-overlay-pane .height-focus-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   fill: #000;
   paint-order: stroke;
