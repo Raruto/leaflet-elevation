@@ -42,7 +42,8 @@ export const Axis = ({
 	tickFormat,
 	label,
 	labelX,
-	labelY
+	labelY,
+	name = ""
 }) => {
 	return g => {
 		let [w, h] = [0, 0];
@@ -63,7 +64,7 @@ export const Axis = ({
 			.tickFormat(tickFormat);
 
 		let axisGroup = g.append("g")
-			.attr("class", [axis, type, position].join(" "))
+			.attr("class", [axis, type, position, name].join(" "))
 			.attr("transform", "translate(" + w + "," + h + ")")
 			.call(axisScale);
 

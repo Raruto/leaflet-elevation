@@ -52,9 +52,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Reset data and display
 	 */
 	clear: function() {
-		if(this._marker) this._marker.remove();
-		if(this._chart) this._chart.clear();
-		if(this._layers) this._layers.clearLayers();
+		if (this._marker) this._marker.remove();
+		if (this._chart) this._chart.clear();
+		if (this._layers) this._layers.clearLayers();
 
 		this._data = [];
 		this.track_info = {};
@@ -113,7 +113,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._markedSegments = L.polyline([]);
 		this._chartEnabled = true,
 
-		this.track_info = {};
+			this.track_info = {};
 
 		this.options = _.deepMerge({}, this.options, options);
 
@@ -732,6 +732,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._y = this._chart._y;
 
 		this._fireEvt("elechart_axis");
+		this._fireEvt("elechart_area");
 
 		this._fireEvt('elechart_updated');
 	},
@@ -753,7 +754,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_updateMapSegments: function(coords) {
 		this._markedSegments.setLatLngs(coords || []);
-		if (this._map && !this._map.hasLayer(this._markedSegments)) {
+		if (coords && this._map && !this._map.hasLayer(this._markedSegments)) {
 			this._markedSegments.addTo(this._map);
 		}
 	},
@@ -807,6 +808,7 @@ Elevation.addInitHook(function() {
 	// autotoggle chart data on click
 	this.on('elepath_toggle', function(e) {
 		let path = e.path;
+		let optName = path.getAttribute('data-name').toLowerCase();
 		let enable = _.hasClass(path, 'hidden');
 		let label = _.select('text', e.legend);
 		let rect = _.select('rect', e.legend);
@@ -817,6 +819,7 @@ Elevation.addInitHook(function() {
 
 		this._chartEnabled = this._chart._area.selectAll('path:not(.hidden)').nodes().length != 0;
 		this._layers.eachLayer(l => _.toggleClass(l.getElement && l.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
+		this.options[optName] = enable && this.options[optName] == 'disabled' ? 'enabled' : 'disabled';
 
 		if (!this._chartEnabled) {
 			this._chart._hideDiagramIndicator();
@@ -824,15 +827,51 @@ Elevation.addInitHook(function() {
 		}
 	});
 
-	this.on("elechart_updated", function() {
-		// TODO: maybe should i listen for this inside chart.js?
-		this._chart._legend.selectAll('.legend-item')
-			.on('click', (d, i, n) => {
+	// TODO: maybe should i listen for this inside chart.js?
+	this.on("elechart_updated elechart_init", function() {
+		let items = this._chart._legend.selectAll('.legend-item');
+		// Calculate legend item positions
+		let n = items.nodes().length;
+		let v = Array(Math.floor(n / 2)).fill(null).map((d, i) => (i + 1) * 2 - (1 - Math.sign(n % 2)));
+		let rev = v.slice().reverse().map((d) => -(d));
+		if (n % 2 !== 0) {
+			rev.push(0);
+		}
+		v = rev.concat(v);
+		items
+			.each((d, i, n) => {
 				let target = n[i];
 				let name = target.getAttribute('data-name');
+				let optName = name.toLowerCase();
 				let path = this._chart._area.select('path[data-name="' + name + '"]').node();
-				this._fireEvt("elepath_toggle", { path: path, name: name, legend: target });
+				// Bind legend click togglers
+				d3.select(target).on('click', () => this._fireEvt("elepath_toggle", { path: path, name: name, legend: target }));
+				// Set initial chart area state
+				if (path && optName in this.options && this.options[optName] == 'disabled') {
+					path.classList.add('hidden');
+					target.querySelector('text').style.textDecorationLine = "line-through";
+					target.querySelector('rect').style.fillOpacity = "0";
+				}
+				// Adjust legend item positions
+				d3.select(target).attr("transform", "translate(" + v[i] * 50 + ", 0)");
 			});
+		// Adjust axis scale positions
+		this._chart._axis.selectAll('.y.axis.right').each((d, i, n) => {
+			let axis = d3.select(n[i]);
+			let transform = axis.attr('transform');
+			let translate = transform.substring(transform.indexOf("(") + 1, transform.indexOf(")")).split(",");
+			axis.attr('transform', 'translate(' + (+translate[0] + (i * 30)) + ',' + translate[1] + ')')
+			if (i > 0) {
+				axis.select(':scope > path').attr('opacity', 0.25);
+				axis.selectAll(':scope > .tick line').attr('opacity', 0.75);
+			}
+		});
+		// Adjust chart right margins
+		let marginR = n * 22;
+		if (this.options.margins.right != marginR) {
+			this.options.margins.right = marginR;
+			this.redraw();
+		}
 	});
 
 	this.on("eletrack_download", function(e) {
@@ -853,7 +892,7 @@ Elevation.addInitHook(function() {
 		map.once('layeradd', function(e) {
 			this.fitBounds(layer.getBounds());
 		}, this);
-		layer.addTo(map);
+		if (this.options.polyline) layer.addTo(map);
 		if (L.GeometryUtil && map.almostOver && map.almostOver.enabled() && !L.Browser.mobile) {
 			map.almostOver.addLayer(layer);
 			map
@@ -915,6 +954,14 @@ Elevation.addInitHook(function() {
 				oldProto.call(this, ctx, layer);
 			}
 		}
+	});
+
+	// Partially fix: https://github.com/Raruto/leaflet-elevation/issues/81#issuecomment-713477050
+	this.on('elechart_init', function() {
+		this.once('elechart_change elechart_hover', function(e) {
+			if (this._chartEnabled) this._chart._showDiagramIndicator(e.data, e.xCoord);
+			this._updateMarker(e.data);
+		});
 	});
 
 });
