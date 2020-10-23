@@ -69,12 +69,12 @@
 .elevation-control.elevation .horizontal-drag-line {
   stroke: transparent;
   cursor: row-resize;
-  stroke-width: 2;
+  stroke-width: 1.1;
   stroke-dasharray: 5;
 }
 
 .elevation-control.elevation .active .horizontal-drag-line {
-  stroke: #2D1130;
+  stroke: #000;
 }
 
 .elevation-control.elevation .horizontal-drag-label {
