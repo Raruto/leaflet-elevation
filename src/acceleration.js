@@ -18,7 +18,7 @@ Elevation.addInitHook(function() {
 			acceleration.path = this._chart._area.append('path')
 				.style("pointer-events", "none")
 				// TODO: add a class here.
-				.attr("fill", "#03ffff")
+				.attr("fill", "#050402")
 				.attr("stroke", "#000")
 				.attr("stroke-opacity", "0.5")
 				.attr("fill-opacity", "0.25");

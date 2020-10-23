@@ -101,11 +101,14 @@
   fill: #000;
   fill-opacity: 0.75;
   pointer-events: none;
+  stroke-width: 1;
+  stroke: #444;
 }
 
 .elevation-control.elevation .mouse-focus-label-text {
   fill: #FFF;
   pointer-events: none;
+  font-size: 10px;
 }
 
 .elevation-control.elevation .mouse-drag {
@@ -212,7 +215,7 @@
 
 .leaflet-elevation-pane .height-focus-label,
 .leaflet-overlay-pane .height-focus-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   fill: #000;
   paint-order: stroke;
