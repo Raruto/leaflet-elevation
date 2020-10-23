@@ -754,7 +754,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_updateMapSegments: function(coords) {
 		this._markedSegments.setLatLngs(coords || []);
-		if (this._map && !this._map.hasLayer(this._markedSegments)) {
+		if (coords && this._map && !this._map.hasLayer(this._markedSegments)) {
 			this._markedSegments.addTo(this._map);
 		}
 	},
@@ -844,7 +844,7 @@ Elevation.addInitHook(function() {
 				let name = target.getAttribute('data-name');
 				let optName = name.toLowerCase();
 				let path = this._chart._area.select('path[data-name="' + name + '"]').node();
-				// Bind click legend togglers
+				// Bind legend click togglers
 				d3.select(target).on('click', () => this._fireEvt("elepath_toggle", { path: path, name: name, legend: target }));
 				// Set initial chart area state
 				if (path && optName in this.options && this.options[optName] == 'disabled') {
@@ -855,16 +855,22 @@ Elevation.addInitHook(function() {
 				// Adjust legend item positions
 				d3.select(target).attr("transform", "translate(" + v[i] * 50 + ", 0)");
 			});
+		// Adjust axis scale positions
 		this._chart._axis.selectAll('.y.axis.right').each((d, i, n) => {
 			let axis = d3.select(n[i]);
-			axis.select(':scope > text').attr('dx', Math.max(0, i * 2.5) + 'em');
-			axis.selectAll('.tick text').attr('dx', Math.max(0, i * 2.5 - 1) + 'em');
+			let transform = axis.attr('transform');
+			let translate = transform.substring(transform.indexOf("(") + 1, transform.indexOf(")")).split(",");
+			axis.attr('transform', 'translate(' + (+translate[0] + (i * 30)) + ',' + translate[1] + ')')
+			if (i > 0) {
+				axis.select(':scope > path').attr('opacity', 0.25);
+				axis.selectAll(':scope > .tick line').attr('opacity', 0.75);
+			}
 		});
-		// Adjust axis label positions
-		let marginR = Math.max(20, 20 * n);
+		// Adjust chart right margins
+		let marginR = n * 22;
 		if (this.options.margins.right != marginR) {
 			this.options.margins.right = marginR;
-			controlElevation._resizeChart();
+			this.redraw();
 		}
 	});
 
@@ -886,7 +892,7 @@ Elevation.addInitHook(function() {
 		map.once('layeradd', function(e) {
 			this.fitBounds(layer.getBounds());
 		}, this);
-		layer.addTo(map);
+		if (this.options.polyline) layer.addTo(map);
 		if (L.GeometryUtil && map.almostOver && map.almostOver.enabled() && !L.Browser.mobile) {
 			map.almostOver.addLayer(layer);
 			map

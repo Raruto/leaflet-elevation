@@ -38,7 +38,7 @@
 .elevation-control.elevation .axis line,
 .elevation-control.elevation .axis path {
   stroke: #2D1130;
-  stroke-width: 2;
+  stroke-width: 1;
   fill: none;
 }
 
