@@ -827,22 +827,45 @@ Elevation.addInitHook(function() {
 		}
 	});
 
-	this.on("elechart_updated", function() {
-		// TODO: maybe should i listen for this inside chart.js?
-		this._chart._legend.selectAll('.legend-item')
+	// TODO: maybe should i listen for this inside chart.js?
+	this.on("elechart_updated elechart_init", function() {
+		let items = this._chart._legend.selectAll('.legend-item');
+		// Calculate legend item positions
+		let n = items.nodes().length;
+		let v = Array(Math.floor(n / 2)).fill(null).map((d, i) => (i + 1) * 2 - (1 - Math.sign(n % 2)));
+		let rev = v.slice().reverse().map((d) => -(d));
+		if (n % 2 !== 0) {
+			rev.push(0);
+		}
+		v = rev.concat(v);
+		items
 			.each((d, i, n) => {
 				let target = n[i];
 				let name = target.getAttribute('data-name');
 				let optName = name.toLowerCase();
 				let path = this._chart._area.select('path[data-name="' + name + '"]').node();
+				// Bind click legend togglers
 				d3.select(target).on('click', () => this._fireEvt("elepath_toggle", { path: path, name: name, legend: target }));
-				// Set initial chart data state
-				if (optName in this.options && this.options[optName] == 'disabled') {
+				// Set initial chart area state
+				if (path && optName in this.options && this.options[optName] == 'disabled') {
 					path.classList.add('hidden');
 					target.querySelector('text').style.textDecorationLine = "line-through";
 					target.querySelector('rect').style.fillOpacity = "0";
 				}
+				// Adjust legend item positions
+				d3.select(target).attr("transform", "translate(" + v[i] * 50 + ", 0)");
 			});
+		this._chart._axis.selectAll('.y.axis.right').each((d, i, n) => {
+			let axis = d3.select(n[i]);
+			axis.select(':scope > text').attr('dx', Math.max(0, i * 2.5) + 'em');
+			axis.selectAll('.tick text').attr('dx', Math.max(0, i * 2.5 - 1) + 'em');
+		});
+		// Adjust axis label positions
+		let marginR = Math.max(20, 20 * n);
+		if (this.options.margins.right != marginR) {
+			this.options.margins.right = marginR;
+			controlElevation._resizeChart();
+		}
 	});
 
 	this.on("eletrack_download", function(e) {

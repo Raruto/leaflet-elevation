@@ -5,15 +5,14 @@ import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
 
-	if (!this.options.speed) return;
+	if (!this.options.speed && !this.options.acceleration) return;
 
 	let opts = this.options;
 	let speed = {};
-	opts.margins.right = 50;
 
 	speed.label = L._(this.options.imperial ? 'mph' : 'km/h');
 
-	if (this.options.speed != "summary") {
+	if (this.options.speed && this.options.speed != "summary") {
 
 		this.on("elechart_init", function() {
 			speed.path = this._chart._area.append('path')
@@ -44,10 +43,11 @@ Elevation.addInitHook(function() {
 				height: this._height(),
 				scale: speed.y,
 				ticks: this.options.yTicks,
-				tickPadding: this.options.slope === true ? 36 : 18,
+				tickPadding: 16,
 				label: speed.label,
-				labelX: this.options.slope === true ? 50 : 35,
-				labelY: 3
+				labelX: 25,
+				labelY: 3,
+				name: "speed"
 			});
 
 			this._chart._axis.call(speed.axis);
@@ -77,23 +77,6 @@ Elevation.addInitHook(function() {
 						height: this._height(),
 						margins: this.options.margins
 					}));
-
-			if (this.options.slope === true) {
-				this._altitudeLegend
-					.attr("transform", "translate(-100, 0)");
-
-				this._chart._legend.select('.legend-slope')
-					.attr("transform", "translate(0, 0)");
-
-				speed.legend.attr("transform", "translate(100, 0)");
-			} else {
-				this._altitudeLegend
-					.attr("transform", "translate(-50, 0)");
-
-				speed.legend
-					.attr("transform", "translate(50, 0)");
-			}
-
 			speed.legend.select("rect")
 				.classed("area", false)
 				// TODO: add a class here.
@@ -101,7 +84,6 @@ Elevation.addInitHook(function() {
 				.attr("stroke", "#000")
 				.attr("stroke-opacity", "0.5")
 				.attr("fill-opacity", "0.25");
-
 		});
 	}
 
@@ -157,48 +139,52 @@ Elevation.addInitHook(function() {
 		this.track_info.speed_avg = this._avgSpeed = sAvg;
 	});
 
-	this.on("elechart_change", function(e) {
-		let item = e.data;
-		let chart = this._chart;
-		let marker = this._marker;
+	if (this.options.speed) {
 
-		if (chart._focuslabel) {
-			if (!chart._focuslabelSpeed || !chart._focuslabelSpeed.property('isConnected')) {
-				chart._focuslabelSpeed = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
-					.attr("class", "mouse-focus-label-speed")
+		this.on("elechart_change", function(e) {
+			let item = e.data;
+			let chart = this._chart;
+			let marker = this._marker;
+
+			if (chart._focuslabel) {
+				if (!chart._focuslabelSpeed || !chart._focuslabelSpeed.property('isConnected')) {
+					chart._focuslabelSpeed = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
+						.attr("class", "mouse-focus-label-speed")
+						.attr("dy", "1.5em");
+				}
+
+				chart._focuslabelSpeed.text(item.speed + " " + speed.label);
+
+				chart._focuslabel.select('.mouse-focus-label-x')
 					.attr("dy", "1.5em");
 			}
 
-			chart._focuslabelSpeed.text(item.speed + " " + speed.label);
+			if (marker._focuslabel) {
+				if (!chart._mouseSpeedFocusLabel) {
+					chart._mouseSpeedFocusLabel = marker._focuslabel.append("svg:tspan")
+						.attr("class", "height-focus-speed ");
+				}
 
-			chart._focuslabel.select('.mouse-focus-label-x')
-				.attr("dy", "1.5em");
-		}
+				chart._mouseSpeedFocusLabel
+					.attr("dy", "1.5em")
+					.text(Math.round(item.speed) + " " + speed.label);
 
-		if (marker._focuslabel) {
-			if (!chart._mouseSpeedFocusLabel) {
-				chart._mouseSpeedFocusLabel = marker._focuslabel.append("svg:tspan")
-					.attr("class", "height-focus-speed ");
+				marker._focuslabel.select('.height-focus-y')
+					.attr("dy", "-1.5em");
 			}
+		});
 
-			chart._mouseSpeedFocusLabel
-				.attr("dy", "1.5em")
-				.text(Math.round(item.speed) + " " + speed.label);
+		this.on("elechart_summary", function() {
+			this.track_info.speed_max = this._maxSpeed || 0;
+			this.track_info.speed_min = this._minSpeed || 0;
 
-			marker._focuslabel.select('.height-focus-y')
-				.attr("dy", "-1.5em");
-		}
-	});
+			this._summary
+				.append("minspeed", L._("Min Speed: "), Math.round(this.track_info.speed_min) + '&nbsp;' + speed.label)
+				.append("maxspeed", L._("Max Speed: "), Math.round(this.track_info.speed_max) + '&nbsp;' + speed.label)
+				.append("avgspeed", L._("Avg Speed: "), Math.round(this.track_info.speed_avg) + '&nbsp;' + speed.label);
+		});
 
-	this.on("elechart_summary", function() {
-		this.track_info.speed_max = this._maxSpeed || 0;
-		this.track_info.speed_min = this._minSpeed || 0;
-
-		this._summary
-			.append("minspeed", L._("Min Speed: "), Math.round(this.track_info.speed_min) + '&nbsp;' + speed.label)
-			.append("maxspeed", L._("Max Speed: "), Math.round(this.track_info.speed_max) + '&nbsp;' + speed.label)
-			.append("avgspeed", L._("Avg Speed: "), Math.round(this.track_info.speed_avg) + '&nbsp;' + speed.label);
-	});
+	}
 
 	this.on("eledata_clear", function() {
 		this._maxSpeed = null;

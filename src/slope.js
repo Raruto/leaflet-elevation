@@ -9,7 +9,6 @@ Elevation.addInitHook(function() {
 
 	let opts = this.options;
 	let slope = {};
-	opts.margins.right = 50;
 
 	if (this.options.slope != "summary") {
 
@@ -55,6 +54,7 @@ Elevation.addInitHook(function() {
 				label: "%",
 				labelX: 25,
 				labelY: 3,
+				name: "slope"
 			});
 
 			this._chart._axis.call(slope.axis);
@@ -86,13 +86,6 @@ Elevation.addInitHook(function() {
 						margins: this.options.margins,
 					})
 				);
-
-			this._altitudeLegend
-				.attr("transform", "translate(-50, 0)");
-
-			slope.legend
-				.attr("transform", "translate(50, 0)");
-
 			slope.legend.select("rect")
 				.classed("area", false)
 				// TODO: add a class here.
@@ -100,7 +93,6 @@ Elevation.addInitHook(function() {
 				.attr("stroke", "#000")
 				.attr("stroke-opacity", "0.5")
 				.attr("fill-opacity", "0.25");
-
 		});
 	}
 

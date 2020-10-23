@@ -44,6 +44,7 @@ import './altitude';
 import './time';
 import './slope';
 import './speed';
+import './acceleration';
 
 Elevation.Utils = _;
 Elevation.Components = D3;

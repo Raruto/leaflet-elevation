@@ -116,6 +116,9 @@ _For a working example see one of the following demos:_
         // [Lat, Long] vs [Long, Lat] points. (leaflet default: [Lat, Long])
         reverseCoords: false,
 
+        // Acceleration chart profile: true || "summary" || "disabled" || false
+        acceleration: false,
+
         // Slope chart profile: true || "summary" || "disabled" || false
         slope: false,
 
