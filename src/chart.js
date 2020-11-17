@@ -77,6 +77,8 @@ export var Chart = L.Class.extend({
 	},
 
 	_updateScale: function() {
+		if(this.zooming) return;
+
 		let opts = this.options;
 
 		this._x = D3.Scale({
@@ -410,6 +412,8 @@ export var Chart = L.Class.extend({
 	 * Handles start of drag operations.
 	 */
 	_dragStartHandler: function() {
+		if(d3.event.ctrlKey) return;
+
 		d3.event.preventDefault();
 		d3.event.stopPropagation();
 
