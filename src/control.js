@@ -486,7 +486,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.on('dragged', this._dragendHandler, this)
 			.on('mouse_move', this._mousemoveHandler, this)
 			.on('mouse_out', this._mouseoutHandler, this)
-			.on('ruler_filter', this._rulerFilterHandler, this);
+			.on('ruler_filter', this._rulerFilterHandler, this)
+			.on('zoom', this._updateChart, this);
 
 		this._fireEvt("elechart_axis");
 		if (this.options.legend) this._fireEvt("elechart_legend");
@@ -793,65 +794,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
  */
 Elevation.addInitHook(function() {
 
-	let control = this;
-	L.Control.Elevation.Chart.addInitHook(function() {
-		let svg = this._container;
-		let g = this._container.select('g');
-		let path = this._path;
-		let area = this._area;
-
-		let margin = this.options.margins;
-
-		const clip = this._clipPath = area.insert("clipPath", ":first-child") // generate and append <clipPath> element
-			.attr("id", 'elevation-clipper');
-		clip.append("rect")
-			.attr("x", 0)
-			.attr("y", 0)
-			.attr("width", this._width())
-			.attr("height", this._height());
-
-		let zoom = d3.zoom()
-			.scaleExtent([1, 10])
-			.extent([
-				[margin.left, 0],
-				[this._width() - margin.right, this._height()]
-			])
-			.translateExtent([
-				[margin.left, -Infinity],
-				[this._width() - margin.right, Infinity]
-			])
-			.on("start", (e) => {
-				if (d3.event.sourceEvent.type == "mousedown") svg.style('cursor', 'grabbing');
-				this.zooming = true;
-			})
-			.on("end", (e) => {
-				this.zooming = false;
-				svg.style('cursor', '');
-			})
-			.on("zoom", (e) => {
-				// TODO: find a faster way to redraw the chart.
-				this.zooming = false;
-				this._updateScale(); // hacky way for restoring x scale when zooming out
-				this.zooming = true;
-				this._x = d3.event.transform.rescaleX(this._x); // calculate x scale at zoom level
-				// this._updateAxis();
-				// this._updateArea();
-				control._updateChart();
-				this._resetDrag();
-				if (d3.event.sourceEvent.type == "mousemove") {
-					this._hideDiagramIndicator();
-				}
-			})
-			.filter(() => d3.event.ctrlKey);
-
-		g.call(zoom) // add zoom functionality to "svg" group
-			.on("wheel", function() {
-				d3.event.preventDefault();
-			});
-
-		// d3.select("body").on("keydown keyup", () => svg.style('cursor', d3.event.ctrlKey ? 'move' : '') );
-	});
-
 	this.on('waypoint_added', function(e) {
 		let p = e.point,
 			pop = p._popup;
@@ -911,6 +853,7 @@ Elevation.addInitHook(function() {
 					target.querySelector('text').style.textDecorationLine = "line-through";
 					target.querySelector('rect').style.fillOpacity = "0";
 				}
+				// Apply d3-zoom 
 				if (path && optName in this.options) {
 					if (this._chart._clipPath) path.setAttribute("clip-path", 'url(#' + this._chart._clipPath.attr('id') + ')'); // bind <clipPath> mask ("Altitude"))
 				}
@@ -965,7 +908,7 @@ Elevation.addInitHook(function() {
 
 	// Basic canvas renderer support.
 	let oldProto = L.Canvas.prototype._fillStroke;
-	// let control = this;
+	let control = this;
 	L.Canvas.include({
 		_fillStroke: function(ctx, layer) {
 			if (control._layers.hasLayer(layer)) {
