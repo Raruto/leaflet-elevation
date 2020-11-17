@@ -837,8 +837,8 @@ Elevation.addInitHook(function() {
 				// this._updateAxis();
 				// this._updateArea();
 				control._updateChart();
+				this._resetDrag();
 				if (d3.event.sourceEvent.type == "mousemove") {
-					this._resetDrag();
 					this._hideDiagramIndicator();
 				}
 			})
