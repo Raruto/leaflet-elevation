@@ -821,10 +821,12 @@ Elevation.addInitHook(function() {
 				[this._width() - margin.right, Infinity]
 			])
 			.on("start", (e) => {
+				if (d3.event.sourceEvent.type == "mousedown") svg.style('cursor', 'grabbing');
 				this.zooming = true;
 			})
 			.on("end", (e) => {
 				this.zooming = false;
+				svg.style('cursor', '');
 			})
 			.on("zoom", (e) => {
 				// TODO: find a faster way to redraw the chart.
@@ -846,6 +848,8 @@ Elevation.addInitHook(function() {
 			.on("wheel", function() {
 				d3.event.preventDefault();
 			});
+
+		// d3.select("body").on("keydown keyup", () => svg.style('cursor', d3.event.ctrlKey ? 'move' : '') );
 	});
 
 	this.on('waypoint_added', function(e) {
