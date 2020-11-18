@@ -384,12 +384,10 @@ export var Chart = L.Class.extend({
 
 		svg.call(zoom) // add zoom functionality to "svg" group
 			.on("wheel", function() {
-				d3.event.preventDefault();
+				if (d3.event.ctrlKey) d3.event.preventDefault();
 			});
 
-		return g => {
-			return g;
-		}
+		return g => g;
 	},
 
 	/**
