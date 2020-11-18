@@ -48,64 +48,6 @@ export var Chart = L.Class.extend({
 		this._legend = svg.select('.legend');
 		this._x = scale.x;
 		this._y = scale.y;
-
-		// d3-zoom
-
-		let path = this._path;
-		let area = this._area;
-
-		let margin = this.options.margins;
-
-		const clip = this._clipPath = area.insert("clipPath", ":first-child") // generate and append <clipPath> element
-			.attr("id", 'elevation-clipper');
-		clip.append("rect")
-			.attr("x", 0)
-			.attr("y", 0)
-			.attr("width", this._width())
-			.attr("height", this._height());
-
-		let zoom = d3.zoom()
-			.scaleExtent([1, 10])
-			.extent([
-				[margin.left, 0],
-				[this._width() - margin.right, this._height()]
-			])
-			.translateExtent([
-				[margin.left, -Infinity],
-				[this._width() - margin.right, Infinity]
-			])
-			.on("start", (e) => {
-				if (d3.event.sourceEvent.type == "mousedown") svg.style('cursor', 'grabbing');
-				this.zooming = true;
-			})
-			.on("end", (e) => {
-				this.zooming = false;
-				svg.style('cursor', '');
-			})
-			.on("zoom", (e) => {
-				// TODO: find a faster way to redraw the chart.
-				this.zooming = false;
-				this._updateScale(); // hacky way for restoring x scale when zooming out
-				this.zooming = true;
-				this._x = d3.event.transform.rescaleX(this._x); // calculate x scale at zoom level
-				// this._updateAxis();
-				// this._updateArea();
-				// control._updateChart();
-				this._resetDrag();
-				if (d3.event.sourceEvent.type == "mousemove") {
-					this._hideDiagramIndicator();
-				}
-				this.fire('zoom');
-			})
-			.filter(() => d3.event.ctrlKey);
-
-		g.call(zoom) // add zoom functionality to "svg" group
-			.on("wheel", function() {
-				d3.event.preventDefault();
-			});
-
-		// d3.select("body").on("keydown keyup", () => svg.style('cursor', d3.event.ctrlKey ? 'move' : '') );
-
 	},
 
 	update: function(props) {
@@ -294,6 +236,7 @@ export var Chart = L.Class.extend({
 				.attr("class", 'focus')
 				.call(this._appendFocusRect())
 				.call(this._appendRuler())
+				.call(this._appendClipper())
 				.call(this._appendMouseFocusG());
 		};
 	},
@@ -384,6 +327,68 @@ export var Chart = L.Class.extend({
 
 			return legend;
 		};
+	},
+
+	/**
+	 * d3-zoom
+	 */
+	_appendClipper: function() {
+		let svg = this._container;
+		let area = svg.select('.area');
+		let margin = this.options.margins;
+
+		const clip = this._clipPath = area.insert("clipPath", ":first-child") // generate and append <clipPath> element
+			.attr("id", 'elevation-clipper');
+		clip.append("rect")
+			.attr("x", 0)
+			.attr("y", 0)
+			.attr("width", this._width())
+			.attr("height", this._height());
+
+		let zoom = d3.zoom()
+			.scaleExtent([1, 10])
+			.extent([
+				[margin.left, 0],
+				[this._width() - margin.right, this._height()]
+			])
+			.translateExtent([
+				[margin.left, -Infinity],
+				[this._width() - margin.right, Infinity]
+			])
+			.filter(() => d3.event.ctrlKey);
+
+		zoom.on("start", (e) => {
+				if (d3.event.sourceEvent.type == "mousedown") svg.style('cursor', 'grabbing');
+				this.zooming = true;
+			})
+			.on("end", (e) => {
+				this.zooming = false;
+				svg.style('cursor', '');
+			})
+			.on("zoom", (e) => {
+				// TODO: find a faster way to redraw the chart.
+				this.zooming = false;
+				this._updateScale(); // hacky way for restoring x scale when zooming out
+				this.zooming = true;
+				this._x = d3.event.transform.rescaleX(this._x); // calculate x scale at zoom level
+				// this._updateAxis();
+				// this._updateArea();
+				// control._updateChart();
+				this._resetDrag();
+				if (d3.event.sourceEvent.type == "mousemove") {
+					this._hideDiagramIndicator();
+				}
+				this.fire('zoom');
+			});
+		// d3.select("body").on("keydown keyup", () => svg.style('cursor', d3.event.ctrlKey ? 'move' : '') );
+
+		return g => {
+			g.call(zoom) // add zoom functionality to "svg" group
+				.on("wheel", function() {
+					d3.event.preventDefault();
+				});
+			return g;
+		}
 	},
 
 	/**
