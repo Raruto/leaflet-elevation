@@ -77,7 +77,7 @@ export var Chart = L.Class.extend({
 	},
 
 	_updateScale: function() {
-		if (this.zooming) return;
+		if (this.zooming) return { x: this._x, y: this._y };
 
 		let opts = this.options;
 
