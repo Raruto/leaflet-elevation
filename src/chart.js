@@ -37,7 +37,8 @@ export var Chart = L.Class.extend({
 			.call(this._appendArea())
 			.call(this._appendAxis())
 			.call(this._appendFocusable())
-			.call(this._appendLegend());
+			.call(this._appendLegend())
+			.call(this._appendClipper());
 
 		this._grid = svg.select('.grid');
 		this._area = svg.select('.area');
@@ -236,7 +237,6 @@ export var Chart = L.Class.extend({
 				.attr("class", 'focus')
 				.call(this._appendFocusRect())
 				.call(this._appendRuler())
-				.call(this._appendClipper())
 				.call(this._appendMouseFocusG());
 		};
 	},
@@ -382,11 +382,12 @@ export var Chart = L.Class.extend({
 			});
 		// d3.select("body").on("keydown keyup", () => svg.style('cursor', d3.event.ctrlKey ? 'move' : '') );
 
+		svg.call(zoom) // add zoom functionality to "svg" group
+			.on("wheel", function() {
+				d3.event.preventDefault();
+			});
+
 		return g => {
-			g.call(zoom) // add zoom functionality to "svg" group
-				.on("wheel", function() {
-					d3.event.preventDefault();
-				});
 			return g;
 		}
 	},
