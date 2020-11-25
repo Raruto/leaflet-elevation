@@ -133,6 +133,11 @@ L.GpxGroup = L.Class.extend({
     distanceMarkers_options: {
       lazy: true
     },
+    marker_options: {
+      startIconUrl: null,
+      endIconUrl: null,
+      shadowUrl: null,
+    }
   },
 
   initialize: function(tracks, options) {
@@ -196,14 +201,9 @@ L.GpxGroup = L.Class.extend({
       distanceMarkers: this.options.distanceMarkers_options,
     };
 
-    var marker_style = {
-      startIconUrl: null,
-      endIconUrl: null
-    };
-
     var route = new L.GPX(data, {
       async: this.options.async,
-      marker_options: marker_style,
+      marker_options: this.options.marker_options,
       polyline_options: line_style
     });
 

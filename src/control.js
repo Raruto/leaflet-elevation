@@ -800,7 +800,7 @@ Elevation.addInitHook(function() {
 		if (pop) {
 			pop.options.className = 'elevation-popup';
 		}
-		if (pop._content) {
+		if (pop && pop._content) {
 			pop._content = decodeURI(pop._content);
 			p.bindTooltip(pop._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
 		}
@@ -853,7 +853,7 @@ Elevation.addInitHook(function() {
 					target.querySelector('text').style.textDecorationLine = "line-through";
 					target.querySelector('rect').style.fillOpacity = "0";
 				}
-				// Apply d3-zoom 
+				// Apply d3-zoom
 				if (path && optName in this.options) {
 					if (this._chart._clipPath) path.setAttribute("clip-path", 'url(#' + this._chart._clipPath.attr('id') + ')'); // bind <clipPath> mask ("Altitude"))
 				}

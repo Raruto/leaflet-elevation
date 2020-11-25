@@ -21,7 +21,7 @@
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
 	<!-- Leaflet-UI -->
-	<script src="https://unpkg.com/leaflet-ui@0.4.6/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.4.7/dist/leaflet-ui.js"></script>
 
 	<style>
 
@@ -77,11 +77,11 @@
 					"d3@4.13.0/build/d3.min.js",
 					"leaflet-gpx@1.5.0/gpx.js",
 					"leaflet-geometryutil@0.9.1/src/leaflet.geometryutil.js",
-					"@raruto/leaflet-elevation@1.4.0/dist/leaflet-elevation.min.css",
-					"@raruto/leaflet-elevation@1.4.0/dist/leaflet-elevation.min.js",
-					"@raruto/leaflet-elevation@1.4.0/libs/leaflet-gpxgroup.min.js",
-					"@raruto/leaflet-elevation@1.4.0/libs/leaflet-distance-marker.min.css",
-					"@raruto/leaflet-elevation@1.4.0/libs/leaflet-distance-marker.min.js",
+					"@raruto/leaflet-elevation@1.5.0/dist/leaflet-elevation.min.css",
+					"@raruto/leaflet-elevation@1.5.0/dist/leaflet-elevation.min.js",
+					"@raruto/leaflet-elevation@1.5.0/libs/leaflet-gpxgroup.min.js",
+					"@raruto/leaflet-elevation@1.5.0/libs/leaflet-distance-marker.min.css",
+					"@raruto/leaflet-elevation@1.5.0/libs/leaflet-distance-marker.min.js",
 				],
 			},
 			points: {
@@ -98,6 +98,11 @@
 				zFollow: 15,
 				legend: false,
 			},
+			markers: {
+				startIconUrl: null, // 'http://mpetazzoni.github.io/leaflet-gpx/pin-icon-start.png',
+				endIconUrl: null, // 'http://mpetazzoni.github.io/leaflet-gpx/pin-icon-end.png',
+				shadowUrl: null, // 'http://mpetazzoni.github.io/leaflet-gpx/pin-shadow.png',
+			}
 		};
 
 		var tracks = [
@@ -157,6 +162,7 @@
 				points_options: opts.points,
 				elevation: true,
 				elevation_options: opts.elevation,
+				marker_options: opts.markers,
 				legend: true,
 				distanceMarkers: false,
 			});
