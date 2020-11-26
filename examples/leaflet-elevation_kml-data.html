@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style>
+		html,
+		body,
+		.leaflet-map,
+		.elevation-div {
+			height: 100%;
+			width: 100%;
+			padding: 0px;
+			margin: 0px;
+		}
+
+		.leaflet-map {
+			height: 55%;
+			max-height: 100vh;
+		}
+
+		.elevation-div {
+			height: 25%;
+			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+		}
+	</style>
+
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.4.7/dist/leaflet-ui.js"></script>
+
+	<!-- toGeoJSON -->
+	<script src="https://unpkg.com/@tmcw/togeojson@4.1.0/dist/togeojson.umd.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.4.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.4.0/dist/leaflet-elevation.min.js"></script>
+
+</head>
+
+<body>
+
+	<div id="map" class="leaflet-map"></div>
+
+	<script>
+		var opts = {
+			map: {
+				center: [41.4583, 12.7059],
+				zoom: 5,
+				fullscreenControl: false,
+				resizerControl: true,
+			},
+			elevationControl: {
+				url: "https://raruto.github.io/leaflet-elevation/examples/demo.kml",
+				options: {
+					theme: "lightblue-theme",
+					collapsed: false,
+					detached: true,
+					summary: "multiline",
+				},
+			},
+			layersControl: {
+				options: {
+					collapsed: false,
+				},
+			},
+		};
+
+		var map = L.map('map', opts.map);
+
+		var controlElevation = L.control.elevation(opts.elevationControl.options);
+		var controlLayer = L.control.layers(null, null, opts.layersControl.options);
+
+		controlElevation.addTo(map);
+		controlLayer.addTo(map);
+
+		controlElevation.on('eledata_loaded', function(e) {
+			controlLayer.addOverlay(e.layer, e.name);
+		});
+
+		fetch(opts.elevationControl.url)
+		.then((response) => response.text())
+		.then((xml) => {
+			var data = toGeoJSON.kml(new DOMParser().parseFromString(xml, "text/xml"));
+			if(!data.name) data.name = data.features[0].properties.name;
+			controlElevation.load(data);
+	});
+
+	</script>
+
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
+		 width="163"> </a>
+
+</body>
+
+</html>

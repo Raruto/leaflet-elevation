@@ -15,6 +15,7 @@ _For a working example see one of the following demos:_
 
 - [loading .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation.html)
 - [loading .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
+- [loading .kml file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_kml-data.html)
 - [loading strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
 - [loading geojson group](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
 - [loading local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
