@@ -853,9 +853,9 @@ Elevation.addInitHook(function() {
 					target.querySelector('text').style.textDecorationLine = "line-through";
 					target.querySelector('rect').style.fillOpacity = "0";
 				}
-				// Apply d3-zoom
-				if (path && optName in this.options) {
-					if (this._chart._clipPath) path.setAttribute("clip-path", 'url(#' + this._chart._clipPath.attr('id') + ')'); // bind <clipPath> mask ("Altitude"))
+				// Apply d3-zoom (bind <clipPath> mask)
+				if (path && this._chart._clipPath) {
+					path.setAttribute("clip-path", 'url(#' + this._chart._clipPath.attr('id') + ')');
 				}
 				// Adjust legend item positions
 				d3.select(target).attr("transform", "translate(" + v[i] * 50 + ", 0)");
