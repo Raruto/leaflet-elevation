@@ -664,7 +664,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this._map && this._map._isFullscreen) return;
 		this._resetDrag();
 		this._hideMarker();
-		this.fitBounds();
+		if (this.options.autofitBounds) {
+			this.fitBounds();
+		}
 	},
 
 	/**
@@ -895,7 +897,9 @@ Elevation.addInitHook(function() {
 			return;
 		}
 		map.once('layeradd', function(e) {
-			this.fitBounds(layer.getBounds());
+			if (this.options.autofitBounds) {
+				this.fitBounds(layer.getBounds());
+			}
 		}, this);
 		if (this.options.polyline) layer.addTo(map);
 		if (L.GeometryUtil && map.almostOver && map.almostOver.enabled() && !L.Browser.mobile) {

@@ -1,6 +1,7 @@
 import * as _ from './utils';
 
 export var Options = {
+	autofitBounds: true,
 	autohide: !L.Browser.mobile,
 	autohideMarker: true,
 	collapsed: false,
