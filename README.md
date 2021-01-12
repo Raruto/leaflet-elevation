@@ -112,7 +112,7 @@ _For a working example see one of the following demos:_
         followMarker: true,
 
         // Autoupdate map bounds on chart update.
-        autofitBounds: false,
+        autofitBounds: true,
 
         // Chart distance/elevation units.
         imperial: false,
