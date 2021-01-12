@@ -111,6 +111,9 @@ _For a working example see one of the following demos:_
         // Autoupdate map center on chart mouseover.
         followMarker: true,
 
+        // Autoupdate map bounds on chart update.
+        autofitBounds: false,
+
         // Chart distance/elevation units.
         imperial: false,
 
