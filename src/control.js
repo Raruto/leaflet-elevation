@@ -586,20 +586,23 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (!this._data.length || !this._chartEnabled) {
 			return;
 		}
-		let xCoord = e.xCoord;
-		let item = this._findItemForX(xCoord);
+		let item = this._findItemForX(e.xCoord);
 
-		if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
+		if (item) {
+			let xCoord = e.xCoord;
 
-		this._updateMarker(item);
-		this._setMapView(item);
+			if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
 
-		if (this._map) {
-			_.addClass(this._map.getContainer(), 'elechart-hover');
+			this._updateMarker(item);
+			this._setMapView(item);
+
+			if (this._map) {
+				_.addClass(this._map.getContainer(), 'elechart-hover');
+			}
+
+			this._fireEvt("elechart_change", { data: item, xCoord: xCoord });
+			this._fireEvt("elechart_hover", { data: item, xCoord: xCoord });
 		}
-
-		this._fireEvt("elechart_change", { data: item, xCoord: xCoord });
-		this._fireEvt("elechart_hover", { data: item, xCoord: xCoord });
 	},
 
 	/*
