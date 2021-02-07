@@ -815,15 +815,15 @@ Elevation.addInitHook(function() {
 	this.on('elepath_toggle', function(e) {
 		let path = e.path;
 		let optName = path.getAttribute('data-name').toLowerCase();
-		let enable = _.hasClass(path, 'hidden');
+		let enable = _.hasClass(path, 'leaflet-hidden');
 		let label = _.select('text', e.legend);
 		let rect = _.select('rect', e.legend);
 
 		_.style(label, "text-decoration-line", enable ? "" : "line-through")
 		_.style(rect, "fill-opacity", enable ? "" : "0")
-		_.toggleClass(path, 'hidden', !enable);
+		_.toggleClass(path, 'leaflet-hidden', !enable);
 
-		this._chartEnabled = this._chart._area.selectAll('path:not(.hidden)').nodes().length != 0;
+		this._chartEnabled = this._chart._area.selectAll('path:not(.leaflet-hidden)').nodes().length != 0;
 		this._layers.eachLayer(l => _.toggleClass(l.getElement && l.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
 		this.options[optName] = enable && this.options[optName] == 'disabled' ? 'enabled' : 'disabled';
 
@@ -854,7 +854,7 @@ Elevation.addInitHook(function() {
 				d3.select(target).on('click', () => this._fireEvt("elepath_toggle", { path: path, name: name, legend: target }));
 				// Set initial chart area state
 				if (path && optName in this.options && this.options[optName] == 'disabled') {
-					path.classList.add('hidden');
+					path.classList.add('leaflet-hidden');
 					target.querySelector('text').style.textDecorationLine = "line-through";
 					target.querySelector('rect').style.fillOpacity = "0";
 				}

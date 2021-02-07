@@ -62,7 +62,7 @@ export var Marker = L.Class.extend({
 			let normalizedAlt = this._height() / props.maxElevation * point.z;
 			let normalizedY = point.y - normalizedAlt;
 
-			this._container.classed("hidden", false);
+			this._container.classed("leaflet-hidden", false);
 
 			this._focusmarker
 				.call(
@@ -92,7 +92,7 @@ export var Marker = L.Class.extend({
 					})
 				);
 		} else if (this.options.marker == 'position-marker') {
-			_.removeClass(this._marker.getElement(), 'hidden');
+			_.removeClass(this._marker.getElement(), 'leaflet-hidden');
 			this._marker.setLatLng(this._latlng);
 		}
 	},
@@ -102,9 +102,9 @@ export var Marker = L.Class.extend({
 	 */
 	remove: function() {
 		if (this.options.marker == 'elevation-line') {
-			if (this._container) this._container.classed("hidden", true);
+			if (this._container) this._container.classed("leaflet-hidden", true);
 		} else if (this.options.marker == 'position-marker') {
-			_.addClass(this._marker.getElement(), 'hidden');
+			_.addClass(this._marker.getElement(), 'leaflet-hidden');
 		}
 	},
 

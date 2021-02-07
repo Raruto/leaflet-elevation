@@ -281,7 +281,7 @@ export var Chart = L.Class.extend({
 	_appendMouseFocusG: function() {
 		return g => {
 			let focusG = this._focusG = g.append("g")
-				.attr("class", "mouse-focus-group hidden");
+				.attr("class", "mouse-focus-group leaflet-hidden");
 
 			this._focusline = focusG.append('svg:line')
 				.call(
@@ -396,12 +396,12 @@ export var Chart = L.Class.extend({
 	_appendRuler: function() {
 		const dragstart = function(d) {
 			this._hideDiagramIndicator();
-			this._container.select(".horizontal-drag-label").classed('hidden', false);
+			this._container.select(".horizontal-drag-label").classed('leaflet-hidden', false);
 		}
 
 		const dragend = function(d) {
 			let y = this._container.select('.horizontal-drag-group').node().transform.baseVal.consolidate().matrix.f;
-			this._container.select(".horizontal-drag-label").classed('hidden', y >= this._height() || y <= 0)
+			this._container.select(".horizontal-drag-label").classed('leaflet-hidden', y >= this._height() || y <= 0)
 		};
 
 		const dragged = function(d) {
@@ -627,7 +627,7 @@ export var Chart = L.Class.extend({
 		let opts = this.options;
 		let yCoordinate = this._y(item[opts.yAttr]);
 
-		this._focusG.classed("hidden", false);
+		this._focusG.classed("leaflet-hidden", false);
 
 		this._focusline.call(
 			D3.MouseFocusLine({
@@ -648,7 +648,7 @@ export var Chart = L.Class.extend({
 	},
 
 	_hideDiagramIndicator: function() {
-		this._focusG.classed("hidden", true);
+		this._focusG.classed("leaflet-hidden", true);
 	},
 });
 
