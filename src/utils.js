@@ -175,7 +175,7 @@ export function isVisible(elem) {
 	let styles = window.getComputedStyle(elem);
 
 	function isVisibleByStyles(elem, styles) {
-		return styles.visibility !== 'leaflet-hidden' && styles.display !== 'none';
+		return styles.visibility !== 'hidden' && styles.display !== 'none';
 	}
 
 	function isAboveOtherElements(elem, styles) {
