@@ -863,7 +863,7 @@ Elevation.addInitHook(function() {
 					path.setAttribute("clip-path", 'url(#' + this._chart._clipPath.attr('id') + ')');
 				}
 				// Adjust legend item positions
-				d3.select(target).attr("transform", "translate(" + v[i] * 50 + ", 0)");
+				d3.select(target).attr("transform", "translate(" + v[i] * 55 + ", 0)");
 			});
 		// Adjust axis scale positions
 		this._chart._axis.selectAll('.y.axis.right').each((d, i, n) => {
