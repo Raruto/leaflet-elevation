@@ -104,7 +104,25 @@ export function GeoJSONLoader(data, control) {
 		onEachFeature: (feature, layer) => {
 			if (feature.geometry.type == 'Point') return;
 
-			control.addData(feature, layer);
+			// Standard GeoJSON
+			// control.addData(feature, layer);  // NB uses "_addGeoJSONData"
+
+			// Extended GeoJSON
+			layer._latlngs.forEach((point, i) => {
+				// same properties as L.GPX layer
+				point.meta = { time: null, ele: null, hr: null, cad: null, atemp: null };
+				if("alt" in point) point.meta.ele = point.alt;
+				if(feature.properties) {
+					let prop = feature.properties;
+					if("coordTimes" in prop) point.meta.time = new Date(Date.parse(prop.coordTimes[i]));
+					else if("times" in prop) point.meta.time = new Date(Date.parse(prop.times[i]));
+					else if("time" in prop) point.meta.time = new Date(Date.parse((typeof prop.time === 'object' ? prop.time[i] : prop.time)));
+					if("heartRates" in prop) point.meta.hr = parseInt(prop.heartRates[i]);
+					else if("heartRate" in prop) point.meta.hr = parseInt((typeof prop.heartRate === 'object' ? prop.heartRate[i] : prop.heartRate));
+					// TODO: cadence, temperature
+				}
+			});
+			control.addData(layer); // NB uses "_addGPXData"
 
 			control.track_info = L.extend({}, control.track_info, { type: "geojson", name: data.name });
 		},
@@ -138,7 +156,7 @@ export function GPXLoader(data, control) {
 
 	// similar to L.GeoJSON.onEachFeature
 	layer.on("addline", (e) => {
-		control.addData(e.line /*, layer*/ );
+		control.addData(e.line /*, layer*/ ); // NB uses "_addGPXData"
 		control.track_info = L.extend({}, control.track_info, { type: "gpx", name: layer.get_name() });
 	});
 

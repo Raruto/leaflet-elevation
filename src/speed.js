@@ -10,7 +10,8 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let speed = {};
 
-	speed.label = L._(this.options.imperial ? 'mph' : 'km/h');
+	speed.label = opts.speedLabel || L._(this.options.imperial ? 'mph' : 'km/h');
+	this._speedFactor = opts.speedFactor || 1;
 
 	if (this.options.speed && this.options.speed != "summary") {
 
@@ -107,7 +108,7 @@ Elevation.addInitHook(function() {
 
 			let delta = curr.distanceTo(prev) * this._distanceFactor;
 
-			speed = Math.abs((delta / deltaT) * this._timeFactor);
+			speed = Math.abs((delta / deltaT) * this._timeFactor) * this._speedFactor;
 		}
 
 		// Try to smooth "crazy" speed values.

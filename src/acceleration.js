@@ -10,7 +10,8 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let acceleration = {};
 
-	acceleration.label = L._(this.options.imperial ? 'ft/s²' : 'm/s²');
+	acceleration.label = opts.accelerationLabel || L._(this.options.imperial ? 'ft/s²' : 'm/s²');
+	this._accelerationFactor = opts.accelerationFactor || 1;
 
 	if (this.options.acceleration != "summary") {
 
@@ -108,7 +109,7 @@ Elevation.addInitHook(function() {
 
 			let delta = (curr - prev) * (1000 / this._timeFactor);
 
-			acceleration = Math.abs((delta / deltaT));
+			acceleration = Math.abs((delta / deltaT)) * this._accelerationFactor;
 		}
 
 		// Try to smooth "crazy" acceleration values.
