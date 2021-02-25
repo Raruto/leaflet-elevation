@@ -127,10 +127,10 @@ _For a working example see one of the following demos:_
         // Slope chart profile: true || "summary" || "disabled" || false
         slope: false,
 
-        // speed chart profile: true || "summary" || "disabled" || false
+        // Speed chart profile: true || "summary" || "disabled" || false
         speed: false,
 
-        // Time stamp labels.
+        // Time chart info: true || "summary" || false
         time: false,
 
         // Summary track info style: "line" || "multiline" || false

@@ -844,6 +844,24 @@ Elevation.addInitHook(function() {
 			rev.push(0);
 		}
 		v = rev.concat(v);
+
+		let xAxesB = this._chart._axis.selectAll('.x.axis.bottom').nodes().length;
+
+		// Adjust chart right margins
+		let marginR = n * 30;
+		if (n && this.options.margins.right != marginR) {
+			this.options.margins.right = marginR;
+			this.redraw();
+		}
+
+		// Adjust chart bottom margins
+		let marginB = 60 + (xAxesB * 2);
+		if(xAxesB && this.options.margins.bottom != marginB) {
+			this.options.margins.bottom = marginB;
+			this.redraw();
+		}
+
+
 		items
 			.each((d, i, n) => {
 				let target = n[i];
@@ -863,25 +881,19 @@ Elevation.addInitHook(function() {
 					path.setAttribute("clip-path", 'url(#' + this._chart._clipPath.attr('id') + ')');
 				}
 				// Adjust legend item positions
-				d3.select(target).attr("transform", "translate(" + v[i] * 55 + ", 0)");
+				d3.select(target).attr("transform", "translate(" + v[i] * 55 + ", " + xAxesB * 2 + ")");
 			});
 		// Adjust axis scale positions
 		this._chart._axis.selectAll('.y.axis.right').each((d, i, n) => {
 			let axis = d3.select(n[i]);
 			let transform = axis.attr('transform');
 			let translate = transform.substring(transform.indexOf("(") + 1, transform.indexOf(")")).split(",");
-			axis.attr('transform', 'translate(' + (+translate[0] + (i * 30)) + ',' + translate[1] + ')')
+			axis.attr('transform', 'translate(' + (+translate[0] + (i * 40)) + ',' + translate[1] + ')')
 			if (i > 0) {
 				axis.select(':scope > path').attr('opacity', 0.25);
 				axis.selectAll(':scope > .tick line').attr('opacity', 0.75);
 			}
 		});
-		// Adjust chart right margins
-		let marginR = n * 22;
-		if (this.options.margins.right != marginR) {
-			this.options.margins.right = marginR;
-			this.redraw();
-		}
 	});
 
 	this.on("eletrack_download", function(e) {

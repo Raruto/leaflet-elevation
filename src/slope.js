@@ -53,7 +53,7 @@ Elevation.addInitHook(function() {
 				tickPadding: 16,
 				label: "%",
 				labelX: 25,
-				labelY: 3,
+				labelY: -8,
 				name: "slope"
 			});
 

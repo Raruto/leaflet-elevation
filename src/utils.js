@@ -37,12 +37,12 @@ export function formatNum(num, dec, sep) {
 	return num.toFixed(dec).toString().split(".").join(sep || ".");
 }
 
-export function formatTime(t) {
-	const SEC = 1000;
-	const MIN = SEC * 60;
-	const HOUR = MIN * 60;
-	const DAY = HOUR * 24;
+const SEC = 1000;
+const MIN = SEC * 60;
+const HOUR = MIN * 60;
+const DAY = HOUR * 24;
 
+export function formatTime(t) {
 	let s = '';
 
 	if (t >= DAY) {

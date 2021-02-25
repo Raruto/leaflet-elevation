@@ -41,10 +41,10 @@ export var Options = {
 		lazy: false,
 	},
 	margins: {
-		top: 10,
-		right: 20,
+		top: 30,
+		right: 30,
 		bottom: 30,
-		left: 50
+		left: 40
 	},
 	marker: 'elevation-line',
 	markerIcon: L.divIcon({

@@ -217,8 +217,8 @@ export var Chart = L.Class.extend({
 			scale: this._y,
 			ticks: this.options.yTicks,
 			label: this._yLabel,
-			labelX: -25,
-			labelY: 3,
+			labelX: -3,
+			labelY: -8,
 		});
 	},
 

@@ -54,9 +54,12 @@
 }
 
 .elevation-control.elevation .axis text {
-  text-anchor: end;
   fill: #000;
   font-weight: 700;
+}
+
+.elevation-control.elevation .y.axis text {
+  text-anchor: end;
 }
 
 .elevation-control.elevation .area {
