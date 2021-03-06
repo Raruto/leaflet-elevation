@@ -1,57 +1,65 @@
 import 'leaflet-i18n';
-import * as _ from './utils';
-import * as D3 from './components';
+import * as _        from './utils';
+import * as D3       from './components';
 import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
 
-	this._timeFactor = this.options.timeFactor;
-
+	let opts = this.options;
 	let time = {};
 
-	if (!this.options.timeFormat) {
-		this.options.timeFormat = (time) => new Date(time).toLocaleString().replaceAll('/', '-').replaceAll(',', ' ');
-	} else if (this.options.timeFormat == 'time') {
-		this.options.timeFormat = (time) => new Date(time).toLocaleTimeString();
-	} else if (this.options.timeFormat == 'date') {
-		this.options.timeFormat = (time) => new Date(time).toLocaleDateString();
+	this._timeFactor = opts.timeFactor;
+
+	/**
+	 * Common AVG speeds:
+	 * ----------------------
+	 *  slow walk = 1.8  km/h
+	 *  walking   = 3.6  km/h
+	 *  running   = 10.8 km/h
+	 *  cycling   = 18   km/h
+	 *  driving   = 72   km/h
+	 * ----------------------
+	 */
+	this._timeAVGSpeed = (opts.timeAVGSpeed || 3.6) * (opts.speedFactor || 1);
+
+	if (!opts.timeFormat) {
+		opts.timeFormat = (time) => new Date(time).toLocaleString().replaceAll('/', '-').replaceAll(',', ' ');
+	} else if (opts.timeFormat == 'time') {
+		opts.timeFormat = (time) => new Date(time).toLocaleTimeString();
+	} else if (opts.timeFormat == 'date') {
+		opts.timeFormat = (time) => new Date(time).toLocaleDateString();
 	}
 
-	if (this.options.time && this.options.time != "summary" && !L.Browser.mobile) {
+	opts.xTimeFormat = opts.xTimeFormat || ((t) => _.formatTime(t).split("'")[0]);
+
+	if (opts.time && opts.time != "summary" && !L.Browser.mobile) {
 
 		this.on("elechart_axis", function() {
-
-		if (!this.options.xTimeFormat) {
-				this.options.xTimeFormat = d3.utcFormat("%H:%M");
-		}
 
 		time.y = this._chart._y;
 
 		time.x = D3.Scale({
-			data: this._data,
+			data : this._data,
 			range: [0, this._width()],
-			attr: "duration",
-			min: 0,
-			// max: +1,
+			attr : "duration",
+			min  : 0,
+			// max        : +1,
 			// forceBounds: opts.forceAxisBounds
-			// scale: 'scaleTime'
+			// scale      : 'scaleTime'
 		});
 
 		time.axis = D3.Axis({
-			axis: "x",
-			position: "top",
-			width: this._width(),
-			height: 0,
-			scale: time.x,
-			ticks: this.options.xTicks * 1.5,
-			label: 't',
-			labelY: -10,
-			labelX: this._width(),
-			name: "time",
-			tickFormat: (d) => {
-				let t = this.options.xTimeFormat(d)
-				return (t =='00:00' ? '' : t);
-			}
+			axis      : "x",
+			position  : "top",
+			width     : this._width(),
+			height    : 0,
+			scale     : time.x,
+			ticks     : this.options.xTicks * 1.5,
+			label     : 't',
+			labelY    : -10,
+			labelX    : this._width(),
+			name      : "time",
+			tickFormat: (d) => (d == 0 ? '' : opts.xTimeFormat(d))
 		});
 
 		this._chart._axis
@@ -75,25 +83,39 @@ Elevation.addInitHook(function() {
 	}
 
 	this.on('elepoint_added', function(e) {
-		if (!e.point.meta || !e.point.meta.time) return;
-
 		let data = this._data;
-		let i = e.index;
+		let i    = e.index;
+
+		// Add missing timestamps (see: options.timeAVGSpeed)
+		if (!e.point.meta || !e.point.meta.time) {
+			e.point.meta = e.point.meta || {};
+			let delta = (data[i].dist - data[i > 0 ? i - 1 : i].dist);
+			let speed = this._timeAVGSpeed;
+			e.point.meta.time = new Date(
+				(
+					i > 0
+						? data[i - 1].time.getTime() + ((( delta / speed) * this._timeFactor) * 1000)
+						: Date.now()
+				)
+			);
+		}
+
 		let time = e.point.meta.time;
 
-		if (time.getTime() - time.getTimezoneOffset() * 60000 === 0) {
+		// Handle timezone offset
+		if (time.getTime() - time.getTimezoneOffset() * 60 * 1000 === 0) {
 			time = 0;
 		}
 
 		data[i].time = time;
 
-		let currT = data[i].time;
-		let prevT = i > 0 ? data[i - 1].time : currT;
+		let currT    = data[i].time;
+		let prevT    = i > 0 ? data[i - 1].time : currT;
 
 		let deltaT   = Math.abs(currT - prevT);
 		let duration = (this.track_info.time || 0) + deltaT;
 
-		data[i].duration = duration;
+		data[i].duration     = duration;
 
 		this.track_info.time = duration;
 	});
@@ -102,7 +124,7 @@ Elevation.addInitHook(function() {
 
 	this.on("elechart_change", function(e) {
 		let chart = this._chart;
-		let item = e.data;
+		let item  = e.data;
 
 		if (chart._focuslabel) {
 			if (item.time) {

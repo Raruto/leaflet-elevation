@@ -29,11 +29,11 @@
 
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.4.6/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.0/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.4.0/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.4.0/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.6.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.6.0/dist/leaflet-elevation.min.js"></script>
 
 </head>
 
@@ -54,8 +54,19 @@
 				options: {
 					theme: "lightblue-theme",
 					collapsed: false,
+					autohide: false,
+					autofitBounds: true,
+					position: "bottomleft",
 					detached: true,
-					summary: "multiline",
+					summary: "inline",
+					imperial: false,
+					// altitude: "disabled",
+					slope: "disabled",
+					speed: "disabled",
+					acceleration: "disabled",
+					time: "summary",
+					legend: true,
+					followMarker: false,
 				},
 			},
 			layersControl: {
@@ -78,6 +89,37 @@
 		});
 
 		controlElevation.load(opts.elevationControl.url);
+	</script>
+
+	<!-- i18n -->
+	<script>
+
+		// Register a custom locale
+		L.registerLocale('it', {
+			"Acceleration"      : "Accelerazione",
+			"Altitude"          : "Altitudine",
+			"Slope"             : "Pendenza",
+			"Speed"             : "Velocità",
+			"Total Length: "    : "Distanza: ",
+			"Max Elevation: "   : "Altezza Max: ",
+			"Min Elevation: "   : "Altezza Min: ",
+			"Total Time: "      : "Durata: ",
+			"Total Ascent: "    : "Salita: ",
+			"Total Descent: "   : "Discesa: ",
+			"Min Slope: "       : "Pendenza Min: ",
+			"Max Slope: "       : "Pendenza Max: ",
+			"Min Speed: "       : "Velocità Min: ",
+			"Max Speed: "       : "Velocità Max: ",
+			"Avg Speed: "       : "Velocità Media: ",
+			"Min Acceleration: ": "Accelerazione Min: ",
+			"Max Acceleration: ": "Accelerazione Max: ",
+			"Avg Acceleration: ": "Accelerazione Media: ",
+		});
+
+		// Enable a custom locale
+		// L.setLocale('it');
+		// L.setLocale('en');
+
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"

@@ -1,6 +1,6 @@
 import 'leaflet-i18n';
-import * as _ from './utils';
-import * as D3 from './components';
+import * as _        from './utils';
+import * as D3       from './components';
 import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
@@ -29,26 +29,26 @@ Elevation.addInitHook(function() {
 			acceleration.x = this._chart._x;
 
 			acceleration.y = D3.Scale({
-				data: this._data,
-				range: [this._height(), 0],
-				attr: "acceleration",
-				min: 0,
-				max: +1,
+				data       : this._data,
+				range      : [this._height(), 0],
+				attr       : "acceleration",
+				min        : 0,
+				max        : +1,
 				forceBounds: opts.forceAxisBounds
 			});
 
 			acceleration.axis = D3.Axis({
-				axis: "y",
-				position: "right",
-				width: this._width(),
-				height: this._height(),
-				scale: acceleration.y,
-				ticks: this.options.yTicks,
+				axis       : "y",
+				position   : "right",
+				width      : this._width(),
+				height     : this._height(),
+				scale      : acceleration.y,
+				ticks      : this.options.yTicks,
 				tickPadding: 16,
-				label: acceleration.label,
-				labelX: 25,
-				labelY: -8,
-				name: 'acceleration'
+				label      : acceleration.label,
+				labelX     : 25,
+				labelY     : -8,
+				name       : 'acceleration'
 			});
 
 			this._chart._axis.call(acceleration.axis);
@@ -57,14 +57,14 @@ Elevation.addInitHook(function() {
 		this.on("elechart_area", function() {
 			acceleration.area = D3.Area({
 				interpolation: opts.sInterpolation,
-				data: this._data,
-				name: 'Acceleration',
-				xAttr: opts.xAttr,
-				yAttr: "acceleration",
-				width: this._width(),
-				height: this._height(),
-				scaleX: acceleration.x,
-				scaleY: acceleration.y
+				data         : this._data,
+				name         : 'Acceleration',
+				xAttr        : opts.xAttr,
+				yAttr        : "acceleration",
+				width        : this._width(),
+				height       : this._height(),
+				scaleX       : acceleration.x,
+				scaleY       : acceleration.y
 			});
 			acceleration.path.call(acceleration.area);
 		});
@@ -73,9 +73,9 @@ Elevation.addInitHook(function() {
 			acceleration.legend = this._chart._legend.append("g")
 				.call(
 					D3.LegendItem({
-						name: 'Acceleration',
-						width: this._width(),
-						height: this._height(),
+						name   : 'Acceleration',
+						width  : this._width(),
+						height : this._height(),
 						margins: this.options.margins
 					}));
 			acceleration.legend.select("rect")
@@ -90,17 +90,17 @@ Elevation.addInitHook(function() {
 	}
 
 	this.on('elepoint_added', function(e) {
-		let data = this._data;
-		let i = e.index;
+		let data   = this._data;
+		let i      = e.index;
 
-		let currT = data[i].time;
-		let prevT = i > 0 ? data[i - 1].time : currT;
+		let currT  = data[i].time;
+		let prevT  = i > 0 ? data[i - 1].time : currT;
 
 		let deltaT = (currT - prevT) / 1000;
 
-		let sMax = this._maxAcceleration || -Infinity; // Acceleration Max
-		let sMin = this._minAcceleration || +Infinity; // Acceleration Min
-		let sAvg = this._avgAcceleration || 0; // Acceleration Avg
+		let sMax   = this._maxAcceleration || -Infinity; // Acceleration Max
+		let sMin   = this._minAcceleration || +Infinity; // Acceleration Min
+		let sAvg   = this._avgAcceleration || 0; // Acceleration Avg
 		let acceleration = 0;
 
 		if (deltaT > 0) {

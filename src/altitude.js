@@ -1,22 +1,22 @@
 import 'leaflet-i18n';
-import * as _ from './utils';
-import * as D3 from './components';
+import * as _        from './utils';
+import * as D3       from './components';
 import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
 
 	if (this.options.imperial) {
 		this._heightFactor = this.__footFactor;
-		this._yLabel = "ft";
+		this._yLabel       = "ft";
 	} else {
 		this._heightFactor = this.options.heightFactor;
-		this._yLabel = this.options.yLabel;
+		this._yLabel       = this.options.yLabel;
 	}
 
 	this.on("eledata_updated", function(e) {
-		let data = this._data;
-		let i = e.index;
-		let z = data[i].z * this._heightFactor;
+		let data   = this._data;
+		let i      = e.index;
+		let z      = data[i].z * this._heightFactor;
 
 		let eleMax = this._maxElevation || -Infinity;
 		let eleMin = this._minElevation || +Infinity;
@@ -28,11 +28,11 @@ Elevation.addInitHook(function() {
 				let lastZ = this._lastValidZ;
 				let currZ = z;
 				if (!isNaN(lastZ) && !isNaN(currZ)) {
-					prevZ = (lastZ + currZ) / 2;
+					prevZ   = (lastZ + currZ) / 2;
 				} else if (!isNaN(lastZ)) {
-					prevZ = lastZ;
+					prevZ   = lastZ;
 				} else if (!isNaN(currZ)) {
-					prevZ = currZ;
+					prevZ   = currZ;
 				}
 				if (!isNaN(prevZ)) return data.splice(i - 1, 1);
 				data[i - 1].z = prevZ;
@@ -55,9 +55,9 @@ Elevation.addInitHook(function() {
 		this._altitudeLegend = this._chart._legend.append('g')
 			.call(
 				D3.LegendItem({
-					name: 'Altitude',
-					width: this._width(),
-					height: this._height(),
+					name   : 'Altitude',
+					width  : this._width(),
+					height : this._height(),
 					margins: this.options.margins,
 				})
 			);

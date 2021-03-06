@@ -1,5 +1,5 @@
 import 'leaflet-i18n';
-import * as _ from './utils';
+import * as _  from './utils';
 import * as D3 from './components';
 
 export var Marker = L.Class.extend({
@@ -21,11 +21,11 @@ export var Marker = L.Class.extend({
 
 		if (this.options.marker == 'elevation-line') {
 			// this._container = d3.create("g").attr("class", "height-focus-group");
-			this._focusline = d3.create('svg:line');
+			this._focusline   = d3.create('svg:line');
 			this._focusmarker = d3.create("svg:circle");
-			this._focuslabel = d3.create("svg:text");
+			this._focuslabel  = d3.create("svg:text");
 		} else if (this.options.marker == 'position-marker') {
-			this._marker = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
+			this._marker      = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
 		}
 		return this;
 	},
@@ -60,14 +60,14 @@ export var Marker = L.Class.extend({
 		if (this.options.marker == 'elevation-line') {
 
 			let normalizedAlt = this._height() / props.maxElevation * point.z;
-			let normalizedY = point.y - normalizedAlt;
+			let normalizedY   = point.y - normalizedAlt;
 
 			this._container.classed("leaflet-hidden", false);
 
 			this._focusmarker
 				.call(
 					D3.HeightFocusMarker({
-						theme: opts.theme,
+						theme : opts.theme,
 						xCoord: point.x,
 						yCoord: point.y,
 					}));
@@ -75,20 +75,19 @@ export var Marker = L.Class.extend({
 			this._focusline
 				.call(
 					D3.HeightFocusLine({
-						theme: opts.theme,
+						theme : opts.theme,
 						xCoord: point.x,
 						yCoord: point.y,
 						length: normalizedY
 					})
 				);
-
 			this._focuslabel
 				.call(
 					D3.HeightFocusLabel({
-						theme: opts.theme,
+						theme : opts.theme,
 						xCoord: point.x,
 						yCoord: normalizedY,
-						label: _.formatNum(point[opts.yAttr], opts.decimalsY) + " " + this._yLabel
+						label : d3.format("." + opts.decimalsY + "f")(point[opts.yAttr]) + " " + this._yLabel
 					})
 				);
 		} else if (this.options.marker == 'position-marker') {

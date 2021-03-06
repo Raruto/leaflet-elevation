@@ -35,6 +35,11 @@
   touch-action: none;
 }
 
+.elevation-control.elevation .background.zoomed .point,
+.elevation-control.elevation .background.zoomed .axis.time {
+  display: none;
+}
+
 .elevation-control.elevation .axis line,
 .elevation-control.elevation .axis path {
   stroke: #2D1130;
@@ -53,9 +58,13 @@
   pointer-events: none;
 }
 
-.elevation-control.elevation .axis text {
+.elevation-control.elevation .axis text,
+.elevation-control.elevation .point text {
   fill: #000;
   font-weight: 700;
+  paint-order: stroke fill;
+  stroke: #fff;
+  stroke-width: 2px
 }
 
 .elevation-control.elevation .y.axis text {

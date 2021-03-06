@@ -1,8 +1,8 @@
 import 'leaflet-i18n';
-import * as _ from './utils';
-import * as D3 from './components';
-import { Chart } from './chart';
-import { Marker } from './marker';
+import * as _      from './utils';
+import * as D3     from './components';
+import { Chart }   from './chart';
+import { Marker }  from './marker';
 import { Summary } from './summary';
 import { Options } from './options';
 
@@ -13,8 +13,21 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	options: Options,
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
-	__D3: 'https://unpkg.com/d3@5.15.0/dist/d3.min.js',
-	__LGPX: 'https://unpkg.com/leaflet-gpx@1.5.0/gpx.js',
+	__D3: 'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
+	__TOGEOJSON: 'https://unpkg.com/@tmcw/togeojson@4.1.0/dist/togeojson.umd.js',
+	__LGEOMUTIL: 'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
+	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
+
+	/**
+	 * Add a waypoint marker to the diagram
+	 */
+	addCheckpoint: function(checkpoint, skipUpdate = false) {
+		this.on("elechart_updated", function() {
+			if(!this._data.length) return;
+			this._chart._addCheckpoint(checkpoint);
+		});
+		if(!skipUpdate) this._updateChart();
+	},
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
@@ -53,10 +66,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	clear: function() {
 		if (this._marker) this._marker.remove();
-		if (this._chart) this._chart.clear();
+		if (this._chart)  this._chart.clear();
 		if (this._layers) this._layers.clearLayers();
 
-		this._data = [];
+		this._data      = [];
 		this.track_info = {};
 
 		this._fireEvt("eledata_clear");
@@ -108,25 +121,31 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Initialize chart control "options" and "container".
 	 */
 	initialize: function(options) {
-		this._data = [];
-		this._layers = L.featureGroup();
+		this._data           = [];
+		this._layers         = L.featureGroup();
 		this._markedSegments = L.polyline([]);
-		this._chartEnabled = true,
+		this._chartEnabled   = true,
 
-			this.track_info = {};
+		this.track_info      = {};
 
-		this.options = _.deepMerge({}, this.options, options);
+		this.options         = _.deepMerge({}, this.options, options);
 
-		this._zFollow = this.options.zFollow;
+		this._zFollow        = this.options.zFollow;
 
 		if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
-		if (this.options.placeholder) this.options.loadData.lazy = this.options.loadData.defer = true;
+		if (this.options.placeholder)  this.options.loadData.lazy = this.options.loadData.defer = true;
 
-		if (this.options.legend) this.options.margins.bottom += 30;
+		if (this.options.legend)       this.options.margins.bottom += 30;
 
-		if (this.options.theme) this.options.polylineSegments.className += ' ' + this.options.theme;
+		if (this.options.theme)        this.options.polylineSegments.className += ' ' + this.options.theme;
 
 		this._markedSegments.setStyle(this.options.polylineSegments);
+
+		if (L.Browser.mobile) {
+			this._updateChart   = _.debounce(this._updateChart,   300, this);
+			this._updateSummary = _.debounce(this._updateSummary, 300, this);
+			this._resizeChart   = _.debounce(this._resizeChart,   300, this);
+		}
 	},
 
 	/**
@@ -144,7 +163,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Load elevation data (GPX or GeoJSON).
+	 * Load elevation data (GPX, GeoJSON or KML).
 	 */
 	loadData: function(data, opts) {
 		opts = L.extend({}, this.options.loadData, opts);
@@ -153,7 +172,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		} else if (opts.lazy) {
 			this.loadLazy(data, opts);
 		} else if (_.isXMLDoc(data)) {
-			this.loadGPX(data);
+			this.loadXML(data);
 		} else if (_.isJSONDoc(data)) {
 			this.loadGeoJSON(data);
 		} else {
@@ -165,7 +184,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Wait for document load before download data.
 	 */
 	loadDefer: function(data, opts) {
-		opts = L.extend({}, this.options.loadData, opts);
+		opts       = L.extend({}, this.options.loadData, opts);
 		opts.defer = false;
 		_.deferFunc(L.bind(this.loadData, this, data, opts));
 	},
@@ -174,8 +193,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Load data from a remote url.
 	 */
 	loadFile: function(url) {
-		_.loadFile(url)
-			.then((data) => {
+		fetch(url)
+			.then((response) => response.text())
+			.then((data)     => {
 				this._downloadURL = url; // TODO: handle multiple urls?
 				this.loadData(data, { lazy: false, defer: false });
 			})
@@ -190,21 +210,37 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Load raw GPX data.
+	 * Alias for loadXML
 	 */
-	loadGPX: function(data) {
-		Elevation._gpxLazyLoader = _.lazyLoader(
-			this.__LGPX,
-			typeof L.GPX !== 'function' || !this.options.lazyLoadJS,
-			Elevation._gpxLazyLoader
-		).then(() => _.GPXLoader(data, this));
+	loadGPX: function(data){
+		this.loadXML(data);
+	},
+
+	/**
+	 * Load raw XML data.
+	 */
+	loadXML: function(data) {
+		Elevation._togeojsonLazyLoader = _.lazyLoader(
+			this.__TOGEOJSON,
+			typeof toGeoJSON !== 'function' || !this.options.lazyLoadJS,
+			Elevation._togeojsonLazyLoader
+		).then(
+			() => {
+				let xml     = (new DOMParser()).parseFromString(data, "text/xml");
+				let type    = xml.documentElement.tagName.toLowerCase(); // "kml" or "gpx"
+				let geojson = toGeoJSON[type](xml);
+				let name    = xml.getElementsByTagName('name');
+				if(name[0]) { geojson.name = name[0].innerHTML; }
+				return this.loadGeoJSON(geojson, this);
+			}
+		);
 	},
 
 	/**
 	 * Wait for chart container visible before download data.
 	 */
 	loadLazy: function(data, opts) {
-		opts = L.extend({}, this.options.loadData, opts);
+		opts     = L.extend({}, this.options.loadData, opts);
 		let elem = opts.lazy.parentNode ? opts.lazy : this.placeholder;
 		_.waitHolder(elem)
 			.then(() => {
@@ -244,17 +280,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._initLayer(map);
 
 			map
-				.on('zoom viewreset zoomanim', this._hideMarker, this)
-				.on('resize', this._resetView, this)
-				.on('resize', this._resizeChart, this)
-				.on('mousedown', this._resetDrag, this);
+				.on('zoom viewreset zoomanim',       this._hideMarker,    this)
+				.on('resize',                        this._resetView,     this)
+				.on('resize',                        this._resizeChart,   this)
+				.on('mousedown',                     this._resetDrag,     this);
 
-			_.on(map.getContainer(), 'mousewheel', this._resetDrag, this);
-			_.on(map.getContainer(), 'touchstart', this._resetDrag, this);
+			_.on(map.getContainer(), 'mousewheel', this._resetDrag,     this);
+			_.on(map.getContainer(), 'touchstart', this._resetDrag,     this);
 
 			this
-				.on('eledata_added eledata_loaded', this._updateChart, this)
-				.on('eledata_added eledata_loaded', this._updateSummary, this);
+				.on('eledata_added eledata_loaded',  this._updateChart,   this)
+				.on('eledata_added eledata_loaded',  this._updateSummary, this);
 
 			this._updateChart();
 			this._updateSummary();
@@ -271,17 +307,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._container = null;
 
 		map
-			.off('zoom viewreset zoomanim', this._hideMarker, this)
-			.off('resize', this._resetView, this)
-			.off('resize', this._resizeChart, this)
-			.off('mousedown', this._resetDrag, this);
+			.off('zoom viewreset zoomanim',       this._hideMarker,    this)
+			.off('resize',                        this._resetView,     this)
+			.off('resize',                        this._resizeChart,   this)
+			.off('mousedown',                     this._resetDrag,     this);
 
-		_.off(map.getContainer(), 'mousewheel', this._resetDrag, this);
-		_.off(map.getContainer(), 'touchstart', this._resetDrag, this);
+		_.off(map.getContainer(), 'mousewheel', this._resetDrag,     this);
+		_.off(map.getContainer(), 'touchstart', this._resetDrag,     this);
 
 		this
-			.off('eledata_added eledata_loaded', this._updateChart, this)
-			.off('eledata_added eledata_loaded', this._updateSummary, this);
+			.off('eledata_added eledata_loaded',  this._updateChart,   this)
+			.off('eledata_added eledata_loaded',  this._updateSummary, this);
 	},
 
 	/**
@@ -309,10 +345,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Parsing data either from GPX or GeoJSON and update the diagram data
 	 */
 	_addData: function(d) {
-		let geom = d && d.geometry;
-		let feat = d && d.type === "FeatureCollection";
-		let gpx = d && d._latlngs;
+		if (!d) {
+			return;
+		}
 
+		let geom = d.geometry;
 		if (geom) {
 			switch (geom.type) {
 				case 'LineString':
@@ -328,11 +365,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			}
 		}
 
-		if (feat) {
+		if (d.type === "FeatureCollection") {
 			_.each(d.features, feature => this._addData(feature));
 		}
 
-		if (gpx) {
+		if (d._latlngs) {
 			this._addGPXData(d._latlngs);
 		}
 	},
@@ -371,7 +408,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			x: x,
 			y: y,
 			z: z,
-			latlng: L.latLng(x, y, z),
+			latlng: L.latLng(x, y, z)
 		});
 
 		this._fireEvt("eledata_updated", { index: this._data.length - 1 });
@@ -388,11 +425,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		let eleDiv = _.select(this.options.elevationDiv);
 		if (!eleDiv) {
 			this.options.elevationDiv = '#elevation-div_' + _.randomId();
-			eleDiv = _.create('div', 'leaflet-control elevation elevation-div', { id: this.options.elevationDiv.substr(1) });
+			eleDiv                    = _.create('div', 'leaflet-control elevation elevation-div', { id: this.options.elevationDiv.substr(1) });
 		}
 		if (this.options.detached) {
-			_.addClass(eleDiv, 'elevation-detached');
-			_.removeClass(eleDiv, 'leaflet-control');
+			_.replaceClass(eleDiv, 'leaflet-control', 'elevation-detached');
 		}
 		this.eleDiv = eleDiv;
 		return this.eleDiv;
@@ -402,16 +438,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Collapse current chart control.
 	 */
 	_collapse: function() {
-		_.removeClass(this._container, 'elevation-expanded');
-		_.addClass(this._container, 'elevation-collapsed');
+		_.replaceClass(this._container, 'elevation-expanded', 'elevation-collapsed');
 	},
 
 	/*
 	 * Expand current chart control.
 	 */
 	_expand: function() {
-		_.removeClass(this._container, 'elevation-collapsed');
-		_.addClass(this._container, 'elevation-expanded');
+		_.replaceClass(this._container, 'elevation-collapsed', 'elevation-expanded');
 	},
 
 	/*
@@ -457,20 +491,20 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Generate "svg" chart DOM element.
 	 */
 	_initChart: function(container) {
-		let opts = this.options;
+		let opts    = this.options;
 		opts.xTicks = opts.xTicks || Math.round(this._width() / 75);
 		opts.yTicks = opts.yTicks || Math.round(this._height() / 30);
 
 		if (opts.responsive) {
 			if (opts.detached) {
-				let offWi = this.eleDiv.offsetWidth;
-				let offHe = this.eleDiv.offsetHeight;
-				opts.width = offWi > 0 ? offWi : opts.width;
-				opts.height = (offHe - 20) > 0 ? offHe - 20 : opts.height; // 20 = horizontal scrollbar size.
+				let offWi          = this.eleDiv.offsetWidth;
+				let offHe          = this.eleDiv.offsetHeight;
+				opts.width         = offWi > 0 ? offWi : opts.width;
+				opts.height        = (offHe - 20) > 0 ? offHe - 20 : opts.height; // 20 = horizontal scrollbar size.
 			} else {
-				opts._maxWidth = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
+				opts._maxWidth     = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
 				let containerWidth = this._map.getContainer().clientWidth;
-				opts.width = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
+				opts.width         = opts._maxWidth > containerWidth ? containerWidth - 30 : opts.width;
 			}
 		}
 
@@ -481,13 +515,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.call(chart.render())
 
 		chart
-			.on('reset_drag', this._hideMarker, this)
-			.on('mouse_enter', this._fireEvt.bind('elechart_enter'), this)
-			.on('dragged', this._dragendHandler, this)
-			.on('mouse_move', this._mousemoveHandler, this)
-			.on('mouse_out', this._mouseoutHandler, this)
-			.on('ruler_filter', this._rulerFilterHandler, this)
-			.on('zoom', this._updateChart, this);
+			.on('reset_drag',   this._hideMarker,                     this)
+			.on('mouse_enter',  this._fireEvt.bind('elechart_enter'), this)
+			.on('dragged',      this._dragendHandler,                 this)
+			.on('mouse_move',   this._mousemoveHandler,               this)
+			.on('mouse_out',    this._mouseoutHandler,                this)
+			.on('ruler_filter', this._rulerFilterHandler,             this)
+			.on('zoom',         this._updateChart,                    this);
 
 		this._fireEvt("elechart_axis");
 		if (this.options.legend) this._fireEvt("elechart_legend");
@@ -499,25 +533,24 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._layers
 			.on('layeradd layerremove', (e) => {
 				let layer = e.layer
-				let toggleClass = e.type == 'layeradd' ? _.addClass : _.removeClass;
-				let toggleEvt = layer[e.type == 'layeradd' ? "on" : "off"].bind(layer);
-				toggleClass(layer.getElement && layer.getElement(), this.options.polyline.className + ' ' + this.options.theme);
-				toggleEvt("mousemove", this._mousemoveLayerHandler, this)
-				toggleEvt("mouseout", this._mouseoutHandler, this);
+				let node  = layer.getElement && layer.getElement();
+				_.toggleClass(node,  this.options.polyline.className + ' ' + this.options.theme, e.type == 'layeradd');
+				_.toggleEvent(layer, "mousemove", this._mousemoveLayerHandler.bind(this),        e.type == 'layeradd')
+				_.toggleEvent(layer, "mouseout",  this._mouseoutHandler.bind(this),              e.type == 'layeradd');
 			});
 	},
 
 	_initMarker: function(map) {
-		let pane = map.getPane('elevationPane');
+		let pane                   = map.getPane('elevationPane');
 		if (!pane) {
-			pane = this._pane = map.createPane('elevationPane');
-			pane.style.zIndex = 625; // This pane is above markers but below popups.
+			pane = this._pane        = map.createPane('elevationPane');
+			pane.style.zIndex        = 625; // This pane is above markers but below popups.
 			pane.style.pointerEvents = 'none';
 		}
-		if (this._renderer) this._renderer.remove()
-		this._renderer = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
 
-		this._marker = new Marker(this.options);
+		if (this._renderer) this._renderer.remove()
+		this._renderer             = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
+		this._marker               = new Marker(this.options);
 	},
 
 	/**
@@ -545,8 +578,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if (this.options.collapsed) {
 				this._collapse();
 				if (this.options.autohide) {
-					_.on(container, 'mouseover', this._expand, this);
-					_.on(container, 'mouseout', this._collapse, this);
+					_.on(container, 'mouseover', this._expand,   this);
+					_.on(container, 'mouseout',  this._collapse, this);
 				} else {
 					_.on(link, 'click', L.DomEvent.stop);
 					_.on(link, 'click', this._toggle, this);
@@ -601,7 +634,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			}
 
 			this._fireEvt("elechart_change", { data: item, xCoord: xCoord });
-			this._fireEvt("elechart_hover", { data: item, xCoord: xCoord });
+			this._fireEvt("elechart_hover",  { data: item, xCoord: xCoord });
 		}
 	},
 
@@ -647,7 +680,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_mousewheelHandler: function(e) {
 		if (this._map.gestureHandling && this._map.gestureHandling._enabled) return;
 		let ll = this._marker.getLatLng() || this._map.getCenter();
-		let z = this._map.getZoom() + Math.sign(e.deltaY);
+		let z  = this._map.getZoom() + Math.sign(e.deltaY);
 		this._resetDrag();
 		this._map.flyTo(ll, z);
 	},
@@ -681,9 +714,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		if (this.options.responsive) {
 			if (this.options.detached) {
-				let newWidth = this.eleDiv.offsetWidth; // - 20;
+				let newWidth            = this.eleDiv.offsetWidth; // - 20;
 				if (newWidth) {
-					this.options.width = newWidth;
+					this.options.width    = newWidth;
 					this.eleDiv.innerHTML = "";
 					_.append(this.eleDiv, this.onAdd(this._map));
 				}
@@ -719,7 +752,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (!this.options.followMarker || !this._map) return;
 		let zoom = this._map.getZoom();
 		if ("number" === typeof this._zFollow) {
-			zoom = zoom < this._zFollow ? this._zFollow : zoom;
+			zoom   = zoom < this._zFollow ? this._zFollow : zoom;
 			this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
 		} else if (!this._map.getBounds().contains(item.latlng)) {
 			this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
@@ -734,8 +767,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		this._chart = this._chart.update({ data: this._data });
 
-		this._x = this._chart._x;
-		this._y = this._chart._y;
+		this._x     = this._chart._x;
+		this._y     = this._chart._y;
 
 		this._fireEvt("elechart_axis");
 		this._fireEvt("elechart_area");
@@ -748,10 +781,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_updateMarker: function(item) {
 		this._marker.update({
-			map: this._map,
-			item: item,
+			map         : this._map,
+			item        : item,
 			maxElevation: this._maxElevation,
-			options: this.options
+			options     : this.options
 		});
 	},
 
@@ -807,25 +840,31 @@ Elevation.addInitHook(function() {
 		}
 		if (pop && pop._content) {
 			pop._content = decodeURI(pop._content);
-			p.bindTooltip(pop._content, { direction: 'top', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
+			p.bindTooltip(pop._content, { direction: 'auto', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
 		}
 	});
 
 	// autotoggle chart data on click
 	this.on('elepath_toggle', function(e) {
-		let path = e.path;
-		let optName = path.getAttribute('data-name').toLowerCase();
-		let enable = _.hasClass(path, 'leaflet-hidden');
-		let label = _.select('text', e.legend);
-		let rect = _.select('rect', e.legend);
+		let path              = e.path;
+		let optName           = path.getAttribute('data-name').toLowerCase();
+		let enabled           = !_.hasClass(path, 'leaflet-hidden');
+		let label             = _.select('text', e.legend);
+		let rect              = _.select('rect', e.legend);
 
-		_.style(label, "text-decoration-line", enable ? "" : "line-through")
-		_.style(rect, "fill-opacity", enable ? "" : "0")
-		_.toggleClass(path, 'leaflet-hidden', !enable);
+		_.toggleStyle(label, 'text-decoration-line', 'line-through', enabled);
+		_.toggleStyle(rect,  'fill-opacity',         '0',            enabled);
+		_.toggleClass(path,  'leaflet-hidden',                       enabled);
 
-		this._chartEnabled = this._chart._area.selectAll('path:not(.leaflet-hidden)').nodes().length != 0;
-		this._layers.eachLayer(l => _.toggleClass(l.getElement && l.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
-		this.options[optName] = enable && this.options[optName] == 'disabled' ? 'enabled' : 'disabled';
+		this._chartEnabled    = this._chart._area.selectAll('path:not(.leaflet-hidden)').nodes().length != 0;
+
+		this._layers.eachLayer(layer => {
+			let node = layer.getElement && layer.getElement();
+			_.toggleClass(node, this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled);
+			}
+		);
+
+		this.options[optName] = !enabled && this.options[optName] == 'disabled' ? 'enabled' : 'disabled';
 
 		if (!this._chartEnabled) {
 			this._chart._hideDiagramIndicator();
@@ -835,65 +874,87 @@ Elevation.addInitHook(function() {
 
 	// TODO: maybe should i listen for this inside chart.js?
 	this.on("elechart_updated elechart_init", function() {
-		let items = this._chart._legend.selectAll('.legend-item');
+
+		// Get legend items
+		let items  = this._chart._legend.selectAll('.legend-item');
+
 		// Calculate legend item positions
-		let n = items.nodes().length;
-		let v = Array(Math.floor(n / 2)).fill(null).map((d, i) => (i + 1) * 2 - (1 - Math.sign(n % 2)));
-		let rev = v.slice().reverse().map((d) => -(d));
+		let n      = items.nodes().length;
+		let v      = Array(Math.floor(n / 2)).fill(null).map((d, i) => (i + 1) * 2 - (1 - Math.sign(n % 2)));
+		let rev    = v.slice().reverse().map((d) => -(d));
+
 		if (n % 2 !== 0) {
 			rev.push(0);
 		}
 		v = rev.concat(v);
 
-		let xAxesB = this._chart._axis.selectAll('.x.axis.bottom').nodes().length;
+		// Get chart margins
+		let xAxesB  = this._chart._axis.selectAll('.x.axis.bottom').nodes().length;
+		let marginB = 60 + (xAxesB * 2);
+		let marginR = n * 30;
 
 		// Adjust chart right margins
-		let marginR = n * 30;
 		if (n && this.options.margins.right != marginR) {
-			this.options.margins.right = marginR;
+			this.options.margins.right  = marginR;
 			this.redraw();
 		}
 
 		// Adjust chart bottom margins
-		let marginB = 60 + (xAxesB * 2);
 		if(xAxesB && this.options.margins.bottom != marginB) {
 			this.options.margins.bottom = marginB;
 			this.redraw();
 		}
 
-
 		items
 			.each((d, i, n) => {
-				let target = n[i];
-				let name = target.getAttribute('data-name');
+
+				let target  = n[i];
+				let legend  = d3.select(target);
+				let name    = target.getAttribute('data-name');
 				let optName = name.toLowerCase();
-				let path = this._chart._area.select('path[data-name="' + name + '"]').node();
+				let path    = this._chart._area.select('path[data-name="' + name + '"]');
+				let node    = path.node();
+
+				legend
+
 				// Bind legend click togglers
-				d3.select(target).on('click', () => this._fireEvt("elepath_toggle", { path: path, name: name, legend: target }));
-				// Set initial chart area state
-				if (path && optName in this.options && this.options[optName] == 'disabled') {
-					path.classList.add('leaflet-hidden');
-					target.querySelector('text').style.textDecorationLine = "line-through";
-					target.querySelector('rect').style.fillOpacity = "0";
-				}
-				// Apply d3-zoom (bind <clipPath> mask)
-				if (path && this._chart._clipPath) {
-					path.setAttribute("clip-path", 'url(#' + this._chart._clipPath.attr('id') + ')');
-				}
+				.on('click', () => this._fireEvt("elepath_toggle", { path: node, name: name, legend: target }))
+
 				// Adjust legend item positions
-				d3.select(target).attr("transform", "translate(" + v[i] * 55 + ", " + xAxesB * 2 + ")");
+				.attr("transform", "translate(" + v[i] * 55 + ", " + xAxesB * 2 + ")");
+
+				// Set initial chart area state
+				if (optName in this.options && this.options[optName] == 'disabled') {
+					path.classed('leaflet-hidden', true);
+					legend.select('text').style('text-decoration-line', 'line-through');
+					legend.select('rect').style('fill-opacity', '0');
+				}
+
+				// Apply d3-zoom (bind <clipPath> mask)
+				if (this._chart._clipPath) {
+					path.attr('clip-path', 'url(#' + this._chart._clipPath.attr('id') + ')');
+				}
+
 			});
+
 		// Adjust axis scale positions
-		this._chart._axis.selectAll('.y.axis.right').each((d, i, n) => {
-			let axis = d3.select(n[i]);
-			let transform = axis.attr('transform');
-			let translate = transform.substring(transform.indexOf("(") + 1, transform.indexOf(")")).split(",");
-			axis.attr('transform', 'translate(' + (+translate[0] + (i * 40)) + ',' + translate[1] + ')')
-			if (i > 0) {
-				axis.select(':scope > path').attr('opacity', 0.25);
-				axis.selectAll(':scope > .tick line').attr('opacity', 0.75);
-			}
-		});
+		this._chart._axis
+			.selectAll('.y.axis.right')
+			.each((d, i, n) => {
+
+				let axis      = d3.select(n[i]);
+				let transform = axis.attr('transform');
+				let translate = transform.substring(transform.indexOf("(") + 1, transform.indexOf(")")).split(",");
+
+				axis.attr('transform', 'translate(' + (+translate[0] + (i * 40)) + ',' + translate[1] + ')')
+
+				if (i > 0) {
+					axis.select(':scope > path')         .attr('opacity', 0.25);
+					axis.selectAll(':scope > .tick line').attr('opacity', 0.75);
+				}
+
+			});
+
 	});
 
 	this.on("eletrack_download", function(e) {
@@ -905,71 +966,73 @@ Elevation.addInitHook(function() {
 	});
 
 	this.on('eledata_loaded', function(e) {
-		let map = this._map;
+		let map   = this._map;
 		let layer = e.layer;
 		if (!map) {
 			console.warn("Undefined elevation map object");
 			return;
 		}
-		map.once('layeradd', function(e) {
-			if (this.options.autofitBounds) {
-				this.fitBounds(layer.getBounds());
-			}
-		}, this);
+		map.once('layeradd',   (e) => this.options.autofitBounds && this.fitBounds(layer.getBounds()));
+
 		if (this.options.polyline) layer.addTo(map);
-		if (L.GeometryUtil && map.almostOver && map.almostOver.enabled() && !L.Browser.mobile) {
-			map.almostOver.addLayer(layer);
-			map
-				.on('almost:move', (e) => this._mousemoveLayerHandler(e))
-				.on('almost:out', (e) => this._mouseoutHandler(e));
+
+		// Download "Leaflet-GeometryUtil" and "Leaflet-AlmostOver" scripts
+		if (!L.Browser.mobile) {
+			Elevation._geomutilLazyLoader = _.lazyLoader(
+				this.__LGEOMUTIL,
+				typeof L.GeometryUtil !== 'function' || !this.options.lazyLoadJS,
+				Elevation._geomutilLazyLoader
+			).then(
+				() => {
+					Elevation._almostoverLazyLoader = _.lazyLoader(
+						this.__LALMOSTOVER,
+						typeof L.Handler.AlmostOver  !== 'function' || !this.options.lazyLoadJS,
+						Elevation._almostoverLazyLoader
+					).then(
+						() => {
+							map.addHandler('almostOver',L.Handler.AlmostOver)
+							// Support for "Leaflet.AlmostOver"
+							if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
+								map.almostOver.addLayer(layer);
+								map
+									.on('almost:move', (e) => this._mousemoveLayerHandler(e))
+									.on('almost:out',  (e) => this._mouseoutHandler(e));
+							}
+						}
+					);
+				}
+			);
 		}
 	});
 
 	// Basic canvas renderer support.
 	let oldProto = L.Canvas.prototype._fillStroke;
-	let control = this;
+	let control  = this;
 	L.Canvas.include({
 		_fillStroke: function(ctx, layer) {
 			if (control._layers.hasLayer(layer)) {
-				let theme = control.options.theme.replace('-theme', '');
-				let options = layer.options;
-				options.stroke = true;
+				let theme   = control.options.theme.replace('-theme', '');
+				let colors  = L.extend({}, {
+					'lightblue': '#3366CC',
+					'magenta'  : '#FF005E',
+					'red'      : '#F00',
+					'yellow'   : '#FF0',
+					'purple'   : '#732C7B',
+					'steelblue': '#4682B4',
+					'lime'     : '#566B13'
+				}, control.options.colors);
 
-				switch (theme) {
-					case 'lightblue':
-						options.color = '#3366CC';
-						break;
-					case 'magenta':
-						options.color = '#FF005E';
-						break;
-					case 'red':
-						options.color = '#F00';
-						break;
-					case 'yellow':
-						options.color = '#FF0';
-						break;
-					case 'purple':
-						options.color = '#732C7B';
-						break;
-					case 'steelblue':
-						options.color = '#4682B4';
-						break;
-					case 'lime':
-						options.color = '#566B13';
-						break;
-					default:
-						if (theme) options.color = theme;
-						else options.stroke = false;
-						break
-				}
+				let options    = layer.options;
+				options.color  = colors[theme] || theme;
+				options.stroke = !!options.color;
 
 				oldProto.call(this, ctx, layer);
 
 				if (options.stroke && options.weight !== 0) {
-					let oldVal = ctx.globalCompositeOperation || 'source-over';
+					let oldVal                   = ctx.globalCompositeOperation || 'source-over';
 					ctx.globalCompositeOperation = 'destination-over'
-					ctx.strokeStyle = '#FFF';
-					ctx.lineWidth = options.weight * 1.75;
+					ctx.strokeStyle              = '#FFF';
+					ctx.lineWidth                = options.weight * 1.75;
 					ctx.stroke();
 					ctx.globalCompositeOperation = oldVal;
 				}

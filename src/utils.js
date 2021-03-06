@@ -29,49 +29,39 @@ export function deferFunc(f) {
 	if (document.readyState !== 'complete') window.addEventListener("load", f, { once: true });
 	else f();
 }
-
-/*
- * Similar to L.Util.formatNum
+/**
+ * Debounce function to limit events are being fired.
  */
-export function formatNum(num, dec, sep) {
-	return num.toFixed(dec).toString().split(".").join(sep || ".");
+export function debounce(func, wait, context, immediate) {
+	var timeout;
+	return function() {
+		var args = arguments;
+		clearTimeout(timeout);
+		timeout  = setTimeout(function() {
+			timeout = null;
+		if (!immediate) func.apply(context, args);
+		}, wait);
+		if (immediate && !timeout) func.apply(context, args);
+	};
 }
 
-const SEC = 1000;
-const MIN = SEC * 60;
+const SEC  = 1000;
+const MIN  = SEC * 60;
 const HOUR = MIN * 60;
-const DAY = HOUR * 24;
+const DAY  = HOUR * 24;
 
+/**
+ * Convert a duration time (millis) to a human readable string (%Dd %H:%M'%S")
+ */
 export function formatTime(t) {
-	let s = '';
-
-	if (t >= DAY) {
-		s += Math.floor(t / DAY) + 'd ';
-		t = t % DAY;
-	}
-
-	if (t >= HOUR) {
-		s += Math.floor(t / HOUR) + ':';
-		t = t % HOUR;
-	}
-
-	if (t >= MIN) {
-		s += Math.floor(t / MIN).toString().padStart(2, 0) + "'";
-		t = t % MIN;
-	}
-
-	if (t >= SEC) {
-		s += Math.floor(t / SEC).toString().padStart(2, 0);
-		t = t % SEC;
-	}
-
-	let msec = Math.round(Math.floor(t) * 1000) / 1000;
-	if (msec) s += '.' + msec.toString().replace(/0+$/, '');
-
-  if (!s) s = "0.0";
-	s += '"';
-
-	return s;
+	let d = Math.floor(t / DAY);
+	let h = Math.floor( (t - d * DAY) / HOUR);
+	let m = Math.floor( (t - d * DAY - h * HOUR) / MIN);
+	let s = Math.round( (t - d * DAY - h * HOUR - m * MIN) / SEC);
+	if ( s === 60 ) { m++; s = 0; }
+	if ( m === 60 ) { h++; m = 0; }
+	if ( h === 24 ) { d++; h = 0; }
+	return (d ? d + "d " : '') + h.toString().padStart(2, 0) + ':' + m.toString().padStart(2, 0) + "'" + s.toString().padStart(2, 0) + '"';
 }
 
 /**
@@ -93,22 +83,24 @@ export function GeoJSONLoader(data, control) {
 		},
 		pointToLayer: (feature, latlng) => {
 			let marker = L.marker(latlng, { icon: control.options.gpxOptions.marker_options.wptIcons[''] });
-			let desc = feature.properties.desc ? feature.properties.desc : '';
-			let name = feature.properties.name ? feature.properties.name : '';
+			let prop   = feature.properties;
+			let desc   = prop.desc ? prop.desc : '';
+			let name   = prop.name ? prop.name : '';
 			if (name || desc) {
 				marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
 			}
+			control.addCheckpoint({latlng:latlng, label: name}, true);
 			control.fire('waypoint_added', { point: marker, point_type: 'waypoint', element: latlng });
 			return marker;
 		},
 		onEachFeature: (feature, layer) => {
-			if (feature.geometry.type == 'Point') return;
+			if (feature.geometry && feature.geometry.type == 'Point') return;
 
 			// Standard GeoJSON
 			// control.addData(feature, layer);  // NB uses "_addGeoJSONData"
 
 			// Extended GeoJSON
-			layer._latlngs.forEach((point, i) => {
+			layer._latlngs.forEach((point, i, data) => {
 				// same properties as L.GPX layer
 				point.meta = { time: null, ele: null, hr: null, cad: null, atemp: null };
 				if("alt" in point) point.meta.ele = point.alt;
@@ -130,41 +122,6 @@ export function GeoJSONLoader(data, control) {
 
 	L.Control.Elevation._d3LazyLoader.then(() => {
 		control._fireEvt("eledata_loaded", { data: data, layer: layer, name: control.track_info.name, track_info: control.track_info })
-	});
-
-	return layer;
-}
-
-/**
- * Simple GPX data loader.
- */
-export function GPXLoader(data, control) {
-	control = control || this;
-
-	control.options.gpxOptions.polyline_options = L.extend({}, control.options.polyline, control.options.gpxOptions.polyline_options);
-
-	if (control.options.theme) {
-		control.options.gpxOptions.polyline_options.className += ' ' + control.options.theme;
-	}
-
-	let layer = new L.GPX(data, control.options.gpxOptions);
-
-	// similar to L.GeoJSON.pointToLayer
-	layer.on('addpoint', (e) => {
-		control.fire("waypoint_added", e);
-	});
-
-	// similar to L.GeoJSON.onEachFeature
-	layer.on("addline", (e) => {
-		control.addData(e.line /*, layer*/ ); // NB uses "_addGPXData"
-		control.track_info = L.extend({}, control.track_info, { type: "gpx", name: layer.get_name() });
-	});
-
-	// unlike the L.GeoJSON, L.GPX parsing is async
-	layer.once('loaded', (e) => {
-		L.Control.Elevation._d3LazyLoader.then(() => {
-			control._fireEvt("eledata_loaded", { data: data, layer: layer, name: control.track_info.name, track_info: control.track_info });
-		});
 	});
 
 	return layer;
@@ -278,20 +235,6 @@ export function lazyLoader(url, skip, loader) {
 }
 
 /**
- * Download data from a remote url.
- */
-export function loadFile(url, success) {
-	return new Promise((resolve, reject) => {
-		let xhr = new XMLHttpRequest();
-		xhr.responseType = "text";
-		xhr.open('GET', url);
-		xhr.onload = () => resolve(xhr.response);
-		xhr.onerror = () => reject("Error " + xhr.status + " while fetching remote file: " + url);
-		xhr.send();
-	});
-}
-
-/**
  * Generate download data event.
  */
 export function saveFile(dataURI, fileName) {
@@ -344,9 +287,22 @@ export function toggleClass(targetNode, className, conditional) {
 	return (conditional ? addClass : removeClass).call(null, targetNode, className)
 }
 
+export function replaceClass(targetNode, removeClassName, addClassName) {
+  if (removeClassName) removeClass(targetNode, removeClassName);
+  if (addClassName) addClass(targetNode, addClassName);
+}
+
 export function style(targetNode, name, value) {
 	if (typeof value === "undefined") return L.DomUtil.getStyle(targetNode, name);
 	else return targetNode.style.setProperty(name, value);
+}
+
+export function toggleStyle(targetNode, name, value, conditional) {
+  return style(targetNode, name, conditional ? value : '');
+}
+
+export function toggleEvent(leafletElement, eventName, handler, conditional) {
+	return leafletElement[conditional ? 'on' : 'off'](eventName, handler);
 }
 
 /**

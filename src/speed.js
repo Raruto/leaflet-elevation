@@ -1,6 +1,6 @@
 import 'leaflet-i18n';
-import * as _ from './utils';
-import * as D3 from './components';
+import * as _        from './utils';
+import * as D3       from './components';
 import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
@@ -10,8 +10,8 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let speed = {};
 
-	speed.label = opts.speedLabel || L._(this.options.imperial ? 'mph' : 'km/h');
-	this._speedFactor = opts.speedFactor || 1;
+	speed.label          = opts.speedLabel || L._(this.options.imperial ? 'mph' : 'km/h');
+	this._speedFactor    = opts.speedFactor || 1;
 
 	if (this.options.speed && this.options.speed != "summary") {
 
@@ -29,26 +29,26 @@ Elevation.addInitHook(function() {
 			speed.x = this._chart._x;
 
 			speed.y = D3.Scale({
-				data: this._data,
-				range: [this._height(), 0],
-				attr: "speed",
-				min: 0,
-				max: +1,
+				data       : this._data,
+				range      : [this._height(), 0],
+				attr       : "speed",
+				min        : 0,
+				max        : +1,
 				forceBounds: opts.forceAxisBounds
 			});
 
 			speed.axis = D3.Axis({
-				axis: "y",
-				position: "right",
-				width: this._width(),
-				height: this._height(),
-				scale: speed.y,
-				ticks: this.options.yTicks,
+				axis       : "y",
+				position   : "right",
+				width      : this._width(),
+				height     : this._height(),
+				scale      : speed.y,
+				ticks      : this.options.yTicks,
 				tickPadding: 16,
-				label: speed.label,
-				labelX: 25,
-				labelY: -8,
-				name: "speed"
+				label      : speed.label,
+				labelX     : 25,
+				labelY     : -8,
+				name       : "speed"
 			});
 
 			this._chart._axis.call(speed.axis);
@@ -57,14 +57,14 @@ Elevation.addInitHook(function() {
 		this.on("elechart_area", function() {
 			speed.area = D3.Area({
 				interpolation: opts.sInterpolation,
-				data: this._data,
-				name: 'Speed',
-				xAttr: opts.xAttr,
-				yAttr: "speed",
-				width: this._width(),
-				height: this._height(),
-				scaleX: speed.x,
-				scaleY: speed.y
+				data         : this._data,
+				name         : 'Speed',
+				xAttr        : opts.xAttr,
+				yAttr        : "speed",
+				width        : this._width(),
+				height       : this._height(),
+				scaleX       : speed.x,
+				scaleY       : speed.y
 			});
 			speed.path.call(speed.area);
 		});
@@ -73,9 +73,9 @@ Elevation.addInitHook(function() {
 			speed.legend = this._chart._legend.append("g")
 				.call(
 					D3.LegendItem({
-						name: 'Speed',
-						width: this._width(),
-						height: this._height(),
+						name   : 'Speed',
+						width  : this._width(),
+						height : this._height(),
 						margins: this.options.margins
 					}));
 			speed.legend.select("rect")
@@ -89,31 +89,27 @@ Elevation.addInitHook(function() {
 	}
 
 	this.on('elepoint_added', function(e) {
-		let data = this._data;
-		let i = e.index;
+		let data   = this._data;
+		let i      = e.index;
 
-		let currT = data[i].time;
-		let prevT = i > 0 ? data[i - 1].time : currT;
+		let currT  = data[i].time;
+		let prevT  = i > 0 ? data[i - 1].time : currT;
 
 		let deltaT = currT - prevT;
 
-		let sMax = this._maxSpeed || -Infinity; // Speed Max
-		let sMin = this._minSpeed || +Infinity; // Speed Min
-		let sAvg = this._avgSpeed || 0; // Speed Avg
-		let speed = 0;
+		let sMax   = this._maxSpeed || -Infinity; // Speed Max
+		let sMin   = this._minSpeed || +Infinity; // Speed Min
+		let sAvg   = this._avgSpeed || 0; // Speed Avg
+		let speed  = 0;
 
 		if (deltaT > 0) {
-			let curr = data[i].latlng;
-			let prev = i > 0 ? data[i - 1].latlng : curr;
-
-			let delta = curr.distanceTo(prev) * this._distanceFactor;
-
+			let delta = (data[i].dist - data[i > 0 ? i - 1 : i].dist) * 1000;
 			speed = Math.abs((delta / deltaT) * this._timeFactor) * this._speedFactor;
 		}
 
 		// Try to smooth "crazy" speed values.
 		if (this.options.speedDeltaMax) {
-			let deltaS = i > 0 ? speed - data[i - 1].speed : 0;
+			let deltaS    = i > 0 ? speed - data[i - 1].speed : 0;
 			let maxDeltaS = this.options.speedDeltaMax;
 			if (Math.abs(deltaS) > maxDeltaS) {
 				speed = data[i - 1].speed + maxDeltaS * Math.sign(deltaS);

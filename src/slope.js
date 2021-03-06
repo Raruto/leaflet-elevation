@@ -1,13 +1,13 @@
 import 'leaflet-i18n';
-import * as _ from './utils';
-import * as D3 from './components';
+import * as _        from './utils';
+import * as D3       from './components';
 import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
 
 	if (!this.options.slope) return;
 
-	let opts = this.options;
+	let opts  = this.options;
 	let slope = {};
 
 	if (this.options.slope != "summary") {
@@ -26,35 +26,35 @@ Elevation.addInitHook(function() {
 			slope.x = this._chart._x;
 
 			// slope.x = D3.Scale({
-			// 	data: this._data,
-			// 	range: [0, this._width()],
-			// 	attr: opts.xAttr,
-			// 	min: opts.xAxisMin,
-			// 	max: opts.xAxisMax,
+			// 	data       : this._data,
+			// 	range      : [0, this._width()],
+			// 	attr       : opts.xAttr,
+			// 	min        : opts.xAxisMin,
+			// 	max        : opts.xAxisMax,
 			// 	forceBounds: opts.forceAxisBounds,
 			// });
 
 			slope.y = D3.Scale({
-				data: this._data,
-				range: [this._height(), 0],
-				attr: "slope",
-				min: -1,
-				max: +1,
+				data       : this._data,
+				range      : [this._height(), 0],
+				attr       : "slope",
+				min        : -1,
+				max        : +1,
 				forceBounds: opts.forceAxisBounds,
 			});
 
 			slope.axis = D3.Axis({
-				axis: "y",
-				position: "right",
-				width: this._width(),
-				height: this._height(),
-				scale: slope.y,
-				ticks: this.options.yTicks,
+				axis       : "y",
+				position   : "right",
+				width      : this._width(),
+				height     : this._height(),
+				scale      : slope.y,
+				ticks      : this.options.yTicks,
 				tickPadding: 16,
-				label: "%",
-				labelX: 25,
-				labelY: -8,
-				name: "slope"
+				label      : "%",
+				labelX     : 25,
+				labelY     : -8,
+				name       : "slope"
 			});
 
 			this._chart._axis.call(slope.axis);
@@ -63,14 +63,14 @@ Elevation.addInitHook(function() {
 		this.on("elechart_area", function() {
 			slope.area = D3.Area({
 				interpolation: opts.sInterpolation,
-				data: this._data,
-				name: 'Slope',
-				xAttr: opts.xAttr,
-				yAttr: "slope",
-				width: this._width(),
-				height: this._height(),
-				scaleX: slope.x,
-				scaleY: slope.y,
+				data         : this._data,
+				name         : 'Slope',
+				xAttr        : opts.xAttr,
+				yAttr        : "slope",
+				width        : this._width(),
+				height       : this._height(),
+				scaleX       : slope.x,
+				scaleY       : slope.y,
 			});
 
 			slope.path.call(slope.area);
@@ -80,9 +80,9 @@ Elevation.addInitHook(function() {
 			slope.legend = this._chart._legend.append("g")
 				.call(
 					D3.LegendItem({
-						name: 'Slope',
-						width: this._width(),
-						height: this._height(),
+						name   : 'Slope',
+						width  : this._width(),
+						height : this._height(),
 						margins: this.options.margins,
 					})
 				);
@@ -97,20 +97,16 @@ Elevation.addInitHook(function() {
 	}
 
 	this.on("eledata_updated", function(e) {
-		let data = this._data;
-		let i = e.index;
-		let z = data[i].z;
-
-		let curr = data[i].latlng;
-		let prev = i > 0 ? data[i - 1].latlng : curr;
-
-		let delta = curr.distanceTo(prev) * this._distanceFactor;
+		let data  = this._data;
+		let i     = e.index;
+		let z     = data[i].z;
+		let delta = (data[i].dist - data[i > 0 ? i - 1 : i].dist) * 1000;
 
 		// Slope / Gain
-		let tAsc = this._tAsc || 0; // Total Ascent
-		let tDes = this._tDes || 0; // Total Descent
-		let sMax = this._sMax || 0; // Slope Max
-		let sMin = this._sMin || 0; // Slope Min
+		let tAsc  = this._tAsc || 0; // Total Ascent
+		let tDes  = this._tDes || 0; // Total Descent
+		let sMax  = this._sMax || 0; // Slope Max
+		let sMin  = this._sMin || 0; // Slope Min
 		let slope = 0;
 
 		if (!isNaN(z)) {
@@ -123,7 +119,7 @@ Elevation.addInitHook(function() {
 
 		// Try to smooth "crazy" slope values.
 		if (this.options.sDeltaMax) {
-			let deltaS = i > 0 ? slope - data[i - 1].slope : 0;
+			let deltaS    = i > 0 ? slope - data[i - 1].slope : 0;
 			let maxDeltaS = this.options.sDeltaMax;
 			if (Math.abs(deltaS) > maxDeltaS) {
 				slope = data[i - 1].slope + maxDeltaS * Math.sign(deltaS);
@@ -144,17 +140,17 @@ Elevation.addInitHook(function() {
 
 		data[i].slope = slope;
 
-		this.track_info.ascent = this._tAsc = tAsc;
-		this.track_info.descent = this._tDes = tDes;
+		this.track_info.ascent    = this._tAsc = tAsc;
+		this.track_info.descent   = this._tDes = tDes;
 		this.track_info.slope_max = this._sMax = sMax;
 		this.track_info.slope_min = this._sMin = sMin;
 	});
 
 	this.on("elechart_change", function(e) {
-		let item = e.data;
+		let item        = e.data;
 		let xCoordinate = e.xCoord;
-		let chart = this._chart;
-		let marker = this._marker;
+		let chart       = this._chart;
+		let marker      = this._marker;
 
 		if (chart._focuslabel) {
 			if (!chart._focuslabelSlope || !chart._focuslabelSlope.property('isConnected')) {
@@ -185,8 +181,8 @@ Elevation.addInitHook(function() {
 	});
 
 	this.on("elechart_summary", function() {
-		this.track_info.ascent = this._tAsc || 0;
-		this.track_info.descent = this._tDes || 0;
+		this.track_info.ascent    = this._tAsc || 0;
+		this.track_info.descent   = this._tDes || 0;
 		this.track_info.slope_max = this._sMax || 0;
 		this.track_info.slope_min = this._sMin || 0;
 

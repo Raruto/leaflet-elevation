@@ -48,7 +48,7 @@ export const Axis = ({
 	return g => {
 		let [w, h] = [0, 0];
 		if (position == "bottom") h = height;
-		if (position == "right") w = width;
+		if (position == "right")  w = width;
 
 		if (axis == "x" && type == "grid") {
 			tickSize = -height;
@@ -69,7 +69,7 @@ export const Axis = ({
 			.call(axisScale);
 
 		if (label) {
-			axisGroup.append("text")
+			axisGroup.append("svg:text")
 				.attr("x", labelX)
 				.attr("y", labelY)
 				.text(label);
@@ -177,7 +177,7 @@ export const LegendItem = ({
 			.attr("class", "legend-item legend-" + name.toLowerCase())
 			.attr("data-name", name);
 
-		g.append("rect")
+		g.append("svg:rect")
 			.attr("class", "area")
 			.attr("x", (width / 2) - 50)
 			.attr("y", height + margins.bottom / 2)
@@ -185,7 +185,7 @@ export const LegendItem = ({
 			.attr("height", 10)
 			.attr("opacity", 0.75);
 
-		g.append('text')
+		g.append('svg:text')
 			.text(L._(name))
 			.attr("x", (width / 2) + 5)
 			.attr("font-size", 10)
@@ -223,13 +223,13 @@ export const MouseFocusLabel = ({
 
 		let rect = g.select(".mouse-focus-label-rect");
 		let text = g.select(".mouse-focus-label-text");
-		let y = text.select(".mouse-focus-label-y");
-		let x = text.select(".mouse-focus-label-x");
+		let y    = text.select(".mouse-focus-label-y");
+		let x    = text.select(".mouse-focus-label-x");
 
-		if (!rect.node()) rect = g.append("rect");
+		if (!rect.node()) rect = g.append("svg:rect");
 		if (!text.node()) text = g.append("svg:text");
-		if (!y.node()) y = text.append("svg:tspan");
-		if (!x.node()) x = text.append("svg:tspan");
+		if (!y.node())    y    = text.append("svg:tspan");
+		if (!x.node())    x    = text.append("svg:tspan");
 
 		y.text(labelY);
 		x.text(labelX);
@@ -237,7 +237,7 @@ export const MouseFocusLabel = ({
 		// Sets focus-label-text position to the left / right of the mouse-focus-line
 		let xAlign = 0;
 		let yAlign = 0;
-		let bbox = { width: 0, height: 0 };
+		let bbox   = { width: 0, height: 0 };
 		try { bbox = text.node().getBBox(); } catch (e) { return g; }
 
 		if (xCoord) xAlign = xCoord + (xCoord < width / 2 ? 10 : -bbox.width - 10);
@@ -280,12 +280,12 @@ export const Ruler = ({
 			}])
 			.attr("transform", d => "translate(" + d.x + "," + d.y + ")");
 
-		g.append("line")
+		g.append("svg:line")
 			.attr("class", "horizontal-drag-line")
 			.attr("x1", 0)
 			.attr("x2", width);
 
-		g.append("text")
+		g.append("svg:text")
 			.attr("class", "horizontal-drag-label")
 			.attr("text-anchor", "end")
 			.attr("x", width - 8)
@@ -300,7 +300,7 @@ export const Ruler = ({
 				"size": 50
 			}])
 			.enter()
-			.append("path")
+			.append("svg:path")
 			.attr("class", "horizontal-drag-symbol")
 			.attr("d",
 				d3.symbol()

@@ -1,21 +1,21 @@
 import 'leaflet-i18n';
-import * as _ from './utils';
-import * as D3 from './components';
+import * as _        from './utils';
+import * as D3       from './components';
 import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
 
 	if (this.options.imperial) {
 		this._distanceFactor = this.__mileFactor;
-		this._xLabel = "mi";
+		this._xLabel         = "mi";
 	} else {
 		this._distanceFactor = this.options.distanceFactor;
-		this._xLabel = this.options.xLabel;
+		this._xLabel         = this.options.xLabel;
 	}
 
 	this.on("eledata_updated", function(e) {
 		let data = this._data;
-		let i = e.index;
+		let i    = e.index;
 
 		let dist = this._distance || 0;
 
@@ -24,7 +24,7 @@ Elevation.addInitHook(function() {
 
 		let delta = curr.distanceTo(prev) * this._distanceFactor;
 
-		dist = dist + Math.round(delta / 1000 * 100000) / 100000;
+		dist += Math.round(delta / 1000 * 100000) / 100000; // handles floating points calc
 
 		data[i].dist = dist;
 
