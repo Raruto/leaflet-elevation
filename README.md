@@ -16,6 +16,7 @@ _For a working example see one of the following demos:_
 - [loading .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation.html)
 - [loading .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
 - [loading .kml file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_kml-data.html)
+- [loading .tcx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_tcx-data.html)
 - [loading strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
 - [loading geojson group](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
 - [loading local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
@@ -150,7 +151,7 @@ _For a working example see one of the following demos:_
       // Instantiate elevation control.
       var controlElevation = L.control.elevation(elevation_options).addTo(map);
 
-      // Load track from url (allowed data types: "*.geojson", "*.gpx")
+      // Load track from url (allowed data types: "*.geojson", "*.gpx", "*.tcx")
       controlElevation.load("https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx");
 
     </script>

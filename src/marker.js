@@ -25,6 +25,7 @@ export var Marker = L.Class.extend({
 			this._focusmarker = d3.create("svg:circle");
 			this._focuslabel  = d3.create("svg:text");
 		} else if (this.options.marker == 'position-marker') {
+			// this._marker      = L.circleMarker([0, 0], { pane: 'elevationPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
 			this._marker      = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
 		}
 		return this;

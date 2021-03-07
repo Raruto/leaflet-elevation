@@ -14,7 +14,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
 	__D3: 'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
-	__TOGEOJSON: 'https://unpkg.com/@tmcw/togeojson@4.1.0/dist/togeojson.umd.js',
+	__TOGEOJSON: 'https://unpkg.com/@tmcw/togeojson@4.3.0/dist/togeojson.umd.js',
 	__LGEOMUTIL: 'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
 
@@ -228,9 +228,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			() => {
 				let xml     = (new DOMParser()).parseFromString(data, "text/xml");
 				let type    = xml.documentElement.tagName.toLowerCase(); // "kml" or "gpx"
+				if (!(type in toGeoJSON)) {
+					type = xml.documentElement.tagName == "TrainingCenterDatabase" ? 'tcx' : 'gpx';
+				}
 				let geojson = toGeoJSON[type](xml);
 				let name    = xml.getElementsByTagName('name');
 				if(name[0]) { geojson.name = name[0].innerHTML; }
+				else if(this._downloadURL) { geojson.name = this._downloadURL.split('/').pop().split('#')[0].split('?')[0]; }
+
 				return this.loadGeoJSON(geojson, this);
 			}
 		);
@@ -543,7 +548,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_initMarker: function(map) {
 		let pane                   = map.getPane('elevationPane');
 		if (!pane) {
-			pane = this._pane        = map.createPane('elevationPane');
+			pane = this._pane        = map.createPane('elevationPane', map.getPane('rotatePane') || map.getPane('mapPane'));
 			pane.style.zIndex        = 625; // This pane is above markers but below popups.
 			pane.style.pointerEvents = 'none';
 		}
