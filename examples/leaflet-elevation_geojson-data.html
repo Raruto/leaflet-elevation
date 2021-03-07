@@ -48,6 +48,7 @@
 				zoom: 5,
 				fullscreenControl: false,
 				resizerControl: true,
+				preferCanvas: true,
 			},
 			elevationControl: {
 				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
@@ -95,30 +96,29 @@
 	<script>
 
 		// Register a custom locale
-		L.registerLocale('it', {
-			"Acceleration"      : "Accelerazione",
-			"Altitude"          : "Altitudine",
-			"Slope"             : "Pendenza",
-			"Speed"             : "Velocità",
-			"Total Length: "    : "Distanza: ",
-			"Max Elevation: "   : "Altezza Max: ",
-			"Min Elevation: "   : "Altezza Min: ",
-			"Total Time: "      : "Durata: ",
-			"Total Ascent: "    : "Salita: ",
-			"Total Descent: "   : "Discesa: ",
-			"Min Slope: "       : "Pendenza Min: ",
-			"Max Slope: "       : "Pendenza Max: ",
-			"Min Speed: "       : "Velocità Min: ",
-			"Max Speed: "       : "Velocità Max: ",
-			"Avg Speed: "       : "Velocità Media: ",
-			"Min Acceleration: ": "Accelerazione Min: ",
-			"Max Acceleration: ": "Accelerazione Max: ",
-			"Avg Acceleration: ": "Accelerazione Media: ",
+		L.registerLocale('en:18', {
+			"Acceleration"      : "Acceleration",
+			"Altitude"          : "Elevation",
+			"Slope"             : "Slope",
+			"Speed"             : "Velocity",
+			"Total Length: "    : "L: ",
+			"Max Elevation: "   : "E Max: ",
+			"Min Elevation: "   : "E Min: ",
+			"Total Time: "      : "T: ",
+			"Total Ascent: "    : "Asc: ",
+			"Total Descent: "   : "Desc: ",
+			"Min Slope: "       : "S Min: ",
+			"Max Slope: "       : "S Max: ",
+			"Min Speed: "       : "V Min: ",
+			"Max Speed: "       : "V Max: ",
+			"Avg Speed: "       : "V Avg: ",
+			"Min Acceleration: ": "A Min: ",
+			"Max Acceleration: ": "A Max: ",
+			"Avg Acceleration: ": "A Avg: ",
 		});
 
 		// Enable a custom locale
-		// L.setLocale('it');
-		// L.setLocale('en');
+		// L.setLocale('en:18');
 
 	</script>
 

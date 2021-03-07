@@ -338,13 +338,13 @@ L.GpxGroup = L.Class.extend({
 
     var parent = e.input.closest('.leaflet-control-layers-list');
     var offset = e.input.offsetTop - parent.offsetTop;
+
     parent.scroll({
         top: offset || 0,
         behavior: 'smooth'
       }
     );
 
-    // e.input.scroll();
     for (var j in layers) {
       var selected = layers[j].isSelected();
       var legend = L.DomUtil.get('legend_' + layers[j]._leaflet_id);
