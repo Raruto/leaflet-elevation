@@ -50,7 +50,7 @@
 				resizerControl: true,
 			},
 			elevationControl: {
-				url: "https://raruto.github.io/leaflet-elevation/examples/demo.gpx",
+				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
 				options: {
 					theme: "lime-theme",
 					collapsed: false,
@@ -61,10 +61,10 @@
 					summary: "inline",
 					imperial: false,
 					// altitude: "disabled",
-					slope: "disabled",
-					speed: "disabled",
-					acceleration: "disabled",
-					time: "summary",
+					slope: true,
+					speed: false,
+					acceleration: false,
+					time: true,
 					legend: true,
 					followMarker: false,
 				},
