@@ -8,52 +8,83 @@
 	<style>
 		html,
 		body,
-		#map {
+		.leaflet-map {
 			height: 100%;
 			width: 100%;
 			padding: 0px;
 			margin: 0px;
 		}
+
+		.elevation-div {
+			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+		}
 	</style>
 
-	<!-- Leaflet (JS/CSS) -->
-	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.2/dist/leaflet.css" />
-	<script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
-	<!-- D3.js -->
-	<script src="https://unpkg.com/d3@4.13.0/build/d3.min.js" charset="utf-8"></script>
-	<!-- leaflet-gpx -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.js"></script>
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.0/dist/leaflet-ui.js"></script>
+
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@0.3.9/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@0.3.9/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.6.2/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.6.2/dist/leaflet-elevation.min.js"></script>
 
 	<style>
-		.leaflet-control.elevation .elevation-toggle-icon {
-			background-color: #FF0 !important;
-		}
+	.elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button,
+	.lime-theme.elevation-control.elevation .elevation-toggle-icon {
+		animation: BLINK-ANIMATION 1s linear 3;
+		background-color: #ff0;
+	}
+
+	@keyframes BLINK-ANIMATION {
+		0%, 49%   {	background-color: #fff; }
+		50%, 100% { }
+	}
+	</style>
+
+  <!-- CHANGE ME: custom lime-theme colors -->
+	<style>
+	.lime-theme.height-focus.circle-lower {
+		fill: #FFF;
+	}
+
+	.lime-theme.elevation-polyline {
+		stroke: #FF0;
+		filter: drop-shadow(1px 1px 0 #000) drop-shadow(-1px -1px 0 #000) drop-shadow(1px -1px 0 #000) drop-shadow(-1px 1px 0 #000);
+		stroke-opacity: 1;
+	}
+
+	.lime-theme.elevation-polyline-segments {
+		stroke: #000;
+		stroke-width: 2;
+		stroke-dasharray: 4;
+	}
 	</style>
 
 </head>
 
 <body>
 
-	<div id="map"></div>
+	<div id="map" class="leaflet-map"></div>
 
 	<script>
 		var opts = {
 			map: {
+				mapTypeId: 'satellite',
 				center: [41.4583, 12.7059],
 				zoom: 5,
-				markerZoomAnimation: false,
-				zoomControl: false,
-			},
-			zoomControl: {
-				position: 'bottomright',
-			},
-			otmLayer: {
-				url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-				options: {
-					attribution: 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+				fullscreenControl: false,
+				minimapControl: false,
+				gestureHandling: false,
+				resizerControl: false,
+				pegmanControl: false,
+				locateControl: false,
+				loadingControl: false,
+				searchControl: false,
+				preferCanvas: false,
+				rotate: true,
+				bearing: 15,
+				rotateControl: {
+					closeOnZeroBearing: true
 				},
 			},
 			elevationControl: {
@@ -61,13 +92,16 @@
 				options: {
 					position: 'topright',
 					theme: "lime-theme",
+					detached: false,
 					collapsed: true,
 					autohide: false,
+					legend: true,
+					downloadLink: true
 				},
 			},
 			layersControl: {
 				options: {
-					position: 'topleft',
+					position: 'bottomleft',
 					collapsed: false,
 				},
 			},
@@ -75,20 +109,14 @@
 
 		var map = new L.Map('map', opts.map);
 
-		var baseLayers = {};
-		baseLayers.OTM = new L.TileLayer(opts.otmLayer.url, opts.otmLayer.options);
-
 		var controlZoom = new L.Control.Zoom(opts.zoomControl);
 		var controlElevation = L.control.elevation(opts.elevationControl.options);
-		var controlLayer = L.control.layers(baseLayers, null, opts.layersControl.options);
+		var controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-		controlZoom.addTo(map);
 		controlLayer.addTo(map);
 
 		controlElevation.loadChart(map);
 		controlElevation.loadData(opts.elevationControl.url);
-
-		map.addLayer(baseLayers.OTM);
 
 		map.on('eledata_loaded', function(e) {
 			controlLayer.addOverlay(e.layer, e.name);

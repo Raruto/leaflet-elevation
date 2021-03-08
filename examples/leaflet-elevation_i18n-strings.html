@@ -28,12 +28,12 @@
 	</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.2.5/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.0/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.1.0/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.1.0/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.6.2/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.6.2/dist/leaflet-elevation.min.js"></script>
 
 </head>
 
@@ -42,12 +42,25 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-
 		var mylocale = {
-			"Total Length: ": "Distanza: ",
-			"Max Elevation: ": "Altezza Max: ",
-			"Min Elevation: ": "Altezza Min: ",
-			"Download": "Download",
+			"Acceleration"      : "Accelerazione",
+			"Altitude"          : "Altitudine",
+			"Slope"             : "Pendenza",
+			"Speed"             : "Velocità",
+			"Total Length: "    : "Distanza: ",
+			"Max Elevation: "   : "Altezza Max: ",
+			"Min Elevation: "   : "Altezza Min: ",
+			"Total Time: "      : "Durata: ",
+			"Total Ascent: "    : "Salita: ",
+			"Total Descent: "   : "Discesa: ",
+			"Min Slope: "       : "Pendenza Min: ",
+			"Max Slope: "       : "Pendenza Max: ",
+			"Min Speed: "       : "Velocità Min: ",
+			"Max Speed: "       : "Velocità Max: ",
+			"Avg Speed: "       : "Velocità Media: ",
+			"Min Acceleration: ": "Accelerazione Min: ",
+			"Max Acceleration: ": "Accelerazione Max: ",
+			"Avg Acceleration: ": "Accelerazione Media: ",
 		};
 
 		L.registerLocale('it', mylocale);
