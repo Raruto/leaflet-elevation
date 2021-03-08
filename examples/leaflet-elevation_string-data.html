@@ -19,26 +19,63 @@
     .leaflet-map {
       height: 65%;
       max-height: 100vh;
+      position: absolute;
+      bottom: 0;
     }
 
-    .elevation-div {
-      height: 25%;
+    .elevation-div.elevation-detached {
+      height: 35%;
       font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
     }
   </style>
 
   <!-- leaflet-ui -->
   <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-ui@0.4.6/dist/leaflet-ui.js"></script>
+  <script src="https://unpkg.com/leaflet-ui@0.5.0/dist/leaflet-ui.js"></script>
 
   <!-- leaflet-elevation -->
-  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.4.0/dist/leaflet-elevation.min.css" />
-  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.4.0/dist/leaflet-elevation.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.6.1/dist/leaflet-elevation.min.css" />
+  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.6.1/dist/leaflet-elevation.min.js"></script>
+
+  <style>
+    .elevation-data {
+      width: 100%;
+      box-sizing: border-box;
+      resize: vertical;
+      height: 55%;
+      max-height: 100vh;
+    }
+    button {
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+    }
+    .update {
+      background-color: #4CAF50;
+    }
+    .reset {
+      background-color: #f44336;
+    }
+  </style>
 </head>
 
 <body>
 
+  <div id="elevation-div" class="elevation-div"></div>
   <div id="map" class="leaflet-map"></div>
+
+  <textarea id="text-data" class="elevation-data"></textarea>
+
+  <div align="center">
+    <button class="update">UPDATE</button>
+    <button class="reset">RESET</button>
+  </div>
 
   <script>
     var opts = {
@@ -50,7 +87,11 @@
         pegmanControl: false,
         locateControl: false,
         searchControl: false,
-        resizerControl: true,
+        resizerControl: false,
+        layersControl: false,
+        zoomControl:false,
+        minimapControl:false,
+        rotateControl:false,
       },
       elevationControl: {
         // data: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
@@ -62,6 +103,7 @@
           theme: "purple-theme",
           collapsed: false,
           detached: true,
+          elevationDiv: "#elevation-div",
           summary: "inline",
           marker: 'position-marker',
           followMarker: false,
@@ -77,16 +119,52 @@
     var map = L.map('map', opts.map);
 
     var controlElevation = L.control.elevation(opts.elevationControl.options);
-    var controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-    controlLayer.addTo(map);
     controlElevation.addTo(map);
 
-    controlElevation.on('eledata_loaded', function(e) {
-      controlLayer.addOverlay(e.layer, e.name);
-    });
+    controlElevation
+      .on('elechart_change', (e) => {
+        map.getContainer().style.height = "";
+        setTimeout(function() {
+          map.invalidateSize();
+        }, 201);
+        map.setView(e.data.latlng, map.getZoom());
+      })
+      .on('elechart_leave', () => (map.getContainer().style.height = "0"));
 
-    controlElevation.load(opts.elevationControl.data);
+    map.getContainer().style.height = "0";
+
+    const updateElevationData = (data) => {
+
+    }
+
+    let data = document.querySelector('.elevation-data');
+    let update = document.querySelector('.update');
+    let reset = document.querySelector('.reset');
+
+    update.addEventListener('click', () => {
+      controlElevation._layers.eachLayer((l)=>l.remove());
+      controlElevation.clear();
+      if (data.value) {
+        controlElevation.load(data.value);
+      }
+    });
+    reset.addEventListener('click', () => {
+      let json = opts.elevationControl.data;
+      data.value = JSON.stringify(
+        (
+          typeof json === "string"
+            ? JSON.parse(json)
+            : json
+        ),
+        undefined,
+        2
+      );
+      update.click();
+    } );
+
+    reset.click();
+
   </script>
 
   <a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
