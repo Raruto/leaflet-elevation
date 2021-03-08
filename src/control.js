@@ -13,10 +13,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	options: Options,
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
-	__D3: 'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
-	__TOGEOJSON: 'https://unpkg.com/@tmcw/togeojson@4.3.0/dist/togeojson.umd.js',
-	__LGEOMUTIL: 'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
+	__D3:          'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
+	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.3.0/dist/togeojson.umd.js',
+	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
+	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.6.2/libs/leaflet-distance-marker.min.js',
 
 	/**
 	 * Add a waypoint marker to the diagram
@@ -979,33 +980,51 @@ Elevation.addInitHook(function() {
 		}
 		map.once('layeradd',   (e) => this.options.autofitBounds && this.fitBounds(layer.getBounds()));
 
-		if (this.options.polyline) layer.addTo(map);
+		if (L.Browser.mobile) {
 
-		// Download "Leaflet-GeometryUtil" and "Leaflet-AlmostOver" scripts
-		if (!L.Browser.mobile) {
+			if (this.options.polyline) layer.addTo(map);
+
+		} else {
+
+			// leaflet-geometryutil
 			Elevation._geomutilLazyLoader = _.lazyLoader(
 				this.__LGEOMUTIL,
 				typeof L.GeometryUtil !== 'function' || !this.options.lazyLoadJS,
 				Elevation._geomutilLazyLoader
 			).then(
 				() => {
-					Elevation._almostoverLazyLoader = _.lazyLoader(
-						this.__LALMOSTOVER,
-						typeof L.Handler.AlmostOver  !== 'function' || !this.options.lazyLoadJS,
-						Elevation._almostoverLazyLoader
-					).then(
-						() => {
-							map.addHandler('almostOver',L.Handler.AlmostOver)
-							// Support for "Leaflet.AlmostOver"
-							if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
-								map.almostOver.addLayer(layer);
-								map
-									.on('almost:move', (e) => this._mousemoveLayerHandler(e))
-									.on('almost:out',  (e) => this._mouseoutHandler(e));
+
+					// leaflet-almostover
+					if (this.options.almostOver) {
+						Elevation._almostoverLazyLoader = _.lazyLoader(
+							this.__LALMOSTOVER,
+							typeof L.Handler.AlmostOver  !== 'function' || !this.options.lazyLoadJS,
+							Elevation._almostoverLazyLoader
+						).then(
+							() => {
+								map.addHandler('almostOver',L.Handler.AlmostOver)
+								if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
+									map.almostOver.addLayer(layer);
+									map
+										.on('almost:move', (e) => this._mousemoveLayerHandler(e))
+										.on('almost:out',  (e) => this._mouseoutHandler(e));
+								}
 							}
-						}
-					);
+						);
+					}
+
+					// leaflet-distance-markers
+					if (this.options.distanceMarkers) {
+						Elevation._distanceMarkersLazyLoader = _.lazyLoader(
+							this.__LDISTANCEM,
+							typeof L.DistanceMarkers  !== 'function' || !this.options.lazyLoadJS,
+							Elevation._distanceMarkersLazyLoader
+						).then(() => this.options.polyline && layer.addTo(map));
+					} else {
+						if (this.options.polyline) layer.addTo(map);
+					}
 				}
+
 			);
 		}
 	});

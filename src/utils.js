@@ -73,7 +73,14 @@ export function GeoJSONLoader(data, control) {
 	}
 	control = control || this;
 
+  let distanceMarkers = (
+			control.options.distanceMarkers === true
+				? { lazy: true }
+				: L.extend({ lazy: true }, control.options.distanceMarkers)
+	);
+
 	let layer = L.geoJson(data, {
+		distanceMarkers: distanceMarkers,
 		style: (feature) => {
 			let style = L.extend({}, control.options.polyline);
 			if (control.options.theme) {
@@ -115,6 +122,16 @@ export function GeoJSONLoader(data, control) {
 				}
 			});
 			control.addData(layer); // NB uses "_addGPXData"
+
+			// Postpone adding the distance markers (lazy: true)
+			if(control.options.distanceMarkers && distanceMarkers.lazy) {
+        layer.on('add remove', (e) => {
+          let path = e.target;
+          if (L.DistanceMarkers && path instanceof L.Polyline) {
+            path[e.type + 'DistanceMarkers']();
+          }
+        });
+      }
 
 			control.track_info = L.extend({}, control.track_info, { type: "geojson", name: data.name });
 		},

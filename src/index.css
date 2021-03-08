@@ -427,3 +427,13 @@
 .lightblue-theme.elevation-polyline {
   stroke: #3366CC;
 }
+
+/* leaflet-distance-markers */
+.dist-marker {
+  font-size: 0.5rem;
+  border: 1px solid #777;
+  border-radius: 10px;
+  text-align: center;
+  color: #000;
+  background: #fff;
+}

@@ -43,6 +43,9 @@
 	<!-- leaflet-almostover -->
 	<!-- <script src="https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js"></script> -->
 
+	<script src="https://unpkg.com/leaflet-geometryutil@0.9.1/src/leaflet.geometryutil.js"></script>
+	<script src="../libs/leaflet-distance-marker.min.js"></script>
+
 	<!-- leaflet-elevation -->
 	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
 	<script src="../dist/leaflet-elevation.js"></script>
@@ -61,7 +64,7 @@
 				fullscreenControl: false,
 				resizerControl: true,
 				preferCanvas: true,
-				rotate: false,
+				rotate: true,
 				rotateControl: {
 					closeOnZeroBearing: false
 				},
@@ -101,6 +104,8 @@
 					// polyline: false,
 					// marker: 'position-marker',
 					// dragging: true,
+					distanceMarkers: true,
+					almostOver: true,
 				},
 			},
 			layersControl: {
@@ -121,7 +126,7 @@
 				if (array.length && (item.trkStart || item.trkEnd)) array[array.length-1].push(item);
 				return array;
 			}, []);
-			console.log(e);
+			// console.log(e);
 			controlLayer.addOverlay(e.layer, e.name);
 		});
 
@@ -131,7 +136,7 @@
 			this.once('eledata_updated', function(e){
 				this._data[this._data.length-1].trkStart = true;
 			});
-			console.log(this._data[this._data.length-1], e);
+			// console.log(this._data[this._data.length-1], e);
 		});
 
 		controlElevation.load(opts.elevationControl.url);

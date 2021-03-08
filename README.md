@@ -143,6 +143,12 @@ _For a working example see one of the following demos:_
         // Toggle chart legend filter.
         legend: true,
 
+        // Toggle "leaflet-almostover" integration
+        almostOver: true,
+
+        // Toggle "leaflet-distance-markers" integration
+        distanceMarkers: true,
+
       };
 
       // Instantiate map (leaflet-ui).
