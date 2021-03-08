@@ -49,6 +49,11 @@
 				fullscreenControl: false,
 				resizerControl: true,
 				preferCanvas: true,
+				rotate: true,
+				// bearing: 45,
+				rotateControl: {
+					closeOnZeroBearing: true
+				},
 			},
 			elevationControl: {
 				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
@@ -67,7 +72,7 @@
 					acceleration: false,
 					time: true,
 					legend: true,
-					followMarker: false,
+					followMarker: true,
 				},
 			},
 			layersControl: {
