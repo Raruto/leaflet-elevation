@@ -17,15 +17,23 @@
     }
 
     .leaflet-map {
-      height: 65%;
       max-height: 100vh;
       position: absolute;
-      bottom: 0;
+      top: 35%;
+      height: 0;
+      right: 0;
+      opacity: 0;
+      transition: height 0.2s linear;
     }
 
     .elevation-div.elevation-detached {
-      height: 35%;
+      min-height: 35%;
       font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    .leaflet-map.elechart-hover {
+      height: 55%;
+      opacity: 1;
     }
   </style>
 
@@ -62,6 +70,11 @@
     .reset {
       background-color: #f44336;
     }
+    .elevation-summary.inline-summary {
+      margin-top: 0.35em;
+      margin-bottom: 0.35em;
+      font-size: 0.9em;
+    }
   </style>
 </head>
 
@@ -89,9 +102,10 @@
         searchControl: false,
         resizerControl: false,
         layersControl: false,
-        zoomControl:false,
-        minimapControl:false,
-        rotateControl:false,
+        zoomControl: false,
+        minimapControl: false,
+        rotateControl: false,
+        loadingControl: false,
       },
       elevationControl: {
         // data: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
@@ -107,6 +121,10 @@
           summary: "inline",
           marker: 'position-marker',
           followMarker: false,
+          slope: "disabled",
+          speed: "disabled",
+          time: "disabled",
+          acceleration: "disabled",
         },
       },
       layersControl: {
@@ -122,22 +140,16 @@
 
     controlElevation.addTo(map);
 
+    // Hidden Map
     controlElevation
       .on('elechart_change', (e) => {
-        map.getContainer().style.height = "";
         setTimeout(function() {
           map.invalidateSize();
         }, 201);
         map.setView(e.data.latlng, map.getZoom());
-      })
-      .on('elechart_leave', () => (map.getContainer().style.height = "0"));
+      });
 
-    map.getContainer().style.height = "0";
-
-    const updateElevationData = (data) => {
-
-    }
-
+    // HTML Buttons
     let data = document.querySelector('.elevation-data');
     let update = document.querySelector('.update');
     let reset = document.querySelector('.reset');
@@ -149,6 +161,7 @@
         controlElevation.load(data.value);
       }
     });
+
     reset.addEventListener('click', () => {
       let json = opts.elevationControl.data;
       data.value = JSON.stringify(
@@ -164,6 +177,36 @@
     } );
 
     reset.click();
+
+  </script>
+
+  <!-- i18n -->
+  <script>
+
+    // Register a custom locale
+    L.registerLocale('en:18', {
+      "Acceleration"      : "Acceleration",
+      "Altitude"          : "Elevation",
+      "Slope"             : "Slope",
+      "Speed"             : "Velocity",
+      "Total Length: "    : "L: ",
+      "Max Elevation: "   : "E Max: ",
+      "Min Elevation: "   : "E Min: ",
+      "Total Time: "      : "T: ",
+      "Total Ascent: "    : "Asc: ",
+      "Total Descent: "   : "Desc: ",
+      "Min Slope: "       : "S Min: ",
+      "Max Slope: "       : "S Max: ",
+      "Min Speed: "       : "V Min: ",
+      "Max Speed: "       : "V Max: ",
+      "Avg Speed: "       : "V Avg: ",
+      "Min Acceleration: ": "A Min: ",
+      "Max Acceleration: ": "A Max: ",
+      "Avg Acceleration: ": "A Avg: ",
+    });
+
+    // Enable a custom locale
+    L.setLocale('en:18');
 
   </script>
 
