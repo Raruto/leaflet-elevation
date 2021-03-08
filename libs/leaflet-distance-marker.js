@@ -29,6 +29,10 @@ L.DistanceMarkers = L.LayerGroup.extend({
 		var offset = options.offset || 1000;
 		var showAll = Math.min(map.getMaxZoom(), options.showAll || 12);
 		var cssClass = options.cssClass || 'dist-marker';
+		var iconSize = options.iconSize !== undefined ? options.iconSize : [12, 12];
+		var textFunction = options.textFunction || function(distance, i, offset) {
+			return i;
+		};
 
 		var zoomLayers = {};
 		// Get line coords as an array
@@ -59,8 +63,9 @@ L.DistanceMarkers = L.LayerGroup.extend({
 			var m_line = L.polyline([p1, p2]);
 			var ratio = (distance - accumulated[j - 1]) / (accumulated[j] - accumulated[j - 1]);
 			var position = L.GeometryUtil.interpolateOnLine(map, m_line, ratio);
-			var icon = L.divIcon({ className: cssClass, html: i });
-			var marker = L.marker(position.latLng, { title: i, icon: icon });
+			var text = textFunction.call(this, distance, i, offset);
+			var icon = L.divIcon({ className: cssClass, html: text, iconSize: iconSize });
+			var marker = L.marker(position.latLng, { title: text, icon: icon });
 
 			// visible only starting at a specific zoom level
 			var zoom = this._minimumZoomLevelForItem(i, showAll);
@@ -129,7 +134,7 @@ L.Polyline.include({
 		this._originalOnAdd(map);
 
 		var opts = this.options.distanceMarkers || {};
-		if (this._distanceMarkers === undefined) {
+		if (this._distanceMarkers === undefined && this.options.distanceMarkers) {
 			this._distanceMarkers = new L.DistanceMarkers(this, map, opts);
 		}
 		if (opts.lazy === undefined || opts.lazy === false) {

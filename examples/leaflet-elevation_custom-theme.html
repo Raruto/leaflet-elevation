@@ -6,34 +6,34 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
   <style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			height: 100%;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-		}
+    html,
+    body,
+    .leaflet-map,
+    .elevation-div {
+      height: 100%;
+      width: 100%;
+      padding: 0px;
+      margin: 0px;
+    }
 
-		.leaflet-map {
-			height: 65%;
-			max-height: 100vh;
-		}
+    .leaflet-map {
+      height: 65%;
+      max-height: 100vh;
+    }
 
-		.elevation-div.elevation-detached {
-			height: 35%;
-			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-		}
-	</style>
+    .elevation-div.elevation-detached {
+      height: 35%;
+      font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+  </style>
 
-	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.5.0/dist/leaflet-ui.js"></script>
+  <!-- leaflet-ui -->
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-ui@0.5.0/dist/leaflet-ui.js"></script>
 
-	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.6.1/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.6.1/dist/leaflet-elevation.min.js"></script>
+  <!-- leaflet-elevation -->
+  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.6.1/dist/leaflet-elevation.min.css" />
+  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.6.1/dist/leaflet-elevation.min.js"></script>
 
   <!-- CHANGE ME: custom-theme colors -->
   <style>
@@ -84,20 +84,41 @@
 
 <body>
 
-	<div id="map" class="leaflet-map"></div>
+  <div id="map" class="leaflet-map"></div>
   <div id="elevation-div" class="elevation-div"></div>
 
-  <div id="data-summary" class="data-summary"><span class="totlen"><span class="summarylabel">Total Length: </span><span class="summaryvalue">0</span></span> / <span class="maxele"><span class="summarylabel">Max Elevation: </span><span class="summaryvalue">0</span></span>
-    / <span class="minele"><span class="summarylabel">Min Elevation: </span><span class="summaryvalue">0</span></span></div>
+  <div id="data-summary" class="data-summary">
+
+    <span class="totlen">
+      <span class="summarylabel">Total Length: </span>
+      <span class="summaryvalue">0</span>
+    </span> /
+
+    <span class="maxele">
+      <span class="summarylabel">Max Elevation: </span>
+      <span class="summaryvalue">0</span>
+    </span> /
+
+    <span class="minele">
+      <span class="summarylabel">Min Elevation: </span>
+      <span class="summaryvalue">0</span>
+    </span> /
+
+    <span class="tottime">
+      <span class="summarylabel">Total Time: </span>
+      <span class="summaryvalue">0</span>
+    </span>
+
+  </div>
 
   <script>
     var opts = {
       map: {
         center: [41.4583, 12.7059],
-				zoom: 5,
-				fullscreenControl: false,
-				resizerControl: true,
-				preferCanvas: false,
+        zoom: 5,
+        fullscreenControl: false,
+        resizerControl: true,
+        preferCanvas: false,
         rotate: true,
         // bearing: 45,
         rotateControl: {
@@ -108,10 +129,13 @@
         data: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
         options: {
           theme: "custom-theme", // CHANGE: your custom-theme name
+          detached: true,
+          elevationDiv: "#elevation-div",
           summary: false,
           downloadLink: false,
-          elevationDiv: "#elevation-div",
-          detachedView: true,
+          slope: "summary",
+          speed: "summary",
+          time: "summary",
         },
       },
       layersControl: {
@@ -126,7 +150,7 @@
     var controlElevation = L.control.elevation(opts.elevationControl.options);
     var controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-		controlLayer.addTo(map);
+    controlLayer.addTo(map);
     controlElevation.loadChart(map);
 
     map.on('eledata_loaded', function(e) {
@@ -135,9 +159,12 @@
 
       controlLayer.addOverlay(e.layer, e.name);
 
+      // Default Summary info
       q('.totlen .summaryvalue').innerHTML = track.distance.toFixed(2) + " km";
       q('.maxele .summaryvalue').innerHTML = track.elevation_max.toFixed(2) + " m";
       q('.minele .summaryvalue').innerHTML = track.elevation_min.toFixed(2) + " m";
+      // Custom Summary info
+      q('.tottime .summaryvalue').innerHTML = L.Control.Elevation.Utils.formatTime(track.time);
     });
 
     controlElevation.loadData(opts.elevationControl.data);
