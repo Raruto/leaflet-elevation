@@ -147,7 +147,7 @@ _For a working example see one of the following demos:_
         almostOver: true,
 
         // Toggle "leaflet-distance-markers" integration
-        distanceMarkers: true,
+        distanceMarkers: false,
 
       };
 

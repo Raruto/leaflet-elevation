@@ -8,13 +8,9 @@ export var Marker = L.Class.extend({
 		this.options = options;
 
 		if (this.options.imperial) {
-			// this._distanceFactor = this.__mileFactor;
-			// this._heightFactor = this.__footFactor;
 			this._xLabel = "mi";
 			this._yLabel = "ft";
 		} else {
-			// this._distanceFactor = this.options.distanceFactor;
-			// this._heightFactor = this.options.heightFactor;
 			this._xLabel = this.options.xLabel;
 			this._yLabel = this.options.yLabel;
 		}
@@ -25,7 +21,7 @@ export var Marker = L.Class.extend({
 			this._focusmarker = d3.create("svg:circle");
 			this._focuslabel  = d3.create("svg:text");
 		} else if (this.options.marker == 'position-marker') {
-			// this._marker      = L.circleMarker([0, 0], { pane: 'elevationPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
+			// this._marker   = L.circleMarker([0, 0], { pane: 'overlayPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
 			this._marker      = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
 		}
 		return this;
@@ -40,7 +36,7 @@ export var Marker = L.Class.extend({
 			g.append(() => this._focusmarker.node());
 			g.append(() => this._focuslabel.node());
 		} else if (this.options.marker == 'position-marker') {
-			this._marker.addTo(map, { pane: 'elevationPane' });
+			this._marker.addTo(map, { pane: 'overlayPane' });
 		}
 		return this;
 	},
@@ -49,14 +45,23 @@ export var Marker = L.Class.extend({
 	 * Update position marker ("leaflet-marker").
 	 */
 	update: function(props) {
+		if(props) this._props = props;
+		else props = this._props;
 		if (props.options) this.options = props.options;
 		if (!this._map) this.addTo(props.map);
 
 		let opts = this.options;
+		let map = this._map;
 
 		this._latlng = props.item.latlng;
 
-		let point = L.extend({}, props.item, this._map.latLngToLayerPoint(this._latlng));
+		let pos = map.latLngToLayerPoint(this._latlng);
+
+		if (map._rotate) {
+			pos = map.rotatedPointToMapPanePoint(pos);
+		}
+
+		let point = L.extend({}, props.item, pos);
 
 		if (this.options.marker == 'elevation-line') {
 

@@ -27,6 +27,7 @@ export var Chart = L.Class.extend({
 
 		let svg = this._container = d3.create("svg")
 			.attr("class", "background")
+			.attr("viewBox", `0 0 ${opts.width} ${opts.height}`)
 			.attr("width", opts.width)
 			.attr("height", opts.height);
 
@@ -359,7 +360,7 @@ export var Chart = L.Class.extend({
 				[margin.left, -Infinity],
 				[this._width() - margin.right, Infinity]
 			])
-			.filter((e) => e.ctrlKey);
+			.filter((e) => e.shiftKey);
 
 		zoom.on("start", (e) => {
 				if (e.sourceEvent && e.sourceEvent.type == "mousedown") svg.style('cursor', 'grabbing');
@@ -390,11 +391,11 @@ export var Chart = L.Class.extend({
 				}
 				this.fire('zoom');
 			});
-		// d3.select("body").on("keydown keyup", () => svg.style('cursor', e.ctrlKey ? 'move' : '') );
+		// d3.select("body").on("keydown keyup", () => svg.style('cursor', e.shiftKey ? 'move' : '') );
 
 		svg.call(zoom) // add zoom functionality to "svg" group
 			.on("wheel", function(e) {
-				if (e.ctrlKey) e.preventDefault();
+				if (e.shiftKey) e.preventDefault();
 			});
 
 		return g => g;
@@ -404,25 +405,29 @@ export var Chart = L.Class.extend({
 	 * Generate "ruler".
 	 */
 	_appendRuler: function() {
-		const dragstart = function(e, d) {
+
+		const yMax      = this._height();
+		const formatNum = d3.format(".0f");
+
+		const dragstart = (e, d) => {
 			this._hideDiagramIndicator();
-			this._container.select(".horizontal-drag-label").classed('leaflet-hidden', false);
+			this._dragG.select(".horizontal-drag-label").text('');
 		}
 
-		const dragend = function(e, d) {
-			let y = this._container.select('.horizontal-drag-group').node().transform.baseVal.consolidate().matrix.f;
-			this._container.select(".horizontal-drag-label").classed('leaflet-hidden', y >= this._height() || y <= 0)
+		const dragend = (e, d) => {
+			let y = this._dragG.data()[0].y;
+			if(y >= yMax || y <= 0) this._dragG.select(".horizontal-drag-label").text('');
 		};
 
-		const dragged = function(e, d) {
-			let yMax      = this._height();
+		const dragged = (e, d) => {
 			let yCoord    = d3.pointers(e, this._area.node())[0][1];
 			let y         = yCoord > 0 ? (yCoord < yMax ? yCoord : yMax) : 0;
 			let z         = this._y.invert(y);
-			let formatNum = d3.format(".0f");
+			let data      = L.extend(this._dragG.data()[0], { y: y });
 
-			this._container.select(".horizontal-drag-group")
-				.attr("transform", d => "translate(" + d.x + "," + y + ")")
+			this._dragG
+				.data([data])
+				.attr("transform", d => "translate(" + d.x + "," + d.y + ")")
 				.classed('active', y < yMax);
 
 			this._container.select(".horizontal-drag-label")
@@ -537,7 +542,7 @@ export var Chart = L.Class.extend({
 	 * Handles start of drag operations.
 	 */
 	_dragStartHandler: function(e) {
-		if (e.ctrlKey) return;
+		if (e.shiftKey) return;
 
 		e.preventDefault();
 		e.stopPropagation();

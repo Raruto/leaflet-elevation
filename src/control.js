@@ -17,7 +17,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.3.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
-	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.6.2/libs/leaflet-distance-marker.min.js',
+	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.6.3/libs/leaflet-distance-marker.min.js',
 
 	/**
 	 * Add a waypoint marker to the diagram
@@ -142,10 +142,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		this._markedSegments.setStyle(this.options.polylineSegments);
 
+		// this._resizeChart   = _.debounce(this._resizeChart,   300, this);
+		this._resizeChart = L.Util.throttle(this._resizeChart, 300, this);
+
 		if (L.Browser.mobile) {
 			this._updateChart   = _.debounce(this._updateChart,   300, this);
 			this._updateSummary = _.debounce(this._updateSummary, 300, this);
-			this._resizeChart   = _.debounce(this._resizeChart,   300, this);
 		}
 	},
 
@@ -289,6 +291,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				.on('zoom viewreset zoomanim',       this._hideMarker,    this)
 				.on('resize',                        this._resetView,     this)
 				.on('resize',                        this._resizeChart,   this)
+				.on('rotate',                        this._rotateMarker,  this)
 				.on('mousedown',                     this._resetDrag,     this);
 
 			_.on(map.getContainer(), 'mousewheel', this._resetDrag,     this);
@@ -549,7 +552,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_initMarker: function(map) {
 		let pane                   = map.getPane('elevationPane');
 		if (!pane) {
-			pane = this._pane        = map.createPane('elevationPane', map.getPane('rotatePane') || map.getPane('mapPane'));
+			pane = this._pane        = map.createPane('elevationPane', map.getPane('norotatePane') || map.getPane('mapPane'));
 			pane.style.zIndex        = 625; // This pane is above markers but below popups.
 			pane.style.pointerEvents = 'none';
 		}
@@ -731,6 +734,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this.addTo(this._map);
 			}
 		}
+
 		this._updateMapSegments();
 	},
 
@@ -771,7 +775,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_updateChart: function() {
 		if (!this._data.length || !this._container) return;
 
-		this._chart = this._chart.update({ data: this._data });
+		this._chart = this._chart.update({ data: this._data, options: this.options });
 
 		this._x     = this._chart._x;
 		this._y     = this._chart._y;
@@ -786,12 +790,21 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Update the position/height indicator marker drawn onto the map
 	 */
 	_updateMarker: function(item) {
+		if (!this._marker) return;
 		this._marker.update({
 			map         : this._map,
 			item        : item,
 			maxElevation: this._maxElevation,
 			options     : this.options
 		});
+	},
+
+	/**
+	 * Fix marker rotation on rotated maps
+	 */
+	_rotateMarker: function() {
+		if (!this._marker) return;
+		this._marker.update();
 	},
 
 	/**
