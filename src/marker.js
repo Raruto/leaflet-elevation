@@ -45,8 +45,11 @@ export var Marker = L.Class.extend({
 	 * Update position marker ("leaflet-marker").
 	 */
 	update: function(props) {
-		if(props) this._props = props;
+		if (props) this._props = props;
 		else props = this._props;
+
+		if(!props) return;
+
 		if (props.options) this.options = props.options;
 		if (!this._map) this.addTo(props.map);
 
@@ -106,6 +109,7 @@ export var Marker = L.Class.extend({
 	 * Hides the position/height indicator marker drawn onto the map
 	 */
 	remove: function() {
+		this._props = null;
 		if (this.options.marker == 'elevation-line') {
 			if (this._container) this._container.classed("leaflet-hidden", true);
 		} else if (this.options.marker == 'position-marker') {
