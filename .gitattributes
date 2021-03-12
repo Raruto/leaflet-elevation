@@ -2,3 +2,6 @@
 .jshintrc export-ignore
 .gitattributes export-ignore
 _config.yml export-ignore
+
+# Auto detect text files and perform LF normalization
+* text=auto
