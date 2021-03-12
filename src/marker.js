@@ -129,4 +129,24 @@ export var Marker = L.Class.extend({
 		return opts.height - opts.margins.top - opts.margins.bottom;
 	},
 
+	_registerFocusLabel: function(props) {
+		if (!this._focuslabel) return;
+
+		this._focuslabels = this._focuslabels || {};
+		let label         = this._focuslabels[props.name]
+
+		if (!label) {
+			label           = this._focuslabel.append("svg:tspan")
+				.attr("class", "height-focus-" + props.name);
+			this._focuslabels[props.name] = label;
+		}
+
+		label
+			.attr("dy", "1.5em")
+			.text(props.value);
+
+		this._focuslabel.select('.height-focus-y')
+			.attr("dy", "-1.5em");
+	}
+
 });

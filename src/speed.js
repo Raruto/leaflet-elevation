@@ -15,34 +15,17 @@ Elevation.addInitHook(function() {
 
 	if (this.options.speed && this.options.speed != "summary") {
 
-		this.on("elechart_init", function() {
-			speed.path = this._chart._area.append('path')
-				.style("pointer-events", "none")
-				// TODO: add a class here.
-				.attr("fill", "#03ffff")
-				.attr("stroke", "#000")
-				.attr("stroke-opacity", "0.5")
-				.attr("fill-opacity", "0.25");
-		});
-
 		this.on("elechart_axis", function() {
 			speed.x = this._chart._x;
-
-			speed.y = D3.Scale({
-				data       : this._data,
-				range      : [this._height(), 0],
-				attr       : "speed",
-				min        : 0,
-				max        : +1,
-				forceBounds: opts.forceAxisBounds
-			});
-
-			speed.axis = D3.Axis({
+			speed.y = this._chart._registerAxisScale({
 				axis       : "y",
 				position   : "right",
-				width      : this._width(),
-				height     : this._height(),
-				scale      : speed.y,
+				scale      : {
+					range      : [this._height(), 0],
+					attr       : "speed",
+					min        : 0,
+					max        : +1,
+				},
 				ticks      : this.options.yTicks,
 				tickPadding: 16,
 				label      : speed.label,
@@ -50,42 +33,25 @@ Elevation.addInitHook(function() {
 				labelY     : -8,
 				name       : "speed"
 			});
-
-			this._chart._axis.call(speed.axis);
 		});
 
-		this.on("elechart_area", function() {
-			speed.area = D3.Area({
-				interpolation: opts.sInterpolation,
-				data         : this._data,
-				name         : 'Speed',
-				xAttr        : opts.xAttr,
-				yAttr        : "speed",
-				width        : this._width(),
-				height       : this._height(),
-				scaleX       : speed.x,
-				scaleY       : speed.y
+		this.on("elechart_init", function() {
+
+			this._chart._registerAreaPath({
+				name       : 'speed',
+				label      : 'Speed',
+				xAttr      : opts.xAttr,
+				yAttr      : "speed",
+				scaleX     : speed.x,
+				scaleY     : speed.y,
+				color      : '#03ffff',
+				strokeColor  : '#000',
+				strokeOpacity: "0.5",
+				fillOpacity  : "0.25",
 			});
-			speed.path.call(speed.area);
+
 		});
 
-		this.on("elechart_legend", function() {
-			speed.legend = this._chart._legend.append("g")
-				.call(
-					D3.LegendItem({
-						name   : 'Speed',
-						width  : this._width(),
-						height : this._height(),
-						margins: this.options.margins
-					}));
-			speed.legend.select("rect")
-				.classed("area", false)
-				// TODO: add a class here.
-				.attr("fill", "#03ffff")
-				.attr("stroke", "#000")
-				.attr("stroke-opacity", "0.5")
-				.attr("fill-opacity", "0.25");
-		});
 	}
 
 	this.on('elepoint_added', function(e) {
@@ -140,45 +106,38 @@ Elevation.addInitHook(function() {
 
 		this.on("elechart_change", function(e) {
 			let item = e.data;
-			let chart = this._chart;
-			let marker = this._marker;
 
-			if (chart._focuslabel) {
-				if (!chart._focuslabelSpeed || !chart._focuslabelSpeed.property('isConnected')) {
-					chart._focuslabelSpeed = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
-						.attr("class", "mouse-focus-label-speed")
-						.attr("dy", "1.5em");
-				}
+			this._chart._registerFocusLabel({
+				name: 'speed',
+				value: item.speed + " " + speed.label
+			});
 
-				chart._focuslabelSpeed.text(item.speed + " " + speed.label);
+			this._marker._registerFocusLabel({
+				name: 'speed',
+				value: Math.round(item.speed) + " " + speed.label
+			});
 
-				chart._focuslabel.select('.mouse-focus-label-x')
-					.attr("dy", "1.5em");
-			}
-
-			if (marker._focuslabel) {
-				if (!chart._mouseSpeedFocusLabel) {
-					chart._mouseSpeedFocusLabel = marker._focuslabel.append("svg:tspan")
-						.attr("class", "height-focus-speed ");
-				}
-
-				chart._mouseSpeedFocusLabel
-					.attr("dy", "1.5em")
-					.text(Math.round(item.speed) + " " + speed.label);
-
-				marker._focuslabel.select('.height-focus-y')
-					.attr("dy", "-1.5em");
-			}
 		});
 
 		this.on("elechart_summary", function() {
 			this.track_info.speed_max = this._maxSpeed || 0;
 			this.track_info.speed_min = this._minSpeed || 0;
 
-			this._summary
-				.append("minspeed", L._("Min Speed: "), Math.round(this.track_info.speed_min) + '&nbsp;' + speed.label)
-				.append("maxspeed", L._("Max Speed: "), Math.round(this.track_info.speed_max) + '&nbsp;' + speed.label)
-				.append("avgspeed", L._("Avg Speed: "), Math.round(this.track_info.speed_avg) + '&nbsp;' + speed.label);
+			this._summary._registerSummary({
+				"minspeed"  : {
+					label: "Min Speed: ",
+					value: Math.round(this.track_info.speed_min) + '&nbsp;' + speed.label
+				},
+				"maxspeed"  : {
+					label: "Max Speed: ",
+					value: Math.round(this.track_info.speed_max) + '&nbsp;' + speed.label
+				},
+				"avgspeed": {
+					label: "Avg Speed: ",
+					value: Math.round(this.track_info.speed_avg) + '&nbsp;' + speed.label
+				}
+			});
+
 		});
 
 	}

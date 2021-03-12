@@ -5,12 +5,15 @@ import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
 
+	let opts     = this.options;
+	let distance = {};
+
 	if (this.options.imperial) {
 		this._distanceFactor = this.__mileFactor;
 		this._xLabel         = "mi";
 	} else {
-		this._distanceFactor = this.options.distanceFactor;
-		this._xLabel         = this.options.xLabel;
+		this._distanceFactor = opts.distanceFactor;
+		this._xLabel         = opts.xLabel;
 	}
 
 	this.on("eledata_updated", function(e) {
@@ -31,11 +34,50 @@ Elevation.addInitHook(function() {
 		this.track_info.distance = this._distance = dist;
 	});
 
+	this.on("elechart_axis", function() {
+
+		this._chart._registerAxisGrid({
+			axis      : "x",
+			position  : "bottom",
+			scale     : this._chart._x,
+			ticks     : this._xTicks
+		});
+
+	});
+
+	if (this.options.distance != "summary") {
+
+		this.on("elechart_axis", function() {
+
+			distance.x     = this._chart._x;
+			distance.y     = this._chart._y;
+			distance.label = this._chart._xLabel;
+
+			this._chart._registerAxisScale({
+				axis    : "x",
+				position: "bottom",
+				scale   : distance.x,
+				ticks   : this._xTicks,
+				label   : distance.label,
+				labelY  : 25,
+				labelX  : this._width() + 6,
+				name    : "distance",
+			});
+
+		});
+
+	}
+
 	this.on("elechart_summary", function() {
 		this.track_info.distance = this._distance || 0;
 
-		this._summary
-			.append("totlen", L._("Total Length: "), this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel);
+		this._summary._registerSummary({
+			"totlen"  : {
+				label: "Total Length: ",
+				value: this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel
+			}
+		});
+
 	});
 
 	this.on("eledata_clear", function() {

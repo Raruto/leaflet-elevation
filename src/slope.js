@@ -12,88 +12,43 @@ Elevation.addInitHook(function() {
 
 	if (this.options.slope != "summary") {
 
-		this.on("elechart_init", function() {
-			slope.path = this._chart._area.append('path')
-				.style("pointer-events", "none")
-				// TODO: add a class here.
-				.attr("fill", "#F00")
-				.attr("stroke", "#000")
-				.attr("stroke-opacity", "0.5")
-				.attr("fill-opacity", "0.25");
-		});
-
 		this.on("elechart_axis", function() {
 			slope.x = this._chart._x;
-
-			// slope.x = D3.Scale({
-			// 	data       : this._data,
-			// 	range      : [0, this._width()],
-			// 	attr       : opts.xAttr,
-			// 	min        : opts.xAxisMin,
-			// 	max        : opts.xAxisMax,
-			// 	forceBounds: opts.forceAxisBounds,
-			// });
-
-			slope.y = D3.Scale({
-				data       : this._data,
-				range      : [this._height(), 0],
-				attr       : "slope",
-				min        : -1,
-				max        : +1,
-				forceBounds: opts.forceAxisBounds,
-			});
-
-			slope.axis = D3.Axis({
+			slope.y = this._chart._registerAxisScale({
 				axis       : "y",
 				position   : "right",
-				width      : this._width(),
-				height     : this._height(),
-				scale      : slope.y,
+				scale      : {
+					range      : [this._height(), 0],
+					attr       : "slope",
+					min        : -1,
+					max        : +1,
+				},
 				ticks      : this.options.yTicks,
 				tickPadding: 16,
-				label      : "%",
+				label      : '%',
 				labelX     : 25,
 				labelY     : -8,
-				name       : "slope"
+				name       : 'slope'
 			});
-
-			this._chart._axis.call(slope.axis);
 		});
 
-		this.on("elechart_area", function() {
-			slope.area = D3.Area({
-				interpolation: opts.sInterpolation,
-				data         : this._data,
-				name         : 'Slope',
+		this.on("elechart_init", function() {
+
+			this._chart._registerAreaPath({
+				name         : 'slope',
+				label        : 'Slope',
 				xAttr        : opts.xAttr,
-				yAttr        : "slope",
-				width        : this._width(),
-				height       : this._height(),
+				yAttr        : 'slope',
 				scaleX       : slope.x,
 				scaleY       : slope.y,
+				color        : '#F00',
+				strokeColor  : '#000',
+				strokeOpacity: "0.5",
+				fillOpacity  : "0.25",
 			});
 
-			slope.path.call(slope.area);
 		});
 
-		this.on("elechart_legend", function() {
-			slope.legend = this._chart._legend.append("g")
-				.call(
-					D3.LegendItem({
-						name   : 'Slope',
-						width  : this._width(),
-						height : this._height(),
-						margins: this.options.margins,
-					})
-				);
-			slope.legend.select("rect")
-				.classed("area", false)
-				// TODO: add a class here.
-				.attr("fill", "#F00")
-				.attr("stroke", "#000")
-				.attr("stroke-opacity", "0.5")
-				.attr("fill-opacity", "0.25");
-		});
 	}
 
 	this.on("eledata_updated", function(e) {
@@ -147,50 +102,46 @@ Elevation.addInitHook(function() {
 	});
 
 	this.on("elechart_change", function(e) {
-		let item        = e.data;
-		let xCoordinate = e.xCoord;
-		let chart       = this._chart;
-		let marker      = this._marker;
+		let item = e.data;
 
-		if (chart._focuslabel) {
-			if (!chart._focuslabelSlope || !chart._focuslabelSlope.property('isConnected')) {
-				chart._focuslabelSlope = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
-					.attr("class", "mouse-focus-label-slope")
-					.attr("dy", "1.5em");
-			}
+		this._chart._registerFocusLabel({
+			name: 'slope',
+			value: item.slope + "%"
+		});
 
-			chart._focuslabelSlope.text(item.slope + "%");
+		this._marker._registerFocusLabel({
+			name: 'slope',
+			value: Math.round(item.slope) + "%"
+		});
 
-			chart._focuslabel.select('.mouse-focus-label-x')
-				.attr("dy", "1.5em");
-		}
-
-		if (marker._focuslabel) {
-			if (!chart._mouseSlopeFocusLabel) {
-				chart._mouseSlopeFocusLabel = marker._focuslabel.append("svg:tspan")
-					.attr("class", "height-focus-slope ");
-			}
-
-			chart._mouseSlopeFocusLabel
-				.attr("dy", "1.5em")
-				.text(Math.round(item.slope) + "%");
-
-			marker._focuslabel.select('.height-focus-y')
-				.attr("dy", "-1.5em");
-		}
 	});
 
 	this.on("elechart_summary", function() {
+
 		this.track_info.ascent    = this._tAsc || 0;
 		this.track_info.descent   = this._tDes || 0;
 		this.track_info.slope_max = this._sMax || 0;
 		this.track_info.slope_min = this._sMin || 0;
 
-		this._summary
-			.append("ascent", L._("Total Ascent: "), Math.round(this.track_info.ascent) + '&nbsp;' + this._yLabel)
-			.append("descent", L._("Total Descent: "), Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel)
-			.append("minslope", L._("Min Slope: "), Math.round(this.track_info.slope_min) + '&nbsp;' + '%')
-			.append("maxslope", L._("Max Slope: "), Math.round(this.track_info.slope_max) + '&nbsp;' + '%');
+		this._summary._registerSummary({
+			"ascent"  : {
+				label: "Total Ascent: ",
+				value: Math.round(this.track_info.ascent) + '&nbsp;' + this._yLabel
+			},
+			"descent"  : {
+				label: "Total Descent: ",
+				value: Math.round(this.track_info.descent) + '&nbsp;' + this._yLabel
+			},
+			"minslope": {
+				label: "Min Slope: ",
+				value: Math.round(this.track_info.slope_min) + '&nbsp;' + '%'
+			},
+			"maxslope": {
+				label: "Max Slope: ",
+				value: Math.round(this.track_info.slope_max) + '&nbsp;' + '%'
+			}
+		});
+
 	});
 
 	this.on("eledata_clear", function() {

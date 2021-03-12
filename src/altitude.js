@@ -5,12 +5,15 @@ import { Elevation } from './control';
 
 Elevation.addInitHook(function() {
 
-	if (this.options.imperial) {
+	let opts     = this.options;
+	let altitude = {};
+
+	if (opts.imperial) {
 		this._heightFactor = this.__footFactor;
 		this._yLabel       = "ft";
 	} else {
-		this._heightFactor = this.options.heightFactor;
-		this._yLabel       = this.options.yLabel;
+		this._heightFactor = opts.heightFactor;
+		this._yLabel       = opts.yLabel;
 	}
 
 	this.on("eledata_updated", function(e) {
@@ -51,25 +54,76 @@ Elevation.addInitHook(function() {
 		this.track_info.elevation_min = this._minElevation = eleMin;
 	});
 
-	this.on("elechart_legend", function() {
-		this._altitudeLegend = this._chart._legend.append('g')
-			.call(
-				D3.LegendItem({
-					name   : 'Altitude',
-					width  : this._width(),
-					height : this._height(),
-					margins: this.options.margins,
-				})
-			);
+	this.on("elechart_axis", function() {
+
+		this._chart._registerAxisGrid({
+			axis      : "y",
+			position  : "left",
+			scale     : this._chart._y,
+			ticks     : this.options.yTicks
+		});
+
 	});
+
+	if (this.options.altitude != "summary") {
+
+		this.on("elechart_axis", function() {
+
+			altitude.x     = this._x;
+			altitude.y     = this._y;
+			altitude.label = this._yLabel;
+
+			this._chart._registerAxisScale({
+				axis    : "y",
+				position: "left",
+				scale   : altitude.y,
+				ticks   : this._yTicks,
+				label   : altitude.label,
+				labelX  : -3,
+				labelY  : -8,
+				name    : "altitude",
+			});
+
+		});
+
+		this.on("elechart_init", function() {
+
+			let theme      = this.options.theme.replace('-theme', '');
+			let color      = D3.Colors[theme] || {};
+
+			this._chart._registerAreaPath({
+				name         : 'altitude',
+				label        : 'Altitude',
+				xAttr        : opts.xAttr,
+				yAttr        : opts.yAttr,
+				scaleX       : this._x,
+				scaleY       : this._y,
+				color        : color.area || theme,
+				strokeColor  : color.stroke || '#000',
+				strokeOpacity: "1",
+				fillOpacity  : color.alpha || '1',
+				preferCanvas : this.options.preferCanvas,
+			});
+
+		});
+
+	}
 
 	this.on("elechart_summary", function() {
 		this.track_info.elevation_max = this._maxElevation || 0;
 		this.track_info.elevation_min = this._minElevation || 0;
 
-		this._summary
-			.append("maxele", L._("Max Elevation: "), this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel)
-			.append("minele", L._("Min Elevation: "), this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel);
+		this._summary._registerSummary({
+			"maxele"  : {
+				label: "Max Elevation: ",
+				value: this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel
+			},
+			"minele"  : {
+				label: "Min Elevation: ",
+				value: this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel
+			},
+		});
+
 	});
 
 	this.on("eledata_clear", function() {

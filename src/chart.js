@@ -23,42 +23,59 @@ export var Chart = L.Class.extend({
 		this._xTicks   = opts.xTicks;
 		this._yTicks   = opts.yTicks;
 
-		let scale = this._updateScale();
+		let chart  = this._chart = D3.Chart(opts);
+		let scale  = this._updateScale();
 
-		let svg = this._container = d3.create("svg")
-			.attr("class", "background")
-			.attr("viewBox", `0 0 ${opts.width} ${opts.height}`)
-			.attr("width", opts.width)
-			.attr("height", opts.height);
+		// SVG Container
+		let svg   = this._container = chart.svg;
 
-		let g = svg
-			.append("g")
-			.attr("transform", "translate(" + opts.margins.left + "," + opts.margins.top + ")")
-			.call(this._appendGrid())
-			.call(this._appendArea())
-			.call(this._appendAxis())
+		// Panes
+		this._grid  = chart.grid;
+		this._area  = chart.area;
+		this._point = chart.point;
+		this._axis  = chart.axis;
+
+		// Helpers
+		svg.select('g')
 			.call(this._appendFocusable())
 			.call(this._appendLegend())
-			.call(this._appendClipper());
+			.call(this._appendClipper())
+			.call(this._appendCanvasPlot());
 
-		this._grid      = svg.select('.grid');
-		this._area      = svg.select('.area');
-		this._path      = svg.select('.area path');
-		this._axis      = svg.select('.axis');
+		this._context   = svg.select('.canvas-plot').node().getContext('2d');
 		this._focus     = svg.select('.focus');
 		this._focusRect = this._focus.select('rect');
 		this._legend    = svg.select('.legend');
 		this._x         = scale.x;
 		this._y         = scale.y;
+
 	},
 
 	update: function(props) {
 		if (props.data) this._data = props.data;
 		if (props.options) this.options = props.options;
 
+		// reset canvas profiles
+		this._context.clearRect(0, 0, this._width(), this._height());
+
+		// Reset chart profiles
+		let chart = this;
+		let paths = chart._paths;
+
+		// chart._context.clearRect(0, 0, this._width(), this._height());
+		// for (var i in paths) {
+		// 	if (!paths[i].classed('leaflet-hidden')) {
+		// 		if (paths[i].classed('canvas-path')) {
+		// 			chart._drawCanvasPath(paths[i]);
+		// 		}
+		// 	}
+		// }
+
 		this._updateScale();
-		this._updateAxis();
-		this._updateArea();
+
+		// Reset chart axis.
+		this._grid.selectAll('g').remove();
+		this._axis.selectAll('g').remove();
 
 		return this;
 	},
@@ -70,10 +87,10 @@ export var Chart = L.Class.extend({
 	clear: function() {
 		this._resetDrag();
 		this._area.selectAll('path').attr("d", "M0 0");
+		this._context.clearRect(0, 0, this._width(), this._height());
 		if (this._path) {
 			// this._x.domain([0, 1]);
 			// this._y.domain([0, 1]);
-			// this._updateAxis();
 		}
 	},
 
@@ -82,156 +99,173 @@ export var Chart = L.Class.extend({
 
 		let opts = this.options;
 
-		this._x = D3.Scale({
+		this._scales = this._scales || {};
+
+		this._scales.distance = {
 			data       : this._data,
 			range      : [0, this._width()],
 			attr       : opts.xAttr,
 			min        : opts.xAxisMin,
 			max        : opts.xAxisMax,
 			forceBounds: opts.forceAxisBounds,
-		});
+		};
 
-		this._y = D3.Scale({
+		this._scales.altitude = {
 			data       : this._data,
 			range      : [this._height(), 0],
 			attr       : opts.yAttr,
 			min        : opts.yAxisMin,
 			max        : opts.yAxisMax,
 			forceBounds: opts.forceAxisBounds,
-		});
+		};
+
+		this._x = D3.Scale(this._scales.distance);
+
+		this._y = D3.Scale(this._scales.altitude);
 
 		return { x: this._x, y: this._y };
 	},
 
-	/**
-	 * Update chart axis.
-	 */
-	_updateAxis: function() {
-		this._grid.selectAll('g').remove();
-		this._axis.selectAll('g').remove();
-		this._grid
-			.call(this._appendXGrid())
-			.call(this._appendYGrid());
-		this._axis
-			.call(this._appendXaxis())
-			.call(this._appendYaxis());
 
-		// this.fire('axis_updated');
-	},
-
-	_updateArea: function() {
+	_drawPath: function(name) {
 		let opts = this.options;
-		this._path
-			.call(
-				D3.Area({
-					interpolation: opts.interpolation,
-					data         : this._data,
-					name         : 'Altitude',
-					xAttr        : opts.xAttr,
-					yAttr        : opts.yAttr,
-					width        : this._width(),
-					height       : this._height(),
-					scaleX       : this._x,
-					scaleY       : this._y,
-				})
-			);
-	},
+		let ctx  = this._context;
 
-	/**
-	 * Generate "grid".
-	 */
-	_appendGrid: function() {
-		return g =>
-			g.append("g")
-			.attr("class", "grid")
-			.call(this._appendXGrid())
-			.call(this._appendYGrid());
-	},
+		let path = this._paths[name];
+		let area = this._areas[name];
+		let node = path.node();
 
-	/**
-	 * Generate "x-grid".
-	 */
-	_appendXGrid: function() {
-		return D3.Grid({
-			axis      : "x",
-			position  : "bottom",
-			width     : this._width(),
-			height    : this._height(),
-			scale     : this._x,
-			ticks     : this._xTicks,
-			tickFormat: "",
+		area = L.extend(area, {
+			width        : this._width(),
+			height       : this._height(),
+			scaleX       : this._x, //D3.Scale(this._scales.distance),
+			scaleY       : D3.Scale(this._scales[name])
 		});
+
+		path.datum(this._data).attr("d", D3.Area(area));
+
+		if (path.classed('leaflet-hidden')) return;
+
+		if (opts.preferCanvas) {
+			path.classed('canvas-path', true);
+
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			let p = new Path2D(path.attr('d'));
+
+			ctx.strokeStyle = path.attr('stroke');
+			ctx.fillStyle   = path.attr('fill');
+			ctx.lineWidth   = 1.25;
+			ctx.globalCompositeOperation = 'source-over';
+
+			// stroke opacity
+			ctx.globalAlpha = path.attr('stroke-opacity') || 0.3;
+			ctx.stroke(p);
+
+			// stroke opacity
+			ctx.globalAlpha = path.attr('fill-opacity') || 0.45;
+			ctx.fill(p);
+
+			ctx.globalAlpha = 1;
+
+			ctx.closePath();
+		} else /*if(!node.isConnected)*/ {
+			this._area.append(() => node);
+		}
 	},
 
-	/**
-	 * Generate "y-grid".
-	 */
-	_appendYGrid: function() {
-		return D3.Grid({
-			axis      : "y",
-			position  : "left",
-			width     : this._width(),
-			height    : this._height(),
-			scale     : this._y,
-			ticks     : this.options.yTicks,
-			tickFormat: "",
-		});
+	_registerAxisGrid: function(props) {
+		let opts = this.options;
+		let grid = props;
+
+		if (typeof grid !== 'function') {
+			grid = L.extend({
+				width     : this._width(),
+				height    : this._height(),
+				tickFormat: "",
+			}, grid);
+			grid = D3.Grid(grid);
+		}
+
+		this._grid.call(grid);
+
+		return grid;
 	},
 
-	/**
-	 * Generate "axis".
-	 */
-	_appendAxis: function() {
-		return g =>
-			g.append("g")
-			.attr("class", "axis")
-			.call(this._appendXaxis())
-			.call(this._appendYaxis());
+	_registerAxisScale: function(props) {
+		let opts  = this.options;
+		let scale = props.scale;
+
+		if (typeof scale !== 'function') {
+			scale       = L.extend({
+				data       : this._data,
+				forceBounds: opts.forceAxisBounds
+			}, scale);
+			this._scales[props.name] = scale;
+			scale       = D3.Scale(scale);
+			props.scale = scale;
+		}
+
+		props      = L.extend({
+			width  : this._width(),
+			height : this._height(),
+		}, props);
+
+		let axis    = D3.Axis(props);
+
+		this._axis.call(axis);
+
+		return scale;
 	},
 
-	/**
-	 * Generate "x-axis".
-	 */
-	_appendXaxis: function() {
-		return D3.Axis({
-			axis    : "x",
-			position: "bottom",
-			width   : this._width(),
-			height  : this._height(),
-			scale   : this._x,
-			ticks   : this._xTicks,
-			label   : this._xLabel,
-			labelY  : 25,
-			labelX  : this._width() + 6,
-			name    : "distance",
-		});
+	_registerAreaPath: function(props) {
+		let opts = this.options;
+
+		let path = D3.Path(props);
+
+		// Save paths in memory for latter usage
+		this._paths             = this._paths || {};
+		this._paths[props.name] = path;
+
+		this._areas             = this._areas || {};
+		this._areas[props.name] = props;
+
+		this._pathProps             = this._pathProps || {};
+		this._pathProps[props.name] = props;
+
+		this._drawPath(props.name);
+
+		if (opts.legend) {
+			this._legendItems = this._legendItems || {};
+			this._legendItems[props.name] = D3.LegendItem({
+				name   : props.name,
+				label  : props.label,
+				width  : this._width(),
+				height : this._height(),
+				margins: opts.margins,
+				color: props.color
+			});
+		}
+
 	},
 
-	/**
-	 * Generate "y-axis".
-	 */
-	_appendYaxis: function() {
-		return D3.Axis({
-			axis    : "y",
-			position: "left",
-			width   : this._width(),
-			height  : this._height(),
-			scale   : this._y,
-			ticks   : this.options.yTicks,
-			label   : this._yLabel,
-			labelX  : -3,
-			labelY  : -8,
-			name    : "altitude",
-		});
-	},
+	_registerFocusLabel: function(props) {
+		if (!this._focuslabel)  return;
 
-	/**
-	 * Generate "path".
-	 */
-	_appendArea: function() {
-		return g => g.append('g')
-			.attr("class", "area")
-			.append('path');
+		this._focuslabels = this._focuslabels || {};
+		let label         = this._focuslabels[props.name]
+
+		if (!label || !label.property('isConnected')) {
+			label           = this._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
+				.attr("class", "mouse-focus-label-" + props.name)
+				.attr("dy", "1.5em");
+			this._focuslabels[props.name] = label;
+		}
+
+		label.text(props.value);
+
+		this._focuslabel.select('.mouse-focus-label-x')
+			.attr("dy", "1.5em");
 	},
 
 	_appendFocusable: function() {
@@ -293,7 +327,7 @@ export var Chart = L.Class.extend({
 						xCoord: 0,
 						height: this._height()
 					})
-				);;
+				);
 			this._focuslabel = focusG.append("g")
 				.call(
 					D3.MouseFocusLabel({
@@ -382,8 +416,6 @@ export var Chart = L.Class.extend({
 				this._updateScale(); // hacky way for restoring x scale when zooming out
 				this.zooming = true;
 				this._x = e.transform.rescaleX(this._x); // calculate x scale at zoom level
-				// this._updateAxis();
-				// this._updateArea();
 				// control._updateChart();
 				this._resetDrag();
 				if (e.sourceEvent && e.sourceEvent.type == "mousemove") {
@@ -397,6 +429,24 @@ export var Chart = L.Class.extend({
 			.on("wheel", function(e) {
 				if (e.shiftKey) e.preventDefault();
 			});
+
+		return g => g;
+	},
+
+	/**
+	 * Init Canvas
+	 */
+	_appendCanvasPlot: function() {
+		let svg    = this._container;
+		let area   = svg.select('.area');
+
+		const canvas = area.insert('svg:foreignObject'/*, ":first-child"*/) // generate and append <clipPath> element
+			.attr('width', this._width())
+			.attr('height', this._height())
+		.append('xhtml:canvas')
+			.attr('class', 'canvas-plot')
+			.attr('width', this._width())
+			.attr('height', this._height())
 
 		return g => g;
 	},
@@ -459,52 +509,47 @@ export var Chart = L.Class.extend({
 	/**
 	 * Add a waypoint of interest over the chart
 	 */
-	_addCheckpoint:function(checkpoint) {
+	_addCheckpoint:function(point) {
 		let item, x, y;
 
-		if (!this._checkpoint || !this._checkpoint.property('isConnected')) {
-			this._checkpoint = this._container.select('g').insert("g", ".axis")
-				.attr("class", "point");
-		}
-
-		if(checkpoint.latlng) {
-			item = this._data[this._findIndexForLatLng(checkpoint.latlng)];
+		if (point.latlng) {
+			item = this._data[this._findIndexForLatLng(point.latlng)];
 			x    = this._x(item.dist);
 			y    = this._y(item.z);
-		} else if (!isNaN(checkpoint.dist)) {
-			x    = this._x(checkpoint.dist);
+		} else if (!isNaN(point.dist)) {
+			x    = this._x(point.dist);
 			item = this._data[this._findIndexForXCoord(x)]
 			y    = this._y(item.z);
 		} else
 
 		if (isNaN(x) || isNaN(y)) return;
 
-		if (!checkpoint.item || !checkpoint.item.property('isConnected')) {
-			checkpoint.position = checkpoint.position || "bottom";
+		if (!point.item || !point.item.property('isConnected')) {
+			point.position = point.position || "bottom";
 
-			checkpoint.item = this._checkpoint.append('g')
-				.attr("class", "point " + checkpoint.position)
+			point.item = this._point.append('g')
+				.attr("class", "point " + point.position)
 				.attr("transform", "translate(" + x + "," + y + ")");
 
-			let line = checkpoint.item
+			let line = point.item
 				.append("svg:line")
 				.attr("y1", 0)
 				.attr("x1", 0)
-				.attr("y2", ({'top': -y, 'bottom': this._height() - y})[checkpoint.position])
-				.attr("x2", ({'left': -x, 'right': this._width() - x})[checkpoint.position] || 0)
+				.attr("y2", ({'top': -y, 'bottom': this._height() - y})[point.position])
+				.attr("x2", ({'left': -x, 'right': this._width() - x})[point.position] || 0)
 				.attr("style","stroke: rgb(51, 51, 51); stroke-width: 0.5; stroke-dasharray: 2, 2;");
 
-				checkpoint.item
+				point.item
 					.append("svg:circle")
 					.attr("class", " height-focus circle-lower")
 					.attr("r", 3);
 
-				if (checkpoint.label) {
-					checkpoint.item
+				if (point.label) {
+					point.item
 						.append("svg:text")
 						.attr("dx", "4px")
 						.attr("dy", "-4px")
-						.text(checkpoint.label);
+						.text(point.label);
 				}
 		}
 
@@ -514,16 +559,18 @@ export var Chart = L.Class.extend({
 	 * Calculates chart width.
 	 */
 	_width: function() {
-		let opts = this.options;
-		return opts.width - opts.margins.left - opts.margins.right;
+		return this._chart._width;
+		// let opts = this.options;
+		// return opts.width - opts.margins.left - opts.margins.right;
 	},
 
 	/**
 	 * Calculates chart height.
 	 */
 	_height: function() {
-		let opts = this.options;
-		return opts.height - opts.margins.top - opts.margins.bottom;
+		return this._chart._height;
+		// let opts = this.options;
+		// return opts.height - opts.margins.top - opts.margins.bottom;
 	},
 
 	/*

@@ -74,7 +74,8 @@
 .elevation-control.elevation .area {
   fill: #4682B4;
   stroke: #000;
-  stroke-width: 1.8;
+  stroke-width: 1.2;
+  fill-opacity: 0.8;
   paint-order: stroke fill;
 }
 
@@ -322,7 +323,8 @@
   background: url(../images/elevation-steelblue.svg) no-repeat center center;
 }
 
-.steelblue-theme.elevation-control.elevation .area {
+.steelblue-theme.elevation-control.elevation .area,
+.steelblue-theme.elevation-polyline {
   fill: #4682B4;
 }
 
@@ -333,10 +335,6 @@
 .steelblue-theme.height-focus {
   stroke: #000;
   fill: #4682B4;
-}
-
-.steelblue-theme.elevation-polyline {
-  stroke: #4682B4;
 }
 
 /* PURPLE THEME //////////////////////////////////////////////// */
@@ -357,7 +355,8 @@
   background: url(../images/elevation-purple.svg) no-repeat center center;
 }
 
-.purple-theme.elevation-control.elevation .area {
+.purple-theme.elevation-control.elevation .area,
+.purple-theme.elevation-polyline {
   fill: #732C7B;
 }
 
@@ -370,27 +369,16 @@
   fill: #732C7B;
 }
 
-.purple-theme.elevation-polyline {
-  stroke: #732C7B;
-}
-
 /* YELLOW THEME //////////////////////////////////////////////// */
-.yellow-theme.elevation-control.elevation .area {
+.yellow-theme.elevation-control.elevation .area,
+.yellow-theme.elevation-polyline {
   fill: #FF0;
 }
 
-.yellow-theme.elevation-polyline {
-  stroke: #FF0;
-}
-
 /* RED THEME //////////////////////////////////////////////// */
-.red-theme.elevation-control.elevation .area {
-  fill: #F00;
-  stroke: #000;
-}
-
+.red-theme.elevation-control.elevation .area,
 .red-theme.elevation-polyline {
-  stroke: #F00;
+  fill: #F00;
 }
 
 /* MAGENTA THEME //////////////////////////////////////////////// */
@@ -398,34 +386,24 @@
   background-color: rgba(255, 255, 255, 0.47);
 }
 
-.magenta-theme.elevation-control.elevation .area {
-  fill: #FF005E;
-  stroke: #000;
-}
-
+.magenta-theme.elevation-control.elevation .area,
 .magenta-theme.elevation-polyline {
   stroke: #FF005E;
 }
 
 /* LIGHTBLUE THEME //////////////////////////////////////////////// */
-.lightblue-theme.elevation-control.elevation .area {
+.lightblue-theme.elevation-control.elevation .area,
+.lightblue-theme.elevation-polyline {
   fill: #3366CC;
-  stroke: #000;
-  stroke-width: 1.25;
 }
 
 .elevation-detached .lightblue-theme.elevation-control.elevation .area {
-  stroke: #3366CC;
   fill-opacity: 0.45;
 }
 
 .lightblue-theme.height-focus {
   stroke: #000;
   fill: #FFFFFF;
-}
-
-.lightblue-theme.elevation-polyline {
-  stroke: #3366CC;
 }
 
 /* leaflet-distance-markers */

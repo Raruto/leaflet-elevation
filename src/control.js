@@ -17,7 +17,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.3.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
-	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.6.4/libs/leaflet-distance-marker.min.js',
+	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.6.5/libs/leaflet-distance-marker.min.js',
 
 	/**
 	 * Add a waypoint marker to the diagram
@@ -149,6 +149,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._updateChart   = _.debounce(this._updateChart,   300, this);
 			this._updateSummary = _.debounce(this._updateSummary, 300, this);
 		}
+
+		// Leaflet canvas renderer colors
+		L.extend(D3.Colors, this.options.colors || {});
 	},
 
 	/**
@@ -519,6 +522,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		let chart = this._chart = new Chart(opts);
 
+		this._x     = this._chart._x;
+		this._y     = this._chart._y;
+
 		d3
 			.select(container)
 			.call(chart.render())
@@ -865,6 +871,7 @@ Elevation.addInitHook(function() {
 
 	// autotoggle chart data on click
 	this.on('elepath_toggle', function(e) {
+		if (!e.path) return;
 		let path              = e.path;
 		let optName           = path.getAttribute('data-name').toLowerCase();
 		let enabled           = !_.hasClass(path, 'leaflet-hidden');
@@ -875,7 +882,19 @@ Elevation.addInitHook(function() {
 		_.toggleStyle(rect,  'fill-opacity',         '0',            enabled);
 		_.toggleClass(path,  'leaflet-hidden',                       enabled);
 
-		this._chartEnabled    = this._chart._area.selectAll('path:not(.leaflet-hidden)').nodes().length != 0;
+		this._chartEnabled = false;//  = this._chart._area.selectAll('path:not(.leaflet-hidden)').nodes().length != 0;
+
+		// Reset chart profiles
+		let chart = this._chart;
+		let paths = chart._paths;
+
+		chart._context.clearRect(0, 0, this._width(), this._height());
+		for (var i in paths) {
+			if (!paths[i].classed('leaflet-hidden')) {
+				this._chartEnabled = true;
+				chart._drawPath(i);
+			}
+		}
 
 		this._layers.eachLayer(layer => {
 			let node = layer.getElement && layer.getElement();
@@ -889,13 +908,30 @@ Elevation.addInitHook(function() {
 			this._chart._hideDiagramIndicator();
 			this._marker.remove();
 		}
+
+
 	});
 
 	// TODO: maybe should i listen for this inside chart.js?
 	this.on("elechart_updated elechart_init", function() {
 
+		// Reset chart profiles
+		let chart = this._chart;
+		let paths = chart._paths;
+
+		// chart._context.clearRect(0, 0, this._width(), this._height());
+		for (var i in paths) {
+			chart._drawPath(i);
+		}
+
+		// Reset legend items
+		chart._legend.selectAll('g').remove();
+		for (var i in this._chart._legendItems) {
+			chart._legend.append("g").call(chart._legendItems[i])
+		}
+
 		// Get legend items
-		let items  = this._chart._legend.selectAll('.legend-item');
+		let items  = chart._legend.selectAll('.legend-item');
 
 		// Calculate legend item positions
 		let n      = items.nodes().length;
@@ -931,7 +967,7 @@ Elevation.addInitHook(function() {
 				let legend  = d3.select(target);
 				let name    = target.getAttribute('data-name');
 				let optName = name.toLowerCase();
-				let path    = this._chart._area.select('path[data-name="' + name + '"]');
+				let path    = this._chart._paths[name];// _area.select('path[data-name="' + name + '"]');
 				let node    = path.node();
 
 				legend
@@ -1048,19 +1084,12 @@ Elevation.addInitHook(function() {
 	L.Canvas.include({
 		_fillStroke: function(ctx, layer) {
 			if (control._layers.hasLayer(layer)) {
-				let theme   = control.options.theme.replace('-theme', '');
-				let colors  = L.extend({}, {
-					'lightblue': '#3366CC',
-					'magenta'  : '#FF005E',
-					'red'      : '#F00',
-					'yellow'   : '#FF0',
-					'purple'   : '#732C7B',
-					'steelblue': '#4682B4',
-					'lime'     : '#566B13'
-				}, control.options.colors);
 
+				let theme      = control.options.theme.replace('-theme', '');
+				let color      = D3.Colors[theme] || {};
 				let options    = layer.options;
-				options.color  = colors[theme] || theme;
+
+				options.color  = color.line || color.area || theme;
 				options.stroke = !!options.color;
 
 				oldProto.call(this, ctx, layer);

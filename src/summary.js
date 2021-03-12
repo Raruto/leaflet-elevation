@@ -23,4 +23,10 @@ export var Summary = L.Class.extend({
 		return this;
 	},
 
+	_registerSummary: function(data) {
+		for (let i in data) {
+			this.append(i, L._(data[i].label), data[i].value);
+		}
+	}
+
 });

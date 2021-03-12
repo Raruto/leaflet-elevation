@@ -16,33 +16,20 @@ Elevation.addInitHook(function() {
 	if (this.options.acceleration != "summary") {
 
 		this.on("elechart_init", function() {
-			acceleration.path = this._chart._area.append('path')
-				.style("pointer-events", "none")
-				// TODO: add a class here.
-				.attr("fill", "#050402")
-				.attr("stroke", "#000")
-				.attr("stroke-opacity", "0.5")
-				.attr("fill-opacity", "0.25");
+			acceleration.path = d3.create('svg:path');
 		});
 
 		this.on("elechart_axis", function() {
 			acceleration.x = this._chart._x;
-
-			acceleration.y = D3.Scale({
-				data       : this._data,
-				range      : [this._height(), 0],
-				attr       : "acceleration",
-				min        : 0,
-				max        : +1,
-				forceBounds: opts.forceAxisBounds
-			});
-
-			acceleration.axis = D3.Axis({
+			acceleration.y = this._chart._registerAxisScale({
 				axis       : "y",
 				position   : "right",
-				width      : this._width(),
-				height     : this._height(),
-				scale      : acceleration.y,
+				scale      : {
+					range      : [this._height(), 0],
+					attr       : "acceleration",
+					min        : 0,
+					max        : +1,
+				},
 				ticks      : this.options.yTicks,
 				tickPadding: 16,
 				label      : acceleration.label,
@@ -50,43 +37,25 @@ Elevation.addInitHook(function() {
 				labelY     : -8,
 				name       : 'acceleration'
 			});
-
-			this._chart._axis.call(acceleration.axis);
 		});
 
-		this.on("elechart_area", function() {
-			acceleration.area = D3.Area({
-				interpolation: opts.sInterpolation,
-				data         : this._data,
-				name         : 'Acceleration',
-				xAttr        : opts.xAttr,
-				yAttr        : "acceleration",
-				width        : this._width(),
-				height       : this._height(),
-				scaleX       : acceleration.x,
-				scaleY       : acceleration.y
+		this.on("elechart_init", function() {
+
+			this._chart._registerAreaPath({
+				name       : 'acceleration',
+				label      : 'Acceleration',
+				xAttr      : opts.xAttr,
+				yAttr      : "acceleration",
+				scaleX     : acceleration.x,
+				scaleY     : acceleration.y,
+				color      : '#050402',
+				strokeColor  : '#000',
+				strokeOpacity: "0.5",
+				fillOpacity  : "0.25",
 			});
-			acceleration.path.call(acceleration.area);
-		});
-
-		this.on("elechart_legend", function() {
-			acceleration.legend = this._chart._legend.append("g")
-				.call(
-					D3.LegendItem({
-						name   : 'Acceleration',
-						width  : this._width(),
-						height : this._height(),
-						margins: this.options.margins
-					}));
-			acceleration.legend.select("rect")
-				.classed("area", false)
-				// TODO: add a class here.
-				.attr("fill", "#03ffff")
-				.attr("stroke", "#000")
-				.attr("stroke-opacity", "0.5")
-				.attr("fill-opacity", "0.25");
 
 		});
+
 	}
 
 	this.on('elepoint_added', function(e) {
@@ -143,45 +112,38 @@ Elevation.addInitHook(function() {
 
 	this.on("elechart_change", function(e) {
 		let item = e.data;
-		let chart = this._chart;
-		let marker = this._marker;
 
-		if (chart._focuslabel) {
-			if (!chart._focuslabelAcceleration || !chart._focuslabelAcceleration.property('isConnected')) {
-				chart._focuslabelAcceleration = chart._focuslabel.select('text').insert("svg:tspan", ".mouse-focus-label-x")
-					.attr("class", "mouse-focus-label-acceleration")
-					.attr("dy", "1.5em");
-			}
+		this._chart._registerFocusLabel({
+			name: 'acceleration',
+			value: item.acceleration + " " + acceleration.label
+		});
 
-			chart._focuslabelAcceleration.text(item.acceleration + " " + acceleration.label);
+		this._marker._registerFocusLabel({
+			name: 'acceleration',
+			value: Math.round(item.acceleration) + " " + acceleration.label
+		});
 
-			chart._focuslabel.select('.mouse-focus-label-x')
-				.attr("dy", "1.5em");
-		}
-
-		if (marker._focuslabel) {
-			if (!chart._mouseAccelerationFocusLabel) {
-				chart._mouseAccelerationFocusLabel = marker._focuslabel.append("svg:tspan")
-					.attr("class", "height-focus-acceleration ");
-			}
-
-			chart._mouseAccelerationFocusLabel
-				.attr("dy", "1.5em")
-				.text(Math.round(item.acceleration) + " " + acceleration.label);
-
-			marker._focuslabel.select('.height-focus-y')
-				.attr("dy", "-1.5em");
-		}
 	});
 
 	this.on("elechart_summary", function() {
 		this.track_info.acceleration_max = this._maxAcceleration || 0;
 		this.track_info.acceleration_min = this._minAcceleration || 0;
 
-		this._summary
-			.append("minacceleration", L._("Min Acceleration: "), Math.round(this.track_info.acceleration_min) + '&nbsp;' + acceleration.label)
-			.append("maxacceleration", L._("Max Acceleration: "), Math.round(this.track_info.acceleration_max) + '&nbsp;' + acceleration.label)
-			.append("avgacceleration", L._("Avg Acceleration: "), Math.round(this.track_info.acceleration_avg) + '&nbsp;' + acceleration.label);
+		this._summary._registerSummary({
+			"minacceleration"  : {
+				label: "Min Acceleration: ",
+				value: Math.round(this.track_info.acceleration_min) + '&nbsp;' + acceleration.label
+			},
+			"maxacceleration"  : {
+				label: "Max Acceleration: ",
+				value: Math.round(this.track_info.acceleration_max) + '&nbsp;' + acceleration.label
+			},
+			"avgacceleration": {
+				label: "Avg Acceleration: ",
+				value: Math.round(this.track_info.acceleration_avg) + '&nbsp;' + acceleration.label
+			}
+		});
+
 	});
 
 	this.on("eledata_clear", function() {

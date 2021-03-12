@@ -131,8 +131,14 @@ _For a working example see one of the following demos:_
         // Speed chart profile: true || "summary" || "disabled" || false
         speed: false,
 
-        // Time chart info: true || "summary" || false
+        // Display time info: true || "summary" || false
         time: false,
+
+        // Display distance info: true || "summary"
+        distance: true,
+
+        // Display altitude info: true || "summary"
+        altitude: true,
 
         // Summary track info style: "line" || "multiline" || false
         summary: 'multiline',
@@ -148,6 +154,9 @@ _For a working example see one of the following demos:_
 
         // Toggle "leaflet-distance-markers" integration
         distanceMarkers: false,
+
+        // Render chart profiles as Canvas or SVG Paths
+        preferCanvas: true
 
       };
 

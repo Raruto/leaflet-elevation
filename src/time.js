@@ -35,35 +35,24 @@ Elevation.addInitHook(function() {
 	if (opts.time && opts.time != "summary" && !L.Browser.mobile) {
 
 		this.on("elechart_axis", function() {
-
-		time.y = this._chart._y;
-
-		time.x = D3.Scale({
-			data : this._data,
-			range: [0, this._width()],
-			attr : "duration",
-			min  : 0,
-			// max        : +1,
-			// forceBounds: opts.forceAxisBounds
-			// scale      : 'scaleTime'
-		});
-
-		time.axis = D3.Axis({
-			axis      : "x",
-			position  : "top",
-			width     : this._width(),
-			height    : 0,
-			scale     : time.x,
-			ticks     : this.options.xTicks * 1.5,
-			label     : 't',
-			labelY    : -10,
-			labelX    : this._width(),
-			name      : "time",
-			tickFormat: (d) => (d == 0 ? '' : opts.xTimeFormat(d))
-		});
+			time.y = this._chart._y;
+			time.x = this._chart._registerAxisScale({
+				axis      : "x",
+				position  : "top",
+				scale     : {
+					range     : [0, this._width()],
+					attr      : "duration",
+					min       : 0,
+				},
+				ticks     : this.options.xTicks * 1.5,
+				label     : 't',
+				labelY    : -10,
+				labelX    : this._width(),
+				name      : "time",
+				tickFormat: (d) => (d == 0 ? '' : opts.xTimeFormat(d))
+			});
 
 		this._chart._axis
-			.call(time.axis)
 			.call(g => {
 				let axis = g.select(".x.axis.time");
 				axis.select(".domain").remove();
@@ -123,27 +112,25 @@ Elevation.addInitHook(function() {
 	if (!this.options.time) return;
 
 	this.on("elechart_change", function(e) {
-		let chart = this._chart;
 		let item  = e.data;
 
-		if (chart._focuslabel) {
-			if (item.time) {
-				if (!chart._focuslabelTime || !chart._focuslabelTime.property('isConnected')) {
-					chart._focuslabelTime = chart._focuslabel.select('text')
-						.insert("svg:tspan", ".mouse-focus-label-x")
-						.attr("class", "mouse-focus-label-time")
-						.attr("dy", "1.5em");
-				}
-				chart._focuslabelTime.text(this.options.timeFormat(item.time));
-			}
-		}
+		this._chart._registerFocusLabel({
+			name: 'time',
+			value: this.options.timeFormat(item.time)
+		});
+
 	});
 
 	this.on("elechart_summary", function() {
 		this.track_info.time = this.track_info.time || 0;
 
-		this._summary
-			.append("tottime", L._("Total Time: "), _.formatTime(this.track_info.time))
+		this._summary._registerSummary({
+			"tottime"  : {
+				label: "Total Time: ",
+				value: _.formatTime(this.track_info.time)
+			}
+		});
+
 	});
 
 });

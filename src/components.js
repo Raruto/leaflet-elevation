@@ -1,32 +1,55 @@
+export const Colors = {
+	'lightblue': { area: '#3366CC', alpha: 0.45, stroke: '#3366CC' },
+	'magenta'  : { area: '#FF005E' },
+	'yellow'   : { area: '#FF0' },
+	'purple'   : { area: '#732C7B' },
+	'steelblue': { area: '#4682B4' },
+	'red'      : { area: '#F00' },
+	'lime'     : { area: '#9CC222', line: '#566B13' }
+};
+
 export const Area = ({
-	data,
-	name,
+	width,
+	height,
 	xAttr,
 	yAttr,
 	scaleX,
 	scaleY,
-	height,
-	interpolation = "curveLinear",
+	interpolation = "curveLinear"
 }) => {
-	return path => {
-		if (typeof interpolation === 'string') interpolation = d3[interpolation];
+	if (typeof interpolation === 'string') interpolation = d3[interpolation];
 
-		let area = d3.area().curve(interpolation)
-			.x(d => (d.xDiagCoord = scaleX(d[xAttr])))
-			.y0(height)
-			.y1(d => scaleY(d[yAttr]));
+	let area = d3.area().curve(interpolation)
+		.x(d => (d.xDiagCoord = scaleX(d[xAttr])))
+		.y0(height)
+		.y1(d => scaleY(d[yAttr]));
 
-		if (data) path.datum(data).attr("d", area);
-		if (name) path.attr('data-name', name);
-
-		return area;
-	};
+	return area;
 };
 
-export const AreaPath = (props) => {
-	return d3.create('svg:path')
-		.attr("class", "area")
-		.call(Area(props));
+export const Path = ({
+	name,
+	color,
+	strokeColor,
+	strokeOpacity,
+	fillOpacity,
+	preferCanvas
+}) => {
+	let path = d3.create('svg:path')
+
+	if (name) path.attr('data-name', name);
+
+	path.style("pointer-events", "none");
+
+	if (preferCanvas !== false) {
+		path
+		.attr("fill", color || '#3366CC')
+		.attr("stroke", strokeColor || '#000')
+		.attr("stroke-opacity", strokeOpacity || '1')
+		.attr("fill-opacity", fillOpacity || '0.8');
+	}
+
+	return path;
 };
 
 export const Axis = ({
@@ -168,9 +191,11 @@ export const HeightFocusMarker = ({
 
 export const LegendItem = ({
 	name,
+  label,
 	width,
 	height,
 	margins = {},
+	color
 }) => {
 	return g => {
 		g
@@ -178,15 +203,17 @@ export const LegendItem = ({
 			.attr("data-name", name);
 
 		g.append("svg:rect")
-			.attr("class", "area")
 			.attr("x", (width / 2) - 50)
 			.attr("y", height + margins.bottom / 2)
 			.attr("width", 50)
 			.attr("height", 10)
-			.attr("opacity", 0.75);
+			.attr("fill", color)
+			.attr("stroke", "#000")
+			.attr("stroke-opacity", "0.5")
+			.attr("fill-opacity", "0.25");
 
 		g.append('svg:text')
-			.text(L._(name))
+			.text(L._(label || name))
 			.attr("x", (width / 2) + 5)
 			.attr("font-size", 10)
 			.style("text-decoration-thickness", "2px")
@@ -341,4 +368,34 @@ export const Bisect = ({
 	return d3
 		.bisector(d => d[attr])
 		.left(data, scale.invert(x));
+};
+
+export const Chart = ({
+	width,
+	height,
+	margins = {}
+}) => {
+	const svg   = d3.create("svg:svg")
+		.attr("class", "background")
+		.attr("viewBox", `0 0 ${width} ${height}`)
+		.attr("width", width)
+		.attr("height", height);
+
+	const g     = svg
+		.append("g")
+		.attr("transform", "translate(" + margins.left + "," + margins.top + ")");
+
+	const grid  = g.append("g").attr("class", "grid");
+	const area  = g.append('g').attr("class", "area");
+	const point = g.append('g').attr("class", "point");
+	const axis  = g.append('g').attr("class", "axis");
+
+	const _width  = width - margins.left - margins.right;
+	const _height = height - margins.top - margins.bottom;
+
+	const scale = (opts) => ({ x: Scale(opts.x), y: Scale(opts.y)});
+
+	const chart = { svg, g, grid, area, point, axis, scale, _width, _height };
+
+	return chart;
 };
