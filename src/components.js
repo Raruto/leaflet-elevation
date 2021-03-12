@@ -33,7 +33,8 @@ export const Path = ({
 	strokeColor,
 	strokeOpacity,
 	fillOpacity,
-	preferCanvas
+	preferCanvas,
+	detached,
 }) => {
 	let path = d3.create('svg:path')
 

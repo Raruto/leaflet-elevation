@@ -90,6 +90,8 @@ Elevation.addInitHook(function() {
 
 			let theme      = this.options.theme.replace('-theme', '');
 			let color      = D3.Colors[theme] || {};
+			let alpha      = (this.options.detached ? (color.alpha || '0.8') : 1);
+			let stroke     = (this.options.detached ? color.stroke : false);
 
 			this._chart._registerAreaPath({
 				name         : 'altitude',
@@ -99,9 +101,9 @@ Elevation.addInitHook(function() {
 				scaleX       : this._x,
 				scaleY       : this._y,
 				color        : color.area || theme,
-				strokeColor  : color.stroke || '#000',
+				strokeColor  : stroke || '#000',
 				strokeOpacity: "1",
-				fillOpacity  : color.alpha || '1',
+				fillOpacity  : alpha,
 				preferCanvas : this.options.preferCanvas,
 			});
 
