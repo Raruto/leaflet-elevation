@@ -102,7 +102,7 @@
   pointer-events: none;
 }
 
-.elevation-control.elevation .horizontal-drag-group {
+.elevation-control.elevation .ruler {
   cursor: row-resize;
   color: #000;
 }
@@ -127,8 +127,14 @@
   font-size: 10px;
 }
 
-.elevation-control.elevation .mouse-drag {
+.elevation-control.elevation .brush .overlay {
+  cursor: unset;
+}
+
+.elevation-control.elevation .brush .selection {
   fill: rgba(23, 74, 117, 0.4);
+  stroke: none;
+  fill-opacity: unset;
 }
 
 .elevation-control.elevation .elevation-toggle {
@@ -283,7 +289,7 @@
   stroke: #CCC;
 }
 
-.lime-theme.elevation-control.elevation .mouse-drag {
+.lime-theme.elevation-control.elevation .brush .selection {
   fill: rgba(99, 126, 11, 0.4);
 }
 
@@ -318,7 +324,7 @@
   stroke: #0D1821;
 }
 
-.steelblue-theme.elevation-control.elevation .mouse-drag {
+.steelblue-theme.elevation-control.elevation .brush .selection {
   fill: rgba(23, 74, 117, 0.4);
 }
 
@@ -353,7 +359,7 @@
   stroke: #2D1130;
 }
 
-.purple-theme.elevation-control.elevation .mouse-drag {
+.purple-theme.elevation-control.elevation .brush .selection {
   fill: rgba(74, 14, 80, 0.4);
 }
 

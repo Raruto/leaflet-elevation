@@ -3,8 +3,9 @@ import * as _ from './utils';
 import * as D3 from './components';
 
 export var Summary = L.Class.extend({
-	initialize: function(opts) {
+	initialize: function(opts, control) {
 		this.options = opts;
+		this.control = control;
 
 		let summary = this._container = _.create("div", "elevation-summary " + (opts.summary ? opts.summary + "-summary" : ''));
 		_.style(summary, 'max-width', opts.width ? opts.width + 'px' : '');
@@ -25,7 +26,7 @@ export var Summary = L.Class.extend({
 
 	_registerSummary: function(data) {
 		for (let i in data) {
-			this.append(i, L._(data[i].label), data[i].value);
+			this.append(i, L._(data[i].label), typeof data[i].value !== "function" ? data[i].value : data[i].value(this.control.track_info));
 		}
 	}
 

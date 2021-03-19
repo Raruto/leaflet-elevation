@@ -10,46 +10,35 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let speed = {};
 
-	speed.label          = opts.speedLabel || L._(this.options.imperial ? 'mph' : 'km/h');
+	speed.label          = opts.speedLabel  || L._(this.options.imperial ? 'mph' : 'km/h');
 	this._speedFactor    = opts.speedFactor || 1;
 
 	if (this.options.speed && this.options.speed != "summary") {
 
-		this.on("elechart_axis", function() {
-			speed.x = this._chart._x;
-			speed.y = this._chart._registerAxisScale({
-				axis       : "y",
-				position   : "right",
-				scale      : {
-					range      : [this._height(), 0],
-					attr       : "speed",
-					min        : 0,
-					max        : +1,
-				},
-				ticks      : this.options.yTicks,
-				tickPadding: 16,
-				label      : speed.label,
-				labelX     : 25,
-				labelY     : -8,
-				name       : "speed"
-			});
+		this._registerAxisScale({
+			axis       : "y",
+			position   : "right",
+			scale      : {
+				min        : 0,
+				max        : +1,
+			},
+			tickPadding: 16,
+			label      : speed.label,
+			labelX     : 25,
+			labelY     : -8,
+			name       : "speed"
 		});
 
-		this.on("elechart_init", function() {
-
-			this._chart._registerAreaPath({
-				name       : 'speed',
-				label      : 'Speed',
-				xAttr      : opts.xAttr,
-				yAttr      : "speed",
-				scaleX     : speed.x,
-				scaleY     : speed.y,
-				color      : '#03ffff',
-				strokeColor  : '#000',
-				strokeOpacity: "0.5",
-				fillOpacity  : "0.25",
-			});
-
+		this._registerAreaPath({
+			name       : 'speed',
+			label      : 'Speed',
+			yAttr      : "speed",
+			scaleX     : 'distance',
+			scaleY     : 'speed',
+			color      : '#03ffff',
+			strokeColor  : '#000',
+			strokeOpacity: "0.5",
+			fillOpacity  : "0.25",
 		});
 
 	}
@@ -63,9 +52,10 @@ Elevation.addInitHook(function() {
 
 		let deltaT = currT - prevT;
 
-		let sMax   = this._maxSpeed || -Infinity; // Speed Max
-		let sMin   = this._minSpeed || +Infinity; // Speed Min
-		let sAvg   = this._avgSpeed || 0; // Speed Avg
+		let track  = this.track_info;
+		let sMax   = track.speed_max || -Infinity; // Speed Max
+		let sMin   = track.speed_min || +Infinity; // Speed Min
+		let sAvg   = track.speed_avg || 0;         // Speed Avg
 		let speed  = 0;
 
 		if (deltaT > 0) {
@@ -78,14 +68,14 @@ Elevation.addInitHook(function() {
 			let deltaS    = i > 0 ? speed - data[i - 1].speed : 0;
 			let maxDeltaS = this.options.speedDeltaMax;
 			if (Math.abs(deltaS) > maxDeltaS) {
-				speed = data[i - 1].speed + maxDeltaS * Math.sign(deltaS);
+				speed       = data[i - 1].speed + maxDeltaS * Math.sign(deltaS);
 			}
 		}
 
 		// Range of acceptable speed values.
 		if (this.options.speedRange) {
 			let range = this.options.speedRange;
-			if (speed < range[0]) speed = range[0];
+			if (speed < range[0])      speed = range[0];
 			else if (speed > range[1]) speed = range[1];
 		}
 
@@ -97,54 +87,34 @@ Elevation.addInitHook(function() {
 
 		data[i].speed = speed;
 
-		this.track_info.speed_max = this._maxSpeed = sMax;
-		this.track_info.speed_min = this._minSpeed = sMin;
-		this.track_info.speed_avg = this._avgSpeed = sAvg;
+		track.speed_max = sMax;
+		track.speed_min = sMin;
+		track.speed_avg = sAvg;
 	});
 
 	if (this.options.speed) {
 
-		this.on("elechart_change", function(e) {
-			let item = e.data;
-
-			this._chart._registerFocusLabel({
-				name: 'speed',
-				value: item.speed + " " + speed.label
-			});
-
-			this._marker._registerFocusLabel({
-				name: 'speed',
-				value: Math.round(item.speed) + " " + speed.label
-			});
-
+		this._registerFocusLabel({
+			name: 'speed',
+			chart: (item) => item.speed + " " + speed.label,
+			marker: (item) => Math.round(item.speed) + " " + speed.label
 		});
 
-		this.on("elechart_summary", function() {
-			this.track_info.speed_max = this._maxSpeed || 0;
-			this.track_info.speed_min = this._minSpeed || 0;
-
-			this._summary._registerSummary({
-				"minspeed"  : {
-					label: "Min Speed: ",
-					value: Math.round(this.track_info.speed_min) + '&nbsp;' + speed.label
-				},
-				"maxspeed"  : {
-					label: "Max Speed: ",
-					value: Math.round(this.track_info.speed_max) + '&nbsp;' + speed.label
-				},
-				"avgspeed": {
-					label: "Avg Speed: ",
-					value: Math.round(this.track_info.speed_avg) + '&nbsp;' + speed.label
-				}
-			});
-
+		this._registerSummary({
+			"minspeed"  : {
+				label: "Min Speed: ",
+				value: (track) => Math.round(track.speed_min || 0) + '&nbsp;' + speed.label
+			},
+			"maxspeed"  : {
+				label: "Max Speed: ",
+				value: (track) => Math.round(track.speed_max || 0) + '&nbsp;' + speed.label
+			},
+			"avgspeed": {
+				label: "Avg Speed: ",
+				value: (track) => Math.round(track.speed_avg || 0) + '&nbsp;' + speed.label
+			}
 		});
 
 	}
-
-	this.on("eledata_clear", function() {
-		this._maxSpeed = null;
-		this._minSpeed = null;
-	});
 
 });

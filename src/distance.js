@@ -20,7 +20,8 @@ Elevation.addInitHook(function() {
 		let data = this._data;
 		let i    = e.index;
 
-		let dist = this._distance || 0;
+		let track = this.track_info;
+		let dist  = track.distance || 0;
 
 		let curr = data[i].latlng;
 		let prev = i > 0 ? data[i - 1].latlng : curr;
@@ -31,7 +32,7 @@ Elevation.addInitHook(function() {
 
 		data[i].dist = dist;
 
-		this.track_info.distance = this._distance = dist;
+		track.distance = dist;
 	});
 
 	this.on("elechart_axis", function() {
@@ -40,7 +41,6 @@ Elevation.addInitHook(function() {
 			axis      : "x",
 			position  : "bottom",
 			scale     : this._chart._x,
-			ticks     : this._xTicks
 		});
 
 	});
@@ -50,17 +50,15 @@ Elevation.addInitHook(function() {
 		this.on("elechart_axis", function() {
 
 			distance.x     = this._chart._x;
-			distance.y     = this._chart._y;
 			distance.label = this._chart._xLabel;
 
 			this._chart._registerAxisScale({
 				axis    : "x",
 				position: "bottom",
 				scale   : distance.x,
-				ticks   : this._xTicks,
 				label   : distance.label,
 				labelY  : 25,
-				labelX  : this._width() + 6,
+				labelX  : () => this._width() + 6,
 				name    : "distance",
 			});
 
@@ -68,20 +66,11 @@ Elevation.addInitHook(function() {
 
 	}
 
-	this.on("elechart_summary", function() {
-		this.track_info.distance = this._distance || 0;
-
-		this._summary._registerSummary({
-			"totlen"  : {
-				label: "Total Length: ",
-				value: this.track_info.distance.toFixed(2) + '&nbsp;' + this._xLabel
-			}
-		});
-
-	});
-
-	this.on("eledata_clear", function() {
-		this._distance = 0;
+	this._registerSummary({
+		"totlen"  : {
+			label: "Total Length: ",
+			value: (track) => (track.distance || 0).toFixed(2) + '&nbsp;' + this._xLabel
+		}
 	});
 
 });

@@ -96,7 +96,7 @@ export function GeoJSONLoader(data, control) {
 			if (name || desc) {
 				marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
 			}
-			control.addCheckpoint({latlng:latlng, label: name}, true);
+			control._registerCheckPoint({latlng:latlng, label: name}, true);
 			control.fire('waypoint_added', { point: marker, point_type: 'waypoint', element: latlng });
 			return marker;
 		},

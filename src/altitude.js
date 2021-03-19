@@ -21,8 +21,9 @@ Elevation.addInitHook(function() {
 		let i      = e.index;
 		let z      = data[i].z * this._heightFactor;
 
-		let eleMax = this._maxElevation || -Infinity;
-		let eleMin = this._minElevation || +Infinity;
+		let track  = this.track_info;
+		let eleMax = track.elevation_max || -Infinity;
+		let eleMin = track.elevation_min || +Infinity;
 
 		// check and fix missing elevation data on last added point
 		if (!this.options.skipNullZCoords && i > 0) {
@@ -50,8 +51,8 @@ Elevation.addInitHook(function() {
 
 		data[i].z = z;
 
-		this.track_info.elevation_max = this._maxElevation = eleMax;
-		this.track_info.elevation_min = this._minElevation = eleMin;
+		track.elevation_max = eleMax;
+		track.elevation_min = eleMin;
 	});
 
 	this.on("elechart_axis", function() {
@@ -60,7 +61,6 @@ Elevation.addInitHook(function() {
 			axis      : "y",
 			position  : "left",
 			scale     : this._chart._y,
-			ticks     : this.options.yTicks
 		});
 
 	});
@@ -69,15 +69,13 @@ Elevation.addInitHook(function() {
 
 		this.on("elechart_axis", function() {
 
-			altitude.x     = this._x;
-			altitude.y     = this._y;
+			altitude.y     = this._chart._y;
 			altitude.label = this._yLabel;
 
 			this._chart._registerAxisScale({
 				axis    : "y",
 				position: "left",
 				scale   : altitude.y,
-				ticks   : this._yTicks,
 				label   : altitude.label,
 				labelX  : -3,
 				labelY  : -8,
@@ -96,10 +94,8 @@ Elevation.addInitHook(function() {
 			this._chart._registerAreaPath({
 				name         : 'altitude',
 				label        : 'Altitude',
-				xAttr        : opts.xAttr,
-				yAttr        : opts.yAttr,
-				scaleX       : this._x,
-				scaleY       : this._y,
+				scaleX       : 'distance',
+				scaleY       : 'altitude',
 				color        : color.area || theme,
 				strokeColor  : stroke || '#000',
 				strokeOpacity: "1",
@@ -111,26 +107,15 @@ Elevation.addInitHook(function() {
 
 	}
 
-	this.on("elechart_summary", function() {
-		this.track_info.elevation_max = this._maxElevation || 0;
-		this.track_info.elevation_min = this._minElevation || 0;
-
-		this._summary._registerSummary({
-			"maxele"  : {
-				label: "Max Elevation: ",
-				value: this.track_info.elevation_max.toFixed(2) + '&nbsp;' + this._yLabel
-			},
-			"minele"  : {
-				label: "Min Elevation: ",
-				value: this.track_info.elevation_min.toFixed(2) + '&nbsp;' + this._yLabel
-			},
-		});
-
-	});
-
-	this.on("eledata_clear", function() {
-		this._maxElevation = null;
-		this._minElevation = null;
+	this._registerSummary({
+		"maxele"  : {
+			label: "Max Elevation: ",
+			value: (track) => (track.elevation_max || 0).toFixed(2) + '&nbsp;' + this._yLabel
+		},
+		"minele"  : {
+			label: "Min Elevation: ",
+			value: (track) => (track.elevation_min || 0).toFixed(2) + '&nbsp;' + this._yLabel
+		},
 	});
 
 });

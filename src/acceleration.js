@@ -10,50 +10,35 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let acceleration = {};
 
-	acceleration.label = opts.accelerationLabel || L._(this.options.imperial ? 'ft/s²' : 'm/s²');
+	acceleration.label       = opts.accelerationLabel  || L._(this.options.imperial ? 'ft/s²' : 'm/s²');
 	this._accelerationFactor = opts.accelerationFactor || 1;
 
 	if (this.options.acceleration != "summary") {
 
-		this.on("elechart_init", function() {
-			acceleration.path = d3.create('svg:path');
+		this._registerAxisScale({
+			axis       : "y",
+			position   : "right",
+			scale      : {
+				min        : 0,
+				max        : +1,
+			},
+			tickPadding: 16,
+			label      : acceleration.label,
+			labelX     : 25,
+			labelY     : -8,
+			name       : 'acceleration'
 		});
 
-		this.on("elechart_axis", function() {
-			acceleration.x = this._chart._x;
-			acceleration.y = this._chart._registerAxisScale({
-				axis       : "y",
-				position   : "right",
-				scale      : {
-					range      : [this._height(), 0],
-					attr       : "acceleration",
-					min        : 0,
-					max        : +1,
-				},
-				ticks      : this.options.yTicks,
-				tickPadding: 16,
-				label      : acceleration.label,
-				labelX     : 25,
-				labelY     : -8,
-				name       : 'acceleration'
-			});
-		});
-
-		this.on("elechart_init", function() {
-
-			this._chart._registerAreaPath({
-				name       : 'acceleration',
-				label      : 'Acceleration',
-				xAttr      : opts.xAttr,
-				yAttr      : "acceleration",
-				scaleX     : acceleration.x,
-				scaleY     : acceleration.y,
-				color      : '#050402',
-				strokeColor  : '#000',
-				strokeOpacity: "0.5",
-				fillOpacity  : "0.25",
-			});
-
+		this._registerAreaPath({
+			name       : 'acceleration',
+			label      : 'Acceleration',
+			yAttr      : 'acceleration',
+			scaleX     : 'distance',
+			scaleY     : 'acceleration',
+			color      : '#050402',
+			strokeColor  : '#000',
+			strokeOpacity: "0.5",
+			fillOpacity  : "0.25",
 		});
 
 	}
@@ -67,24 +52,23 @@ Elevation.addInitHook(function() {
 
 		let deltaT = (currT - prevT) / 1000;
 
-		let sMax   = this._maxAcceleration || -Infinity; // Acceleration Max
-		let sMin   = this._minAcceleration || +Infinity; // Acceleration Min
-		let sAvg   = this._avgAcceleration || 0; // Acceleration Avg
+		let track  = this.track_info;
+		let sMax   = track.acceleration_max || -Infinity; // Acceleration Max
+		let sMin   = track.acceleration_min || +Infinity; // Acceleration Min
+		let sAvg   = track.acceleration_avg || 0; // Acceleration Avg
 		let acceleration = 0;
 
 		if (deltaT > 0) {
-			let curr = data[i].speed;
-			let prev = i > 0 ? data[i - 1].speed : curr;
-
-			let delta = (curr - prev) * (1000 / this._timeFactor);
-
+			let curr     = data[i].speed;
+			let prev     = i > 0 ? data[i - 1].speed : curr;
+			let delta    = (curr - prev) * (1000 / this._timeFactor);
 			acceleration = Math.abs((delta / deltaT)) * this._accelerationFactor;
 		}
 
 		// Try to smooth "crazy" acceleration values.
 		if (this.options.accelerationDeltaMax) {
-			let deltaA = i > 0 ? acceleration - data[i - 1].acceleration : 0;
-			let maxDeltaS = this.options.accelerationDeltaMax;
+			let deltaA     = i > 0 ? acceleration - data[i - 1].acceleration : 0;
+			let maxDeltaS  = this.options.accelerationDeltaMax;
 			if (Math.abs(deltaA) > maxDeltaS) {
 				acceleration = data[i - 1].acceleration + maxDeltaS * Math.sign(deltaA);
 			}
@@ -93,62 +77,42 @@ Elevation.addInitHook(function() {
 		// Range of acceptable acceleration values.
 		if (this.options.accelerationRange) {
 			let range = this.options.accelerationRange;
-			if (acceleration < range[0]) acceleration = range[0];
+			if (acceleration < range[0])      acceleration = range[0];
 			else if (acceleration > range[1]) acceleration = range[1];
 		}
 
 		acceleration = L.Util.formatNum(acceleration, 2);
 
-		sMax = acceleration > sMax ? acceleration : sMax;
-		sMin = acceleration < sMin ? acceleration : sMin;
+		if (acceleration > sMax) sMax = acceleration;
+		if (acceleration < sMin) sMin = acceleration;
 		sAvg = (acceleration + sAvg) / 2.0;
 
 		data[i].acceleration = acceleration;
 
-		this.track_info.acceleration_max = this._maxAcceleration = sMax;
-		this.track_info.acceleration_min = this._minAcceleration = sMin;
-		this.track_info.acceleration_avg = this._avgAcceleration = sAvg;
+		track.acceleration_max = sMax;
+		track.acceleration_min = sMin;
+		track.acceleration_avg = sAvg;
 	});
 
-	this.on("elechart_change", function(e) {
-		let item = e.data;
-
-		this._chart._registerFocusLabel({
-			name: 'acceleration',
-			value: item.acceleration + " " + acceleration.label
-		});
-
-		this._marker._registerFocusLabel({
-			name: 'acceleration',
-			value: Math.round(item.acceleration) + " " + acceleration.label
-		});
-
+	this._registerFocusLabel({
+		name  : 'acceleration',
+		chart : (item) => item.acceleration + " " + acceleration.label,
+		marker: (item) => Math.round(item.acceleration) + " " + acceleration.label,
 	});
 
-	this.on("elechart_summary", function() {
-		this.track_info.acceleration_max = this._maxAcceleration || 0;
-		this.track_info.acceleration_min = this._minAcceleration || 0;
-
-		this._summary._registerSummary({
-			"minacceleration"  : {
-				label: "Min Acceleration: ",
-				value: Math.round(this.track_info.acceleration_min) + '&nbsp;' + acceleration.label
-			},
-			"maxacceleration"  : {
-				label: "Max Acceleration: ",
-				value: Math.round(this.track_info.acceleration_max) + '&nbsp;' + acceleration.label
-			},
-			"avgacceleration": {
-				label: "Avg Acceleration: ",
-				value: Math.round(this.track_info.acceleration_avg) + '&nbsp;' + acceleration.label
-			}
-		});
-
-	});
-
-	this.on("eledata_clear", function() {
-		this._maxAcceleration = null;
-		this._minAcceleration = null;
+	this._registerSummary({
+		"minacceleration"  : {
+			label: "Min Acceleration: ",
+			value: (track) => Math.round(track.acceleration_min || 0) + '&nbsp;' + acceleration.label
+		},
+		"maxacceleration"  : {
+			label: "Max Acceleration: ",
+			value: (track) => Math.round(track.acceleration_max || 0) + '&nbsp;' + acceleration.label
+		},
+		"avgacceleration": {
+			label: "Avg Acceleration: ",
+			value: (track) => Math.round(track.acceleration_avg || 0) + '&nbsp;' + acceleration.label
+		}
 	});
 
 });

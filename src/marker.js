@@ -24,6 +24,9 @@ export var Marker = L.Class.extend({
 			// this._marker   = L.circleMarker([0, 0], { pane: 'overlayPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
 			this._marker      = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
 		}
+
+		this._focuslabels = {};
+
 		return this;
 	},
 
@@ -99,6 +102,26 @@ export var Marker = L.Class.extend({
 						label : d3.format("." + opts.decimalsY + "f")(point[opts.yAttr]) + " " + this._yLabel
 					})
 				);
+
+			let labels = this._focuslabels;
+			let tooltip = this._focuslabel;
+			let label;
+
+			for (var i in labels) {
+				label = tooltip.select(".height-focus-" + labels[i].name);
+
+				if (!label.size()) {
+					label   = tooltip.append("svg:tspan")
+						.attr("class", "height-focus-" + labels[i].name)
+						.attr("dy", "1.5em");
+				}
+
+				label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(props.item) );
+
+				this._focuslabel.select('.height-focus-y')
+					.attr("dy", "-1.5em");
+			}
+
 		} else if (this.options.marker == 'position-marker') {
 			_.removeClass(this._marker.getElement(), 'leaflet-hidden');
 			this._marker.setLatLng(this._latlng);
@@ -130,23 +153,7 @@ export var Marker = L.Class.extend({
 	},
 
 	_registerFocusLabel: function(props) {
-		if (!this._focuslabel) return;
-
-		this._focuslabels = this._focuslabels || {};
-		let label         = this._focuslabels[props.name]
-
-		if (!label) {
-			label           = this._focuslabel.append("svg:tspan")
-				.attr("class", "height-focus-" + props.name);
-			this._focuslabels[props.name] = label;
-		}
-
-		label
-			.attr("dy", "1.5em")
-			.text(props.value);
-
-		this._focuslabel.select('.height-focus-y')
-			.attr("dy", "-1.5em");
+		this._focuslabels[props.name] = props;
 	}
 
 });

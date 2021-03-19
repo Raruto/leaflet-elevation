@@ -97,4 +97,5 @@ export var Options = {
 	yLabel: "m",
 	yTicks: undefined,
 	zFollow: false,
+	zooming: !L.Browser.Mobile,
 };

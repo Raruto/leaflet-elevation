@@ -8,6 +8,7 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let time = {};
 
+	time.label       = opts.timeLabel  || 't';
 	this._timeFactor = opts.timeFactor;
 
 	/**
@@ -23,50 +24,41 @@ Elevation.addInitHook(function() {
 	this._timeAVGSpeed = (opts.timeAVGSpeed || 3.6) * (opts.speedFactor || 1);
 
 	if (!opts.timeFormat) {
-		opts.timeFormat = (time) => new Date(time).toLocaleString().replaceAll('/', '-').replaceAll(',', ' ');
+		opts.timeFormat = (time) => (new Date(time)).toLocaleString().replaceAll('/', '-').replaceAll(',', ' ');
 	} else if (opts.timeFormat == 'time') {
-		opts.timeFormat = (time) => new Date(time).toLocaleTimeString();
+		opts.timeFormat = (time) => (new Date(time)).toLocaleTimeString();
 	} else if (opts.timeFormat == 'date') {
-		opts.timeFormat = (time) => new Date(time).toLocaleDateString();
+		opts.timeFormat = (time) => (new Date(time)).toLocaleDateString();
 	}
 
 	opts.xTimeFormat = opts.xTimeFormat || ((t) => _.formatTime(t).split("'")[0]);
 
 	if (opts.time && opts.time != "summary" && !L.Browser.mobile) {
 
-		this.on("elechart_axis", function() {
-			time.y = this._chart._y;
-			time.x = this._chart._registerAxisScale({
-				axis      : "x",
-				position  : "top",
-				scale     : {
-					range     : [0, this._width()],
-					attr      : "duration",
-					min       : 0,
-				},
-				ticks     : this.options.xTicks * 1.5,
-				label     : 't',
-				labelY    : -10,
-				labelX    : this._width(),
-				name      : "time",
-				tickFormat: (d) => (d == 0 ? '' : opts.xTimeFormat(d))
-			});
-
-		this._chart._axis
-			.call(g => {
-				let axis = g.select(".x.axis.time");
-				axis.select(".domain").remove();
+		this._registerAxisScale({
+			axis       : "x",
+			position   : "top",
+			scale      : {
+				attr       : "duration",
+				min        : 0,
+			},
+			label      : time.label,
+			labelY     : -10,
+			labelX     : () => this._width(),
+			name       : "time",
+			tickFormat : (d)  => (d == 0 ? '' : opts.xTimeFormat(d)),
+			onAxisMount: axis => {
+				axis.select(".domain")
+					.remove();
 				axis.selectAll("text")
-				.attr('opacity', 0.65)
-				.style('font-family', 'Monospace')
-				.style('font-size', '110%');
+					.attr('opacity', 0.65)
+					.style('font-family', 'Monospace')
+					.style('font-size', '110%');
 				axis.selectAll(".tick line")
 					.attr('y2', this._height())
 					.attr('stroke-dasharray', 2)
 					.attr('opacity', 0.75);
 				}
-			)
-
 		});
 
 	}
@@ -96,41 +88,32 @@ Elevation.addInitHook(function() {
 			time = 0;
 		}
 
-		data[i].time = time;
-
-		let currT    = data[i].time;
+		let currT    = time;
 		let prevT    = i > 0 ? data[i - 1].time : currT;
 
 		let deltaT   = Math.abs(currT - prevT);
 		let duration = (this.track_info.time || 0) + deltaT;
 
+		data[i].time         = time;
 		data[i].duration     = duration;
 
 		this.track_info.time = duration;
 	});
 
-	if (!this.options.time) return;
+	if (this.options.time) {
 
-	this.on("elechart_change", function(e) {
-		let item  = e.data;
-
-		this._chart._registerFocusLabel({
+		this._registerFocusLabel({
 			name: 'time',
-			value: this.options.timeFormat(item.time)
+			chart: (item) => this.options.timeFormat(item.time)
 		});
 
-	});
-
-	this.on("elechart_summary", function() {
-		this.track_info.time = this.track_info.time || 0;
-
-		this._summary._registerSummary({
+		this._registerSummary({
 			"tottime"  : {
 				label: "Total Time: ",
-				value: _.formatTime(this.track_info.time)
+				value: (track) => _.formatTime(track.time || 0)
 			}
 		});
 
-	});
+	}
 
 });

@@ -17,14 +17,11 @@ export const Area = ({
 	scaleY,
 	interpolation = "curveLinear"
 }) => {
-	if (typeof interpolation === 'string') interpolation = d3[interpolation];
-
-	let area = d3.area().curve(interpolation)
+	return d3.area()
+		.curve(typeof interpolation === 'string' ? d3[interpolation] : interpolation)
 		.x(d => (d.xDiagCoord = scaleX(d[xAttr])))
 		.y0(height)
 		.y1(d => scaleY(d[yAttr]));
-
-	return area;
 };
 
 export const Path = ({
@@ -33,22 +30,18 @@ export const Path = ({
 	strokeColor,
 	strokeOpacity,
 	fillOpacity,
-	preferCanvas,
-	detached,
 }) => {
 	let path = d3.create('svg:path')
 
-	if (name) path.attr('data-name', name);
+	if (name) path.classed(name, true);
 
 	path.style("pointer-events", "none");
 
-	if (preferCanvas !== false) {
-		path
-		.attr("fill", color || '#3366CC')
-		.attr("stroke", strokeColor || '#000')
-		.attr("stroke-opacity", strokeOpacity || '1')
-		.attr("fill-opacity", fillOpacity || '0.8');
-	}
+	path
+	.attr("fill", color || '#3366CC')
+	.attr("stroke", strokeColor || '#000')
+	.attr("stroke-opacity", strokeOpacity || '1')
+	.attr("fill-opacity", fillOpacity || '0.8');
 
 	return path;
 };
@@ -67,7 +60,8 @@ export const Axis = ({
 	label,
 	labelX,
 	labelY,
-	name = ""
+	name = "",
+	onAxisMount,
 }) => {
 	return g => {
 		let [w, h] = [0, 0];
@@ -99,36 +93,12 @@ export const Axis = ({
 				.text(label);
 		}
 
+		if (onAxisMount) {
+			axisGroup.call(onAxisMount);
+		}
+
 		return axisGroup;
 	};
-};
-
-export const DragRectangle = ({
-	dragStartCoords,
-	dragEndCoords,
-	height,
-}) => {
-	return rect => {
-		let x1 = Math.min(dragStartCoords[0], dragEndCoords[0]);
-		let x2 = Math.max(dragStartCoords[0], dragEndCoords[0]);
-
-		return rect
-			.attr("width", x2 - x1)
-			.attr("height", height)
-			.attr("x", x1);
-	};
-};
-
-export const FocusRect = ({
-	width,
-	height,
-}) => {
-	return rect => rect
-		.attr("width", width)
-		.attr("height", height)
-		.style("fill", "none")
-		.style("stroke", "none")
-		.style("pointer-events", "all");
 };
 
 export const Grid = (props) => {
@@ -189,19 +159,30 @@ export const HeightFocusMarker = ({
 		.attr("cy", 0);
 };
 
-
 export const LegendItem = ({
 	name,
   label,
 	width,
 	height,
 	margins = {},
-	color
+	color,
+	path
 }) => {
 	return g => {
 		g
 			.attr("class", "legend-item legend-" + name.toLowerCase())
 			.attr("data-name", name);
+
+		const svg = d3.select(g.node().ownerSVGElement || g);
+
+		g.on('click.legend', () => svg.dispatch("legend_clicked", {
+			detail: {
+				path: path.node(),
+				name: name,
+				legend: g.node(),
+				enabled: !path.classed('leaflet-hidden'),
+			}
+		}));
 
 		g.append("svg:rect")
 			.attr("x", (width / 2) - 50)
@@ -308,28 +289,60 @@ export const Ruler = ({
 			}])
 			.attr("transform", d => "translate(" + d.x + "," + d.y + ")");
 
-		g.append("svg:line")
-			.attr("class", "horizontal-drag-line")
-			.attr("x1", 0)
-			.attr("x2", width);
+		let rect   = g.selectAll('.horizontal-drag-rect')
+			.data([{ w: width }]);
 
-		g.append("svg:text")
-			.attr("class", "horizontal-drag-label")
-			.attr("text-anchor", "end")
-			.attr("x", width - 8)
-			.attr("y", -8)
+		let line   = g.selectAll('.horizontal-drag-line')
+			.data([{ w: width }]);
 
-		g.selectAll()
+		let label  = g.selectAll('.horizontal-drag-label')
+			.data([{ w: width - 8 }]);
+
+		let symbol = g.selectAll('.horizontal-drag-symbol')
 			.data([{
 				"type": d3.symbolTriangle,
 				"x": width + 7,
 				"y": 0,
 				"angle": -90,
 				"size": 50
-			}])
+			}]);
+
+		rect.exit().remove();
+		line.exit().remove();
+		label.exit().remove();
+		symbol.exit().remove();
+
+		rect.enter()
+			.append("svg:rect")
+			.attr("class", "horizontal-drag-rect")
+			.attr("x", 0)
+			.attr("y", -8)
+			.attr("height", 8)
+			.attr('fill', 'none')
+			.attr('pointer-events', 'all')
+			.merge(rect)
+			.attr("width", d => d.w);
+
+		line.enter()
+			.append("svg:line")
+			.attr("class", "horizontal-drag-line")
+			.attr("x1", 0)
+			.merge(line)
+			.attr("x2", d => d.w);
+
+		label.enter()
+			.append("svg:text")
+			.attr("class", "horizontal-drag-label")
+			.attr("text-anchor", "end")
+			.attr("y", -8)
+			.merge(label)
+			.attr("x", d => d.w)
+
+		symbol
 			.enter()
 			.append("svg:path")
 			.attr("class", "horizontal-drag-symbol")
+			.merge(symbol)
 			.attr("d",
 				d3.symbol()
 				.type(d => d.type)
@@ -341,23 +354,42 @@ export const Ruler = ({
 	}
 };
 
-export const Scale = ({
-	data,
-	attr,
+export const Domain = ({
 	min,
-	forceBounds,
-	range,
-}) => {
-	let domain = data ? d3.extent(data, d => d[attr]) : [0, 1];
+	max,
+	attr,
+	name,
+	forceBounds
+}) => function(data) {
+	attr = attr || name;
+	let domain = data && data.length ? d3.extent(data, d => d[attr]) : [0, 1];
 	if (typeof min !== "undefined" && (min < domain[0] || forceBounds)) {
 		domain[0] = min;
 	}
 	if (typeof max !== "undefined" && (max > domain[1] || forceBounds)) {
 		domain[1] = max;
 	}
+	return domain;
+};
+
+export const Range = ({
+	axis
+}) => function(width, height) {
+	if (axis == 'x')      return [0, width];
+	else if (axis == 'y') return [height, 0];
+};
+
+export const Scale = ({
+	data,
+	attr,
+	min,
+	max,
+	forceBounds,
+	range,
+}) => {
 	return d3.scaleLinear()
 		.range(range)
-		.domain(domain);
+		.domain(Domain({min, max, attr, forceBounds})(data));
 };
 
 export const Bisect = ({
@@ -374,29 +406,142 @@ export const Bisect = ({
 export const Chart = ({
 	width,
 	height,
-	margins = {}
+	margins = {},
+	ruler,
 }) => {
-	const svg   = d3.create("svg:svg")
-		.attr("class", "background")
-		.attr("viewBox", `0 0 ${width} ${height}`)
-		.attr("width", width)
-		.attr("height", height);
 
-	const g     = svg
-		.append("g")
-		.attr("transform", "translate(" + margins.left + "," + margins.top + ")");
+	const _width   = width - margins.left - margins.right;
+	const _height  = height - margins.top - margins.bottom;
 
-	const grid  = g.append("g").attr("class", "grid");
-	const area  = g.append('g').attr("class", "area");
-	const point = g.append('g').attr("class", "point");
-	const axis  = g.append('g').attr("class", "axis");
+	// SVG Container
+	const svg   = d3.create("svg:svg").attr("class", "background");
 
-	const _width  = width - margins.left - margins.right;
-	const _height = height - margins.top - margins.bottom;
+	// SVG Groups
+	const g     = svg.append("g");
+	const panes = {
+		grid   : g.append("g").attr("class", "grid"),
+		area   : g.append('g').attr("class", "area"),
+		point  : g.append('g').attr("class", "point"),
+		axis   : g.append('g').attr("class", "axis"),
+		brush  : g.append("g").attr("class", "brush"),
+		tooltip: g.append("g").attr("class", "tooltip").attr('display', 'none'),
+		ruler  : g.append('g').attr('class', 'ruler'),
+		legend : g.append('g').attr("class", "legend"),
+	};
 
-	const scale = (opts) => ({ x: Scale(opts.x), y: Scale(opts.y)});
+	// SVG Paths
+	const clipPath      = panes.area.append("svg:clipPath").attr("id", 'elevation-clipper');
+	const clipRect      = clipPath.append("svg:rect");
 
-	const chart = { svg, g, grid, area, point, axis, scale, _width, _height };
+	// Canvas Paths
+	const foreignObject = panes.area.append('svg:foreignObject');
+	const canvas        = foreignObject.append('xhtml:canvas').attr('class', 'canvas-plot');
+	const context       = canvas.node().getContext('2d');
+
+	// Mouse Focus
+	const dragG         = panes.ruler;
+	const focusG        = panes.tooltip;
+	const brushG        = panes.brush;
+
+	focusG.append('svg:line')
+		.call(
+			MouseFocusLine({
+				xCoord: 0,
+				height: _height
+			})
+		);
+
+	focusG.append("g")
+		.call(
+			MouseFocusLabel({
+				xCoord: 0,
+				yCoord: 0,
+				height: _height,
+				width : _width,
+				labelX: "",
+				labelY: "",
+			})
+		);
+
+
+	// Add the brushing
+	let brush           = d3.brushX().on('start.cursor end.cursor brush.cursor', () => brushG.select(".overlay").attr('cursor', null));
+
+	// Scales
+	const scale         = (opts) => ({ x: Scale(opts.x), y: Scale(opts.y)});
+
+	let utils = {
+		clipPath,
+		canvas,
+		context,
+		dragG,
+		focusG,
+		brush,
+	};
+
+	let chart = {
+		svg,
+		g,
+		panes,
+		utils,
+		scale,
+	};
+
+	// Resize
+	chart._resize  = ({
+		width,
+		height,
+		margins = {},
+		ruler,
+	}) => {
+
+		const _width   = width - margins.left - margins.right;
+		const _height  = height - margins.top - margins.bottom;
+
+		svg.attr("viewBox", `0 0 ${width} ${height}`)
+			.attr("width", width)
+			.attr("height", height);
+
+		g.attr("transform", "translate(" + margins.left + "," + margins.top + ")");
+
+		clipRect
+			.attr("x", 0)
+			.attr("y", 0)
+			.attr("width", _width)
+			.attr("height", _height);
+
+		foreignObject
+			.attr('width', _width)
+			.attr('height', _height);
+
+		canvas
+			.attr('width', _width)
+			.attr('height', _height);
+
+		if (ruler) {
+			dragG    .call(Ruler({ height: _height, width: _width }));
+		}
+
+		brushG.call(brush.extent( [ [0,0], [_width, _height] ] ));
+		brushG.select(".overlay").attr('cursor', null);
+
+		chart._width  = _width;
+		chart._height = _height;
+
+		chart.svg.dispatch('resize', { detail: { width: _width, height: _height } } );
+
+	};
+
+	chart.pane = (name) => {
+		if (!panes[name]) {
+			panes[name] = g.append('g').attr("class", name);
+		}
+		return panes[name];
+	}
+
+	chart.get = (name) => utils[name];
+
+	chart._resize({ width, height, margins});
 
 	return chart;
 };
