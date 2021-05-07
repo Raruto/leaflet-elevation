@@ -608,17 +608,17 @@ export var Chart = L.Class.extend({
 
 		// Get chart margins
 		let xAxesB  = this._axis.selectAll('.x.axis.bottom').nodes().length;
-		let marginB = 30 + (xAxesB * 2);
+		let marginB = 60 + (xAxesB * 2);
 		let marginR = n * 30;
 
 		// Adjust chart right margins
-		if (n && this.options.margins.right < marginR) {
+		if (n && this.options.margins.right != marginR) {
 			this.options.margins.right  = marginR;
 			this.fire('margins_updated');
 		}
 
 		// Adjust chart bottom margins
-		if(xAxesB && this.options.margins.bottom < marginB) {
+		if(xAxesB && this.options.margins.bottom != marginB) {
 			this.options.margins.bottom = marginB;
 			this.fire('margins_updated');
 		}
