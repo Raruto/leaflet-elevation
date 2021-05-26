@@ -8,6 +8,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "rollup -c build/rollup.config.js",
 		"watch": "rollup -c build/rollup.config.js --watch",
+		"dev": "npm run watch",
 		"version": "npm run build && git add -A"
 	},
 	"repository": {
