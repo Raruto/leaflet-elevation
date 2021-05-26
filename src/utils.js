@@ -79,6 +79,8 @@ export function GeoJSONLoader(data, control) {
 				: L.extend({ lazy: true }, control.options.distanceMarkers)
 	);
 
+  let wptIcons = control.options.gpxOptions.marker_options.wptIcons;
+
 	let layer = L.geoJson(data, {
 		distanceMarkers: distanceMarkers,
 		style: (feature) => {
@@ -89,15 +91,24 @@ export function GeoJSONLoader(data, control) {
 			return style;
 		},
 		pointToLayer: (feature, latlng) => {
-			let marker = L.marker(latlng, { icon: control.options.gpxOptions.marker_options.wptIcons[''] });
 			let prop   = feature.properties;
 			let desc   = prop.desc ? prop.desc : '';
 			let name   = prop.name ? prop.name : '';
+			let sym    = (prop.sym ? prop.sym : name).replace(' ', '-').toLowerCase();
+
+			// generate appropriate icon symbol or retrieve it from cache
+			wptIcons[sym] = (wptIcons[sym] ? wptIcons[sym] : L.divIcon({
+				className: 'elevation-waypoint-marker',
+				html: '<i class="elevation-waypoint-icon ' + sym + '"></i>',
+				iconSize: [30, 30],
+				iconAnchor: [8, 30],
+			}));
+			let marker = L.marker(latlng, { icon: wptIcons[sym] });
 			if (name || desc) {
 				marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
 			}
-			control._registerCheckPoint({latlng:latlng, label: name}, true);
-			control.fire('waypoint_added', { point: marker, point_type: 'waypoint', element: latlng });
+			control._registerCheckPoint({latlng: latlng, label: name}, true);
+			control.fire('waypoint_added', { point: marker, element: latlng, properties: prop });
 			return marker;
 		},
 		onEachFeature: (feature, layer) => {
@@ -125,13 +136,13 @@ export function GeoJSONLoader(data, control) {
 
 			// Postpone adding the distance markers (lazy: true)
 			if(control.options.distanceMarkers && distanceMarkers.lazy) {
-        layer.on('add remove', (e) => {
-          let path = e.target;
-          if (L.DistanceMarkers && path instanceof L.Polyline) {
-            path[e.type + 'DistanceMarkers']();
-          }
-        });
-      }
+			  layer.on('add remove', (e) => {
+			    let path = e.target;
+			    if (L.DistanceMarkers && path instanceof L.Polyline) {
+						path[e.type + 'DistanceMarkers']();
+			    }
+			  });
+			}
 
 			control.track_info = L.extend({}, control.track_info, { type: "geojson", name: data.name });
 		},
