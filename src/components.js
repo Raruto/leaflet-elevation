@@ -359,9 +359,11 @@ export const Domain = ({
 	max,
 	attr,
 	name,
-	forceBounds
+	forceBounds,
+	scale
 }) => function(data) {
 	attr = attr || name;
+	if (scale && scale.attr) attr = scale.attr;
 	let domain = data && data.length ? d3.extent(data, d => d[attr]) : [0, 1];
 	if (typeof min !== "undefined" && (min < domain[0] || forceBounds)) {
 		domain[0] = min;
