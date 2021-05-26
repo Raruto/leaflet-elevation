@@ -577,6 +577,9 @@ export var Chart = L.Class.extend({
 	},
 
 	_updateLegend: function () {
+
+		if (this.options.legend == false) return;
+
 		let legends = this._props.legendItems;
 		let legend;
 
