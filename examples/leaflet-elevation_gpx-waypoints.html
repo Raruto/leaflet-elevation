@@ -7,14 +7,14 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 
 	<!-- Leaflet -->
-	<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
 
 	<!-- Leaflet-UI -->
-	<script src="https://unpkg.com/leaflet-ui@0.2.5/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.4.1/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@0.5.7/leaflet-elevation.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@0.5.7/leaflet-elevation.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.6.8/dist/leaflet-elevation.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.6.8/dist/leaflet-elevation.js"></script>
 
 	<style>
 		html,
@@ -88,6 +88,10 @@
 			font-weight: bold;
 			text-align: center;
 		}
+
+		.elevation-waypoint-icon.poi::before {
+			background-image: url(../images/elevation-poi.png);
+		}
 	</style>
 
 </head>
@@ -118,17 +122,23 @@
 					 *
 					 * @link https://github.com/mpetazzoni/leaflet-gpx#about-waypoints
 					 */
-
 					// gpxOptions: {
 					// 	marker_options: {
-					// 		wptIconUrls: {
-					// 			'Trail Head': 'http://maps.google.com/mapfiles/kml/shapes/hiker.png',
-					// 			'Summit': 'http://maps.google.com/mapfiles/kml/shapes/mountains.png'
+					// 		wptIcons: {
+					// 			'': L.divIcon({
+					// 				className: 'elevation-waypoint-marker',
+					// 				html: '<i class="elevation-waypoint-icon"></i>',
+					// 				iconSize: [30, 30],
+					// 				iconAnchor: [8, 30],
+					// 			}),
+					// 			'summit': L.divIcon({
+					// 				className: 'elevation-waypoint-marker',
+					// 				html: '<i class="elevation-waypoint-icon poi"></i>',
+					// 				iconSize: [12, 12],
+					// 			})
 					// 		},
-					// 		iconSize: [30, 30],
-					// 		iconAnchor: [15, 15],
 					// 	}
-					// }
+					// },
 				},
 			},
 		};

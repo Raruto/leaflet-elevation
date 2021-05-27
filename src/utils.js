@@ -94,7 +94,7 @@ export function GeoJSONLoader(data, control) {
 			let prop   = feature.properties;
 			let desc   = prop.desc ? prop.desc : '';
 			let name   = prop.name ? prop.name : '';
-			let sym    = (prop.sym ? prop.sym : name).replace(' ', '-').toLowerCase();
+			let sym    = (prop.sym ? prop.sym : name).replace(' ', '-').replace('"', '').replace("'", '').toLowerCase();
 
 			// generate appropriate icon symbol or retrieve it from cache
 			wptIcons[sym] = (wptIcons[sym] ? wptIcons[sym] : L.divIcon({
