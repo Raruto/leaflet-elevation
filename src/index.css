@@ -223,6 +223,10 @@
   width: 20px;
 }
 
+.elevation-control.elevation g.area > foreignObject {
+  pointer-events: none;
+}
+
 .leaflet-elevation-pane .height-focus,
 .leaflet-overlay-pane .height-focus {
   stroke: #000;
