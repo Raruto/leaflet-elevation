@@ -140,8 +140,11 @@ _For a working example see one of the following demos:_
         // Display altitude info: true || "summary"
         altitude: true,
 
-        // Summary track info style: "line" || "multiline" || false
+        // Summary track info style: "inline" || "multiline" || false
         summary: 'multiline',
+
+        // Download link: "link" || false || "modal"
+        downloadLink: 'link',
 
         // Toggle chart ruler filter.
         ruler: true,
