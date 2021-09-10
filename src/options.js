@@ -88,6 +88,7 @@ export var Options = {
 	sInterpolation: "curveStepAfter",
 	sRange: undefined,
 	width: 600,
+	waypoints: true,
 	xAttr: "dist",
 	xLabel: "km",
 	xTicks: undefined,

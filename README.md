@@ -146,10 +146,10 @@ _For a working example see one of the following demos:_
         // Download link: "link" || false || "modal"
         downloadLink: 'link',
 
-        // Toggle chart ruler filter.
+        // Toggle chart ruler filter
         ruler: true,
 
-        // Toggle chart legend filter.
+        // Toggle chart legend filter
         legend: true,
 
         // Toggle "leaflet-almostover" integration
@@ -157,6 +157,9 @@ _For a working example see one of the following demos:_
 
         // Toggle "leaflet-distance-markers" integration
         distanceMarkers: false,
+
+        // Display track waypoints
+        waypoints: true,
 
         // Render chart profiles as Canvas or SVG Paths
         preferCanvas: true

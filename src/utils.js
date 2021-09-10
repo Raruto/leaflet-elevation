@@ -91,6 +91,8 @@ export function GeoJSONLoader(data, control) {
 			return style;
 		},
 		pointToLayer: (feature, latlng) => {
+      if (!control.options.waypoints) return;
+
 			let prop   = feature.properties;
 			let desc   = prop.desc ? prop.desc : '';
 			let name   = prop.name ? prop.name : '';
