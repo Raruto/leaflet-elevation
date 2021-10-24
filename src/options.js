@@ -18,22 +18,6 @@ export var Options = {
 	elevationDiv: "#elevation-div",
 	followMarker: true,
 	forceAxisBounds: false,
-	gpxOptions: {
-		async: true,
-		marker_options: {
-			startIconUrl: null,
-			endIconUrl: null,
-			shadowUrl: null,
-			wptIcons: {
-				'': L.divIcon({
-					className: 'elevation-waypoint-marker',
-					html: '<i class="elevation-waypoint-icon"></i>',
-					iconSize: [30, 30],
-					iconAnchor: [8, 30],
-				})
-			},
-		},
-	},
 	height: 200,
 	heightFactor: 1,
 	imperial: false,
@@ -89,6 +73,14 @@ export var Options = {
 	sRange: undefined,
 	width: 600,
 	waypoints: true,
+	wptIcons: {
+		'': L.divIcon({
+			className: 'elevation-waypoint-marker',
+			html: '<i class="elevation-waypoint-icon"></i>',
+			iconSize: [30, 30],
+			iconAnchor: [8, 30],
+		}),
+	},
 	xAttr: "dist",
 	xLabel: "km",
 	xTicks: undefined,

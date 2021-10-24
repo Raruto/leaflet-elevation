@@ -97,8 +97,10 @@ export var Chart = L.Class.extend({
 
 	clear: function() {
 		this._resetDrag();
+		this._hideDiagramIndicator()
 		this._area.selectAll('path').attr("d", "M0 0");
 		this._context.clearRect(0, 0, this._width(), this._height());
+
 		if (this._path) {
 			// this._x.domain([0, 1]);
 			// this._y.domain([0, 1]);
@@ -173,6 +175,7 @@ export var Chart = L.Class.extend({
 	 */
 	_initBrush: function(e) {
 		const brush   = (e) => {
+			if (!this._data.length) return;
 			let extent  = e.selection;
 			if (extent) {
 				let start = this._findIndexForXCoord(extent[0]);
@@ -182,6 +185,7 @@ export var Chart = L.Class.extend({
 		}
 
 		const focus   = (e) => {
+			if (!this._data.length) return;
 			if (e.type == 'brush' && !e.sourceEvent) return;
 			let rect    = this._chart.panes.brush.select('.overlay').node();
 			let coords  = d3.pointers(e, rect)[0];

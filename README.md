@@ -161,6 +161,16 @@ _For a working example see one of the following demos:_
         // Display track waypoints
         waypoints: true,
 
+        // Custom waypoint icons (associative array of <sym> tags)
+        wptIcons: {
+          '': L.divIcon({
+            className: 'elevation-waypoint-marker',
+            html: '<i class="elevation-waypoint-icon"></i>',
+            iconSize: [30, 30],
+            iconAnchor: [8, 30],
+          }),
+        },
+
         // Render chart profiles as Canvas or SVG Paths
         preferCanvas: true
 
@@ -177,6 +187,52 @@ _For a working example see one of the following demos:_
 
     </script>
     ```
+
+### FAQ
+
+<details>
+  <summary>1. How can I change the color of the elevation plot?</summary><br>
+
+There are multiple options to achieve this:
+
+* You could either use some default presets (see: theme: "lightblue-theme" option in readme file and the following file `leaflet-elevation.css` for some other default "*-theme" names).
+* check out [this example](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
+* Or add the following lines for custom colors.
+```css
+.elevation-control.elevation .area {
+    fill: red;
+}
+.elevation-control.elevation .background {
+    background-color: white;
+```
+</details>
+
+<details>
+  <summary>2. How to enable/disable the leaflet user interface customizations?</summary><br>
+
+These customizations are actually part of the [leaflet-ui](https://github.com/Raruto/leaflet-ui) and can be toggled on/off using e.g. the following options:
+```js
+var map = L.map('map', {
+    center: [41.4583, 12.7059],  // needs value to initialize
+    zoom: 5,                     // needs value to initialize
+    mapTypeId: 'topo',
+    mapTypeIds: ['osm', 'terrain', 'satellite', 'topo'],
+    gestureHandling: false,     // zoom with Cmd + Scroll
+    zoomControl: true,          // plus minus buttons
+    pegmanControl: false,
+    locateControl: false,
+    fullscreenControl: true,
+    layersControl: true,
+    minimapControl: false,
+    editInOSMControl: false,
+    loadingControl: false,
+    searchControl: false,
+    disableDefaultUI: false,
+    printControl: false,
+});
+```
+</details>
+
 _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
 
 ---

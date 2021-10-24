@@ -56,13 +56,40 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	clear: function() {
 		if (this._marker) this._marker.remove();
-		if (this._chart)  this._chart.clear();
-		if (this._layers) this._layers.clearLayers();
+		if (this._chart)  this._clearChart();
+		if (this._layers) this._clearLayers();
+		if (this._markers) this._clearMarkers();
 
 		this._data      = [];
 		this.track_info = {};
 
 		this._fireEvt("eledata_clear");
+
+		this._updateChart();
+	},
+
+	_clearChart: function() {
+		if (this._events && this._events.elechart_updated) {
+			this._events.elechart_updated.forEach(e => controlElevation.off('elechart_updated', e.fn, e.ctx));
+		}
+		if (this._chart && this._chart._container) {
+			this._chart._container.selectAll('g.point .point').remove();
+			this._chart.clear();
+		}
+	},
+
+	_clearLayers: function() {
+		if (this._layers && this._layers.eachLayer) {
+			this._layers.eachLayer(l => l.remove())
+			this._layers.clearLayers();
+		}
+	},
+
+	_clearMarkers: function() {
+		if (this._markers && this._markers.eachLayer) {
+			this._markers.eachLayer(l => l.remove())
+			this._markers.clearLayers();
+		}
 	},
 
 	/**
@@ -142,6 +169,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	initialize: function(options) {
 		this._data           = [];
 		this._layers         = L.featureGroup();
+		this._markers        = L.featureGroup();
 		this._markedSegments = L.polyline([]);
 		this._chartEnabled   = true,
 
@@ -446,6 +474,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	_addLayer: function(layer) {
 		if (layer) this._layers.addLayer(layer)
+	},
+
+	_addMarker: function(marker) {
+		if (marker) this._markers.addLayer(marker)
 	},
 
 	/**
@@ -886,7 +918,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Calculates [x, y] domain and then update chart.
 	 */
 	_updateChart: function() {
-		if (!this._data.length || !this._container) return;
+		if (/*!this._data.length ||*/ !this._container) return;
 
 		this._fireEvt("elechart_axis");
 		this._fireEvt("elechart_area");
