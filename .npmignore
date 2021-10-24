@@ -1,4 +1,5 @@
 /build
+/.github
 /examples
 /test
 .jshintrc
