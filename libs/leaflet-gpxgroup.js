@@ -137,6 +137,9 @@ L.GpxGroup = L.Class.extend({
       startIconUrl: null,
       endIconUrl: null,
       shadowUrl: null,
+    },
+    gpx_options: {
+      parseElements: ["track", "route"],
     }
   },
 
@@ -204,7 +207,8 @@ L.GpxGroup = L.Class.extend({
     var route = new L.GPX(data, {
       async: this.options.async,
       marker_options: this.options.marker_options,
-      polyline_options: line_style
+      polyline_options: line_style,
+      gpx_options: this.options.gpx_options,
     });
 
     route.originalStyle = line_style;
