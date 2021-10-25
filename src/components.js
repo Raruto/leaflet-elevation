@@ -506,6 +506,11 @@ export const Chart = ({
 
 		g.attr("transform", "translate(" + margins.left + "," + margins.top + ")");
 
+		// Partially fix: https://github.com/Raruto/leaflet-elevation/issues/123
+		if(/AppleWebkit/i.test(navigator.userAgent)) {
+			canvas.attr("transform", "translate(0,0)");
+		}
+
 		clipRect
 			.attr("x", 0)
 			.attr("y", 0)
