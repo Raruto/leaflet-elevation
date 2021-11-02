@@ -100,11 +100,10 @@ L.control.layersLegend = function(baseLayers, overlays, options) {
   return new L.Control.LayersLegend(baseLayers, overlays, options);
 };
 
-L.GPX.include(L.Mixin.Selectable);
+L.GeoJSON.include(L.Mixin.Selectable);
 
 L.GpxGroup = L.Class.extend({
   options: {
-    async: true,
     highlight: {
       color: '#ff0',
       opacity: 1,
@@ -125,7 +124,6 @@ L.GpxGroup = L.Class.extend({
     elevation: true,
     elevation_options: {
       theme: 'yellow-theme',
-      // width: 500,
       detachedView: true,
       elevationDiv: '#elevation-div',
     },
@@ -133,14 +131,6 @@ L.GpxGroup = L.Class.extend({
     distanceMarkers_options: {
       lazy: true
     },
-    marker_options: {
-      startIconUrl: null,
-      endIconUrl: null,
-      shadowUrl: null,
-    },
-    gpx_options: {
-      parseElements: ["track", "route"],
-    }
   },
 
   initialize: function(tracks, options) {
@@ -190,10 +180,38 @@ L.GpxGroup = L.Class.extend({
   },
 
   addTrack: function(track) {
-    this._get(track, this._loadRoute.bind(this));
+    fetch(track).then(response => {
+      if (response.ok) {
+        response.text().then(doc => {
+          let geojson;
+          doc = doc.trim();
+
+          try {
+            let xml  = (new DOMParser()).parseFromString(doc, "text/xml");
+            let type = xml.documentElement.tagName.toLowerCase(); // "kml" or "gpx"
+            let name = xml.getElementsByTagName('name');
+            if (!(type in toGeoJSON)) {
+              type = xml.documentElement.tagName == "TrainingCenterDatabase" ? 'tcx' : 'gpx';
+            }
+            geojson = toGeoJSON[type](xml);
+            geojson.name = name.length > 0 ? name[0].textContent : '';
+          } catch (e) {
+            try {
+              geojson = JSON.parse(doc.toString());
+              geojson.name = geojson.name || '';
+            } catch (e) {
+              console.warn("Error parsing track: " + track);
+            }
+          }
+          this._loadRoute(geojson);
+        });
+      }
+    });
   },
 
   _loadRoute: function(data) {
+    if (!data) return;
+
     var colors = this._uniqueColors(this._tracks.length);
     var color = colors[this._count++];
 
@@ -204,24 +222,23 @@ L.GpxGroup = L.Class.extend({
       distanceMarkers: this.options.distanceMarkers_options,
     };
 
-    var route = new L.GPX(data, {
-      async: this.options.async,
-      marker_options: this.options.marker_options,
-      polyline_options: line_style,
-      gpx_options: this.options.gpx_options,
+    var route = L.geoJson(data, {
+      name: data.name || '',
+      style: (feature) => line_style,
+      distanceMarkers: line_style.distanceMarkers,
+      originalStyle: line_style,
     });
-
-    route.originalStyle = line_style;
-
-    route.on('addline', L.bind(this._onRouteAddLine, this, route));
-    route.on('loaded', L.bind(this._onRouteLoaded, this, route));
 
     route.addTo(this._layers);
     this._routes[route._leaflet_id] = route;
+
+    route.eachLayer((layer) => this._onRouteLayer(route, layer));
+    this._onRouteLoaded(route);
+
   },
 
-  _onRouteAddLine: function(route, e) {
-    var polyline = e.line;
+  _onRouteLayer: function(route, layer) {
+    var polyline = layer;
 
     route.on('selected', L.bind(this._onRouteSelected, this, route, polyline));
 
@@ -229,7 +246,7 @@ L.GpxGroup = L.Class.extend({
     polyline.on('mouseout', L.bind(this._onRouteMouseOut, this, route, polyline));
     polyline.on('click', L.bind(this._onRouteClick, this, route, polyline));
 
-    polyline.bindTooltip(route.get_name(), {
+    polyline.bindTooltip(route.options.name, {
       direction: 'auto',
       sticky: true,
     });
@@ -243,7 +260,7 @@ L.GpxGroup = L.Class.extend({
   },
 
   unhighlight: function(route, polyline) {
-    polyline.setStyle(route.originalStyle);
+    polyline.setStyle(route.options.originalStyle);
     if (this.options.distanceMarkers) {
       polyline.removeDistanceMarkers();
     }
@@ -285,7 +302,7 @@ L.GpxGroup = L.Class.extend({
 
   _onRouteLoaded: function(route) {
     if (this.options.legend) {
-      this._legend.addBaseLayer(route, '<svg id="legend_' + route._leaflet_id + '" width="25" height="10" version="1.1" xmlns="http://www.w3.org/2000/svg">' + '<line x1="0" x2="50" y1="5" y2="5" stroke="' + route.options.polyline_options.color + '" fill="transparent" stroke-width="5" /></svg>' + ' ' + route.get_name());
+      this._legend.addBaseLayer(route, '<svg id="legend_' + route._leaflet_id + '" width="25" height="10" version="1.1" xmlns="http://www.w3.org/2000/svg">' + '<line x1="0" x2="50" y1="5" y2="5" stroke="' + route.options.originalStyle.color + '" fill="transparent" stroke-width="5" /></svg>' + ' ' + route.options.name);
     }
     this.fire('route_loaded', {
       route: route,
@@ -318,7 +335,7 @@ L.GpxGroup = L.Class.extend({
       }
       route.getLayers().forEach(function(layer) {
         if (layer instanceof L.Polyline) {
-          elevation.addData(layer);
+          elevation.addData(layer, false);
           layer.bringToFront();
         }
       });
@@ -355,17 +372,6 @@ L.GpxGroup = L.Class.extend({
       legend.querySelector("line").style.stroke = selected ? this.options.highlight.color : "";
       legend.parentNode.style.fontWeight = selected ? "700" : "";
     }
-  },
-
-  _get: function(url, callback) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", url);
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-        callback(xhr.response);
-      }
-    };
-    xhr.send();
   },
 
   _uniqueColors: function(count) {

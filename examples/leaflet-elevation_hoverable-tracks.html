@@ -21,7 +21,7 @@
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
   <!-- Leaflet-UI -->
-  <script src="https://unpkg.com/leaflet-ui@0.4.7/dist/leaflet-ui.js"></script>
+  <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
   <style>
 
@@ -57,9 +57,6 @@
     }
   </style>
 
-  <!-- <script src="https://unpkg.com/leaflet-gpx@1.5.1/gpx.js"></script> -->
-  <!-- <script src="../libs/leaflet-gpxgroup.min.js"></script> -->
-
 </head>
 
 <body>
@@ -77,14 +74,20 @@
         searchControl: false,
         loadingControl: false,
         plugins: [
-          "d3@4.13.0/build/d3.min.js",
-          "leaflet-gpx@1.5.0/gpx.js",
-          "leaflet-geometryutil@0.9.1/src/leaflet.geometryutil.js",
-          "@raruto/leaflet-elevation@1.5.0/dist/leaflet-elevation.min.css",
-          "@raruto/leaflet-elevation@1.5.0/dist/leaflet-elevation.min.js",
-          "@raruto/leaflet-elevation@1.5.0/libs/leaflet-gpxgroup.min.js",
-          "@raruto/leaflet-elevation@1.5.0/libs/leaflet-distance-marker.min.css",
-          "@raruto/leaflet-elevation@1.5.0/libs/leaflet-distance-marker.min.js",
+          "d3@6.5.0/dist/d3.min.js",
+          "@tmcw/togeojson@4.3.0/dist/togeojson.umd.js",
+          "leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js",
+          "leaflet-almostover@1.0.1/src/leaflet.almostover.js",
+          "@raruto/leaflet-elevation@1.7.3/libs/leaflet-distance-marker.min.css",
+          "@raruto/leaflet-elevation@1.7.3/libs/leaflet-distance-marker.min.js",
+          "@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.min.css",
+          "@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.min.js",
+          "@raruto/leaflet-elevation@1.7.3/libs/leaflet-gpxgroup.min.js",
+          // "../libs/leaflet-distance-marker.css",
+          // "../libs/leaflet-distance-marker.js",
+          // "../dist/leaflet-elevation.css",
+          // "../dist/leaflet-elevation.js",
+          // "../libs/leaflet-gpxgroup.js",
         ],
       },
       points: {
@@ -101,15 +104,9 @@
         zFollow: 15,
         legend: false,
       },
-      markers: {
-        startIconUrl: null, // 'http://mpetazzoni.github.io/leaflet-gpx/pin-icon-start.png',
-        endIconUrl: null, // 'http://mpetazzoni.github.io/leaflet-gpx/pin-icon-end.png',
-        shadowUrl: null, // 'http://mpetazzoni.github.io/leaflet-gpx/pin-shadow.png',
-      }
     };
 
     var tracks = [
-      "tracks/20130922.gpx",
       "tracks/20131006.gpx",
       "tracks/20131110.gpx",
       "tracks/20131229.gpx",
@@ -133,6 +130,9 @@
       "tracks/20151227.gpx",
       "tracks/20160417.gpx",
       "tracks/20160508.gpx",
+      // "demo.tcx",
+      // "demo.kml",
+      // "demo.geojson",
     ];
 
     var points = [
@@ -165,7 +165,6 @@
         points_options: opts.points,
         elevation: true,
         elevation_options: opts.elevation,
-        marker_options: opts.markers,
         legend: true,
         distanceMarkers: true,
       });
@@ -185,8 +184,7 @@
 
   </script>
 
-  <a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-      width="163"> </a>
+  <a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

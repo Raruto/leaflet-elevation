@@ -17,13 +17,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.3.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
-	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.7.2/libs/leaflet-distance-marker.min.js',
+	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.7.3/libs/leaflet-distance-marker.min.js',
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
 	 */
 	addData: function(d, layer) {
-		if ((typeof layer === "undefined" || layer === null) && d.on) {
+		if (typeof layer === "undefined" && d.on) {
 			layer = d;
 		}
 		Elevation._d3LazyLoader = _.lazyLoader(
@@ -448,7 +448,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_addGPXData: function(coords) {
 		_.each(coords, point => {
-			this._addPoint(point.lat, point.lng, point.meta.ele);
+			this._addPoint(point.lat, point.lng, typeof point.alt !== "undefined" ? point.alt : point.meta.ele);
 			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
 		});
 		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
