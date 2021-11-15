@@ -194,20 +194,16 @@ L.GpxGroup = L.Class.extend({
               type = xml.documentElement.tagName == "TrainingCenterDatabase" ? 'tcx' : 'gpx';
             }
             geojson = toGeoJSON[type](xml);
-            geojson.name = name.length > 0 ? name[0].textContent : '';
-            for (i = 0; i < name.length; i++) {
-              if (name[i].parentElement.tagName == "trk") {
-                geojson.name = name[i].textContent;
-                break;
-              }
-            }
+            geojson.name = name.length > 0 ? Array.from(name).find(tag => tag.parentElement.tagName == "trk").textContent : '';
           } catch (e) {
             try {
               geojson = JSON.parse(doc.toString());
-              geojson.name = geojson.name || '';
             } catch (e) {
               console.warn("Error parsing track: " + track);
             }
+          }
+          if (!geojson.name) {
+            geojson.name = track.split('/').pop().split('#')[0].split('?')[0];
           }
           this._loadRoute(geojson);
         });
@@ -233,6 +229,7 @@ L.GpxGroup = L.Class.extend({
       style: (feature) => line_style,
       distanceMarkers: line_style.distanceMarkers,
       originalStyle: line_style,
+      filter: feature => feature.geometry.type != "Point",
     });
 
     route.addTo(this._layers);
@@ -259,18 +256,14 @@ L.GpxGroup = L.Class.extend({
   },
 
   highlight: function(route, polyline) {
-	  if (typeof polyline.setStyle != "undefined") {
-	    polyline.setStyle(this.options.highlight);
-	  }
+    polyline.setStyle(this.options.highlight);
     if (this.options.distanceMarkers) {
       polyline.addDistanceMarkers();
     }
   },
 
   unhighlight: function(route, polyline) {
-	if (typeof polyline.setStyle != "undefined") {
-	  polyline.setStyle(route.options.originalStyle);
-	}
+    polyline.setStyle(route.options.originalStyle);
     if (this.options.distanceMarkers) {
       polyline.removeDistanceMarkers();
     }
