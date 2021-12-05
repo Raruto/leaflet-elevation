@@ -161,6 +161,10 @@ L.GpxGroup = L.Class.extend({
       this.options.distanceMarkers = false;
     }
 
+    if (typeof this.options.filename === "undefined") {
+      this.options.filename = false;
+    }
+
   },
 
   getBounds: function() {
@@ -202,8 +206,9 @@ L.GpxGroup = L.Class.extend({
               console.warn("Error parsing track: " + track);
             }
           }
-          if (!geojson.name) {
+          if (!geojson.name || this.options.filename) {
             geojson.name = track.split('/').pop().split('#')[0].split('?')[0];
+            geojson.name = geojson.name.substr(0, geojson.name.lastIndexOf('.'));
           }
           this._loadRoute(geojson);
         });
