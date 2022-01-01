@@ -81,6 +81,7 @@ export var Options = {
 			iconAnchor: [8, 30],
 		}),
 	},
+	wptLabels: true,
 	xAttr: "dist",
 	xLabel: "km",
 	xTicks: undefined,

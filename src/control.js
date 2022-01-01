@@ -70,7 +70,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	_clearChart: function() {
 		if (this._events && this._events.elechart_updated) {
-			this._events.elechart_updated.forEach(e => controlElevation.off('elechart_updated', e.fn, e.ctx));
+			this._events.elechart_updated.forEach(e => this.off('elechart_updated', e.fn, e.ctx));
 		}
 		if (this._chart && this._chart._container) {
 			this._chart._container.selectAll('g.point .point').remove();
@@ -195,6 +195,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		// 	this._updateChart   = _.debounce(this._updateChart,   300, this);
 		// 	this._updateSummary = _.debounce(this._updateSummary, 300, this);
 		// }
+
+		if (this.options.wptIcons === true) this.options.wptIcons = Options.wptIcons;
 
 		// Leaflet canvas renderer colors
 		L.extend(D3.Colors, this.options.colors || {});

@@ -158,10 +158,10 @@ _For a working example see one of the following demos:_
         // Toggle "leaflet-distance-markers" integration
         distanceMarkers: false,
 
-        // Display track waypoints
+        // Display track waypoints: true || "markers" || "dots" || false
         waypoints: true,
 
-        // Custom waypoint icons (associative array of <sym> tags)
+        // Toggle custom waypoint icons: true || { associative array of <sym> tags } || false
         wptIcons: {
           '': L.divIcon({
             className: 'elevation-waypoint-marker',
@@ -170,6 +170,9 @@ _For a working example see one of the following demos:_
             iconAnchor: [8, 30],
           }),
         },
+
+        // Toggle waypoint labels
+        wptLabels: true,
 
         // Render chart profiles as Canvas or SVG Paths
         preferCanvas: true

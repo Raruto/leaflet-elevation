@@ -79,7 +79,8 @@ export function GeoJSONLoader(data, control) {
 				: L.extend({ lazy: true }, control.options.distanceMarkers)
 	);
 
-  let wptIcons = control.options.wptIcons;
+  let wptIcons  = control.options.wptIcons;
+  let wptLabels = control.options.wptLabels;
 
 	let layer = L.geoJson(data, {
 		distanceMarkers: distanceMarkers,
@@ -94,24 +95,37 @@ export function GeoJSONLoader(data, control) {
 			if (!control.options.waypoints) return;
 
 			let prop   = feature.properties;
-			let desc   = prop.desc ? prop.desc : '';
-			let name   = prop.name ? prop.name : '';
-			let sym    = (prop.sym ? prop.sym : name).replace(' ', '-').replace('"', '').replace("'", '').toLowerCase();
+			let desc   = prop.desc ?? '';
+			let name   = prop.name ?? '';
+			let sym    = (prop.sym ?? name).replace(' ', '-').replace('"', '').replace("'", '').toLowerCase();
 
-			// generate and cache appropriate icon symbol
-			if (!wptIcons.hasOwnProperty(sym)) {
-				wptIcons[sym] = L.divIcon(
-					L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } )
-				);
-			}
-			let marker = L.marker(latlng, { icon: wptIcons[sym] });
-			if (name || desc) {
-				marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
-			}
-      control._addMarker(marker);
-			control._registerCheckPoint({latlng: latlng, label: name}, true);
-			control.fire('waypoint_added', { point: marker, element: latlng, properties: prop });
-			return marker;
+      // Handle waypoint lables (markers and dots)
+      if (!wptLabels) {
+        name = '';
+        desc = '';
+      }
+
+      // Handle chart waypoints (dots)
+      if ([true, "dots"].includes(control.options.waypoints)) {
+        control._registerCheckPoint({latlng: latlng, label: name}, true);
+      }
+
+      // Handle map waypoints (markers)
+      if ([true, "markers"].includes(control.options.waypoints) && wptIcons != false) {
+        // generate and cache appropriate icon symbol
+        if (!wptIcons.hasOwnProperty(sym)) {
+          wptIcons[sym] = L.divIcon(
+            L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } )
+          );
+        }
+  			let marker = L.marker(latlng, { icon: wptIcons[sym] });
+  			if (name || desc) {
+  				marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
+  			}
+        control._addMarker(marker);
+  			control.fire('waypoint_added', { point: marker, element: latlng, properties: prop });
+        return marker;
+      }
 		},
 		onEachFeature: (feature, layer) => {
 			if (feature.geometry && feature.geometry.type == 'Point') return;
