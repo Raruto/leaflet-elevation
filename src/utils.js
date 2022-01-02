@@ -98,19 +98,18 @@ export function GeoJSONLoader(data, control) {
 			let name   = prop.name ?? '';
 			let sym    = (prop.sym ?? name).replace(' ', '-').replace('"', '').replace("'", '').toLowerCase();
 
-			// Handle waypoint lables (markers and dots)
-			if (!wptLabels) {
-				name = '';
-				desc = '';
-			}
-
 			// Handle chart waypoints (dots)
-			if ([true, "dots"].includes(control.options.waypoints)) {
-				control._registerCheckPoint({latlng: latlng, label: name}, true);
+			if ([true, 'dots'].includes(control.options.waypoints)) {
+				control._registerCheckPoint({
+						latlng: latlng,
+						label: ([true, 'dots'].includes(wptLabels) ? name : '')
+					},
+					true
+				);
 			}
 
 			// Handle map waypoints (markers)
-			if ([true, "markers"].includes(control.options.waypoints) && wptIcons != false) {
+			if ([true, 'markers'].includes(control.options.waypoints) && wptIcons != false) {
 				// generate and cache appropriate icon symbol
 				if (!wptIcons.hasOwnProperty(sym)) {
 					wptIcons[sym] = L.divIcon(
@@ -118,7 +117,7 @@ export function GeoJSONLoader(data, control) {
 					);
 				}
 				let marker = L.marker(latlng, { icon: wptIcons[sym] });
-				if (name || desc) {
+				if ([true, 'markers'].includes(wptLabels) && (name || desc)) {
 					marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
 				}
 				control._addMarker(marker);
