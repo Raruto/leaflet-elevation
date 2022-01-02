@@ -171,7 +171,7 @@ _For a working example see one of the following demos:_
           }),
         },
 
-        // Display waypoint labels: true || "markers" || "dots" || false
+        // Toggle waypoint labels: true || "markers" || "dots" || false
         wptLabels: true,
 
         // Render chart profiles as Canvas or SVG Paths
