@@ -73,14 +73,13 @@ export function GeoJSONLoader(data, control) {
 	}
 	control = control || this;
 
-  let distanceMarkers = (
+	let distanceMarkers = (
 			control.options.distanceMarkers === true
 				? { lazy: true }
 				: L.extend({ lazy: true }, control.options.distanceMarkers)
 	);
 
-  let wptIcons  = control.options.wptIcons;
-  let wptLabels = control.options.wptLabels;
+	let { wptIcons, wptLabels } = control.options;
 
 	let layer = L.geoJson(data, {
 		distanceMarkers: distanceMarkers,
@@ -99,33 +98,33 @@ export function GeoJSONLoader(data, control) {
 			let name   = prop.name ?? '';
 			let sym    = (prop.sym ?? name).replace(' ', '-').replace('"', '').replace("'", '').toLowerCase();
 
-      // Handle waypoint lables (markers and dots)
-      if (!wptLabels) {
-        name = '';
-        desc = '';
-      }
+			// Handle waypoint lables (markers and dots)
+			if (!wptLabels) {
+				name = '';
+				desc = '';
+			}
 
-      // Handle chart waypoints (dots)
-      if ([true, "dots"].includes(control.options.waypoints)) {
-        control._registerCheckPoint({latlng: latlng, label: name}, true);
-      }
+			// Handle chart waypoints (dots)
+			if ([true, "dots"].includes(control.options.waypoints)) {
+				control._registerCheckPoint({latlng: latlng, label: name}, true);
+			}
 
-      // Handle map waypoints (markers)
-      if ([true, "markers"].includes(control.options.waypoints) && wptIcons != false) {
-        // generate and cache appropriate icon symbol
-        if (!wptIcons.hasOwnProperty(sym)) {
-          wptIcons[sym] = L.divIcon(
-            L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } )
-          );
-        }
-  			let marker = L.marker(latlng, { icon: wptIcons[sym] });
-  			if (name || desc) {
-  				marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
-  			}
-        control._addMarker(marker);
-  			control.fire('waypoint_added', { point: marker, element: latlng, properties: prop });
-        return marker;
-      }
+			// Handle map waypoints (markers)
+			if ([true, "markers"].includes(control.options.waypoints) && wptIcons != false) {
+				// generate and cache appropriate icon symbol
+				if (!wptIcons.hasOwnProperty(sym)) {
+					wptIcons[sym] = L.divIcon(
+						L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } )
+					);
+				}
+				let marker = L.marker(latlng, { icon: wptIcons[sym] });
+				if (name || desc) {
+					marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
+				}
+				control._addMarker(marker);
+				control.fire('waypoint_added', { point: marker, element: latlng, properties: prop });
+				return marker;
+			}
 		},
 		onEachFeature: (feature, layer) => {
 			if (feature.geometry && feature.geometry.type == 'Point') return;
@@ -152,12 +151,12 @@ export function GeoJSONLoader(data, control) {
 
 			// Postpone adding the distance markers (lazy: true)
 			if(control.options.distanceMarkers && distanceMarkers.lazy) {
-			  layer.on('add remove', (e) => {
-			    let path = e.target;
-			    if (L.DistanceMarkers && path instanceof L.Polyline) {
+				layer.on('add remove', (e) => {
+					let path = e.target;
+					if (L.DistanceMarkers && path instanceof L.Polyline) {
 						path[e.type + 'DistanceMarkers']();
-			    }
-			  });
+					}
+				});
 			}
 
 			control.track_info = L.extend({}, control.track_info, { type: "geojson", name: data.name });
@@ -332,8 +331,8 @@ export function toggleClass(targetNode, className, conditional) {
 }
 
 export function replaceClass(targetNode, removeClassName, addClassName) {
-  if (removeClassName) removeClass(targetNode, removeClassName);
-  if (addClassName) addClass(targetNode, addClassName);
+	if (removeClassName) removeClass(targetNode, removeClassName);
+	if (addClassName) addClass(targetNode, addClassName);
 }
 
 export function style(targetNode, name, value) {
@@ -342,7 +341,7 @@ export function style(targetNode, name, value) {
 }
 
 export function toggleStyle(targetNode, name, value, conditional) {
-  return style(targetNode, name, conditional ? value : '');
+	return style(targetNode, name, conditional ? value : '');
 }
 
 export function toggleEvent(leafletElement, eventName, handler, conditional) {

@@ -161,7 +161,7 @@ export const HeightFocusMarker = ({
 
 export const LegendItem = ({
 	name,
-  label,
+	label,
 	width,
 	height,
 	margins = {},
