@@ -783,14 +783,15 @@ export var Chart = L.Class.extend({
 				height: this._height()
 			})
 		);
+
 		this._focuslabel.call(
 			D3.MouseFocusLabel({
 				xCoord: xCoordinate,
 				yCoord: yCoordinate,
 				height: this._height(),
 				width : this._width(),
-				labelX: d3.format("."+ opts.decimalsX +"f")(item[opts.xAttr]) + " " + this._xLabel,
-				labelY: d3.format("."+ opts.decimalsY +"f")(item[opts.yAttr]) + " " + this._yLabel
+				labelX: ((this.options.chartLabel) ? L._("Length") + ": " : "") + d3.format("."+ opts.decimalsX +"f")(item[opts.xAttr]) + " " + this._xLabel,
+				labelY: ((this.options.chartLabel) ? L._("Altitude") + ": " : "") + d3.format("."+ opts.decimalsY +"f")(item[opts.yAttr]) + " " + this._yLabel
 			})
 		);
 
@@ -808,8 +809,9 @@ export var Chart = L.Class.extend({
 					.attr("class", "mouse-focus-label-" + labels[i].name)
 					.attr("dy", "1.5em");
 			}
-
-			label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item) );
+			
+			let labelsName = (this.options.chartLabel)? L._(_.capitalizeFirstLetter(labels[i].name))+ ": " : "";	
+			label.text(typeof labels[i].value !== "function" ? labelsName + labels[i].value : labelsName + labels[i].value(item));
 
 			this._focuslabel.select('.mouse-focus-label-x')
 				.attr("dy", "1.5em");

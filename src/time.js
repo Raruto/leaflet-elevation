@@ -107,6 +107,11 @@ Elevation.addInitHook(function() {
 			chart: (item) => this.options.timeFormat(item.time)
 		});
 
+		this._registerFocusLabel({
+			name: 'duration',
+			chart: (item) => _.formatTime(item.duration || 0)
+		});
+
 		this._registerSummary({
 			"tottime"  : {
 				label: "Total Time: ",

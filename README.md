@@ -175,7 +175,10 @@ _For a working example see one of the following demos:_
         wptLabels: true,
 
         // Render chart profiles as Canvas or SVG Paths
-        preferCanvas: true
+        preferCanvas: true,
+
+        // Toggle chart tooltip labels: true || false
+        chartLabel: true
 
       };
 

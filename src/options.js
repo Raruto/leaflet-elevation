@@ -92,4 +92,5 @@ export var Options = {
 	yTicks: undefined,
 	zFollow: false,
 	zooming: !L.Browser.Mobile,
+	chartLabel: true
 };
