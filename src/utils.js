@@ -408,7 +408,3 @@ export function randomId() {
 export function each(obj, fn) {
 	for (let i in obj) fn(obj[i], i);
 }
-
-export function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}

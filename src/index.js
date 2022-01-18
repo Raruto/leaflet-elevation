@@ -39,8 +39,8 @@ import * as _ from './utils';
 import * as D3 from './components';
 import { Chart } from './chart';
 import { Elevation } from './control';
-import './distance';
 import './altitude';
+import './distance';
 import './time';
 import './slope';
 import './speed';
@@ -49,5 +49,19 @@ import './acceleration';
 Elevation.Utils = _;
 Elevation.Components = D3;
 Elevation.Chart = Chart;
+
+/* Temporary fix for empty values evaluated as false (leaflet-i18n v0.3.1) */
+L.registerLocale = (code, locale) => {
+    L.locales[code] = L.Util.extend({
+        "y: "				: "",
+		"x: "				: "",
+		"t: "				: "",
+		"T: "				: "",
+		"m: "				: "",
+		"v: "				: "",
+		"a: "               : "",
+    }, L.locales[code], locale)
+    _.each(L.locales[code], (d, i) => { if (!L.locales[code][i]) L.locales[code][i] = "\u200B"; }); // zero width space
+}
 
 L.control.elevation = (options) => new Elevation(options);

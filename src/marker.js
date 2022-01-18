@@ -93,34 +93,17 @@ export var Marker = L.Class.extend({
 						length: normalizedY
 					})
 				);
+
 			this._focuslabel
 				.call(
 					D3.HeightFocusLabel({
 						theme : opts.theme,
 						xCoord: point.x,
 						yCoord: normalizedY,
-						label : d3.format("." + opts.decimalsY + "f")(point[opts.yAttr]) + " " + this._yLabel
+						labels: this._focuslabels,
+						item: point
 					})
 				);
-
-			let labels = this._focuslabels;
-			let tooltip = this._focuslabel;
-			let label;
-
-			for (var i in labels) {
-				label = tooltip.select(".height-focus-" + labels[i].name);
-
-				if (!label.size()) {
-					label   = tooltip.append("svg:tspan")
-						.attr("class", "height-focus-" + labels[i].name)
-						.attr("dy", "1.5em");
-				}
-
-				label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(props.item) );
-
-				this._focuslabel.select('.height-focus-y')
-					.attr("dy", "-1.5em");
-			}
 
 		} else if (this.options.marker == 'position-marker') {
 			_.removeClass(this._marker.getElement(), 'leaflet-hidden');

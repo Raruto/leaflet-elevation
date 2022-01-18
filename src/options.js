@@ -68,6 +68,7 @@ export var Options = {
 	time: false,
 	timeFactor: 3600,
 	timeFormat: false,
+	timestamps: false,
 	sDeltaMax: undefined,
 	sInterpolation: "curveStepAfter",
 	sRange: undefined,
@@ -92,5 +93,4 @@ export var Options = {
 	yTicks: undefined,
 	zFollow: false,
 	zooming: !L.Browser.Mobile,
-	chartLabel: true
 };

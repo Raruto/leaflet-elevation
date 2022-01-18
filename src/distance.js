@@ -66,6 +66,11 @@ Elevation.addInitHook(function() {
 
 	}
 
+	this._registerFocusLabel({
+		name: 'x',
+		chart: (item) => L._("x: ") + d3.format("." + opts.decimalsX + "f")(item[opts.xAttr]) + " " + this._xLabel,
+	});
+
 	this._registerSummary({
 		"totlen"  : {
 			label: "Total Length: ",

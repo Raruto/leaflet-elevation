@@ -158,6 +158,9 @@ _For a working example see one of the following demos:_
         // Toggle "leaflet-distance-markers" integration
         distanceMarkers: false,
 
+        // Display track datetimes: true || false
+        timestamps: false,
+
         // Display track waypoints: true || "markers" || "dots" || false
         waypoints: true,
 
@@ -176,9 +179,6 @@ _For a working example see one of the following demos:_
 
         // Render chart profiles as Canvas or SVG Paths
         preferCanvas: true,
-
-        // Toggle chart tooltip labels: true || false
-        chartLabel: true
 
       };
 
