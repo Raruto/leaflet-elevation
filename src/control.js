@@ -1112,7 +1112,7 @@ Elevation.addInitHook(function() {
 				if (options.stroke && options.weight !== 0) {
 					let oldVal                   = ctx.globalCompositeOperation || 'source-over';
 					ctx.globalCompositeOperation = 'destination-over'
-					ctx.strokeStyle              = '#FFF';
+					ctx.strokeStyle              = colors.outline || '#FFF';
 					ctx.lineWidth                = options.weight * 1.75;
 					ctx.stroke();
 					ctx.globalCompositeOperation = oldVal;
