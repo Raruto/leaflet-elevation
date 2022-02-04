@@ -66,7 +66,7 @@ export var Marker = L.Class.extend({
 		if (map._rotate) {
 			pos = map.rotatedPointToMapPanePoint(pos);
 		}
-
+/**
 		let point = L.extend({}, props.item, pos);
 
 		if (this.options.marker == 'elevation-line') {
@@ -126,18 +126,19 @@ export var Marker = L.Class.extend({
 			_.removeClass(this._marker.getElement(), 'leaflet-hidden');
 			this._marker.setLatLng(this._latlng);
 		}
+		 */
 	},
 
 	/*
 	 * Hides the position/height indicator marker drawn onto the map
 	 */
 	remove: function() {
-		this._props = null;
-		if (this.options.marker == 'elevation-line') {
-			if (this._container) this._container.classed("leaflet-hidden", true);
-		} else if (this.options.marker == 'position-marker') {
-			_.addClass(this._marker.getElement(), 'leaflet-hidden');
-		}
+		//this._props = null;
+		//if (this.options.marker == 'elevation-line') {
+		//	if (this._container) this._container.classed("leaflet-hidden", true);
+		//} else if (this.options.marker == 'position-marker') {
+		//	_.addClass(this._marker.getElement(), 'leaflet-hidden');
+		//}
 	},
 
 	getLatLng: function() {
