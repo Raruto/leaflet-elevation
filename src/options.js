@@ -68,6 +68,7 @@ export var Options = {
 	time: false,
 	timeFactor: 3600,
 	timeFormat: false,
+	timestamps: false,
 	sDeltaMax: undefined,
 	sInterpolation: "curveStepAfter",
 	sRange: undefined,

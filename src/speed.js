@@ -96,8 +96,8 @@ Elevation.addInitHook(function() {
 
 		this._registerFocusLabel({
 			name: 'speed',
-			chart: (item) => item.speed + " " + speed.label,
-			marker: (item) => Math.round(item.speed) + " " + speed.label
+			chart: (item) => L._('v: ') + item.speed + " " + speed.label,
+			marker: (item) => Math.round(item.speed) + " " + speed.label,
 		});
 
 		this._registerSummary({

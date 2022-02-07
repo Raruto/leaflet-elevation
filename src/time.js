@@ -100,20 +100,25 @@ Elevation.addInitHook(function() {
 		this.track_info.time = duration;
 	});
 
-	if (this.options.time) {
 
+	if (this.options.timestamps) {
+		this._registerFocusLabel({
+			name: 'date',
+			chart: (item) => L._("t: ") + this.options.timeFormat(item.time)
+		});
+	}
+
+	if (this.options.time) {
 		this._registerFocusLabel({
 			name: 'time',
-			chart: (item) => this.options.timeFormat(item.time)
+			chart: (item) => L._("T: ") + _.formatTime(item.duration || 0)
 		});
-
 		this._registerSummary({
 			"tottime"  : {
 				label: "Total Time: ",
 				value: (track) => _.formatTime(track.time || 0)
 			}
 		});
-
 	}
 
 });

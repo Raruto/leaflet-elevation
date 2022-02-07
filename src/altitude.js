@@ -107,6 +107,12 @@ Elevation.addInitHook(function() {
 
 	}
 
+	this._registerFocusLabel({
+		name: 'y',
+		chart: (item) => L._("y: ") + d3.format("." + opts.decimalsY + "f")(item[opts.yAttr]) + " " + this._yLabel,
+		marker: (item) => d3.format("." + opts.decimalsY + "f")(item[opts.yAttr]) + " " + this._yLabel,
+	});
+
 	this._registerSummary({
 		"maxele"  : {
 			label: "Max Elevation: ",

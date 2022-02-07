@@ -96,7 +96,7 @@ Elevation.addInitHook(function() {
 
 	this._registerFocusLabel({
 		name  : 'acceleration',
-		chart : (item) => item.acceleration + " " + acceleration.label,
+		chart: (item) => L._("a: ") + item.acceleration + " " + acceleration.label,
 		marker: (item) => Math.round(item.acceleration) + " " + acceleration.label,
 	});
 

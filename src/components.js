@@ -124,7 +124,8 @@ export const HeightFocusLabel = ({
 	theme,
 	xCoord = 0,
 	yCoord = 0,
-	label,
+	labels = {},
+	item = {}
 }) => {
 	return text => {
 		text
@@ -133,13 +134,21 @@ export const HeightFocusLabel = ({
 			.attr("x", xCoord + 5)
 			.attr("y", yCoord);
 
-		let y = text.select(".height-focus-y");
-		if (!y.node()) y = text.append("svg:tspan");
+		let label;
 
-		y
-			.attr("class", "height-focus-y")
-			.text(label);
+		for (var i in labels) {
+			label = text.select(".height-focus-" + labels[i].name);
 
+			if (!label.size()) {
+				label = text.append("svg:tspan")
+					.attr("class", "height-focus-" + labels[i].name)
+					.attr("dy", "1.5em");
+			}
+
+			label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item));
+		}
+
+		text.select('tspan').attr("dy", text.selectAll('tspan').size() > 1 ? "-1.5em" : "0em" );
 		text.selectAll('tspan').attr("x", xCoord + 5);
 
 		return text;
@@ -222,9 +231,9 @@ export const MouseFocusLine = ({
 export const MouseFocusLabel = ({
 	xCoord,
 	yCoord,
-	labelX = "",
-	labelY = "",
 	width,
+	labels = {},
+	item = {},
 }) => {
 	return g => {
 
@@ -232,16 +241,9 @@ export const MouseFocusLabel = ({
 
 		let rect = g.select(".mouse-focus-label-rect");
 		let text = g.select(".mouse-focus-label-text");
-		let y    = text.select(".mouse-focus-label-y");
-		let x    = text.select(".mouse-focus-label-x");
 
 		if (!rect.node()) rect = g.append("svg:rect");
 		if (!text.node()) text = g.append("svg:text");
-		if (!y.node())    y    = text.append("svg:tspan");
-		if (!x.node())    x    = text.append("svg:tspan");
-
-		y.text(labelY);
-		x.text(labelX);
 
 		// Sets focus-label-text position to the left / right of the mouse-focus-line
 		let xAlign = 0;
@@ -264,13 +266,22 @@ export const MouseFocusLabel = ({
 			.attr("class", "mouse-focus-label-text")
 			.style("font-weight", "700")
 			.attr("y", yAlign);
-		y
-			.attr("class", "mouse-focus-label-y")
-			.attr("dy", "1em");
-		x
-			.attr("class", "mouse-focus-label-x")
-			.attr("dy", "2em");
 
+		let label;
+
+		for (var i in labels) {
+			label = text.select(".mouse-focus-label-" + labels[i].name);
+
+			if (!label.size()) {
+				label = text.append("svg:tspan", ".mouse-focus-label-x")
+					.attr("class", "mouse-focus-label-" + labels[i].name)
+					.attr("dy", "1.5em");
+			}
+
+			label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item));
+		}
+
+		text.select('tspan').attr("dy", "1em");
 		text.selectAll('tspan').attr("x", xAlign);
 
 		return g;
@@ -460,8 +471,9 @@ export const Chart = ({
 				yCoord: 0,
 				height: _height,
 				width : _width,
-				labelX: "",
-				labelY: "",
+				labels: {}
+				// labelX: "",
+				// labelY: "",
 			})
 		);
 

@@ -783,38 +783,17 @@ export var Chart = L.Class.extend({
 				height: this._height()
 			})
 		);
+
 		this._focuslabel.call(
 			D3.MouseFocusLabel({
 				xCoord: xCoordinate,
 				yCoord: yCoordinate,
 				height: this._height(),
 				width : this._width(),
-				labelX: d3.format("."+ opts.decimalsX +"f")(item[opts.xAttr]) + " " + this._xLabel,
-				labelY: d3.format("."+ opts.decimalsY +"f")(item[opts.yAttr]) + " " + this._yLabel
+				labels: this._props.focusLabels,
+				item: item
 			})
 		);
-
-		// this._focuslabel.selectAll('tspan').data(Object.values(this._focuslabels));
-
-		let labels = this._props.focusLabels;
-		let tooltip = this._focuslabel.select('text');
-		let label;
-
-		for (var i in labels) {
-			label = tooltip.select(".mouse-focus-label-" + labels[i].name);
-
-			if (!label.size()) {
-				label   = tooltip.append("svg:tspan", ".mouse-focus-label-x")
-					.attr("class", "mouse-focus-label-" + labels[i].name)
-					.attr("dy", "1.5em");
-			}
-
-			label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item) );
-
-			this._focuslabel.select('.mouse-focus-label-x')
-				.attr("dy", "1.5em");
-		}
-
 	},
 
 	_hideDiagramIndicator: function() {

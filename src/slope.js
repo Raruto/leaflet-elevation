@@ -95,7 +95,7 @@ Elevation.addInitHook(function() {
 
 	this._registerFocusLabel({
 		name: 'slope',
-		chart: (item) => item.slope + slope.label,
+		chart: (item) => L._("m: ") + item.slope + slope.label,
 		marker: (item) => Math.round(item.slope) + slope.label
 	});
 
