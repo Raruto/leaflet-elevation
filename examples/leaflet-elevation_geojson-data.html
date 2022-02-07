@@ -127,6 +127,20 @@
 		// Enable a custom locale
 		// L.setLocale('en:18');
 
+		// You can also override a previously defined object
+		L.locales['en'] = L.extend({
+			"y: "               : "",
+			"x: "               : "",
+			"t: "               : "",
+			"T: "               : "",
+			"m: "               : "",
+			"v: "               : "",
+			"a: "               : "",
+		}, L.locales['en']);
+
+		// Switch the language
+		L.setLocale('en');
+
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
