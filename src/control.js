@@ -832,6 +832,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Hacky way for handling chart resize. Deletes it and redraw chart.
 	 */
 	_resizeChart: function() {
+		if(!this._container) return;
+
 		// prevent displaying chart on resize if hidden
 		if (_.style(this._container, "display") == "none") return;
 
@@ -920,7 +922,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Calculates [x, y] domain and then update chart.
 	 */
 	_updateChart: function() {
-		if (/*!this._data.length ||*/ !this._container) return;
+		if (/*!this._data.length ||*/ !this._chart || !this._container) return;
 
 		this._fireEvt("elechart_axis");
 		this._fireEvt("elechart_area");

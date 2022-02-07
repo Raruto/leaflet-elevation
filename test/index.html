@@ -91,7 +91,7 @@
 					autohide: false,
 					autofitBounds: true,
 					position: "bottomleft",
-					detached: true,
+					detached: false,
 					summary: "inline",
 					imperial: false,
 					altitude: true, //"summary",
@@ -124,6 +124,9 @@
 		var map              = new L.Map('map', opts.map);
 		var controlElevation = L.control.elevation(opts.elevationControl.options);
 		var controlLayer     = L.control.layers(null, null, opts.layersControl.options);
+
+		controlElevation.clear();
+		controlElevation.redraw();
 
 		map.on('eledata_loaded', function(e) {
 			if (!controlLayer._map) controlLayer.addTo(map);
