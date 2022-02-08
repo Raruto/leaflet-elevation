@@ -239,6 +239,18 @@ var map = L.map('map', {
 ```
 </details>
 
+<details>
+  <summary>3. Some real world projects based on this plugin?</summary><br>
+
+- https://parcours.scasb.org/
+- https://velocat.ru/velo/phpBB3/map.php
+- https://plugins.qgis.org/plugins/track_profile_2_web/
+- https://wordpress.org/plugins/os-datahub-maps/
+- https://wordpress.org/plugins/extensions-leaflet-map/
+- https://github.com/panotom/OTM-Web-Frontend
+
+</details>
+    
 _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
 
 ---
@@ -252,3 +264,5 @@ _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Inte
 ---
 
 **Contributors:** [MrMufflon](https://github.com/MrMufflon/Leaflet.Elevation), [HostedDinner](https://github.com/HostedDinner/Leaflet.Elevation), [ADoroszlai](http://ADoroszlai.github.io/joebed/), [Raruto](https://github.com/Raruto/leaflet-elevation)
+
+---
