@@ -247,7 +247,7 @@ var map = L.map('map', {
 - https://plugins.qgis.org/plugins/track_profile_2_web/
 - https://wordpress.org/plugins/os-datahub-maps/
 - https://wordpress.org/plugins/extensions-leaflet-map/
-- https://github.com/panotom/OTM-Web-Frontend
+- https://github.com/der-stefan/OpenTopoMap
 
 </details>
     
