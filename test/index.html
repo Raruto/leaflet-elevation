@@ -79,9 +79,9 @@
 				// url: `[{"type": "LineString","coordinates": [[-110, 55, 80], [-105, 45, 160], [-100, 40, 50]]}, {"type": "LineString","coordinates": [[-105, 40, 102], [-110, 45, 105], [-115, 55, 200]]}]`,
 				// url: "../examples/time.geojson",
 				// url: "../examples/time.gpx",
-				url: 'multi.gpx',
+				// url: 'multi.gpx',
 				// url: '../examples/demo.kml',
-				// url: "../examples/via-emilia.gpx",
+				url: "../examples/via-emilia.gpx",
 				// url: "../examples/sentiero-italia.gpx",
 				// url: "../examples/demo.geojson",
 				// url: "../examples/waypoints.gpx",
@@ -162,6 +162,30 @@
 		controlElevation.load(opts.elevationControl.url);
 		controlElevation.addTo(map);
 
+		/**
+		 * Move the "g.point" element one level down in the dom
+		 */
+		 controlElevation.on('elechart_updated', () => {
+			let pointG = controlElevation._container.querySelector("g:not(.point) > g.point");
+			if (pointG.nextElementSibling && pointG.nextElementSibling.classList.contains('axis')) {
+				pointG.parentNode.insertBefore(pointG.nextElementSibling, pointG);
+			}
+		});
+
+		/**
+		 * Wait for D3.js and then load some custom checkpoints 
+		 */
+		// L.Control.Elevation._d3LazyLoader.then(() => { 
+			let points = [
+				{ lat: 44.928208, lng: 9.913177, label: "Fiorenzuola d'Arda" },
+				{ lat: 44.867153, lng: 10.06313, label: "Fidenza" },
+				{ lat: 44.824982, lng: 10.212771, label: "Ponte Taro" },
+			];
+			points.forEach(p => {
+				controlElevation._registerCheckPoint({latlng: L.latLng(p.lat, p.lng), label: p.label});
+				L.marker(L.latLng(p.lat, p.lng)).addTo(map);
+			});
+		// });
 	</script>
 
 	<script>
