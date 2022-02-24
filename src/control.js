@@ -28,7 +28,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 		Elevation._d3LazyLoader = _.lazyLoader(
 			this.__D3,
-			typeof d3 !== 'object' || !this.options.lazyLoadJS,
+			this.options.lazyLoadJS && typeof d3 !== 'object',
 			Elevation._d3LazyLoader
 		).then(() => {
 			this._addData(d);
@@ -276,7 +276,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	loadXML: function(data) {
 		Elevation._togeojsonLazyLoader = _.lazyLoader(
 			this.__TOGEOJSON,
-			typeof toGeoJSON !== 'function' || !this.options.lazyLoadJS,
+			this.options.lazyLoadJS && typeof toGeoJSON !== 'object',
 			Elevation._togeojsonLazyLoader
 		).then(
 			() => {
@@ -329,7 +329,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		Elevation._d3LazyLoader = _.lazyLoader(
 			this.__D3,
-			typeof d3 !== 'object' || !this.options.lazyLoadJS,
+			this.options.lazyLoadJS && typeof d3 !== 'object',
 			Elevation._d3LazyLoader
 		).then(() => {
 			this._initButton(container);
@@ -1055,7 +1055,7 @@ Elevation.addInitHook(function() {
 			// leaflet-geometryutil
 			Elevation._geomutilLazyLoader = _.lazyLoader(
 				this.__LGEOMUTIL,
-				typeof L.GeometryUtil !== 'function' || !this.options.lazyLoadJS,
+				this.options.lazyLoadJS && typeof L.GeometryUtil !== 'object',
 				Elevation._geomutilLazyLoader
 			).then(
 				() => {
@@ -1064,11 +1064,11 @@ Elevation.addInitHook(function() {
 					if (this.options.almostOver) {
 						Elevation._almostoverLazyLoader = _.lazyLoader(
 							this.__LALMOSTOVER,
-							typeof L.Handler.AlmostOver  !== 'function' || !this.options.lazyLoadJS,
+							this.options.lazyLoadJS && typeof L.Handler.AlmostOver  !== 'function ',
 							Elevation._almostoverLazyLoader
 						).then(
 							() => {
-								map.addHandler('almostOver',L.Handler.AlmostOver)
+								map.addHandler('almostOver', L.Handler.AlmostOver)
 								if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
 									map.almostOver.addLayer(layer);
 									map
@@ -1083,7 +1083,7 @@ Elevation.addInitHook(function() {
 					if (this.options.distanceMarkers) {
 						Elevation._distanceMarkersLazyLoader = _.lazyLoader(
 							this.__LDISTANCEM,
-							typeof L.DistanceMarkers  !== 'function' || !this.options.lazyLoadJS,
+							this.options.lazyLoadJS && typeof L.DistanceMarkers  !== 'function',
 							Elevation._distanceMarkersLazyLoader
 						).then(() => this.options.polyline && layer.addTo(map));
 					} else {
