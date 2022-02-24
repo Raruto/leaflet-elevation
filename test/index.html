@@ -61,6 +61,10 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
+		L.Icon.Default.prototype.options.iconUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png';
+		L.Icon.Default.prototype.options.iconRetinaUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png';
+		L.Icon.Default.prototype.options.shadowUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png';
+		
 		var opts = {
 			map: {
 				center: [41.4583, 12.7059],
@@ -79,9 +83,9 @@
 				// url: `[{"type": "LineString","coordinates": [[-110, 55, 80], [-105, 45, 160], [-100, 40, 50]]}, {"type": "LineString","coordinates": [[-105, 40, 102], [-110, 45, 105], [-115, 55, 200]]}]`,
 				// url: "../examples/time.geojson",
 				// url: "../examples/time.gpx",
-				// url: 'multi.gpx',
+				url: 'multi.gpx',
 				// url: '../examples/demo.kml',
-				url: "../examples/via-emilia.gpx",
+				// url: "../examples/via-emilia.gpx",
 				// url: "../examples/sentiero-italia.gpx",
 				// url: "../examples/demo.geojson",
 				// url: "../examples/waypoints.gpx",
@@ -117,6 +121,7 @@
 					wptIcons: true,
 					wptLabels: true,
 					almostOver: true,
+					lazyLoadJS: true,
 				},
 			},
 			layersControl: {
@@ -186,6 +191,29 @@
 				L.marker(L.latLng(p.lat, p.lng)).addTo(map);
 			});
 		// });
+
+		/**
+		 * Create a custom checkbox control ("position-marker" toggler)
+		 */
+		let markerToggler = L.control({position: 'topleft'});
+		markerToggler.onAdd = (map) => {
+			const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+			div.style.background = '#fff';
+			div.style.padding = '2.5px 5px';
+			div.innerHTML = '<label style="user-select: none;" title="Toggle “position-marker” option"><input type="checkbox" hidden /> <span>elevation-line</span></label>';
+			const box = div.querySelector('input');
+			const span = div.querySelector('span');
+			L.DomEvent.on(div, 'click', (e) => {
+				L.DomEvent.stopPropagation(e);
+				controlElevation._marker.remove();
+				controlElevation.options.marker = opts.elevationControl.options.marker = (box.checked ? 'position-marker' : 'elevation-line');
+				span.innerHTML = (box.checked ? 'position-marker' : 'elevation-line');
+				controlElevation._initMarker(controlElevation._map);
+				// controlElevation.redraw();
+			});
+			return div;
+		};
+		markerToggler.addTo(map);
 	</script>
 
 	<script>
