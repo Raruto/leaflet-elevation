@@ -14,6 +14,34 @@
             <ele>82.4</ele>
             <name>Fiorenzuola d'Arda</name>
         </wpt>
+        <wpt lat="44.801471" lon="10.32803">
+            <ele>65.8</ele>
+            <name>Parma</name>
+        </wpt>
+        <wpt lat="44.693482" lon="10.627903">
+            <ele>62</ele>
+            <name>Reggio Emilia</name>
+        </wpt>
+        <!-- <wpt lat="44.634977" lon="10.93097">
+            <ele>39.1</ele>
+            <name>Modena</name>
+        </wpt>
+        <wpt lat="44.494727" lon="11.343436">
+            <ele>71.4</ele>
+            <name>Bologna</name>
+        </wpt>
+        <wpt lat="44.215784" lon="12.037169">
+            <ele>35.9</ele>
+            <name>Forlì</name>
+        </wpt>
+        <wpt lat="44.141964" lon="12.24902">
+            <ele>35.3</ele>
+            <name>Cesena</name>
+        </wpt>
+        <wpt lat="44.069404" lon="12.545989">
+            <ele>6.6</ele>
+            <name>Rimini</name>
+        </wpt> -->
         <trkseg>
             <trkpt lat="45.047261" lon="9.705598">
                 <ele>59</ele>
@@ -3718,38 +3746,6 @@
                 <ele>65.7</ele>
             </trkpt> -->
         </trkseg>
-    </trk>
-    <trk>
-        <name>PARMA - REGGIO EMILIA</name>
-        <desc>name=ors-export-linestring</desc>
-        <wpt lat="44.801471" lon="10.32803">
-            <ele>65.8</ele>
-            <name>Parma</name>
-        </wpt>
-        <wpt lat="44.693482" lon="10.627903">
-            <ele>62</ele>
-            <name>Reggio Emilia</name>
-        </wpt>
-        <!-- <wpt lat="44.634977" lon="10.93097">
-            <ele>39.1</ele>
-            <name>Modena</name>
-        </wpt>
-        <wpt lat="44.494727" lon="11.343436">
-            <ele>71.4</ele>
-            <name>Bologna</name>
-        </wpt>
-        <wpt lat="44.215784" lon="12.037169">
-            <ele>35.9</ele>
-            <name>Forlì</name>
-        </wpt>
-        <wpt lat="44.141964" lon="12.24902">
-            <ele>35.3</ele>
-            <name>Cesena</name>
-        </wpt>
-        <wpt lat="44.069404" lon="12.545989">
-            <ele>6.6</ele>
-            <name>Rimini</name>
-        </wpt> -->
         <trkseg>
             <trkpt lat="44.801471" lon="10.32803">
                 <ele>65.8</ele>

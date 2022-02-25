@@ -58,6 +58,23 @@ export function GeoJSONLoader(data, control) {
 
 	let { wptIcons, wptLabels } = control.options;
 
+	// Partially fix MultiLineStrings (trk > trkseg + trkseg) splitting them into seperate LineStrings (trk > trkseg, trk > trkseg)
+	data.features.forEach(d => {
+		if(d.type == 'Feature' && d.geometry.type == "MultiLineString") {
+			d.geometry.coordinates.forEach(coords => {
+				data.features.push({
+					type: 'Feature',
+					geometry: {
+						type: 'LineString',
+						coordinates: coords,
+					},
+					properties: d.properties
+				});
+			});
+		} 
+	});
+	data.features = data.features.filter(d=> d.type && d.geometry.type != "MultiLineString");
+
 	let layer = L.geoJson(data, {
 		distanceMarkers: distanceMarkers,
 		style: (feature) => {
