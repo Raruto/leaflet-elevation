@@ -99,6 +99,9 @@ export var Chart = L.Class.extend({
 			// this._x.domain([0, 1]);
 			// this._y.domain([0, 1]);
 		// }
+
+		this._maskGaps = [];
+		this._mask.selectAll(".gap").remove();
 	},
 
 	_drawPath: function(name) {
