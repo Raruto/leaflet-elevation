@@ -36,7 +36,6 @@
   user-select: none;
 }
 
-.elevation-control.elevation .background.zoomed .point,
 .elevation-control.elevation .background.zoomed .axis.time {
   display: none;
 }

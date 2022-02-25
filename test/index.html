@@ -93,7 +93,7 @@
 				// url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
 				// url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
 				options: {
-					preferCanvas: false,
+					preferCanvas: true,
 					theme: "lightblue-theme",
 					collapsed: false,
 					autohide: false,
@@ -140,28 +140,11 @@
 
 		map.on('eledata_loaded', function(e) {
 			if (!controlLayer._map) controlLayer.addTo(map);
-			controlElevation._gaps = controlElevation._data.reduce(function(array, item ) {
-				if (item.trkEnd) array.push([]);
-				if (array.length && (item.trkStart || item.trkEnd)) array[array.length-1].push(item);
-				return array;
-			}, []);
 			e.layer.eachLayer((trkseg) => {
 				if(trkseg.feature.geometry.type != "Point") {
 					controlLayer.addOverlay(trkseg, trkseg.feature.properties.name);
 				}
 			});
-			// console.log('eledata_loaded');
-			// console.log(e);
-		});
-
-		controlElevation.on('eletrack_added', function(e) {
-			this._data[0].trkStart = true;
-			this._data[this._data.length-1].trkEnd = true;
-			this.once('eledata_updated', function(e){
-				this._data[this._data.length-1].trkStart = true;
-			});
-			// console.log('eletrack_added');
-			// console.log(this._data[this._data.length-1], e);
 		});
 
 		controlElevation.load(opts.elevationControl.url);

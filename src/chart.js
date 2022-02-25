@@ -49,7 +49,7 @@ export var Chart = L.Class.extend({
 		this._initScale();
 
 		// Helpers
-		this._clipPath  = chart.get('clipPath');
+		this._mask  = chart.get('mask');
 		this._context   = chart.get('context');
 		this._brush     = chart.get('brush');
 
@@ -60,6 +60,13 @@ export var Chart = L.Class.extend({
 		this._initInteractions();
 
 		// svg.on('resize', (e)=>console.log(e.detail));
+
+		// Handle multi-track segments (BETA)
+		this._maskGaps = [];
+		control.on('eletrack_added', (e) => {
+			this._maskGaps.push(e.index);
+			control.once('eledata_updated', (e) => this._maskGaps.push(e.index));
+		});
 
 	},
 
@@ -178,6 +185,10 @@ export var Chart = L.Class.extend({
 			if (e.sourceEvent && e.sourceEvent.type == "mousedown") svg.style('cursor', 'grabbing');
 			if (e.transform.k == 1 && e.transform.x == 0) {
 				this._container.classed('zoomed', true);
+				// Apply d3-zoom (bind <clipPath> mask)
+				if (this._mask) {
+					this._point.attr('mask', 'url(#' + this._mask.attr('id') + ')');
+				}
 			}
 			this.zooming = true;
 		};
@@ -185,6 +196,10 @@ export var Chart = L.Class.extend({
 		const onEnd  = (e) => {
 			if (e.transform.k ==1 && e.transform.x == 0){
 				this._container.classed('zoomed', false);
+				// Apply d3-zoom (bind <clipPath> mask)
+				if (this._mask) {
+					this._point.attr('mask', null);
+				}
 			}
 			this.zooming = false;
 			svg.style('cursor', '');
@@ -497,6 +512,24 @@ export var Chart = L.Class.extend({
 				[this._width() - margin.right, Infinity]
 			]);
 
+		// Apply svg mask on multi-track segments (BETA)
+		this._mask.selectAll(".gap").remove()
+		this._maskGaps.forEach((d, i) => {
+			if(i >= this._maskGaps.length - 2) return;
+			let d1 = this._data[this._maskGaps[i]];
+			let d2 = this._data[this._maskGaps[i + 1]];
+			let x1 = this._x(this._data[this._findIndexForLatLng(d1.latlng)].dist);
+			let x2 = this._x(this._data[this._findIndexForLatLng(d2.latlng)].dist);
+			this._mask
+				.append("rect")
+				.attr("x", x1)
+				.attr("y", 0)
+				.attr("width", x2 - x1 )
+				.attr("height", this._height())
+				.attr('class', 'gap')
+				.attr('fill-opacity', '0.8')
+				.attr("fill", 'black');  // black = hide
+		});
 	},
 
 	_updateLegend: function () {
@@ -573,8 +606,8 @@ export var Chart = L.Class.extend({
 				}
 
 				// Apply d3-zoom (bind <clipPath> mask)
-				if (this._clipPath) {
-					path.attr('clip-path', 'url(#' + this._clipPath.attr('id') + ')');
+				if (this._mask) {
+					path.attr('mask', 'url(#' + this._mask.attr('id') + ')');
 				}
 
 			});

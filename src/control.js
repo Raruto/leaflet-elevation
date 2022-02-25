@@ -997,6 +997,7 @@ Elevation.addInitHook(function() {
 					}
 				});
 		}
+
 	});
 
 	// Basic canvas renderer support.

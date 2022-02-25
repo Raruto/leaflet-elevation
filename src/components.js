@@ -505,11 +505,11 @@ export const Chart = ({
 	};
 
 	// SVG Paths
-	const clipPath      = panes.area.append("svg:clipPath").attr("id", 'elevation-clipper');
-	const clipRect      = clipPath.append("svg:rect");
+	const mask          = panes.area.append("svg:mask").attr("id", 'elevation-clipper').attr('fill-opacity', 1);
+	const maskRect      = mask.append("svg:rect").attr('class', 'zoom').attr('fill', 'white'); // white = transparent
 
 	// Canvas Paths
-	const foreignObject = panes.area.append('svg:foreignObject');
+	const foreignObject = panes.area.append('svg:foreignObject').attr('mask', 'url(#' + mask.attr('id') + ')');
 	const canvas        = foreignObject.append('xhtml:canvas').attr('class', 'canvas-plot');
 	const context       = canvas.node().getContext('2d');
 
@@ -523,7 +523,7 @@ export const Chart = ({
 	const scale = (opts) => ({ x: Scale(opts.x), y: Scale(opts.y)});
 
 	let utils = {
-		clipPath,
+		mask,
 		canvas,
 		context,
 		brush,
@@ -560,7 +560,7 @@ export const Chart = ({
 			.style("transform", "translate(" + margins.left + "px," + margins.top + "px)");
 		}
 
-		clipRect
+		maskRect
 			.attr("x", 0)
 			.attr("y", 0)
 			.attr("width", _width)
