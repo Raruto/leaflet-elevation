@@ -22,29 +22,6 @@ export function deepMerge(target, ...sources) {
 	return deepMerge(target, ...sources);
 }
 
-/**
- * Wait for document load before execute function.
- */
-export function deferFunc(f) {
-	if (document.readyState !== 'complete') window.addEventListener("load", f, { once: true });
-	else f();
-}
-/**
- * Debounce function to limit events are being fired.
- */
-export function debounce(func, wait, context, immediate) {
-	var timeout;
-	return function() {
-		var args = arguments;
-		clearTimeout(timeout);
-		timeout  = setTimeout(function() {
-			timeout = null;
-		if (!immediate) func.apply(context, args);
-		}, wait);
-		if (immediate && !timeout) func.apply(context, args);
-	};
-}
-
 const SEC  = 1000;
 const MIN  = SEC * 60;
 const HOUR = MIN * 60;
@@ -170,58 +147,10 @@ export function GeoJSONLoader(data, control) {
 }
 
 /**
- * Check DOM element visibility.
- */
-export function isDomVisible(elem) {
-	return !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
-}
-
-/**
  * Check object type.
  */
 export function isObject(item) {
 	return (item && typeof item === 'object' && !Array.isArray(item));
-}
-
-/**
- * Check DOM element viewport visibility.
- */
-export function isVisible(elem) {
-	if (!elem) return false;
-
-	let styles = window.getComputedStyle(elem);
-
-	function isVisibleByStyles(elem, styles) {
-		return styles.visibility !== 'hidden' && styles.display !== 'none';
-	}
-
-	function isAboveOtherElements(elem, styles) {
-		let boundingRect = elem.getBoundingClientRect();
-		let left = boundingRect.left + 1;
-		let right = boundingRect.right - 1;
-		let top = boundingRect.top + 1;
-		let bottom = boundingRect.bottom - 1;
-		let above = true;
-
-		let pointerEvents = elem.style.pointerEvents;
-
-		if (styles['pointer-events'] == 'none') elem.style.pointerEvents = 'auto';
-
-		if (document.elementFromPoint(left, top) !== elem) above = false;
-		if (document.elementFromPoint(right, top) !== elem) above = false;
-
-		// Only for completely visible elements
-		// if (document.elementFromPoint(left, bottom) !== elem) above = false;
-		// if (document.elementFromPoint(right, bottom) !== elem) above = false;
-
-		elem.style.pointerEvents = pointerEvents;
-
-		return above;
-	}
-
-	if (!isVisibleByStyles(elem, styles)) return false;
-	if (!isAboveOtherElements(elem, styles)) return false;
-	return true;
 }
 
 /**
@@ -259,6 +188,17 @@ export function isXMLDoc(doc, lazy) {
 }
 
 /**
+ * Generate download data event.
+ */
+ export function saveFile(dataURI, fileName) {
+	let a = create('a', '', { href: dataURI, target: '_new', download: fileName || "", style: "display:none;" });
+	let b = document.body;
+	b.appendChild(a);
+	a.click();
+	b.removeChild(a);
+}
+
+/**
  * Async JS script download.
  */
 export function lazyLoader(url, skip, loader) {
@@ -276,39 +216,71 @@ export function lazyLoader(url, skip, loader) {
 	});
 }
 
-/**
- * Generate download data event.
- */
-export function saveFile(dataURI, fileName) {
-	let a = create('a', '', { href: dataURI, target: '_new', download: fileName || "", style: "display:none;" });
-	let b = document.body;
-	b.appendChild(a);
-	a.click();
-	b.removeChild(a);
+export function lazyLoad(src, control) {
+	if (!control.options.lazyLoadJS) return Promise.resolve();
+
+	const Elevation = L.Control.Elevation;
+	let loader      = '';
+	let condition = false;
+
+	switch(src) {
+		case control.__D3:
+			loader    = '_d3LazyLoader';
+			condition = typeof d3 !== 'object';
+		break;
+		case control.__TOGEOJSON:
+			loader    = '_togeojsonLazyLoader';
+			condition = typeof toGeoJSON !== 'object';
+		break;
+		case control.__LGEOMUTIL:
+			loader    = '_geomutilLazyLoader';
+			condition = typeof L.GeometryUtil !== 'object';
+		case control.__LALMOSTOVER:
+			loader    = '_almostoverLazyLoader';
+			condition = typeof L.Handler.AlmostOver  !== 'function ';
+		break;
+		case control.__LDISTANCEM:
+			loader    = '_distanceMarkersLazyLoader';
+			condition = typeof L.DistanceMarkers  !== 'function';
+		break;
+	}
+	return Elevation[loader] = lazyLoader(src, condition, Elevation[loader]);
 }
 
 /**
- * Wait for element visible before execute function.
+ * Convert SVG Path into Path2D and then update canvas
  */
-export function waitHolder(elem) {
-	return new Promise((resolve, reject) => {
-		let ticking = false;
-		let scrollFn = () => {
-			if (!ticking) {
-				L.Util.requestAnimFrame(() => {
-					if (isVisible(elem)) {
-						window.removeEventListener('scroll', scrollFn);
-						resolve();
-					}
-					ticking = false;
-				});
-				ticking = true;
-			}
-		};
-		window.addEventListener('scroll', scrollFn);
-		if (elem) elem.addEventListener('mouseenter', scrollFn, { once: true });
-		scrollFn();
-	});
+ export function drawCanvas(ctx, path) {
+	path.classed('canvas-path', true);
+
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	let p = new Path2D(path.attr('d'));
+
+	ctx.strokeStyle = path.attr('stroke');
+	ctx.fillStyle   = path.attr('fill');
+	ctx.lineWidth   = 1.25;
+	ctx.globalCompositeOperation = 'source-over';
+
+	// stroke opacity
+	ctx.globalAlpha = path.attr('stroke-opacity') || 0.3;
+	ctx.stroke(p);
+
+	// fill opacity
+	ctx.globalAlpha = path.attr('fill-opacity')   || 0.45;
+	ctx.fill(p);
+
+	ctx.globalAlpha = 1;
+
+	ctx.closePath();
+}
+
+/**
+ * Limit a number between min / max values
+ */
+ export function clamp(val, range) {
+	if (range) return val < range[0] ? range[0] : val > range[1] ? range[1] : val;
+	return val;
 }
 
 /**
@@ -401,10 +373,16 @@ export const off = L.DomEvent.off;
 export const hasClass = L.DomUtil.hasClass;
 
 
+/**
+ * Generate a random string
+ */
 export function randomId() {
 	return Math.random().toString(36).substr(2, 9);
 }
 
+/**
+ * Execute a function foreach element in object
+ */
 export function each(obj, fn) {
 	for (let i in obj) fn(obj[i], i);
 }

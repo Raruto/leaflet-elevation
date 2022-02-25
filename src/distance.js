@@ -8,12 +8,12 @@ Elevation.addInitHook(function() {
 	let opts     = this.options;
 	let distance = {};
 
-	if (this.options.imperial) {
-		this._distanceFactor = this.__mileFactor;
-		this._xLabel         = "mi";
+	if (opts.imperial) {
+		opts.distanceFactor = this.__mileFactor;
+		distance.label      = "mi";
 	} else {
-		this._distanceFactor = opts.distanceFactor;
-		this._xLabel         = opts.xLabel;
+		opts.distanceFactor = opts.distanceFactor || 1;
+		distance.label      = opts.xLabel;
 	}
 
 	this.on("eledata_updated", function(e) {
@@ -26,13 +26,13 @@ Elevation.addInitHook(function() {
 		let curr = data[i].latlng;
 		let prev = i > 0 ? data[i - 1].latlng : curr;
 
-		let delta = curr.distanceTo(prev) * this._distanceFactor;
+		let delta = curr.distanceTo(prev) * opts.distanceFactor;
 
 		dist += Math.round(delta / 1000 * 100000) / 100000; // handles floating points calc
 
-		data[i].dist = dist;
-
 		track.distance = dist;
+
+		data[i].dist = dist;
 	});
 
 	this.on("elechart_axis", function() {
@@ -49,13 +49,10 @@ Elevation.addInitHook(function() {
 
 		this.on("elechart_axis", function() {
 
-			distance.x     = this._chart._x;
-			distance.label = this._chart._xLabel;
-
 			this._chart._registerAxisScale({
 				axis    : "x",
 				position: "bottom",
-				scale   : distance.x,
+				scale   : this._chart._x,
 				label   : distance.label,
 				labelY  : 25,
 				labelX  : () => this._width() + 6,
@@ -66,15 +63,15 @@ Elevation.addInitHook(function() {
 
 	}
 
-	this._registerFocusLabel({
+	this._registerTooltip({
 		name: 'x',
-		chart: (item) => L._("x: ") + d3.format("." + opts.decimalsX + "f")(item[opts.xAttr]) + " " + this._xLabel,
+		chart: (item) => L._("x: ") + d3.format("." + opts.decimalsX + "f")(item[opts.xAttr]) + " " + distance.label,
 	});
 
 	this._registerSummary({
 		"totlen"  : {
 			label: "Total Length: ",
-			value: (track) => (track.distance || 0).toFixed(2) + '&nbsp;' + this._xLabel
+			value: (track) => (track.distance || 0).toFixed(2) + '&nbsp;' + distance.label
 		}
 	});
 

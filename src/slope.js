@@ -74,26 +74,17 @@ Elevation.addInitHook(function() {
 		}
 
 		// Range of acceptable slope values.
-		if (this.options.sRange) {
-			let range = this.options.sRange;
-			if (slope < range[0])      slope = range[0];
-			else if (slope > range[1]) slope = range[1];
-		}
-
-		slope = L.Util.formatNum(slope, 2);
-
-		if (slope > sMax) sMax = slope;
-		if (slope < sMin) sMin = slope;
-
-		data[i].slope   = slope;
+		slope = _.clamp(slope, this.options.sRange);
 
 		track.ascent    = tAsc;
 		track.descent   = tDes;
-		track.slope_max = sMax;
-		track.slope_min = sMin;
+		track.slope_max = slope > sMax ? slope : sMax;
+		track.slope_min = slope < sMin ? slope : sMin;
+
+		data[i].slope   = L.Util.formatNum(slope, 2);
 	});
 
-	this._registerFocusLabel({
+	this._registerTooltip({
 		name: 'slope',
 		chart: (item) => L._("m: ") + item.slope + slope.label,
 		marker: (item) => Math.round(item.slope) + slope.label
@@ -102,11 +93,11 @@ Elevation.addInitHook(function() {
 	this._registerSummary({
 		"ascent"  : {
 			label: "Total Ascent: ",
-			value: (track) => Math.round(track.ascent || 0) + '&nbsp;' + this._yLabel
+			value: (track) => Math.round(track.ascent || 0) + '&nbsp;' + (this.options.imperial ? 'ft' : 'm')
 		},
 		"descent"  : {
 			label: "Total Descent: ",
-			value: (track) => Math.round(track.descent || 0) + '&nbsp;' + this._yLabel
+			value: (track) => Math.round(track.descent || 0) + '&nbsp;' + (this.options.imperial ? 'ft' : 'm')
 		},
 		"minslope": {
 			label: "Min Slope: ",

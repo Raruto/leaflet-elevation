@@ -9,21 +9,21 @@ Elevation.addInitHook(function() {
 	let altitude = {};
 
 	if (opts.imperial) {
-		this._heightFactor = this.__footFactor;
-		this._yLabel       = "ft";
+		opts.altitudeFactor = this.__footFactor;
+		altitude.label      = "ft";
 	} else {
-		this._heightFactor = opts.heightFactor;
-		this._yLabel       = opts.yLabel;
+		opts.altitudeFactor = opts.heightFactor || opts.altitudeFactor || 1;
+		altitude.label      = opts.yLabel;
 	}
 
 	this.on("eledata_updated", function(e) {
 		let data   = this._data;
 		let i      = e.index;
-		let z      = data[i].z * this._heightFactor;
+		let z      = data[i].z * opts.altitudeFactor;
 
 		let track  = this.track_info;
-		let eleMax = track.elevation_max || -Infinity;
-		let eleMin = track.elevation_min || +Infinity;
+		let zMax = track.elevation_max || -Infinity;
+		let zMin = track.elevation_min || +Infinity;
 
 		// check and fix missing elevation data on last added point
 		if (!this.options.skipNullZCoords && i > 0) {
@@ -44,15 +44,13 @@ Elevation.addInitHook(function() {
 		}
 		// skip point if it has not elevation
 		if (!isNaN(z)) {
-			eleMax = eleMax < z ? z : eleMax;
-			eleMin = eleMin > z ? z : eleMin;
 			this._lastValidZ = z;
 		}
 
-		data[i].z = z;
+		track.elevation_max = z > zMax ? z : zMax;
+		track.elevation_min = z < zMin ? z : zMin;
 
-		track.elevation_max = eleMax;
-		track.elevation_min = eleMin;
+		data[i].z = z;
 	});
 
 	this.on("elechart_axis", function() {
@@ -69,13 +67,10 @@ Elevation.addInitHook(function() {
 
 		this.on("elechart_axis", function() {
 
-			altitude.y     = this._chart._y;
-			altitude.label = this._yLabel;
-
 			this._chart._registerAxisScale({
 				axis    : "y",
 				position: "left",
-				scale   : altitude.y,
+				scale   : this._chart._y,
 				label   : altitude.label,
 				labelX  : -3,
 				labelY  : -8,
@@ -88,8 +83,6 @@ Elevation.addInitHook(function() {
 
 			let theme      = this.options.theme.replace('-theme', '');
 			let color      = D3.Colors[theme] || {};
-			let alpha      = (this.options.detached ? (color.alpha || '0.8') : 1);
-			let stroke     = (this.options.detached ? color.stroke : false);
 
 			this._chart._registerAreaPath({
 				name         : 'altitude',
@@ -97,9 +90,9 @@ Elevation.addInitHook(function() {
 				scaleX       : 'distance',
 				scaleY       : 'altitude',
 				color        : color.area || theme,
-				strokeColor  : stroke || '#000',
+				strokeColor  : this.options.detached ? color.stroke : '#000',
 				strokeOpacity: "1",
-				fillOpacity  : alpha,
+				fillOpacity  : this.options.detached ? (color.alpha || '0.8') : 1,
 				preferCanvas : this.options.preferCanvas,
 			});
 
@@ -107,20 +100,20 @@ Elevation.addInitHook(function() {
 
 	}
 
-	this._registerFocusLabel({
+	this._registerTooltip({
 		name: 'y',
-		chart: (item) => L._("y: ") + d3.format("." + opts.decimalsY + "f")(item[opts.yAttr]) + " " + this._yLabel,
-		marker: (item) => d3.format("." + opts.decimalsY + "f")(item[opts.yAttr]) + " " + this._yLabel,
+		chart: (item) => L._("y: ") + d3.format("." + opts.decimalsY + "f")(item[opts.yAttr]) + " " + altitude.label,
+		marker: (item) => d3.format("." + opts.decimalsY + "f")(item[opts.yAttr]) + " " + altitude.label,
 	});
 
 	this._registerSummary({
 		"maxele"  : {
 			label: "Max Elevation: ",
-			value: (track) => (track.elevation_max || 0).toFixed(2) + '&nbsp;' + this._yLabel
+			value: (track) => (track.elevation_max || 0).toFixed(2) + '&nbsp;' + altitude.label
 		},
 		"minele"  : {
 			label: "Min Elevation: ",
-			value: (track) => (track.elevation_min || 0).toFixed(2) + '&nbsp;' + this._yLabel
+			value: (track) => (track.elevation_min || 0).toFixed(2) + '&nbsp;' + altitude.label
 		},
 	});
 

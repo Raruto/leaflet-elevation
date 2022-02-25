@@ -7,39 +7,28 @@ export var Marker = L.Class.extend({
 	initialize: function(options) {
 		this.options = options;
 
-		if (this.options.imperial) {
-			this._xLabel = "mi";
-			this._yLabel = "ft";
-		} else {
-			this._xLabel = this.options.xLabel;
-			this._yLabel = this.options.yLabel;
+		switch(this.options.marker) {
+			case 'elevation-line':
+				// this._container = d3.create("g").attr("class", "height-focus-group");
+				this._container = d3.select(map.getPane('elevationPane')).select("svg > g")
+					.attr("class", "height-focus-group");
+			break;
+			case 'position-marker':
+				// this._marker   = L.circleMarker([0, 0], { pane: 'overlayPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
+				this._marker      = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
+			break;
 		}
 
-		if (this.options.marker == 'elevation-line') {
-			// this._container = d3.create("g").attr("class", "height-focus-group");
-			this._focusline   = d3.create('svg:line');
-			this._focusmarker = d3.create("svg:circle");
-			this._focuslabel  = d3.create("svg:text");
-		} else if (this.options.marker == 'position-marker') {
-			// this._marker   = L.circleMarker([0, 0], { pane: 'overlayPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
-			this._marker      = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
-		}
-
-		this._focuslabels = {};
+		this._labels = {};
 
 		return this;
 	},
 
 	addTo: function(map) {
 		this._map = map;
-		if (this.options.marker == 'elevation-line') {
-			let g = this._container = d3.select(map.getPane('elevationPane')).select("svg > g")
-				.attr("class", "height-focus-group");
-			g.append(() => this._focusline.node());
-			g.append(() => this._focusmarker.node());
-			g.append(() => this._focuslabel.node());
-		} else if (this.options.marker == 'position-marker') {
-			this._marker.addTo(map, { pane: 'overlayPane' });
+		switch(this.options.marker) {
+			case 'elevation-line':  this._container.call(D3.PositionMarker({}));      break;
+			case 'position-marker': this._marker.addTo(map, { pane: 'overlayPane' }); break;
 		}
 		return this;
 	},
@@ -56,58 +45,27 @@ export var Marker = L.Class.extend({
 		if (props.options) this.options = props.options;
 		if (!this._map) this.addTo(props.map);
 
-		let opts = this.options;
-		let map = this._map;
-
 		this._latlng = props.item.latlng;
 
-		let pos = map.latLngToLayerPoint(this._latlng);
-
-		if (map._rotate) {
-			pos = map.rotatedPointToMapPanePoint(pos);
-		}
-
-		let point = L.extend({}, props.item, pos);
-
-		if (this.options.marker == 'elevation-line') {
-
-			let normalizedAlt = this._height() / props.maxElevation * point.z;
-			let normalizedY   = point.y - normalizedAlt;
-
-			this._container.classed("leaflet-hidden", false);
-
-			this._focusmarker
-				.call(
-					D3.HeightFocusMarker({
-						theme : opts.theme,
-						xCoord: point.x,
-						yCoord: point.y,
-					}));
-
-			this._focusline
-				.call(
-					D3.HeightFocusLine({
-						theme : opts.theme,
-						xCoord: point.x,
-						yCoord: point.y,
-						length: normalizedY
-					})
-				);
-
-			this._focuslabel
-				.call(
-					D3.HeightFocusLabel({
-						theme : opts.theme,
-						xCoord: point.x,
-						yCoord: normalizedY,
-						labels: this._focuslabels,
-						item: point
-					})
-				);
-
-		} else if (this.options.marker == 'position-marker') {
-			_.removeClass(this._marker.getElement(), 'leaflet-hidden');
-			this._marker.setLatLng(this._latlng);
+		switch(this.options.marker) {
+			case 'elevation-line':
+				let point   = this._map.latLngToLayerPoint(this._latlng);
+				point = L.extend({}, props.item, this._map._rotate ? this._map.rotatedPointToMapPanePoint(point) : point);
+		
+				this._container.classed("leaflet-hidden", false);
+				this._container.call(D3.PositionMarker({
+					theme : this.options.theme,
+					xCoord: point.x,
+					yCoord: point.y,
+					length: point.y - (this._height() / props.maxElevation * point.z), // normalized Y
+					labels: this._labels,
+					item: point
+				}));
+			break;
+			case 'position-marker':
+				_.removeClass(this._marker.getElement(), 'leaflet-hidden');
+				this._marker.setLatLng(this._latlng);
+			break;
 		}
 	},
 
@@ -116,10 +74,9 @@ export var Marker = L.Class.extend({
 	 */
 	remove: function() {
 		this._props = null;
-		if (this.options.marker == 'elevation-line') {
-			if (this._container) this._container.classed("leaflet-hidden", true);
-		} else if (this.options.marker == 'position-marker') {
-			_.addClass(this._marker.getElement(), 'leaflet-hidden');
+		switch(this.options.marker) {
+			case 'elevation-line':  this._container && this._container.classed("leaflet-hidden", true); break;
+			case 'position-marker': _.addClass(this._marker.getElement(), 'leaflet-hidden');            break;
 		}
 	},
 
@@ -135,8 +92,8 @@ export var Marker = L.Class.extend({
 		return opts.height - opts.margins.top - opts.margins.bottom;
 	},
 
-	_registerFocusLabel: function(props) {
-		this._focuslabels[props.name] = props;
+	_registerTooltip: function(props) {
+		this._labels[props.name] = props;
 	}
 
 });

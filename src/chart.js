@@ -14,13 +14,13 @@ export var Chart = L.Class.extend({
 
 		// cache registered components
 		this._props        = {
-			scales     : {},
-			paths      : {},
-			areas      : {},
-			grids      : {},
-			axes       : {},
-			legendItems: {},
-			focusLabels: {},
+			scales      : {},
+			paths       : {},
+			areas       : {},
+			grids       : {},
+			axes        : {},
+			legendItems : {},
+			tooltipItems: {},
 		};
 
 		this._scales       = {};
@@ -30,14 +30,6 @@ export var Chart = L.Class.extend({
 
 		this._brushEnabled = opts.dragging;
 		this._zoomEnabled  = opts.zooming;
-
-		if (opts.imperial) {
-			this._xLabel  = "mi";
-			this._yLabel  = "ft";
-		} else {
-			this._xLabel  = opts.xLabel;
-			this._yLabel  = opts.yLabel;
-		}
 
 		let chart       = this._chart = D3.Chart(opts);
 
@@ -50,21 +42,16 @@ export var Chart = L.Class.extend({
 		this._point     = chart.pane('point');
 		this._axis      = chart.pane('axis');
 		this._legend    = chart.pane('legend');
+		this._tooltip   = chart.pane('tooltip');
+		this._ruler     = chart.pane('ruler');
 
 		// Scales
 		this._initScale();
 
 		// Helpers
 		this._clipPath  = chart.get('clipPath');
-		this._canvas    = chart.get('canvas');
 		this._context   = chart.get('context');
-		this._dragG     = chart.get('dragG');
-		this._focusG    = chart.get('focusG');
 		this._brush     = chart.get('brush');
-
-		// Tooltip
-		this._focusline  = this._focusG.select('.mouse-focus-line');
-		this._focuslabel = this._focusG.select('.mouse-focus-label');
 
 		this._zoom = d3.zoom();
 		this._drag = d3.drag();
@@ -101,62 +88,33 @@ export var Chart = L.Class.extend({
 		this._area.selectAll('path').attr("d", "M0 0");
 		this._context.clearRect(0, 0, this._width(), this._height());
 
-		if (this._path) {
+		// if (this._path) {
 			// this._x.domain([0, 1]);
 			// this._y.domain([0, 1]);
-		}
+		// }
 	},
 
 	_drawPath: function(name) {
-		let opts   = this.options;
-		let ctx    = this._context;
-
 		let path   = this._paths[name];
 		let area   = this._props.areas[name];
-		let node   = path.node();
-		let scaleX = this._scales[area.scaleX];
-		let scaleY = this._scales[area.scaleY];
 
-		area = L.extend({}, area, {
-			width        : this._width(),
-			height       : this._height(),
-			scaleX       : scaleX,
-			scaleY       : scaleY
-		});
-
-		if (!scaleY || !scaleY) {
-			return console.warn('Unable to render path:' + name);
-		}
-
-		path.datum(this._data).attr("d", D3.Area(area));
+		path.datum(this._data).attr("d",
+			D3.Area(
+				L.extend({}, area, {
+					width        : this._width(),
+					height       : this._height(),
+					scaleX       : this._scales[area.scaleX],
+					scaleY       : this._scales[area.scaleY]
+				})
+			)
+		);
 
 		if (path.classed('leaflet-hidden')) return;
 
-		if (opts.preferCanvas) {
-			path.classed('canvas-path', true);
-
-			ctx.beginPath();
-			ctx.moveTo(0, 0);
-			let p = new Path2D(path.attr('d'));
-
-			ctx.strokeStyle = path.attr('stroke');
-			ctx.fillStyle   = path.attr('fill');
-			ctx.lineWidth   = 1.25;
-			ctx.globalCompositeOperation = 'source-over';
-
-			// stroke opacity
-			ctx.globalAlpha = path.attr('stroke-opacity') || 0.3;
-			ctx.stroke(p);
-
-			// fill opacity
-			ctx.globalAlpha = path.attr('fill-opacity')   || 0.45;
-			ctx.fill(p);
-
-			ctx.globalAlpha = 1;
-
-			ctx.closePath();
+		if (this.options.preferCanvas) {
+			_.drawCanvas(this._context, path);
 		} else {
-			this._area.append(() => node);
+			this._area.append(() => path.node());
 		}
 	},
 
@@ -307,8 +265,8 @@ export var Chart = L.Class.extend({
 
 		const label     = (e, d) => {
 			let yMax      = this._height();
-			let y         = this._dragG.data()[0].y;
-			if (y >= yMax || y <= 0) this._dragG.select(".horizontal-drag-label").text('');
+			let y         = this._ruler.data()[0].y;
+			if (y >= yMax || y <= 0) this._ruler.select(".horizontal-drag-label").text('');
 			this._hideDiagramIndicator();
 		};
 
@@ -317,15 +275,15 @@ export var Chart = L.Class.extend({
 			let yCoord    = d3.pointers(e, this._area.node())[0][1];
 			let y         = yCoord > 0 ? (yCoord < yMax ? yCoord : yMax) : 0;
 			let z         = this._y.invert(y);
-			let data      = L.extend(this._dragG.data()[0], { y: y });
+			let data      = L.extend(this._ruler.data()[0], { y: y });
 
-			this._dragG
+			this._ruler
 				.data([data])
 				.attr("transform", d => "translate(" + d.x + "," + d.y + ")")
 				.classed('active', y < yMax);
 
 			this._container.select(".horizontal-drag-label")
-				.text(formatNum(z) + " " + this._yLabel);
+				.text(formatNum(z) + " " + (this.options.imperial ? 'ft' : 'm'));
 
 			this.fire('ruler_filter', { coords: yCoord < yMax && yCoord > 0 ? this._findCoordsForY(yCoord) : [] });
 		}
@@ -334,7 +292,7 @@ export var Chart = L.Class.extend({
 		.on("start end", label)
 		.on("drag", position);
 
-		this._dragG.call(drag);
+		this._ruler.call(drag);
 
 	},
 
@@ -427,7 +385,7 @@ export var Chart = L.Class.extend({
 	},
 
 	/**
-	 * Add a waypoint of interest over the chart
+	 * Add a point of interest over the chart
 	 */
 	_registerCheckPoint: function(point) {
 		if (!this._data.length) return;
@@ -442,58 +400,19 @@ export var Chart = L.Class.extend({
 			x    = this._x(point.dist);
 			item = this._data[this._findIndexForXCoord(x)]
 			y    = this._y(item.z);
-		} else
+		} 
 
-		if (isNaN(x) || isNaN(y)) return;
-
-		if (!point.item || !point.item.property('isConnected')) {
-			point.position = point.position || "bottom";
-
-			point.item = this._point.append('g');
-
-			point.item.append("svg:line")
-				.attr("y1", 0)
-				.attr("x1", 0)
-				.attr("style","stroke: rgb(51, 51, 51); stroke-width: 0.5; stroke-dasharray: 2, 2;");
-
-			point.item
-				.append("svg:circle")
-				.attr("class", " height-focus circle-lower")
-				.attr("r", 3);
-
-			if (point.label) {
-				point.item.append("svg:text")
-					.attr("dx", "4px")
-					.attr("dy", "-4px");
-			}
-		}
-
-		point.item
-			.datum({
-				pos: point.position,
-				x: x,
-				y: y
-			})
-			.attr("class", d => "point " + d.pos)
-			.attr("transform", d => "translate(" + d.x + "," + d.y + ")");
-
-		point.item.select('line')
-			.datum({
-				y2: ({'top': -y, 'bottom': this._height() - y})[point.position],
-				x2: ({'left': -x, 'right': this._width() - x})[point.position] || 0
-			})
-			.attr("y2", d => d.y2)
-			.attr("x2", d => d.x2)
-
-		if (point.label) {
-			point.item.select('text')
-				.text(point.label);
-		}
-
+		this._point.call(D3.CheckPoint({
+			point: point,
+			width: this._width(),
+			height: this._height(),
+			x: x,
+			y: y,
+		}));
 	},
 
-	_registerFocusLabel: function(props) {
-		this._props.focusLabels[props.name] = props;
+	_registerTooltip: function(props) {
+		this._props.tooltipItems[props.name] = props;
 	},
 
 	_updateArea: function() {
@@ -582,7 +501,7 @@ export var Chart = L.Class.extend({
 
 	_updateLegend: function () {
 
-		if (this.options.legend == false) return;
+		if (this.options.legend === false) return;
 
 		let legends = this._props.legendItems;
 		let legend;
@@ -664,16 +583,10 @@ export var Chart = L.Class.extend({
 	_updateScale: function() {
 		if (this.zooming) return { x: this._x, y: this._y };
 
-		let opts = this.options;
-
-		let scales  = this._scales;
-		let d = this._domains;
-		let r = this._ranges;
-
-		for (let i in scales) {
-			scales[i]
-			.domain(d[i](this._data))
-			.range(r[i](this._width(), this._height()))
+		for (let i in this._scales) {
+			this._scales[i]
+				.domain(this._domains[i](this._data))
+				.range(this._ranges[i](this._width(), this._height()))
 		}
 
 		return { x: this._x, y: this._y };
@@ -772,31 +685,19 @@ export var Chart = L.Class.extend({
 	 * Display distance and altitude level ("focus-rect").
 	 */
 	_showDiagramIndicator: function(item, xCoordinate) {
-		let opts        = this.options;
-		let yCoordinate = this._y(item[opts.yAttr]);
-
-		this._focusG.attr("display", null);
-
-		this._focusline.call(
-			D3.MouseFocusLine({
+		this._tooltip
+			.attr("display", null)
+			.call(D3.Tooltip({
 				xCoord: xCoordinate,
-				height: this._height()
-			})
-		);
-
-		this._focuslabel.call(
-			D3.MouseFocusLabel({
-				xCoord: xCoordinate,
-				yCoord: yCoordinate,
+				yCoord: this._y(item[this.options.yAttr]),
 				height: this._height(),
 				width : this._width(),
-				labels: this._props.focusLabels,
+				labels: this._props.tooltipItems,
 				item: item
-			})
-		);
+			}));
 	},
 
 	_hideDiagramIndicator: function() {
-		this._focusG.attr("display", 'none');
+		this._tooltip.attr("display", 'none');
 	},
 });

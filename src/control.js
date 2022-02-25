@@ -23,18 +23,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
 	 */
 	addData: function(d, layer) {
-		if (typeof layer === "undefined" && d.on) {
-			layer = d;
-		}
-		Elevation._d3LazyLoader = _.lazyLoader(
-			this.__D3,
-			this.options.lazyLoadJS && typeof d3 !== 'object',
-			Elevation._d3LazyLoader
-		).then(() => {
-			this._addData(d);
-			this._addLayer(layer);
-			this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
-		});
+		this.lazyLoad(this.__D3)
+			.then(() => {
+				if (typeof layer === "undefined" && d.on) {
+					layer = d;
+				}
+				this._addData(d);
+				this._addLayer(layer);
+				this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
+			});
 	},
 
 	/**
@@ -108,20 +105,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Alias for enableBrush
-	 */
-	enableDragging: function() {
-		this.enableBrushing();
-	},
-
-	/**
-	 * Alias for disableBrush
-	 */
-	disableDragging: function() {
-		this.disableBrushing();
-	},
-
-	/**
 	 * Disable chart zooming.
 	 */
 	disableZoom: function() {
@@ -153,7 +136,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Get default zoom level when "followMarker" is true.
 	 */
 	getZFollow: function() {
-		return this._zFollow;
+		return this.options.zFollow;
 	},
 
 	/**
@@ -172,75 +155,38 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._markers        = L.featureGroup();
 		this._markedSegments = L.polyline([]);
 		this._chartEnabled   = true,
-
 		this.track_info      = {};
-
 		this.options         = _.deepMerge({}, this.options, options);
 
-		this._zFollow        = this.options.zFollow;
-
-		if (this.options.followMarker) this._setMapView = L.Util.throttle(this._setMapView, 300, this);
-		if (this.options.placeholder)  this.options.loadData.lazy = this.options.loadData.defer = true;
-
-		if (this.options.legend)       this.options.margins.bottom += 30;
-
-		if (this.options.theme)        this.options.polylineSegments.className += ' ' + this.options.theme;
+		if (this.options.followMarker)      this._setMapView = L.Util.throttle(this._setMapView, 300, this);
+		if (this.options.legend)            this.options.margins.bottom += 30;
+		if (this.options.theme)             this.options.polylineSegments.className += ' ' + this.options.theme;
+		if (this.options.wptIcons === true) this.options.wptIcons = Options.wptIcons;
 
 		this._markedSegments.setStyle(this.options.polylineSegments);
-
-		// this._resizeChart   = _.debounce(this._resizeChart,   300, this);
-		// this._resizeChart = L.Util.throttle(this._resizeChart, 300, this);
-
-		// if (L.Browser.mobile) {
-		// 	this._updateChart   = _.debounce(this._updateChart,   300, this);
-		// 	this._updateSummary = _.debounce(this._updateSummary, 300, this);
-		// }
-
-		if (this.options.wptIcons === true) this.options.wptIcons = Options.wptIcons;
 
 		// Leaflet canvas renderer colors
 		L.extend(D3.Colors, this.options.colors || {});
 	},
 
 	/**
-	 * Alias for loadData
+	 * Javascript scripts downloader (lazy loader)
 	 */
-	load: function(data, opts) {
-		this.loadData(data, opts);
-	},
-
-	/**
-	 * Alias for addTo
-	 */
-	loadChart: function(map) {
-		this.addTo(map);
+	lazyLoad: function(src) {
+		return _.lazyLoad(src, this);
 	},
 
 	/**
 	 * Load elevation data (GPX, GeoJSON or KML).
 	 */
-	loadData: function(data, opts) {
-		opts = L.extend({}, this.options.loadData, opts);
-		if (opts.defer) {
-			this.loadDefer(data, opts);
-		} else if (opts.lazy) {
-			this.loadLazy(data, opts);
-		} else if (_.isXMLDoc(data)) {
+	load: function(data) {
+		if (_.isXMLDoc(data)) {
 			this.loadXML(data);
 		} else if (_.isJSONDoc(data)) {
 			this.loadGeoJSON(data);
 		} else {
 			this.loadFile(data);
 		}
-	},
-
-	/**
-	 * Wait for document load before download data.
-	 */
-	loadDefer: function(data, opts) {
-		opts       = L.extend({}, this.options.loadData, opts);
-		opts.defer = false;
-		_.deferFunc(L.bind(this.loadData, this, data, opts));
 	},
 
 	/**
@@ -251,7 +197,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.then((response) => response.text())
 			.then((data)     => {
 				this._downloadURL = url; // TODO: handle multiple urls?
-				this.loadData(data, { lazy: false, defer: false });
+				this.load(data);
 			})
 			.catch((err) => console.warn(err));
 	},
@@ -264,22 +210,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Alias for loadXML
-	 */
-	loadGPX: function(data){
-		this.loadXML(data);
-	},
-
-	/**
 	 * Load raw XML data.
 	 */
 	loadXML: function(data) {
-		Elevation._togeojsonLazyLoader = _.lazyLoader(
-			this.__TOGEOJSON,
-			this.options.lazyLoadJS && typeof toGeoJSON !== 'object',
-			Elevation._togeojsonLazyLoader
-		).then(
-			() => {
+		this.lazyLoad(this.__TOGEOJSON)
+			.then(() => {
 				let xml     = (new DOMParser()).parseFromString(data, "text/xml");
 				let type    = xml.documentElement.tagName.toLowerCase(); // "kml" or "gpx"
 				if (!(type in toGeoJSON)) {
@@ -291,21 +226,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				else if(this._downloadURL) { geojson.name = this._downloadURL.split('/').pop().split('#')[0].split('?')[0]; }
 
 				return this.loadGeoJSON(geojson, this);
-			}
-		);
-	},
-
-	/**
-	 * Wait for chart container visible before download data.
-	 */
-	loadLazy: function(data, opts) {
-		opts     = L.extend({}, this.options.loadData, opts);
-		let elem = opts.lazy.parentNode ? opts.lazy : this.placeholder;
-		_.waitHolder(elem)
-			.then(() => {
-				opts.lazy = false;
-				this.loadData(data, opts)
-				this.once('eledata_loaded', () => this.placeholder.parentNode.removeChild(elem));
 			});
 	},
 
@@ -321,40 +241,31 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (!this.options.detached) {
 			_.addClass(container, 'leaflet-control');
 		}
+		this.lazyLoad(this.__D3)
+			.then(() => {
+				this._initButton(container);
+				this._initChart(container);
+				this._initSummary(container);
+				this._initMarker(map);
+				this._initLayer(map);
 
-		if (this.options.placeholder && !this._data.length) {
-			this.placeholder = _.create('img', 'elevation-placeholder', typeof this.options.placeholder === 'string' ? { src: this.options.placeholder, alt: '' } : this.options.placeholder);
-			_.insert(container, this.placeholder, 'afterbegin');
-		}
+				map
+					.on('zoom viewreset zoomanim',       this._hideMarker,    this)
+					.on('resize',                        this._resetView,     this)
+					.on('resize',                        this._resizeChart,   this)
+					.on('rotate',                        this._rotateMarker,  this)
+					.on('mousedown',                     this._resetDrag,     this);
 
-		Elevation._d3LazyLoader = _.lazyLoader(
-			this.__D3,
-			this.options.lazyLoadJS && typeof d3 !== 'object',
-			Elevation._d3LazyLoader
-		).then(() => {
-			this._initButton(container);
-			this._initChart(container);
-			this._initSummary(container);
-			this._initMarker(map);
-			this._initLayer(map);
+				_.on(map.getContainer(), 'mousewheel', this._resetDrag,     this);
+				_.on(map.getContainer(), 'touchstart', this._resetDrag,     this);
 
-			map
-				.on('zoom viewreset zoomanim',       this._hideMarker,    this)
-				.on('resize',                        this._resetView,     this)
-				.on('resize',                        this._resizeChart,   this)
-				.on('rotate',                        this._rotateMarker,  this)
-				.on('mousedown',                     this._resetDrag,     this);
+				this
+					.on('eledata_added eledata_loaded',  this._updateChart,   this)
+					.on('eledata_added eledata_loaded',  this._updateSummary, this);
 
-			_.on(map.getContainer(), 'mousewheel', this._resetDrag,     this);
-			_.on(map.getContainer(), 'touchstart', this._resetDrag,     this);
-
-			this
-				.on('eledata_added eledata_loaded',  this._updateChart,   this)
-				.on('eledata_added eledata_loaded',  this._updateSummary, this);
-
-			this._updateChart();
-			this._updateSummary();
-		});
+				this._updateChart();
+				this._updateSummary();
+			});
 
 		return container;
 	},
@@ -391,7 +302,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Set default zoom level when "followMarker" is true.
 	 */
 	setZFollow: function(zoom) {
-		this._zFollow = zoom;
+		this.options.zFollow = zoom;
 	},
 
 	/**
@@ -450,7 +361,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_addGPXData: function(coords) {
 		_.each(coords, point => {
-			this._addPoint(point.lat, point.lng, typeof point.alt !== "undefined" ? point.alt : point.meta.ele);
+			this._addPoint(point.lat, point.lng, point.alt ?? point.meta.ele);
 			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
 		});
 		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
@@ -561,17 +472,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		opts.xTicks = this._xTicks();
 		opts.yTicks = this._yTicks();
 
-		if (opts.responsive) {
-			if (opts.detached) {
-				let { offsetWidth, offsetHeight}             = this.eleDiv;
-				if (offsetWidth > 0)             opts.width  = offsetWidth;
-				if (offsetHeight > 20)           opts.height = offsetHeight - 20; // 20 = horizontal scrollbar size.
-			} else {
-				let { clientWidth }                          = this._map.getContainer();
-				opts._maxWidth                               = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
-				this._container.style.maxWidth               = opts._maxWidth + 'px';
-				if (opts._maxWidth > clientWidth) opts.width = clientWidth - 30;
-			}
+		if (opts.detached) {
+			let { offsetWidth, offsetHeight}             = this.eleDiv;
+			if (offsetWidth > 0)             opts.width  = offsetWidth;
+			if (offsetHeight > 20)           opts.height = offsetHeight - 20; // 20 = horizontal scrollbar size.
+		} else {
+			let { clientWidth }                          = this._map.getContainer();
+			opts._maxWidth                               = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
+			this._container.style.maxWidth               = opts._maxWidth + 'px';
+			if (opts._maxWidth > clientWidth) opts.width = clientWidth - 30;
 		}
 
 		let chart = this._chart = new Chart(opts, this);
@@ -790,14 +699,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	/**
 	 * Add chart or marker tooltip info
 	 */
-	_registerFocusLabel: function(props) {
+	 _registerTooltip: function(props) {
 		if (props.chart) {
 			let label = L.extend({}, props, { value: props.chart });
-			this.on("elechart_init",   () => this._chart._registerFocusLabel(label));
+			this.on("elechart_init",   () => this._chart._registerTooltip(label));
 		}
 		if (props.marker) {
 			let label = L.extend({}, props, { value: props.marker });
-			this.on("elechart_marker", () => this._marker._registerFocusLabel(label));
+			this.on("elechart_marker", () => this._marker._registerTooltip(label));
 		}
 	},
 
@@ -839,23 +748,23 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		let opts = this.options;
 
-		if (opts.responsive) {
-			let newWidth;
-			if (opts.detached) {
-				newWidth = (this.eleDiv || this._container).offsetWidth;
-			} else {
-				let { clientWidth } = this._map.getContainer();
-				newWidth = opts._maxWidth > clientWidth ? clientWidth - 30 : opts._maxWidth;
-			}
-			if (newWidth) {
-				let chart  = this._chart;
-				opts.width = newWidth;
-				if (chart && chart._chart) {
-					chart._chart._resize(opts);
-					opts.xTicks = this._xTicks();
-					opts.yTicks = this._yTicks();
-					this._updateChart();
-				}
+		let newWidth;
+
+		if (opts.detached) {
+			newWidth = (this.eleDiv || this._container).offsetWidth;
+		} else {
+			let { clientWidth } = this._map.getContainer();
+			newWidth = opts._maxWidth > clientWidth ? clientWidth - 30 : opts._maxWidth;
+		}
+		
+		if (newWidth) {
+			let chart  = this._chart;
+			opts.width = newWidth;
+			if (chart && chart._chart) {
+				chart._chart._resize(opts);
+				opts.xTicks = this._xTicks();
+				opts.yTicks = this._yTicks();
+				this._updateChart();
 			}
 		}
 
@@ -885,9 +794,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_setMapView: function(item) {
 		if (!this.options.followMarker || !this._map) return;
 		let zoom = this._map.getZoom();
-		if ("number" === typeof this._zFollow) {
-			if (zoom < this._zFollow) zoom = this._zFollow;
-			this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
+		let z    = this.options.zFollow;
+		if (typeof z === "number") {
+			this._map.setView(item.latlng, (zoom < z ? z : zoom), { animate: true, duration: 0.25 });
 		} else if (!this._map.getBounds().contains(item.latlng)) {
 			this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
 		}
@@ -939,21 +848,23 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Update the position/height indicator marker drawn onto the map
 	 */
 	_updateMarker: function(item) {
-		if (!this._marker) return;
-		this._marker.update({
-			map         : this._map,
-			item        : item,
-			maxElevation: this.track_info.elevation_max || 0,
-			options     : this.options
-		});
+		if (this._marker) {
+			this._marker.update({
+				map         : this._map,
+				item        : item,
+				maxElevation: this.track_info.elevation_max || 0,
+				options     : this.options
+			});
+		}
 	},
 
 	/**
 	 * Fix marker rotation on rotated maps
 	 */
 	_rotateMarker: function() {
-		if (!this._marker) return;
-		this._marker.update();
+		if (this._marker) {
+			this._marker.update();
+		}
 	},
 
 	/**
@@ -1017,6 +928,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
  */
 Elevation.addInitHook(function() {
 
+	// Alias deprecated functions
+	this.enableDragging  = this.enableBrush;
+	this.disableDragging = this.disableBrush;
+	this.loadChart       = this.addTo;
+	this.loadData        = this.load;
+	this.loadGPX         = this.loadXML;
+
 	this.on('waypoint_added', function(e) {
 		let p = e.point,
 			pop = p._popup;
@@ -1053,21 +971,13 @@ Elevation.addInitHook(function() {
 		} else {
 
 			// leaflet-geometryutil
-			Elevation._geomutilLazyLoader = _.lazyLoader(
-				this.__LGEOMUTIL,
-				this.options.lazyLoadJS && typeof L.GeometryUtil !== 'object',
-				Elevation._geomutilLazyLoader
-			).then(
-				() => {
+			this.lazyLoad(this.__LGEOMUTIL)
+				.then(() => {
 
 					// leaflet-almostover
 					if (this.options.almostOver) {
-						Elevation._almostoverLazyLoader = _.lazyLoader(
-							this.__LALMOSTOVER,
-							this.options.lazyLoadJS && typeof L.Handler.AlmostOver  !== 'function ',
-							Elevation._almostoverLazyLoader
-						).then(
-							() => {
+						this.lazyLoad(this.__LALMOSTOVER)
+							.then(() => {
 								map.addHandler('almostOver', L.Handler.AlmostOver)
 								if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
 									map.almostOver.addLayer(layer);
@@ -1075,23 +985,17 @@ Elevation.addInitHook(function() {
 										.on('almost:move', (e) => this._mousemoveLayerHandler(e))
 										.on('almost:out',  (e) => this._mouseoutHandler(e));
 								}
-							}
-						);
+							});
 					}
 
 					// leaflet-distance-markers
 					if (this.options.distanceMarkers) {
-						Elevation._distanceMarkersLazyLoader = _.lazyLoader(
-							this.__LDISTANCEM,
-							this.options.lazyLoadJS && typeof L.DistanceMarkers  !== 'function',
-							Elevation._distanceMarkersLazyLoader
-						).then(() => this.options.polyline && layer.addTo(map));
+						this.lazyLoad(this.__LDISTANCEM)
+							.then(() => this.options.polyline && layer.addTo(map));
 					} else {
 						if (this.options.polyline) layer.addTo(map);
 					}
-				}
-
-			);
+				});
 		}
 	});
 

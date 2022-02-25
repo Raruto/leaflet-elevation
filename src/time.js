@@ -8,8 +8,8 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let time = {};
 
-	time.label       = opts.timeLabel  || 't';
-	this._timeFactor = opts.timeFactor;
+	time.label      = opts.timeLabel  || 't';
+	opts.timeFactor = opts.timeFactor || 3600;
 
 	/**
 	 * Common AVG speeds:
@@ -75,7 +75,7 @@ Elevation.addInitHook(function() {
 			e.point.meta.time = new Date(
 				(
 					i > 0
-						? data[i - 1].time.getTime() + ((( delta / speed) * this._timeFactor) * 1000)
+						? data[i - 1].time.getTime() + ((( delta / speed) * opts.timeFactor) * 1000)
 						: Date.now()
 				)
 			);
@@ -94,22 +94,22 @@ Elevation.addInitHook(function() {
 		let deltaT   = Math.abs(currT - prevT);
 		let duration = (this.track_info.time || 0) + deltaT;
 
+		this.track_info.time = duration;
+
 		data[i].time         = time;
 		data[i].duration     = duration;
-
-		this.track_info.time = duration;
 	});
 
 
 	if (this.options.timestamps) {
-		this._registerFocusLabel({
+		this._registerTooltip({
 			name: 'date',
 			chart: (item) => L._("t: ") + this.options.timeFormat(item.time)
 		});
 	}
 
 	if (this.options.time) {
-		this._registerFocusLabel({
+		this._registerTooltip({
 			name: 'time',
 			chart: (item) => L._("T: ") + _.formatTime(item.duration || 0)
 		});

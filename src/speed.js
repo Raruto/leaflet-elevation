@@ -10,8 +10,8 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let speed = {};
 
-	speed.label          = opts.speedLabel  || L._(this.options.imperial ? 'mph' : 'km/h');
-	this._speedFactor    = opts.speedFactor || 1;
+	speed.label      = opts.speedLabel  || L._(opts.imperial ? 'mph' : 'km/h');
+	opts.speedFactor = opts.speedFactor || 1;
 
 	if (this.options.speed && this.options.speed != "summary") {
 
@@ -60,7 +60,7 @@ Elevation.addInitHook(function() {
 
 		if (deltaT > 0) {
 			let delta = (data[i].dist - data[i > 0 ? i - 1 : i].dist) * 1000;
-			speed = Math.abs((delta / deltaT) * this._timeFactor) * this._speedFactor;
+			speed = Math.abs((delta / deltaT) * opts.timeFactor) * opts.speedFactor;
 		}
 
 		// Try to smooth "crazy" speed values.
@@ -73,28 +73,18 @@ Elevation.addInitHook(function() {
 		}
 
 		// Range of acceptable speed values.
-		if (this.options.speedRange) {
-			let range = this.options.speedRange;
-			if (speed < range[0])      speed = range[0];
-			else if (speed > range[1]) speed = range[1];
-		}
+		speed = _.clamp(speed, this.options.speedRange);
 
-		speed = L.Util.formatNum(speed, 2);
+		track.speed_max = speed > sMax ? speed : sMax;
+		track.speed_min = speed < sMin ? speed : sMin;
+		track.speed_avg = (speed + sAvg) / 2.0;
 
-		sMax = speed > sMax ? speed : sMax;
-		sMin = speed < sMin ? speed : sMin;
-		sAvg = (speed + sAvg) / 2.0;
-
-		data[i].speed = speed;
-
-		track.speed_max = sMax;
-		track.speed_min = sMin;
-		track.speed_avg = sAvg;
+		data[i].speed = L.Util.formatNum(speed, 2);
 	});
 
 	if (this.options.speed) {
 
-		this._registerFocusLabel({
+		this._registerTooltip({
 			name: 'speed',
 			chart: (item) => L._('v: ') + item.speed + " " + speed.label,
 			marker: (item) => Math.round(item.speed) + " " + speed.label,

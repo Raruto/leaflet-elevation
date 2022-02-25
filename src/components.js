@@ -106,33 +106,45 @@ export const Grid = (props) => {
 	return Axis(props);
 };
 
-export const HeightFocusLine = ({
-	theme,
-	xCoord = 0,
-	yCoord = 0,
-	length = 0,
-}) => {
-	return line => line
-		.attr("class", theme + " height-focus line")
-		.attr("x1", xCoord)
-		.attr("x2", xCoord)
-		.attr("y1", yCoord)
-		.attr("y2", length);
-};
-
-export const HeightFocusLabel = ({
+export const PositionMarker = ({
 	theme,
 	xCoord = 0,
 	yCoord = 0,
 	labels = {},
-	item = {}
+	item = {},
+	length = 0,
 }) => {
-	return text => {
+	return g => {
+
+		let line = g.select('.height-focus.line');
+		let circle = g.select('.height-focus.circle-lower');
+		let text = g.select('.height-focus-label');
+
+		if (!line.node()) line = g.append('svg:line');
+		if (!circle.node()) circle = g.append('svg:circle');
+		if (!text.node()) text = g.append('svg:text');
+
+		if (isNaN(xCoord) || isNaN(yCoord)) return g;
+
+		circle
+			.attr("class", theme + " height-focus circle-lower")
+			.attr("transform", "translate(" + xCoord + "," + yCoord + ")")
+			.attr("r", 6)
+			.attr("cx", 0)
+			.attr("cy", 0);
+
+		line
+			.attr("class", theme + " height-focus line")
+			.attr("x1", xCoord)
+			.attr("x2", xCoord)
+			.attr("y1", yCoord)
+			.attr("y2", length);
+
 		text
 			.attr("class", theme + " height-focus-label")
 			.style("pointer-events", "none")
 			.attr("x", xCoord + 5)
-			.attr("y", yCoord);
+			.attr("y", length);
 
 		let label;
 
@@ -151,21 +163,8 @@ export const HeightFocusLabel = ({
 		text.select('tspan').attr("dy", text.selectAll('tspan').size() > 1 ? "-1.5em" : "0em" );
 		text.selectAll('tspan').attr("x", xCoord + 5);
 
-		return text;
-	};
-};
-
-export const HeightFocusMarker = ({
-	theme,
-	xCoord = 0,
-	yCoord = 0,
-}) => {
-	return circle => circle
-		.attr("class", theme + " height-focus circle-lower")
-		.attr("transform", "translate(" + xCoord + "," + yCoord + ")")
-		.attr("r", 6)
-		.attr("cx", 0)
-		.attr("cy", 0);
+		return g;
+	}
 };
 
 export const LegendItem = ({
@@ -182,16 +181,16 @@ export const LegendItem = ({
 			.attr("class", "legend-item legend-" + name.toLowerCase())
 			.attr("data-name", name);
 
-		const svg = d3.select(g.node().ownerSVGElement || g);
-
-		g.on('click.legend', () => svg.dispatch("legend_clicked", {
-			detail: {
-				path: path.node(),
-				name: name,
-				legend: g.node(),
-				enabled: !path.classed('leaflet-hidden'),
-			}
-		}));
+		g.on('click.legend', () => d3.select(g.node().ownerSVGElement || g)
+			.dispatch("legend_clicked", {
+				detail: {
+					path: path.node(),
+					name: name,
+					legend: g.node(),
+					enabled: !path.classed('leaflet-hidden'),
+				}
+			})
+		);
 
 		g.append("svg:rect")
 			.attr("x", (width / 2) - 50)
@@ -216,34 +215,27 @@ export const LegendItem = ({
 	}
 };
 
-export const MouseFocusLine = ({
-	xCoord = 0,
-	height,
-}) => {
-	return line => line
-		.attr('class', 'mouse-focus-line')
-		.attr('x2', xCoord)
-		.attr('y2', 0)
-		.attr('x1', xCoord)
-		.attr('y1', height);
-};
-
-export const MouseFocusLabel = ({
+export const Tooltip = ({
 	xCoord,
 	yCoord,
 	width,
+	height,
 	labels = {},
 	item = {},
 }) => {
 	return g => {
 
-		g.attr('class', 'mouse-focus-label');
+		let line = g.select('.mouse-focus-line');
+		let box = g.select('.mouse-focus-label');
 
-		let rect = g.select(".mouse-focus-label-rect");
-		let text = g.select(".mouse-focus-label-text");
+		if (!line.node()) line = g.append('svg:line');
+		if (!box.node()) box = g.append("g");
 
-		if (!rect.node()) rect = g.append("svg:rect");
-		if (!text.node()) text = g.append("svg:text");
+		let rect = box.select(".mouse-focus-label-rect");
+		let text = box.select(".mouse-focus-label-text");
+
+		if (!rect.node()) rect = box.append("svg:rect");
+		if (!text.node()) text = box.append("svg:text");
 
 		// Sets focus-label-text position to the left / right of the mouse-focus-line
 		let xAlign = 0;
@@ -254,6 +246,16 @@ export const MouseFocusLabel = ({
 		if (xCoord) xAlign = xCoord + (xCoord < width / 2 ? 10 : -bbox.width - 10);
 		if (yCoord) yAlign = Math.max(yCoord - bbox.height, L.Browser.webkit ? 0 : -Infinity);
 
+		line
+			.attr('class', 'mouse-focus-line')
+			.attr('x2', xCoord)
+			.attr('y2', 0)
+			.attr('x1', xCoord)
+			.attr('y1', height);
+
+		box
+			.attr('class', 'mouse-focus-label');
+
 		rect
 			.attr("class", "mouse-focus-label-rect")
 			.attr("x", xAlign - 5)
@@ -262,6 +264,7 @@ export const MouseFocusLabel = ({
 			.attr("height", bbox.height + 10)
 			.attr("rx", 3)
 			.attr("ry", 3);
+
 		text
 			.attr("class", "mouse-focus-label-text")
 			.style("font-weight", "700")
@@ -269,7 +272,7 @@ export const MouseFocusLabel = ({
 
 		let label;
 
-		for (var i in labels) {
+		for (let i in labels) {
 			label = text.select(".mouse-focus-label-" + labels[i].name);
 
 			if (!label.size()) {
@@ -365,6 +368,65 @@ export const Ruler = ({
 	}
 };
 
+export const CheckPoint = ({
+	point,
+	height,
+	width,
+	x,
+	y
+}) => {
+	return g => {
+
+		if (isNaN(x) || isNaN(y)) return g;
+
+		if (!point.item || !point.item.property('isConnected')) {
+			point.position = point.position || "bottom";
+
+			point.item = g.append('g');
+
+			point.item.append("svg:line")
+				.attr("y1", 0)
+				.attr("x1", 0)
+				.attr("style","stroke: rgb(51, 51, 51); stroke-width: 0.5; stroke-dasharray: 2, 2;");
+
+			point.item
+				.append("svg:circle")
+				.attr("class", " height-focus circle-lower")
+				.attr("r", 3);
+
+			if (point.label) {
+				point.item.append("svg:text")
+					.attr("dx", "4px")
+					.attr("dy", "-4px");
+			}
+		}
+
+		point.item
+			.datum({
+				pos: point.position,
+				x: x,
+				y: y
+			})
+			.attr("class", d => "point " + d.pos)
+			.attr("transform", d => "translate(" + d.x + "," + d.y + ")");
+
+		point.item.select('line')
+			.datum({
+				y2: ({'top': -y, 'bottom': height - y})[point.position],
+				x2: ({'left': -x, 'right': width - x})[point.position] || 0
+			})
+			.attr("y2", d => d.y2)
+			.attr("x2", d => d.x2)
+
+		if (point.label) {
+			point.item.select('text')
+				.text(point.label);
+		}
+
+		return g;
+	}
+};
+
 export const Domain = ({
 	min,
 	max,
@@ -451,45 +513,19 @@ export const Chart = ({
 	const canvas        = foreignObject.append('xhtml:canvas').attr('class', 'canvas-plot');
 	const context       = canvas.node().getContext('2d');
 
-	// Mouse Focus
-	const dragG         = panes.ruler;
-	const focusG        = panes.tooltip;
-	const brushG        = panes.brush;
-
-	focusG.append('svg:line')
-		.call(
-			MouseFocusLine({
-				xCoord: 0,
-				height: _height
-			})
-		);
-
-	focusG.append("g")
-		.call(
-			MouseFocusLabel({
-				xCoord: 0,
-				yCoord: 0,
-				height: _height,
-				width : _width,
-				labels: {}
-				// labelX: "",
-				// labelY: "",
-			})
-		);
-
+	// Add tooltip
+	panes.tooltip.call(Tooltip({ xCoord: 0, yCoord: 0, height: _height, width : _width, labels: {} }));
 
 	// Add the brushing
-	let brush           = d3.brushX().on('start.cursor end.cursor brush.cursor', () => brushG.select(".overlay").attr('cursor', null));
+	let brush   = d3.brushX().on('start.cursor end.cursor brush.cursor', () => panes.brush.select(".overlay").attr('cursor', null));
 
 	// Scales
-	const scale         = (opts) => ({ x: Scale(opts.x), y: Scale(opts.y)});
+	const scale = (opts) => ({ x: Scale(opts.x), y: Scale(opts.y)});
 
 	let utils = {
 		clipPath,
 		canvas,
 		context,
-		dragG,
-		focusG,
 		brush,
 	};
 
@@ -539,11 +575,11 @@ export const Chart = ({
 			.attr('height', _height);
 
 		if (ruler) {
-			dragG    .call(Ruler({ height: _height, width: _width }));
+			panes.ruler.call(Ruler({ height: _height, width: _width }));
 		}
 
-		brushG.call(brush.extent( [ [0,0], [_width, _height] ] ));
-		brushG.select(".overlay").attr('cursor', null);
+		panes.brush.call(brush.extent( [ [0,0], [_width, _height] ] ));
+		panes.brush.select(".overlay").attr('cursor', null);
 
 		chart._width  = _width;
 		chart._height = _height;

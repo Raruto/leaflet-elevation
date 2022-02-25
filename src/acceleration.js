@@ -10,8 +10,8 @@ Elevation.addInitHook(function() {
 	let opts = this.options;
 	let acceleration = {};
 
-	acceleration.label       = opts.accelerationLabel  || L._(this.options.imperial ? 'ft/s²' : 'm/s²');
-	this._accelerationFactor = opts.accelerationFactor || 1;
+	acceleration.label      = opts.accelerationLabel  || L._(opts.imperial ? 'ft/s²' : 'm/s²');
+	opts.accelerationFactor = opts.accelerationFactor || 1;
 
 	if (this.options.acceleration != "summary") {
 
@@ -61,8 +61,8 @@ Elevation.addInitHook(function() {
 		if (deltaT > 0) {
 			let curr     = data[i].speed;
 			let prev     = i > 0 ? data[i - 1].speed : curr;
-			let delta    = (curr - prev) * (1000 / this._timeFactor);
-			acceleration = Math.abs((delta / deltaT)) * this._accelerationFactor;
+			let delta    = (curr - prev) * (1000 / opts.timeFactor);
+			acceleration = Math.abs((delta / deltaT)) * opts.accelerationFactor;
 		}
 
 		// Try to smooth "crazy" acceleration values.
@@ -75,26 +75,16 @@ Elevation.addInitHook(function() {
 		}
 
 		// Range of acceptable acceleration values.
-		if (this.options.accelerationRange) {
-			let range = this.options.accelerationRange;
-			if (acceleration < range[0])      acceleration = range[0];
-			else if (acceleration > range[1]) acceleration = range[1];
-		}
+		acceleration = _.clamp(acceleration, this.options.accelerationRange);
 
-		acceleration = L.Util.formatNum(acceleration, 2);
+		track.acceleration_max = acceleration > sMax ? acceleration : sMax;
+		track.acceleration_min = acceleration < sMin ? acceleration : sMin;
+		track.acceleration_avg = (acceleration + sAvg) / 2.0;
 
-		if (acceleration > sMax) sMax = acceleration;
-		if (acceleration < sMin) sMin = acceleration;
-		sAvg = (acceleration + sAvg) / 2.0;
-
-		data[i].acceleration = acceleration;
-
-		track.acceleration_max = sMax;
-		track.acceleration_min = sMin;
-		track.acceleration_avg = sAvg;
+		data[i].acceleration = L.Util.formatNum(acceleration, 2);
 	});
 
-	this._registerFocusLabel({
+	this._registerTooltip({
 		name  : 'acceleration',
 		chart: (item) => L._("a: ") + item.acceleration + " " + acceleration.label,
 		marker: (item) => Math.round(item.acceleration) + " " + acceleration.label,
