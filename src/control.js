@@ -663,9 +663,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.then((response) => response.text())
 			.then((data)     => {
 				this._downloadURL = url; // TODO: handle multiple urls?
-				this.load(data);
-			})
-			.catch((err) => console.warn(err));
+				this._parseFromString(data)
+					.then( geojson => geojson && this._loadLayer(geojson));
+			}).catch((err) => console.warn(err));
 	},
 
 	/**
@@ -881,8 +881,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (!(type in toGeoJSON)) {
 			type = xml.documentElement.tagName == "TrainingCenterDatabase" ? 'tcx' : 'gpx';
 		}
-		let geojson = toGeoJSON[type](xml);
-		geojson.name = name.length > 0 ? Array.from(name).find(tag => tag.parentElement.tagName == "trk").textContent : '';
+		let geojson  = toGeoJSON[type](xml);
+		geojson.name = name.length > 0 ? (Array.from(name).find(tag => tag.parentElement.tagName == "trk") ?? name[0]).textContent : '';
 		return geojson;
 	},
 
