@@ -36,10 +36,6 @@
   user-select: none;
 }
 
-.elevation-control.elevation .background.zoomed .axis.time {
-  display: none;
-}
-
 .elevation-control.elevation .axis line,
 .elevation-control.elevation .axis path {
   stroke: #2D1130;

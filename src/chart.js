@@ -214,6 +214,7 @@ export var Chart = L.Class.extend({
 			this._updateScale(); // hacky way for restoring x scale when zooming out
 			this.zooming = true;
 			this._scales.distance = this._x = e.transform.rescaleX(this._x); // calculate x scale at zoom level
+			if (this._scales.time) this._scales.time = e.transform.rescaleX(this._scales.time); // calculate x scale at zoom level
 			this._resetDrag();
 			if (e.sourceEvent && e.sourceEvent.type == "mousemove") {
 				this._hideDiagramIndicator();
@@ -374,7 +375,9 @@ export var Chart = L.Class.extend({
 		let opts  = this.options;
 		let scale = props.scale;
 
-		if (typeof scale !== 'function') {
+		if (typeof this._scales[props.name] === 'function') {
+			props.scale = this._scales[props.name]; // retrieve cached scale
+		} else if (typeof scale !== 'function') {
 			scale       = L.extend({
 				data       : this._data,
 				forceBounds: opts.forceAxisBounds
