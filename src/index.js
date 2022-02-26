@@ -61,4 +61,16 @@ Elevation.Chart = Chart;
 	};
 })();
 
+// Alias deprecated functions
+ Elevation.addInitHook(function() {
+	this.enableDragging  = this.enableBrush;
+	this.disableDragging = this.disableBrush;
+	this.loadChart       = this.addTo;
+	this.loadData        = this.load;
+	this.loadGPX         = this.load;
+	this.loadGeoJSON     = this.load;
+	this.loadXML         = this.load;
+	this.loadFile        = this.load;
+});
+
 L.control.elevation = (options) => new Elevation(options);

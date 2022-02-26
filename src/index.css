@@ -211,12 +211,27 @@
 }
 
 .elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button {
-  background: transparent url(../images/remove.svg) no-repeat center center;
+  background: transparent;
   position: absolute;
   right: 5px;
   top: 5px;
   height: 20px;
   width: 20px;
+}
+
+.elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button:before {
+  content: '\2716';
+  display: inline-block;
+  color: #000;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  line-height: 20px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 15px;
 }
 
 .elevation-control.elevation g.area > foreignObject {

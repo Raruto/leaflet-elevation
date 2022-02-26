@@ -156,77 +156,62 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._markedSegments = L.polyline([]);
 		this._chartEnabled   = true,
 		this.track_info      = {};
-		this.options         = _.deepMerge({}, this.options, options);
 
-		if (this.options.followMarker)      this._setMapView = L.Util.throttle(this._setMapView, 300, this);
-		if (this.options.legend)            this.options.margins.bottom += 30;
-		if (this.options.theme)             this.options.polylineSegments.className += ' ' + this.options.theme;
-		if (this.options.wptIcons === true) this.options.wptIcons = Options.wptIcons;
+		L.setOptions(this, options);
+
+		if (this.options.followMarker)             this._setMapView = L.Util.throttle(this._setMapView, 300, this);
+		if (this.options.legend)                   this.options.margins.bottom += 30;
+		if (this.options.theme)                    this.options.polylineSegments.className += ' ' + this.options.theme;
+		if (this.options.wptIcons === true)        this.options.wptIcons = Options.wptIcons;
+		if (this.options.distanceMarkers === true) this.options.distanceMarkers = { lazy: true };
 
 		this._markedSegments.setStyle(this.options.polylineSegments);
 
 		// Leaflet canvas renderer colors
 		L.extend(D3.Colors, this.options.colors || {});
+
+		// Various stuff
+		this._fixCanvasPaths();
+		this._fixTooltipSize();
 	},
 
 	/**
 	 * Javascript scripts downloader (lazy loader)
 	 */
-	lazyLoad: function(src) {
-		return _.lazyLoad(src, this);
+	lazyLoad: function(src, condition = false, loader = '') {
+		if (!this.options.lazyLoadJS) {
+			return Promise.resolve();
+		}
+		switch(src) {
+			case this.__D3:
+				loader    = '_d3LazyLoader';
+				condition = typeof d3 !== 'object';
+			break;
+			case this.__TOGEOJSON:
+				loader    = '_togeojsonLazyLoader';
+				condition = typeof toGeoJSON !== 'object';
+			break;
+			case this.__LGEOMUTIL:
+				loader    = '_geomutilLazyLoader';
+				condition = typeof L.GeometryUtil !== 'object';
+			break;
+			case this.__LALMOSTOVER:
+				loader    = '_almostoverLazyLoader';
+				condition = typeof L.Handler.AlmostOver  !== 'function';
+			break;
+			case this.__LDISTANCEM:
+				loader    = '_distanceMarkersLazyLoader';
+				condition = typeof L.DistanceMarkers  !== 'function';
+			break;
+		}
+		return L.Control.Elevation[loader] = _.lazyLoader(src, condition, L.Control.Elevation[loader]);
 	},
 
 	/**
 	 * Load elevation data (GPX, GeoJSON or KML).
 	 */
 	load: function(data) {
-		if (_.isXMLDoc(data)) {
-			this.loadXML(data);
-		} else if (_.isJSONDoc(data)) {
-			this.loadGeoJSON(data);
-		} else {
-			this.loadFile(data);
-		}
-	},
-
-	/**
-	 * Load data from a remote url.
-	 */
-	loadFile: function(url) {
-		fetch(url)
-			.then((response) => response.text())
-			.then((data)     => {
-				this._downloadURL = url; // TODO: handle multiple urls?
-				this.load(data);
-			})
-			.catch((err) => console.warn(err));
-	},
-
-	/**
-	 * Load raw GeoJSON data.
-	 */
-	loadGeoJSON: function(data) {
-		_.GeoJSONLoader(data, this);
-	},
-
-	/**
-	 * Load raw XML data.
-	 */
-	loadXML: function(data) {
-		this.lazyLoad(this.__TOGEOJSON)
-			.then(() => {
-				let xml     = (new DOMParser()).parseFromString(data, "text/xml");
-				let type    = xml.documentElement.tagName.toLowerCase(); // "kml" or "gpx"
-				if (!(type in toGeoJSON)) {
-					type = xml.documentElement.tagName == "TrainingCenterDatabase" ? 'tcx' : 'gpx';
-				}
-				let geojson = toGeoJSON[type](xml);
-				let name    = xml.getElementsByTagName('name');
-				if(name[0]) { geojson.name = name[0].innerHTML; }
-				else if(this._downloadURL) { geojson.name = this._downloadURL.split('/').pop().split('#')[0].split('?')[0]; }
-
-				return this.loadGeoJSON(geojson, this);
-			});
+		this._parseFromString(data).then( geojson => geojson ? this._loadLayer(geojson) : this._loadFile(data));
 	},
 
 	/**
@@ -236,11 +221,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	onAdd: function(map) {
 		this._map = map;
 
-		let container = this._container = _.create("div", "elevation-control elevation " + this.options.theme);
-
-		if (!this.options.detached) {
-			_.addClass(container, 'leaflet-control');
-		}
+		let container = this._container = _.create("div", "elevation-control elevation " + this.options.theme + " " + (this.options.detached ? '' : 'leaflet-control'));
+		
 		this.lazyLoad(this.__D3)
 			.then(() => {
 				this._initButton(container);
@@ -256,8 +238,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					.on('rotate',                        this._rotateMarker,  this)
 					.on('mousedown',                     this._resetDrag,     this);
 
-				_.on(map.getContainer(), 'mousewheel', this._resetDrag,     this);
-				_.on(map.getContainer(), 'touchstart', this._resetDrag,     this);
+				_.on(map.getContainer(), 'mousewheel', this._resetDrag,       this);
+				_.on(map.getContainer(), 'touchstart', this._resetDrag,       this);
+				_.on(document,           'keydown',    this._keydownHandler,  this);
 
 				this
 					.on('eledata_added eledata_loaded',  this._updateChart,   this)
@@ -283,8 +266,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.off('resize',                        this._resizeChart,   this)
 			.off('mousedown',                     this._resetDrag,     this);
 
-		_.off(map.getContainer(), 'mousewheel', this._resetDrag,     this);
-		_.off(map.getContainer(), 'touchstart', this._resetDrag,     this);
+		_.off(map.getContainer(), 'mousewheel', this._resetDrag,       this);
+		_.off(map.getContainer(), 'touchstart', this._resetDrag,       this);
+		_.off(document,           'keydown',    this._keydownHandler,  this);
 
 		this
 			.off('eledata_added eledata_loaded',  this._updateChart,   this)
@@ -387,10 +371,51 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	_addLayer: function(layer) {
 		if (layer) this._layers.addLayer(layer)
+		// Postpone adding the distance markers (lazy: true)
+		if (layer && this.options.distanceMarkers && this.options.distanceMarkers.lazy) {
+			layer.on('add remove', (e) => L.DistanceMarkers && e.target instanceof L.Polyline && e.target[e.type + 'DistanceMarkers']());
+		}
 	},
 
 	_addMarker: function(marker) {
 		if (marker) this._markers.addLayer(marker)
+	},
+
+	_bindPopup: function(marker) {
+		let popup = marker._popup;
+		if (popup) {
+			popup.options.className = 'elevation-popup';
+			if (popup._content) {
+				popup._content = decodeURI(popup._content);
+				popup.bindTooltip(popup._content, { direction: 'auto', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
+			}
+		}
+	},
+
+	_initAlmostOverHandler: function(map, layer) {
+		if(!map || !this.options.almostOver) return;
+		this.lazyLoad(this.__LGEOMUTIL)
+			.then(() => this.lazyLoad(this.__LALMOSTOVER))
+			.then(() => {
+					map.addHandler('almostOver', L.Handler.AlmostOver)
+					if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
+						map.almostOver.addLayer(layer);
+						map
+							.on('almost:move', (e) => this._mousemoveLayerHandler(e))
+							.on('almost:out',  (e) => this._mouseoutHandler(e));
+					}
+			});
+	},
+
+	_initDistanceMarkers: function(map, layer) {
+		if (!map) return;
+		if (this.options.distanceMarkers) {
+			this.lazyLoad(this.__LGEOMUTIL)
+				.then(() => this.lazyLoad(this.__LDISTANCEM))
+				.then(() => this.options.polyline && layer.addTo(map));
+		} else if (this.options.polyline) {
+			layer.addTo(map);
+		}
 	},
 
 	/**
@@ -405,8 +430,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this.options.detached) {
 			_.replaceClass(eleDiv, 'leaflet-control', 'elevation-detached');
 		}
-		this.eleDiv = eleDiv;
-		return this.eleDiv;
+		return this.eleDiv = eleDiv;
 	},
 
 	/*
@@ -421,6 +445,58 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_expand: function() {
 		_.replaceClass(this._container, 'elevation-collapsed', 'elevation-expanded');
+	},
+
+	/**
+	 * Add some basic colors to leaflet canvas renderer (preferCanvas: true).
+	 */
+	_fixCanvasPaths: function() {
+		let oldProto = L.Canvas.prototype._fillStroke;
+		let control  = this;
+		L.Canvas.include({
+			_fillStroke: function(ctx, layer) {
+				if (control._layers.hasLayer(layer)) {
+
+					let theme      = control.options.theme.replace('-theme', '');
+					let color      = D3.Colors[theme] || {};
+					let options    = layer.options;
+
+					options.color  = color.line || color.area || theme;
+					options.stroke = !!options.color;
+
+					oldProto.call(this, ctx, layer);
+
+					if (options.stroke && options.weight !== 0) {
+						let oldVal                   = ctx.globalCompositeOperation || 'source-over';
+						ctx.globalCompositeOperation = 'destination-over'
+						ctx.strokeStyle              = color.outline || '#FFF';
+						ctx.lineWidth                = options.weight * 1.75;
+						ctx.stroke();
+						ctx.globalCompositeOperation = oldVal;
+					}
+
+				} else {
+					oldProto.call(this, ctx, layer);
+				}
+			}
+		});
+	},
+
+	/**
+	 * Partial fix for initial tooltip size
+	 * 
+	 * @link https://github.com/Raruto/leaflet-elevation/issues/81#issuecomment-713477050
+	 */
+	_fixTooltipSize: function() {
+		this.on('elechart_init', () =>
+			this.once('elechart_change elechart_hover', e => {
+				if (this._chartEnabled) {
+					this._chart._showDiagramIndicator(e.data, e.xCoord);
+					this._chart._showDiagramIndicator(e.data, e.xCoord);
+				}
+				this._updateMarker(e.data);
+			})
+		);
 	},
 
 	/*
@@ -522,7 +598,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	_initMarker: function(map) {
-		let pane                   = map.getPane('elevationPane');
+		let pane                     = map.getPane('elevationPane');
 		if (!pane) {
 			pane = this._pane        = map.createPane('elevationPane', map.getPane('norotatePane') || map.getPane('mapPane'));
 			pane.style.zIndex        = 625; // This pane is above markers but below popups.
@@ -530,8 +606,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		if (this._renderer) this._renderer.remove()
-		this._renderer             = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
-		this._marker               = new Marker(this.options);
+		this._renderer               = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
+		this._marker                 = new Marker(this.options);
 
 		this._fireEvt("elechart_marker");
 	},
@@ -540,20 +616,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Inspired by L.Control.Layers
 	 */
 	_initButton: function(container) {
-		//Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
-		container.setAttribute('aria-haspopup', true);
 
-		if (!this.options.detached) {
+		if (L.Browser.mobile || !this.options.detached) {
 			L.DomEvent
 				.disableClickPropagation(container)
 				.disableScrollPropagation(container);
 		}
-
-		if (L.Browser.mobile) {
-			_.on(container, 'click', L.DomEvent.stopPropagation);
-		}
-
-		_.on(container, 'mousewheel', this._mousewheelHandler, this);
 
 		if (!this.options.detached) {
 			let link = this._button = _.create('a', "elevation-toggle elevation-toggle-icon" + (this.options.autohide ? "" : " close-button"), { href: '#', title: L._('Elevation') }, container);
@@ -571,21 +639,131 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				_.on(link, 'focus', this._toggle, this);
 
 				this._map.on('click', this._collapse, this);
-				// TODO: keyboard accessibility
 			}
-		} else {
-			// TODO: handle autohide when detached=true
 		}
 	},
 
 	_initSummary: function(container) {
-		let summary = this._summary = new Summary({ summary: this.options.summary }, this);
+		this._summary = new Summary({ summary: this.options.summary }, this);
 
-		d3
-			.select(container)
-			.call(summary.render());
+		d3.select(container).call(this._summary.render());
+	},
 
-		this.summaryDiv = this._summary._container;
+	_keydownHandler: function(e) {
+		if(!this.options.detached && e.key === "Escape"){
+			this._collapse()
+		};
+	},
+
+	/**
+	 * Retrieve data from a remote url (HTTP).
+	 */
+	_loadFile: function(url) {
+		fetch(url)
+			.then((response) => response.text())
+			.then((data)     => {
+				this._downloadURL = url; // TODO: handle multiple urls?
+				this.load(data);
+			})
+			.catch((err) => console.warn(err));
+	},
+
+	/**
+	 * Simple GeoJSON data loader (L.GeoJSON).
+	 */
+	_loadLayer: function(geojson) {
+		let control = this;
+
+		let { wptIcons, wptLabels } = control.options;
+
+		let layer = L.geoJson(geojson, {
+			distanceMarkers: control.options.distanceMarkers,
+			style: (feature) => {
+				let style = L.extend({}, control.options.polyline);
+				if (control.options.theme) {
+					style.className += ' ' + control.options.theme;
+				}
+				return style;
+			},
+			pointToLayer: (feature, latlng) => {
+				if (!control.options.waypoints) return;
+
+				let prop   = feature.properties;
+				let desc   = prop.desc ?? '';
+				let name   = prop.name ?? '';
+				let sym    = (prop.sym ?? name).replace(' ', '-').replace('"', '').replace("'", '').toLowerCase();
+
+				// Handle chart waypoints (dots)
+				if ([true, 'dots'].includes(control.options.waypoints)) {
+					control._registerCheckPoint({
+						latlng: latlng,
+						label: ([true, 'dots'].includes(wptLabels) ? name : '')
+					});
+				}
+
+				// Handle map waypoints (markers)
+				if ([true, 'markers'].includes(control.options.waypoints) && wptIcons != false) {
+					// generate and cache appropriate icon symbol
+					if (!wptIcons.hasOwnProperty(sym)) {
+						wptIcons[sym] = L.divIcon(
+							L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } )
+						);
+					}
+					let marker = L.marker(latlng, { icon: wptIcons[sym] });
+					if ([true, 'markers'].includes(wptLabels) && (name || desc)) {
+						marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
+					}
+					control._addMarker(marker);
+					control._bindPopup(marker);
+					control.fire('waypoint_added', { point: marker, element: latlng, properties: prop });
+					return marker;
+				}
+			},
+			onEachFeature: (feature, layer) => {
+				if (feature.geometry && feature.geometry.type == 'Point') return;
+
+				// Standard GeoJSON --> doesn't handle "time"
+				// control.addData(feature, layer);  // NB make use of "_addGeoJSONData"
+				
+				// Extended GeoJSON --> rely on leaflet implementation
+				layer._latlngs.forEach((point, i) => {
+					// same properties as L.GPX layer
+					point.meta = { time: null, ele: null, hr: null, cad: null, atemp: null };
+					if("alt" in point) point.meta.ele = point.alt;
+					if(feature.properties) {
+						let prop = feature.properties;
+						if("coordTimes" in prop) point.meta.time = new Date(Date.parse(prop.coordTimes[i]));
+						else if("times" in prop) point.meta.time = new Date(Date.parse(prop.times[i]));
+						else if("time" in prop) point.meta.time = new Date(Date.parse((typeof prop.time === 'object' ? prop.time[i] : prop.time)));
+						if("heartRates" in prop) point.meta.hr = parseInt(prop.heartRates[i]);
+						else if("heartRate" in prop) point.meta.hr = parseInt((typeof prop.heartRate === 'object' ? prop.heartRate[i] : prop.heartRate));
+						// TODO: cadence, temperature
+					}
+				});
+				control.addData(layer); // NB make use of "_addGPXData"
+
+				control.track_info = L.extend({}, control.track_info, { name: geojson.name });
+			},
+		});
+
+		control.lazyLoad(control.__D3).then(() => {
+			let map   = control._map;
+			if (map) {
+				map.once('layeradd', (e) => control.options.autofitBounds && control.fitBounds(layer.getBounds()));
+				if (!L.Browser.mobile) {
+					control._initAlmostOverHandler(map, layer);
+					control._initDistanceMarkers(map, layer);
+				} else if (control.options.polyline) {
+					layer.addTo(map);
+				}
+			} else {
+				console.warn("Undefined elevation map object");;
+			}
+
+			control._fireEvt("eledata_loaded", { data: geojson, layer: layer, name: control.track_info.name, track_info: control.track_info })
+		});
+
+		return layer;
 	},
 
 	_dragendHandler: function(e) {
@@ -657,19 +835,90 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._fireEvt("elechart_leave");
 	},
 
-	/*
-	 * Handles the mouesewheel over the chart.
+	/**
+	 * Simple GeoJSON Parser
 	 */
-	_mousewheelHandler: function(e) {
-		if (this._map.gestureHandling && this._map.gestureHandling._enabled) return;
-		let ll = this._marker.getLatLng() || this._map.getCenter();
-		let z  = this._map.getZoom() + Math.sign(e.deltaY);
-		this._resetDrag();
-		this._map.flyTo(ll, z);
+	_parseFromGeoJSONString: function(data) {
+		try {
+			return JSON.parse(data);
+		} catch (e) { }
 	},
 
 	/**
-	 * Add a waypoint marker to the diagram
+	 * Attempt to parse raw response data (GeoJSON or XML > GeoJSON)
+	 */
+	_parseFromString: function(data) {
+		return new Promise(resolve =>
+			this.lazyLoad(this.__TOGEOJSON).then(() => {
+				let geojson;
+				try {
+					geojson = this._parseFromXMLString(data.trim());
+				} catch (e) {
+					geojson = this._parseFromGeoJSONString(data.toString());
+				}
+				if (geojson) {
+					geojson = this._prepareMultiLineStrings(geojson);
+					geojson = this._prepareAdditionalProperties(geojson);
+				}
+				resolve(geojson);
+			})
+		);
+	},
+
+	/**
+	 * Simple XML Parser (GPX, KML, TCX)
+	 */
+	_parseFromXMLString: function(data) {
+		if (data.indexOf("<") != 0) {
+			throw 'Invalid XML';
+		}
+		let xml  = (new DOMParser()).parseFromString(data, "text/xml");
+		let type = xml.documentElement.tagName.toLowerCase(); // "kml" or "gpx"
+		let name = xml.getElementsByTagName('name');
+		if (xml.getElementsByTagName('parsererror').length) {
+			throw 'Invalid XML';
+		}
+		if (!(type in toGeoJSON)) {
+			type = xml.documentElement.tagName == "TrainingCenterDatabase" ? 'tcx' : 'gpx';
+		}
+		let geojson = toGeoJSON[type](xml);
+		geojson.name = name.length > 0 ? Array.from(name).find(tag => tag.parentElement.tagName == "trk").textContent : '';
+		return geojson;
+	},
+
+	/**
+	 * Extend GeoJSON properties (name, time, ...)
+	 */
+	 _prepareAdditionalProperties: function(geojson){
+		if (!geojson.name && this._downloadURL) {
+			geojson.name = this._downloadURL.split('/').pop().split('#')[0].split('?')[0];
+		}
+		return geojson;
+	},
+
+	/**
+	 * Just a temporary fix for MultiLineString data (trk > trkseg + trkseg),
+	 * just split them into seperate LineStrings (trk > trkseg, trk > trkseg)
+	 * 
+	 * @link https://github.com/Raruto/leaflet-elevation/issues/56
+	 */
+	_prepareMultiLineStrings: function(geojson) {
+		geojson.features.forEach(feauture => {
+			if (feauture.geometry.type == "MultiLineString") {
+				feauture.geometry.coordinates.forEach(coords => {
+					geojson.features.push({
+						geometry: { type: 'LineString', coordinates: coords },
+						properties: feauture.properties,
+						type: 'Feature'
+					});
+				});
+			} 
+		});
+		return geojson.features.filter(feauture => feauture.geometry.type != "MultiLineString");
+	},
+
+	/**
+	 * Add a point of interest over the diagram
 	 */
 	_registerCheckPoint: function(props) {
 		this.on("elechart_updated", () => this._chart._registerCheckPoint(props));
@@ -887,9 +1136,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._fireEvt("elechart_summary");
 		}
 		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
-			this.summaryDiv.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
-			_.select('.download a', this.summaryDiv).onclick = (e) => {
+			this._summary._container.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
+			_.select('.download a', this._summary._container).onclick = (e) => {
 				e.preventDefault();
+				if (e.downloadLink == 'modal' && typeof CustomEvent === "function") {
+					document.dispatchEvent(new CustomEvent("eletrack_download", { detail: e }));
+				} else if (e.downloadLink == 'link' || e.downloadLink === true) {
+					e.confirm();
+				}
 				this._fireEvt('eletrack_download', { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this, this._downloadURL) });
 			};
 		};
@@ -920,126 +1174,5 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this.__yTicks) this.__yTicks = this.options.yTicks;
 		return this.__yTicks || Math.round(this._height() / 30);
 	}
-
-});
-
-/**
- * Attach here some useful elevation hooks.
- */
-Elevation.addInitHook(function() {
-
-	// Alias deprecated functions
-	this.enableDragging  = this.enableBrush;
-	this.disableDragging = this.disableBrush;
-	this.loadChart       = this.addTo;
-	this.loadData        = this.load;
-	this.loadGPX         = this.loadXML;
-
-	this.on('waypoint_added', function(e) {
-		let p = e.point,
-			pop = p._popup;
-		if (pop) {
-			pop.options.className = 'elevation-popup';
-		}
-		if (pop && pop._content) {
-			pop._content = decodeURI(pop._content);
-			p.bindTooltip(pop._content, { direction: 'auto', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
-		}
-	});
-
-	this.on("eletrack_download", function(e) {
-		if (e.downloadLink == 'modal' && typeof CustomEvent === "function") {
-			document.dispatchEvent(new CustomEvent("eletrack_download", { detail: e }));
-		} else if (e.downloadLink == 'link' || e.downloadLink === true) {
-			e.confirm();
-		}
-	});
-
-	this.on('eledata_loaded', function(e) {
-		let map   = this._map;
-		let layer = e.layer;
-		if (!map) {
-			console.warn("Undefined elevation map object");
-			return;
-		}
-		map.once('layeradd',   (e) => this.options.autofitBounds && this.fitBounds(layer.getBounds()));
-
-		if (L.Browser.mobile) {
-
-			if (this.options.polyline) layer.addTo(map);
-
-		} else {
-
-			// leaflet-geometryutil
-			this.lazyLoad(this.__LGEOMUTIL)
-				.then(() => {
-
-					// leaflet-almostover
-					if (this.options.almostOver) {
-						this.lazyLoad(this.__LALMOSTOVER)
-							.then(() => {
-								map.addHandler('almostOver', L.Handler.AlmostOver)
-								if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
-									map.almostOver.addLayer(layer);
-									map
-										.on('almost:move', (e) => this._mousemoveLayerHandler(e))
-										.on('almost:out',  (e) => this._mouseoutHandler(e));
-								}
-							});
-					}
-
-					// leaflet-distance-markers
-					if (this.options.distanceMarkers) {
-						this.lazyLoad(this.__LDISTANCEM)
-							.then(() => this.options.polyline && layer.addTo(map));
-					} else {
-						if (this.options.polyline) layer.addTo(map);
-					}
-				});
-		}
-
-	});
-
-	// Basic canvas renderer support.
-	let oldProto = L.Canvas.prototype._fillStroke;
-	let control  = this;
-	L.Canvas.include({
-		_fillStroke: function(ctx, layer) {
-			if (control._layers.hasLayer(layer)) {
-
-				let theme      = control.options.theme.replace('-theme', '');
-				let color      = D3.Colors[theme] || {};
-				let options    = layer.options;
-
-				options.color  = color.line || color.area || theme;
-				options.stroke = !!options.color;
-
-				oldProto.call(this, ctx, layer);
-
-				if (options.stroke && options.weight !== 0) {
-					let oldVal                   = ctx.globalCompositeOperation || 'source-over';
-					ctx.globalCompositeOperation = 'destination-over'
-					ctx.strokeStyle              = color.outline || '#FFF';
-					ctx.lineWidth                = options.weight * 1.75;
-					ctx.stroke();
-					ctx.globalCompositeOperation = oldVal;
-				}
-
-			} else {
-				oldProto.call(this, ctx, layer);
-			}
-		}
-	});
-
-	// Partially fix: https://github.com/Raruto/leaflet-elevation/issues/81#issuecomment-713477050
-	this.on('elechart_init', function() {
-		this.once('elechart_change elechart_hover', function(e) {
-			if (this._chartEnabled) {
-				this._chart._showDiagramIndicator(e.data, e.xCoord);
-				this._chart._showDiagramIndicator(e.data, e.xCoord);
-			}
-			this._updateMarker(e.data);
-		});
-	});
 
 });
