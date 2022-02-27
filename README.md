@@ -13,17 +13,18 @@ A Leaflet plugin that allows to add elevation profiles using d3js
 
 _For a working example see one of the following demos:_
 
-- [loading .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation.html)
-- [loading .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
-- [loading .kml file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_kml-data.html)
-- [loading .tcx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_tcx-data.html)
+- [loading a .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation.html)
+- [loading a .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
+- [loading a .kml file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_kml-data.html)
+- [loading a .tcx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_tcx-data.html)
 - [loading a local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
-- [loading multiple tracks (gpx group 1)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
-- [loading multiple tracks (gpx group 2)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
-- [loading individual tracks (geojson)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
-- [loading individual tracks (gpx)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
-- [loading waypoint icons (gpx)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
-- [loading waypoint icons (geojson)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
+- [loading data from textarea](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
+- [loading individual .geojson tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
+- [loading individual .gpx tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
+- [loading multiple .gpx tracks (hover to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
+- [loading multiple .gpx tracks (click to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
+- [using .gpx waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
+- [using .geojson waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
 
 <br/>
 
@@ -39,7 +40,6 @@ _For a working example see one of the following demos:_
 - [leaflet follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
 - [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
 - [speed chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_speed-chart.html)
-- [web editor](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
 
 ---
 
