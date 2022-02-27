@@ -25,16 +25,27 @@
 			height: 25%;
 			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
 		}
+
+		/** Custom legend item color (see: "heart" option) */
+		.legend-item.legend-heart rect {
+			stroke: #f00;
+			fill-opacity: 0;
+			stroke-opacity: 0.85;
+		}
+
+		/** (optional) Hide some useful legend items */
+		.elevation-summary > :not(.minbpm, .maxbpm, .avgbpm, .download) {
+			display: none !important;
+		}
 	</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@latest/dist/leaflet-src.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@latest/dist/leaflet-ui-src.js"></script>
+	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.1.2/dist/leaflet-elevation.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.1.3/dist/leaflet-elevation.js"></script>
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.1.3/libs/extended-ui.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.8.8/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.8.8/dist/leaflet-elevation.min.js"></script>
 
 </head>
 
@@ -42,6 +53,93 @@
 
 	<div id="map" class="leaflet-map"></div>
 
+	<!-- Let's define here a custom option (eg. "heart") -->
+	<script>
+		L.Control.Elevation.addInitHook(function() {
+
+			if (!this.options.heart) return;  // <-- Your custom option name (eg. "heart: true")
+
+			let heart = {};
+
+			heart.label      = opts.heartLabel  || 'bpm';
+
+			if (this.options.heart != "summary") {
+
+				this._registerAxisScale({ // <-- NB these are private functions use them at your own risk!
+					axis       : "y",
+					position   : "right",
+					scale      : {
+						min        : -1,
+						max        : +1,
+					},
+					tickPadding: 16,
+					label      : heart.label,
+					labelX     : 25,
+					labelY     : -8,
+					name       : 'heart'
+				});
+
+				this._registerAreaPath({
+					name         : 'heart',
+					label        : 'Cardio',
+					yAttr        : 'heart',
+					scaleX       : 'distance',
+					scaleY       : 'heart',
+					color        : '#FFF',
+					strokeColor  : '#F00',
+					strokeOpacity: "0.85",
+					fillOpacity  : "0.1",
+				});
+
+			}
+
+			this.on("elepoint_added", function(e) {
+				let data  = this._data;
+				let i     = e.index;
+				let track = this.track_info;
+				let hMax   = track.heart_max || -Infinity; // Max BPM
+				let hMin   = track.heart_min || +Infinity; // Min BPM
+				let hAvg   = track.heart_avg || 0;         // Avg BPM
+
+				let heart = (e.point.hr ?? e.point.meta.hr) || 0;
+
+				// Simple fix for missing values
+				if (!heart && i > 0 && data[i -1].heart) {
+					heart = data[i-1].heart;
+				}
+
+				data[i].heart = heart;
+
+				track.heart_max = heart > hMax ? heart : hMax;
+				track.heart_min = heart < hMin ? heart : hMin;
+				track.heart_avg = (heart + hAvg) / 2.0;
+			});
+
+			this._registerTooltip({
+				name: 'heart',
+				chart: (item) => L._("hr: ") + item.heart + " " + heart.label,
+				marker: (item) => Math.round(item.heart) + " " + heart.label
+			});
+
+			this._registerSummary({
+				"minbpm": {
+					label: "Min BPM: ",
+					value: (track) => Math.round(track.heart_min || 0) + '&nbsp;' + heart.label
+				},
+				"maxbpm": {
+					label: "Max BPM: ",
+					value: (track) => Math.round(track.heart_min || 0) + '&nbsp;' + heart.label
+				},
+				"avgbpm": {
+					label: "Avg BPM: ",
+					value: (track) => Math.round(track.heart_avg || 0) + '&nbsp;' + heart.label
+				}
+			});
+
+			});
+	</script>
+
+	<!-- After that proceed as usual -->
 	<script>
 		var opts = {
 			map: {
@@ -51,14 +149,19 @@
 				resizerControl: true,
 			},
 			elevationControl: {
-				url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
-				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+				url: "https://raruto.github.io/leaflet-elevation/examples/time.gpx",
 				options: {
 					theme: "lightblue-theme",
 					collapsed: false,
 					detached: true,
-					summary: "inline",
-					extendedUI: true,
+					summary: "multiline",
+					altitude: "disabled",
+					acceleration: false,
+					slope: false,
+					speed: "disabled",
+					time: true,
+					distance: true,
+					heart: true, // <-- Enable your custom option
 				},
 			},
 			layersControl: {
@@ -69,16 +172,18 @@
 		};
 
 		var map = new L.Map('map', opts.map);
+
 		var controlElevation = L.control.elevation(opts.elevationControl.options);
 		var controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-		controlElevation.load(opts.elevationControl.url);
 		controlElevation.addTo(map);
+		controlLayer.addTo(map);
 
-		map.on('eledata_loaded', function(e) {
-			if (!controlLayer._map) controlLayer.addTo(map);
+		controlElevation.on('eledata_loaded', function(e) {
 			controlLayer.addOverlay(e.layer, e.name);
 		});
+
+		controlElevation.load(opts.elevationControl.url);
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"

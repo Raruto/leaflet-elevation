@@ -23,6 +23,7 @@ _For a working example see one of the following demos:_
 
 <br/>
 
+- [custom chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
 - [custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
 - [custom summary](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-summary.html)
 - [close button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
@@ -48,7 +49,6 @@ _For a working example see one of the following demos:_
 - [almost over](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
 - [follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
 - [dynamic runner](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
-- [extended ui](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
 
 ---
 

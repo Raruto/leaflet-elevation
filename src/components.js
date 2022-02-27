@@ -496,8 +496,8 @@ export const Chart = ({
 	const panes = {
 		grid   : g.append("g").attr("class", "grid"),
 		area   : g.append('g').attr("class", "area"),
-		point  : g.append('g').attr("class", "point"),
 		axis   : g.append('g').attr("class", "axis"),
+		point  : g.append('g').attr("class", "point"),
 		brush  : g.append("g").attr("class", "brush"),
 		tooltip: g.append("g").attr("class", "tooltip").attr('display', 'none'),
 		ruler  : g.append('g').attr('class', 'ruler'),

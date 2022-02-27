@@ -146,7 +146,7 @@
 			if (!controlLayer._map) controlLayer.addTo(map);
 			e.layer.eachLayer((trkseg) => {
 				if(trkseg.feature.geometry.type != "Point") {
-					controlLayer.addOverlay(trkseg, trkseg.feature.properties.name);
+					controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties.name);
 				}
 			});
 		});
@@ -157,12 +157,12 @@
 		/**
 		 * Move the "g.point" element one level down in the dom
 		 */
-		 controlElevation.on('elechart_updated', () => {
-			let pointG = controlElevation._container.querySelector("g:not(.point) > g.point");
-			if (pointG.nextElementSibling && pointG.nextElementSibling.classList.contains('axis')) {
-				pointG.parentNode.insertBefore(pointG.nextElementSibling, pointG);
-			}
-		});
+		//  controlElevation.on('elechart_updated', () => {
+		// 	let pointG = controlElevation._container.querySelector("g:not(.point) > g.point");
+		// 	if (pointG.nextElementSibling && pointG.nextElementSibling.classList.contains('axis')) {
+		// 		pointG.parentNode.insertBefore(pointG.nextElementSibling, pointG);
+		// 	}
+		// });
 
 		/**
 		 * Wait for D3.js and then load some custom checkpoints 

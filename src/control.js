@@ -17,7 +17,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.5.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
-	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.8.7/libs/leaflet-distance-marker.min.js',
+	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.8.8/libs/leaflet-distance-marker.min.js',
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
@@ -1063,16 +1063,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Toggle chart data on legend click
 	 */
 	_toggleChartHandler: function(e) {
-		let { path, name, enabled } = e;
+		let { name, enabled } = e;
 
 		this._chartEnabled = this._chart._hasActiveLayers();
 
 		// toggle layer visibility on empty chart
-		this._layers.eachLayer(layer => {
-			let node = layer.getElement && layer.getElement();
-			_.toggleClass(node, this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled);
-			}
-		);
+		this._layers.eachLayer(layer => _.toggleClass(layer.getElement && layer.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
 
 		// toggle option value (eg. altitude = { 'disabled' || 'disabled' })
 		this.options[name] = !enabled && this.options[name] == 'disabled' ? 'enabled' : 'disabled';
