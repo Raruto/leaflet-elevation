@@ -17,7 +17,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.5.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
-	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.8.9/libs/leaflet-distance-marker.min.js',
+	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.9.0/libs/leaflet-distance-marker.min.js',
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
@@ -345,12 +345,16 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			
 			// "alt" property is generated inside "leaflet"
 			if ("alt" in point) point.meta.ele = point.alt;
-			
+
 			// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
-			if (properties && properties.coordinateProperties) {
-				let props = properties.coordinateProperties;
-				if("times" in props) point.meta.time = new Date(Date.parse(props.times[i]));
-				if("heart" in props) point.meta.hr = parseInt(props.heart[i]);
+			let props = (properties && properties.coordinateProperties) || properties;
+			if (props) {
+				if("coordTimes" in props)     point.meta.time = new Date(Date.parse(props.coordTimes[i]));
+				else if("times" in props)     point.meta.time = new Date(Date.parse(props.times[i]));
+				else if("time" in props)      point.meta.time = new Date(Date.parse((typeof props.time === 'object' ? props.time[i] : props.time)));
+				if ("heartRates" in props)    point.meta.hr   = parseInt(props.heartRates[i]);
+				else if("heartRate" in props) point.meta.hr   = parseInt((typeof props.heartRate === 'object' ? props.heartRate[i] : props.heartRate));
+				else if("heart" in props)     point.meta.hr   = parseInt((typeof props.heart === 'object' ? props.heart[i] : props.heart));
 				// TODO: ask to "@tmcw/toGeoJSON" for "cadence" and "temperature" implementation
 			}
 
