@@ -258,7 +258,7 @@ _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Inte
 **Compatibile with:**
 [![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.6.0-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
 [![d3.js v6 compatibile!](https://img.shields.io/badge/d3.js-6.5-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
-[![@tmcw/togeojson v4.3.0 compatibile!](https://img.shields.io/badge/@tmcw/togeojson-4.3-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
+[![@tmcw/togeojson v4.5.0 compatibile!](https://img.shields.io/badge/@tmcw/togeojson-4.5-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
 
 
 ---

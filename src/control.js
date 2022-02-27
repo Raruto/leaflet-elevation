@@ -14,7 +14,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__mileFactor: 0.621371,
 	__footFactor: 3.28084,
 	__D3:          'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
-	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.3.0/dist/togeojson.umd.js',
+	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.5.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
 	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.8.6/libs/leaflet-distance-marker.min.js',
@@ -304,6 +304,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			return;
 		}
 
+		/**
+		 * Standard GeoJSON --> doesn't handle "time", "heart", …
+		 */
 		let geom = d.geometry;
 		if (geom) {
 			switch (geom.type) {
@@ -319,35 +322,47 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					console.warn('Unsopperted GeoJSON feature geometry type:' + geom.type);
 			}
 		}
-
 		if (d.type === "FeatureCollection") {
 			_.each(d.features, feature => this._addData(feature));
 		}
 
+		/**
+		 * Extended GeoJSON --> rely on leaflet implementation
+		 */
 		if (d._latlngs) {
-			this._addGPXData(d._latlngs);
+			this._addGeoJSONData(d._latlngs, d.feature && d.feature.properties);
 		}
 	},
 
 	/*
 	 * Parsing of GeoJSON data lines and their elevation in z-coordinate
 	 */
-	_addGeoJSONData: function(coords) {
-		_.each(coords, point => {
-			this._addPoint(point[1], point[0], point[2]);
-			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
-		});
-		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
-	},
+	_addGeoJSONData: function(coords, properties) {
+		coords.forEach((point, i) => {
 
-	/*
-	 * Parsing function for GPX data and their elevation in z-coordinate
-	 */
-	_addGPXData: function(coords) {
-		_.each(coords, point => {
-			this._addPoint(point.lat, point.lng, point.alt ?? point.meta.ele);
+			// Inspired by L.GPX layer properties
+			point.meta = point.meta ?? { time: null, ele: null, hr: null, cad: null, atemp: null };
+			
+			// "alt" property is generated inside "leaflet"
+			if ("alt" in point) point.meta.ele = point.alt;
+			
+			// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
+			if (properties.coordinateProperties) {
+				let props = properties.coordinateProperties;
+				if("times" in props) point.meta.time = new Date(Date.parse(props.times[i]));
+				if("heart" in props) point.meta.hr = parseInt(props.heart[i]);
+				// TODO: ask to "@tmcw/toGeoJSON" for "cadence" and "temperature" implementation
+			}
+
+			this._addPoint(
+				point.lat ?? point[1], 
+				point.lng ?? point[0],
+				point.alt ?? point.meta.ele ?? point[2]
+			);
+
 			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
 		});
+
 		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
 	},
 
@@ -392,6 +407,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	/**
+	 * Initialize "L.AlmostOver" integration
+	 */
 	_initAlmostOverHandler: function(map, layer) {
 		if(!map || !this.options.almostOver) return;
 		this.lazyLoad(this.__LGEOMUTIL)
@@ -407,6 +425,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			});
 	},
 
+	/**
+	 * Initialize "L.DistanceMarkers" integration
+	 */
 	_initDistanceMarkers: function(map, layer) {
 		if (!map) return;
 		if (this.options.distanceMarkers) {
@@ -431,6 +452,24 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			_.replaceClass(eleDiv, 'leaflet-control', 'elevation-detached');
 		}
 		return this.eleDiv = eleDiv;
+	},
+
+	/**
+	 * Initialize "L.AlmostOver" and "L.DistanceMarkers"
+	 */
+	_initMapIntegrations: function(control, layer) {
+		let map   = control._map;
+		if (control._map) {
+			map.once('layeradd', (e) => control.options.autofitBounds && control.fitBounds(layer.getBounds()));
+			if (!L.Browser.mobile) {
+				control._initAlmostOverHandler(map, layer);
+				control._initDistanceMarkers(map, layer);
+			} else if (control.options.polyline) {
+				layer.addTo(map);
+			}
+		} else {
+			console.warn("Undefined elevation map object");;
+		}
 	},
 
 	/*
@@ -720,46 +759,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				}
 			},
 			onEachFeature: (feature, layer) => {
-				if (feature.geometry && feature.geometry.type == 'Point') return;
-
-				// Standard GeoJSON --> doesn't handle "time"
-				// control.addData(feature, layer);  // NB make use of "_addGeoJSONData"
-				
-				// Extended GeoJSON --> rely on leaflet implementation
-				layer._latlngs.forEach((point, i) => {
-					// same properties as L.GPX layer
-					point.meta = { time: null, ele: null, hr: null, cad: null, atemp: null };
-					if("alt" in point) point.meta.ele = point.alt;
-					if(feature.properties) {
-						let prop = feature.properties;
-						if("coordTimes" in prop) point.meta.time = new Date(Date.parse(prop.coordTimes[i]));
-						else if("times" in prop) point.meta.time = new Date(Date.parse(prop.times[i]));
-						else if("time" in prop) point.meta.time = new Date(Date.parse((typeof prop.time === 'object' ? prop.time[i] : prop.time)));
-						if("heartRates" in prop) point.meta.hr = parseInt(prop.heartRates[i]);
-						else if("heartRate" in prop) point.meta.hr = parseInt((typeof prop.heartRate === 'object' ? prop.heartRate[i] : prop.heartRate));
-						// TODO: cadence, temperature
-					}
-				});
-				control.addData(layer); // NB make use of "_addGPXData"
-
-				control.track_info = L.extend({}, control.track_info, { name: geojson.name });
+				if (feature.geometry && feature.geometry.type != 'Point') {
+					control.addData(layer);
+					control.track_info = L.extend({}, control.track_info, { name: geojson.name });
+				} 
 			},
 		});
 
 		control.lazyLoad(control.__D3).then(() => {
-			let map   = control._map;
-			if (map) {
-				map.once('layeradd', (e) => control.options.autofitBounds && control.fitBounds(layer.getBounds()));
-				if (!L.Browser.mobile) {
-					control._initAlmostOverHandler(map, layer);
-					control._initDistanceMarkers(map, layer);
-				} else if (control.options.polyline) {
-					layer.addTo(map);
-				}
-			} else {
-				console.warn("Undefined elevation map object");;
-			}
-
+			control._initMapIntegrations(control, layer);
 			control._fireEvt("eledata_loaded", { data: geojson, layer: layer, name: control.track_info.name, track_info: control.track_info })
 		});
 
@@ -889,7 +897,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	/**
 	 * Extend GeoJSON properties (name, time, ...)
 	 */
-	 _prepareAdditionalProperties: function(geojson){
+	 _prepareAdditionalProperties: function(geojson) {
 		if (!geojson.name && this._downloadURL) {
 			geojson.name = this._downloadURL.split('/').pop().split('#')[0].split('?')[0];
 		}
@@ -948,7 +956,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	/**
 	 * Add chart or marker tooltip info
 	 */
-	 _registerTooltip: function(props) {
+	_registerTooltip: function(props) {
 		if (props.chart) {
 			let label = L.extend({}, props, { value: props.chart });
 			this.on("elechart_init",   () => this._chart._registerTooltip(label));
