@@ -69,8 +69,8 @@ _For a working example see one of the following demos:_
     <style> html, body, #map, #elevation-div { height: 100%; width: 100%; padding: 0; margin: 0; } #map { height: 75%; } #elevation-div {	height: 25%; font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif; } </style>
 
     <!-- leaflet-ui -->
-    <script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-ui@0.2.0/dist/leaflet-ui.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
     <!-- leaflet-elevation -->
     <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css" />
@@ -256,7 +256,7 @@ _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Inte
 ---
 
 **Compatibile with:**
-[![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.6.0-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
+[![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.7.0-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
 [![d3.js v6 compatibile!](https://img.shields.io/badge/d3.js-6.5-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
 [![@tmcw/togeojson v4.5.0 compatibile!](https://img.shields.io/badge/@tmcw/togeojson-4.5-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
 
