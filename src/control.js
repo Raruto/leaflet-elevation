@@ -400,17 +400,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (marker) this._markers.addLayer(marker)
 	},
 
-	_bindPopup: function(marker) {
-		let popup = marker._popup;
-		if (popup) {
-			popup.options.className = 'elevation-popup';
-			if (popup._content) {
-				popup._content = decodeURI(popup._content);
-				popup.bindTooltip(popup._content, { direction: 'auto', sticky: true, opacity: 1, className: 'elevation-tooltip' }).openTooltip();
-			}
-		}
-	},
-
 	/**
 	 * Initialize "L.AlmostOver" integration
 	 */
@@ -754,10 +743,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					}
 					let marker = L.marker(latlng, { icon: wptIcons[sym] });
 					if ([true, 'markers'].includes(wptLabels) && (name || desc)) {
-						marker.bindPopup("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : '')).openPopup();
+						let content = decodeURI("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : ''));
+						marker.bindPopup(content, { className: 'elevation-popup', keepInView: true }).openPopup();
+						marker.bindTooltip(content, { className: 'elevation-tooltip', direction: 'auto', sticky: true, opacity: 1 }).openTooltip();
 					}
 					control._addMarker(marker);
-					control._bindPopup(marker);
 					control.fire('waypoint_added', { point: marker, element: latlng, properties: prop });
 					return marker;
 				}

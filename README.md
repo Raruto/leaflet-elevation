@@ -22,7 +22,7 @@ _For a working example see one of the following demos:_
 - [loading multiple tracks (gpx group 2)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
 - [loading individual tracks (geojson)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
 - [loading individual tracks (gpx)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
-- [loading waypoints icons (gpx)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
+- [loading waypoint icons (gpx)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
 - [loading waypoint icons (geojson)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
 
 <br/>

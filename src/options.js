@@ -69,7 +69,7 @@ export var Options = {
 	wptIcons: {
 		'': L.divIcon({
 			className: 'elevation-waypoint-marker',
-			html: '<i class="elevation-waypoint-icon"></i>',
+			html: '<i class="elevation-waypoint-icon default"></i>',
 			iconSize: [30, 30],
 			iconAnchor: [8, 30],
 		}),
