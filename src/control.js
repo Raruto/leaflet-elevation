@@ -1147,12 +1147,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._summary._container.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
 			_.select('.download a', this._summary._container).onclick = (e) => {
 				e.preventDefault();
-				if (e.downloadLink == 'modal' && typeof CustomEvent === "function") {
-					document.dispatchEvent(new CustomEvent("eletrack_download", { detail: e }));
-				} else if (e.downloadLink == 'link' || e.downloadLink === true) {
-					e.confirm();
+				let event = { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this, this._downloadURL) };
+				if (this.options.downloadLink == 'modal' && typeof CustomEvent === "function") {
+					document.dispatchEvent(new CustomEvent("eletrack_download", { detail: event }));
+				} else if (this.options.downloadLink == 'link' || this.options.downloadLink === true) {
+					event.confirm();
 				}
-				this._fireEvt('eletrack_download', { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this, this._downloadURL) });
+				this._fireEvt('eletrack_download', event);
 			};
 		};
 	},
