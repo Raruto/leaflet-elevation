@@ -17,38 +17,29 @@ _For a working example see one of the following demos:_
 - [loading .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
 - [loading .kml file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_kml-data.html)
 - [loading .tcx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_tcx-data.html)
-- [loading strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
-- [loading geojson group](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
-- [loading local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
+- [loading a local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
+- [loading multiple tracks (gpx group 1)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
+- [loading multiple tracks (gpx group 2)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
+- [loading individual tracks (geojson)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
+- [loading individual tracks (gpx)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
+- [loading waypoints icons (gpx)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
+- [loading waypoint icons (geojson)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
 
 <br/>
 
+- [autohide map](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-map.html)
+- [autohide chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-chart.html)
 - [custom chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
 - [custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
+- [custom labels](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
+- [custom marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
 - [custom summary](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-summary.html)
-- [close button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
+- [leaflet button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
+- [leaflet almost over](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
+- [leaflet follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
 - [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
 - [speed chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_speed-chart.html)
-- [i18n strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
-
-<br/>
-
-- [hoverable chart / hidden map](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-map.html)
-- [hoverable chart / hidden chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-chart.html)
-- [hoverable tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
-- [toggable tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
-- [toggable charts](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
-
-<br/>
-
-- [waypoint icons / gpx](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
-- [waypoint icons / geojson](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
-
-<br/>
-
-- [almost over](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
-- [follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
-- [dynamic runner](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
+- [web editor](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
 
 ---
 

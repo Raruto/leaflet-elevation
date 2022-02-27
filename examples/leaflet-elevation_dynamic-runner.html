@@ -25,15 +25,28 @@
 			height: 25%;
 			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
 		}
+
+		/** (optional) Get rid of mouse events over the chart */
+		.elevation-control.elevation svg * {
+			pointer-events: none;
+		}
+		/** (optional) Restore click on legend control */
+		.elevation-control.elevation svg .legend * { 
+			pointer-events: all;
+		}
+		/** (optional) Get rid of mouse events over the layer */
+		.elevation-polyline.leaflet-interactive {
+			pointer-events: none !important;
+		}
 	</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.2.5/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@0.6.8/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@0.6.8/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="../dist/leaflet-elevation.min.css" />
+	<script src="../dist/leaflet-elevation.js"></script>
 
 </head>
 
@@ -41,6 +54,67 @@
 
 	<div id="map" class="leaflet-map"></div>
 
+	<!-- Let's define here some custom functions -->
+	<script>
+		L.Control.Elevation.include({
+
+			addCheckpoint: function(checkpoint) {
+				return this._registerCheckPoint({ // <-- NB these are private functions use them at your own risk!
+						latlng: this._findItemForX(this._x(checkpoint.dist)).latlng,
+						label: checkpoint.label || ''
+					});
+			},
+
+			addRunner: function(runner) {
+				let x = this._x(runner.dist);
+				let y = this._y(this._findItemForX(x).z)
+				let g = d3.select(this._container)
+					.select('svg > g')
+					.append("svg:circle")
+					.attr("class", "runner " + this.options.theme + " height-focus circle-lower")
+					.attr("r", 6)
+					.attr("cx", x)
+					.attr("cy", y);
+				return g;
+			},
+
+			// Update map and chart "markers" from latlng
+			setPositionFromLatLng: function(latlng) {
+				this._mousemoveLayerHandler({latlng: latlng});
+			},
+
+			tick: function (runner, dist = 0, inc = 0.1) {
+				dist = (dist <= this.track_info.distance - inc) ? dist + inc : 0;
+				this.updateRunnerPos(runner, dist);
+				setTimeout(() => this.tick(runner, dist), 150);
+			},
+
+			updateRunnerPos: function(runner, pos) {
+				let x    = this._x(pos);
+				let curr = this._findItemForX(x);
+				runner
+					.attr("cx", x)
+					.attr("cy", this._y(curr.z));
+				this.setPositionFromLatLng(curr.latlng);
+			}
+		});
+	</script>
+
+	<!-- Add here a custom tooltip -->
+	<script>
+		L.Control.Elevation.addInitHook(function(){
+			this._registerTooltip({
+				name: '0', // <-- MAYBE BUGGED: doing like so it should be rendered at first position (alphabetical order: 0 -> y)
+				marker: (item) => L._("You are here: "),
+			});
+			this._registerTooltip({
+				name: 'distance',
+				marker: (item) => Math.round(item.dist) + " " + this.options.xLabel,
+			});
+		});
+	</script>
+
+	<!-- And finally initialize map and controls -->
 	<script>
 		var opts = {
 			map: {
@@ -48,6 +122,8 @@
 				zoom: 5,
 				fullscreenControl: false,
 				resizerControl: true,
+				rotate: true,
+				// bearing: -25,
 			},
 			elevationControl: {
 				url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
@@ -56,6 +132,7 @@
 					collapsed: false,
 					detached: true,
 					summary: "multiline",
+					waypoints: false, // disable built-in checkpoint handling
 				},
 			},
 			layersControl: {
@@ -64,98 +141,31 @@
 				},
 			},
 		};
-		L.Control.Elevation.include({
-			// Update map and chart "markers" from latlng
-			setPositionFromLatLng: function(latlng) {
-				if (!this._data || this._data.length === 0) {
-					return;
-				}
-				// var latlng = e.latlng;
-				var item = this._findItemForLatLng(latlng);
-				if (item) {
-					var xCoord = item.xDiagCoord;
-
-					this._hidePositionMarker();
-					this._showDiagramIndicator(item, xCoord);
-					this._showPositionMarker(item);
-				}
-
-			},
-
-			addRunner: function(runner) {
-				let g = d3.select(controlElevation._container).select("svg > g");
-				const runnerObj = g.append("g").attr("class", "runner");
-				let x = this._x(runner.dist);
-				runnerObj
-					.append("svg:circle")
-					.attr("class", " height-focus circle-lower")
-					.attr("r", 6)
-					.attr("cx", x)
-					.attr("cy", this._y(this._data[this._findItemForX(x)].z));
-
-				return runnerObj;
-			},
-
-			addCheckpoint: function(checkpoint) {
-				let g = d3.select(controlElevation._container).select("svg > g");
-				let check = g.append("g").attr("class", "checkpoints");
-				let x = this._x(checkpoint.dist);
-				let y = this._y(this._data[this._findItemForX(x)].z);
-				check
-					.append("svg:line")
-					.attr("x2", x)
-					.attr("y2", y)
-					.attr("x1", x)
-					.attr("y1", this._height())
-					.attr(
-						"style",
-						"stroke: rgb(51, 51, 51); stroke-width: 0.5; stroke-dasharray: 2, 2;"
-					);
-
-				check
-					.append("svg:circle")
-					.attr("class", " height-focus circle-lower")
-					.attr("r", 3)
-					.attr("cx", x)
-					.attr("cy", y);
-
-				return checkpoint;
-			},
-			updateRunnerPos: function(runner, pos) {
-				let x = this._x(pos);
-				let curr = this._data[this._findItemForX(x)];
-				runner
-					.select("circle")
-					.attr("cx", x)
-					.attr("cy", this._y(curr.z));
-				this.setPositionFromLatLng(curr.latlng);
-			},
-		});
 
 		var map = new L.Map('map', opts.map);
 
 		var controlElevation = L.control.elevation(opts.elevationControl.options);
-		controlElevation.addTo(map);
-		controlElevation.load(opts.elevationControl.url);
 
-		function test(runner, i) {
-			if (i < controlElevation._distance) {
-				i = i + 0.1;
-				setTimeout(function() {
-					controlElevation.updateRunnerPos(runner, i);
-					test(runner, i)
-				}, 150);
-			}
-		}
-		map.on('eledata_loaded', function(e) {
-			let runner = controlElevation.addRunner({
-				dist: 0
-			});
-			controlElevation.addCheckpoint({
-				dist: 50
-			});
-			test(runner, 0)
+		controlElevation.on('eledata_loaded', function(e) {
+			// Dynamically generate chart markers
+			[50, 100, 150, 200, 250].forEach(d => controlElevation.addCheckpoint({ dist: d, label: d + ' km' }));
+
+			// Start here a custom "walking" runner
+			let runner = controlElevation.addRunner({ dist: 0 });
+			controlElevation.tick(runner)
 		});
+
+		controlElevation.load(opts.elevationControl.url);
+		controlElevation.addTo(map);
+	</script>
+
+	<script>
+		L.registerLocale('en', {
+			"You are here: ": "You are here: ",
+			"y: "           : "y: ",
+			"x: "           : "x: "
+		});
+		L.setLocale('en');
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
