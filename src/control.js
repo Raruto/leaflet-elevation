@@ -17,7 +17,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.5.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
-	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.8.8/libs/leaflet-distance-marker.min.js',
+	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.8.9/libs/leaflet-distance-marker.min.js',
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
@@ -347,7 +347,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if ("alt" in point) point.meta.ele = point.alt;
 			
 			// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
-			if (properties.coordinateProperties) {
+			if (properties && properties.coordinateProperties) {
 				let props = properties.coordinateProperties;
 				if("times" in props) point.meta.time = new Date(Date.parse(props.times[i]));
 				if("heart" in props) point.meta.hr = parseInt(props.heart[i]);
