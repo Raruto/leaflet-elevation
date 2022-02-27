@@ -13,12 +13,12 @@ A Leaflet plugin that allows to add elevation profiles using d3js
 
 _For a working example see one of the following demos:_
 
-- [loading a .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation.html)
-- [loading a .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
-- [loading a .kml file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_kml-data.html)
-- [loading a .tcx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_tcx-data.html)
+- [loading .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation.html)
+- [loading .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
+- [loading .kml file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_kml-data.html)
+- [loading .tcx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_tcx-data.html)
 - [loading a local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
-- [loading data from textarea](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
+- [loading data from a textarea](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
 - [loading individual .geojson tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
 - [loading individual .gpx tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
 - [loading multiple .gpx tracks (hover to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
