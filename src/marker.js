@@ -10,8 +10,6 @@ export var Marker = L.Class.extend({
 		switch(this.options.marker) {
 			case 'elevation-line':
 				// this._container = d3.create("g").attr("class", "height-focus-group");
-				this._container = d3.select(map.getPane('elevationPane')).select("svg > g")
-					.attr("class", "height-focus-group");
 			break;
 			case 'position-marker':
 				// this._marker   = L.circleMarker([0, 0], { pane: 'overlayPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
@@ -27,7 +25,7 @@ export var Marker = L.Class.extend({
 	addTo: function(map) {
 		this._map = map;
 		switch(this.options.marker) {
-			case 'elevation-line':  this._container.call(D3.PositionMarker({}));      break;
+			case 'elevation-line':  this._container = d3.select(map.getPane('elevationPane')).select("svg > g").call(D3.PositionMarker({})); break;
 			case 'position-marker': this._marker.addTo(map, { pane: 'overlayPane' }); break;
 		}
 		return this;
@@ -49,18 +47,20 @@ export var Marker = L.Class.extend({
 
 		switch(this.options.marker) {
 			case 'elevation-line':
-				let point   = this._map.latLngToLayerPoint(this._latlng);
-				point = L.extend({}, props.item, this._map._rotate ? this._map.rotatedPointToMapPanePoint(point) : point);
-		
-				this._container.classed("leaflet-hidden", false);
-				this._container.call(D3.PositionMarker({
-					theme : this.options.theme,
-					xCoord: point.x,
-					yCoord: point.y,
-					length: point.y - (this._height() / props.maxElevation * point.z), // normalized Y
-					labels: this._labels,
-					item: point
-				}));
+				if (this._container) {
+					let point = this._map.latLngToLayerPoint(this._latlng);
+					point     = L.extend({}, props.item, this._map._rotate ? this._map.rotatedPointToMapPanePoint(point) : point);
+
+					this._container.classed("leaflet-hidden", false);
+					this._container.call(D3.PositionMarker({
+						theme : this.options.theme,
+						xCoord: point.x,
+						yCoord: point.y,
+						length: point.y - (this._height() / props.maxElevation * point.z), // normalized Y
+						labels: this._labels,
+						item: point
+					}));
+				}
 			break;
 			case 'position-marker':
 				_.removeClass(this._marker.getElement(), 'leaflet-hidden');

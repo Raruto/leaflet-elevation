@@ -116,9 +116,11 @@ export const PositionMarker = ({
 }) => {
 	return g => {
 
-		let line = g.select('.height-focus.line');
+		g.attr("class", "height-focus-group");
+
+		let line   = g.select('.height-focus.line');
 		let circle = g.select('.height-focus.circle-lower');
-		let text = g.select('.height-focus-label');
+		let text   = g.select('.height-focus-label');
 
 		if (!line.node()) line = g.append('svg:line');
 		if (!circle.node()) circle = g.append('svg:circle');
