@@ -1,6 +1,6 @@
 {
 	"name": "@raruto/leaflet-elevation",
-	"version": "1.9.2",
+	"version": "1.9.3",
 	"description": "A Leaflet plugin that allows to add elevation profiles using d3js",
 	"main": "dist/leaflet-elevation.min.js",
 	"module": "src/index.js",
