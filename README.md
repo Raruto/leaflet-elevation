@@ -239,6 +239,7 @@ var map = L.map('map', {
 - https://wordpress.org/plugins/os-datahub-maps/
 - https://wordpress.org/plugins/extensions-leaflet-map/
 - https://github.com/der-stefan/OpenTopoMap
+- https://gpx.n-peloton.fr/
 
 </details>
     
