@@ -54,6 +54,8 @@
 	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
 	<script src="../dist/leaflet-elevation.js"></script>
 
+	<!-- <script src="../libs/leaflet-distance-marker.js"></script> -->
+
 </head>
 
 <body>
@@ -120,7 +122,11 @@
 					// polyline: false,
 					// marker: 'position-marker',
 					// dragging: true,
-					distanceMarkers: true,
+					distanceMarkers: true{
+						lazy: true,
+						arrows: true,
+						distance: true,
+					},
 					waypoints: true,
 					wptIcons: true,
 					wptLabels: true,
@@ -155,6 +161,7 @@
 		controlElevation.load(opts.elevationControl.url);
 		controlElevation.addTo(map);
 
+		
 		/**
 		 * Move the "g.point" element one level down in the dom
 		 */

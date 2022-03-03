@@ -163,7 +163,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this.options.legend)                   this.options.margins.bottom += 30;
 		if (this.options.theme)                    this.options.polylineSegments.className += ' ' + this.options.theme;
 		if (this.options.wptIcons === true)        this.options.wptIcons = Options.wptIcons;
-		if (this.options.distanceMarkers === true) this.options.distanceMarkers = { lazy: true };
+		if (this.options.distanceMarkers === true) this.options.distanceMarkers = Options.distanceMarkers;
 
 		this._markedSegments.setStyle(this.options.polylineSegments);
 

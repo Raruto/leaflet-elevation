@@ -1,109 +1,269 @@
 /*
- * https://github.com/adoroszlai/leaflet-distance-markers
+ * Copyright (c) 2022, GPL-3.0+ Project, Raruto
  *
- * The MIT License (MIT)
+ *  This file is free software: you may copy, redistribute and/or modify it
+ *  under the terms of the GNU General Public License as published by the
+ *  Free Software Foundation, either version 2 of the License, or (at your
+ *  option) any later version.
  *
- * Copyright (c) 2014- Doroszlai Attila, 2016- Phil Whitehurst
+ *  This file is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see .
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * This file incorporates work covered by the following copyright and
+ * permission notice:
+ * 
+ *     Copyright (c) 2014- Doroszlai Attila, 2016- Phil Whitehurst
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *     Permission to use, copy, modify, and/or distribute this software
+ *     for any purpose with or without fee is hereby granted, provided
+ *     that the above copyright notice and this permission notice appear
+ *     in all copies.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ *     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ *     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ *     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+ *     CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+ *     OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ *     NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// TODO: the "L.DistanceMarker" (canvas marker) class could be alternatively provided by "leaflet-rotate"? 
+
+L.DistanceMarker = L.CircleMarker.extend({
+	_updatePath: function () {
+		let ctx = this._renderer._ctx;
+		let p = this._point;
+
+		// Calculate image direction (rotation)
+		this.options.rotation = this.options.rotation || 0;
+
+		// Draw circle marker (canvas point)
+		if (this.options.radius && this._renderer._updateCircle) {
+			this._renderer._updateCircle(this);
+		}
+
+		// Draw image over circle (distance marker)
+		if (this.options.icon && this.options.icon.url) {
+			if (!this.options.icon.element) {
+				const icon = document.createElement('img');
+				this.options.icon = L.extend({ rotate: 0, size: [40, 40], offset: { x: 0, y: 0 } }, this.options.icon);
+				this.options.icon.rotate += this.options.rotation;
+				this.options.icon.element = icon;
+				icon.src = this.options.icon.url;
+				icon.onload = () => this.redraw();
+				icon.onerror = () => this.options.icon = null;
+			} else {
+				const icon = this.options.icon;
+				let cx = p.x + icon.offset.x;
+				let cy = p.y + icon.offset.y;
+				ctx.save();
+				if (icon.rotate) {
+					ctx.translate(p.x, p.y);
+					ctx.rotate(icon.rotate);
+					cx = 0;
+					cy = 0;
+				}
+				ctx.drawImage(icon.element, cx - icon.size[0] / 2, cy - icon.size[1] / 2, icon.size[0], icon.size[1]);
+				ctx.restore();
+			}
+		}
+
+		// Add a label inside the circle (distance marker)
+		if (this.options.label) {
+			let cx = p.x, cy = p.y;
+			ctx.save();
+
+			ctx.font = this.options.font || 'normal 7pt "Helvetica Neue", Arial, Helvetica, sans-serif';
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillStyle = this.options.fillStyle || 'black';
+
+			// TODO rescale circle to fit text
+			// let fontSize  = Number(/[0-9\.]+/.exec(ctx.font)[0]);
+			// let fontWidth = ctx.measureText(this.options.html).width;
+
+			if (this.options.rotation) {
+				ctx.translate(p.x, p.y);
+				ctx.rotate(this.options.rotation);
+				cx = 0;
+				cy = 0;
+			}
+
+			// Temporary fix to prevent stroke blurs at higher zoom levels
+			if (this._map.getZoom() > 17) {
+				ctx.fillStyle = this.options.strokeStyle || 'black';
+			}
+
+			ctx.fillText(this.options.label, cx, cy);
+
+			if (this.options.strokeStyle && this._map.getZoom() <= 17) {
+				ctx.strokeStyle = this.options.strokeStyle;
+				ctx.strokeText(this.options.label, cx, cy);
+			}
+
+			ctx.restore();
+		}
+	}
+});
+
 L.DistanceMarkers = L.LayerGroup.extend({
+	__arrowIcon: "data:image/svg+xml,%3Csvg transform='rotate(90)' xmlns='http://www.w3.org/2000/svg' width='560px' height='560px' viewBox='0 0 560 560'%3E%3Cpath stroke-width='35' fill='%23FFF' stroke='%23000' d='M280,40L522,525L280,420L38,525z'/%3E%3C/svg%3E",
+	options: {
+		cssClass: 'dist-marker',
+		iconSize: [12, 12],
+		offset: 1000,
+		showAll: 12,
+		textFunction: (distance, i, offset) => i,
+	},
 	initialize: function (line, map, options) {
-		options = options || {};
-		var offset = options.offset || 1000;
-		var showAll = Math.min(map.getMaxZoom(), options.showAll || 12);
-		var cssClass = options.cssClass || 'dist-marker';
-		var iconSize = options.iconSize !== undefined ? options.iconSize : [12, 12];
-		var textFunction = options.textFunction || function(distance, i, offset) {
-			return i;
-		};
 
-		var zoomLayers = {};
+		this._layers = {};
+		this._zoomLayers = {};
+
+		options = L.setOptions(this, options);
+
+		let preferCanvas = map.options.preferCanvas;
+		let showAll = Math.min(map.getMaxZoom(), options.showAll);
+
+		// You should use "leaflet-rotate" to show rotated arrow markers (preferCanvas: false)
+		if (!preferCanvas && !map.options.rotate) {
+			console.warn('Missing dependency: "leaflet-rotate"');
+		}
+
 		// Get line coords as an array
-		var coords = line;
-		if (typeof line.getLatLngs == 'function') {
-			coords = line.getLatLngs();
-		}
+		let coords = typeof line.getLatLngs == 'function' ? line.getLatLngs() : line;
+
 		// Get accumulated line lengths as well as overall length
-		var accumulated = L.GeometryUtil.accumulatedLengths(line);
-		var length = accumulated.length > 0 ? accumulated[accumulated.length - 1] : 0;
-		// Position in accumulated line length array
-		var j = 0;
-		// Number of distance markers to be added
-		var count = Math.floor(length / offset);
+		let accumulated = L.GeometryUtil.accumulatedLengths(line);
+		let length = accumulated.length > 0 ? accumulated[accumulated.length - 1] : 0;
 
-		for (var i = 1; i <= count; ++i) {
-			var distance = offset * i;
-			// Find the first accumulated distance that is greater
-			// than the distance of this marker
-			while (j < accumulated.length - 1 && accumulated[j] < distance) {
-				++j;
-			}
-			// Now grab the two nearest points either side of
-			// distance marker position and create a simple line to
-			// interpolate on
-			var p1 = coords[j - 1];
-			var p2 = coords[j];
-			var m_line = L.polyline([p1, p2]);
-			var ratio = (distance - accumulated[j - 1]) / (accumulated[j] - accumulated[j - 1]);
-			var position = L.GeometryUtil.interpolateOnLine(map, m_line, ratio);
-			var text = textFunction.call(this, distance, i, offset);
-			var icon = L.divIcon({ className: cssClass, html: text, iconSize: iconSize });
-			var marker = L.marker(position.latLng, { title: text, icon: icon });
+		// count = Number of distance markers to be added
+		// j = Position in accumulated line length array
+		for (let i = 1, count = Math.floor(length / options.offset), j = 0; i <= count; ++i) {
 
-			// visible only starting at a specific zoom level
-			var zoom = this._minimumZoomLevelForItem(i, showAll);
-			if (zoomLayers[zoom] === undefined) {
-				zoomLayers[zoom] = L.layerGroup();
+			let distance = options.offset * i;
+
+			// Find the first accumulated distance that is greater than the distance of this marker
+			while (j < accumulated.length - 1 && accumulated[j] < distance) ++j;
+
+			// Grab two nearest points either side marker position
+			let p1 = coords[j - 1];
+			let p2 = coords[j];
+			let m_line = L.polyline([p1, p2]);
+
+			// and create a simple line to interpolate on
+			let ratio = (distance - accumulated[j - 1]) / (accumulated[j] - accumulated[j - 1]);
+			let position = L.GeometryUtil.interpolateOnLine(map, m_line, ratio);
+			let delta = map.project(p2).subtract(map.project(p1));
+			let angle = Math.atan2(delta.y, delta.x);
+
+			// Generate distance marker label
+			let text = options.textFunction.call(this, distance, i, options.offset);
+
+			// Grouping layer of generated markers (arrow + distance)
+			let marker = L.layerGroup();
+
+			// Grouping layer of visible layers (at zoom level)
+			let zoom = this._minimumZoomLevelForItem(i, showAll);
+			this._zoomLayers[zoom] = this._zoomLayers[zoom] || L.layerGroup()
+			this._zoomLayers[zoom].addLayer(marker);
+
+			// create arrow markers
+			if (options.arrows && ((options.distance && i % 2 == 1) || !options.distance)) {
+				if (preferCanvas) {
+					marker.addLayer(
+						new L.DistanceMarker(p1, {
+							radius: 0,
+							icon: {
+								url: this.__arrowIcon, //image link
+								size: [20, 20],        //image size ( default [40, 40] )
+								rotate: 0,             //image base rotate ( default 0 )
+								offset: { x: 0, y: 0 },//image offset ( default { x: 0, y: 0 } )
+							},
+							rotation: angle,
+							interactive: false,
+							// label: '⮞', //'➜',
+							// font: 'normal 20pt "Helvetica Neue", Arial, Helvetica, sans-serif',
+							// fillStyle: 'white',//'#3366CC',
+							// strokeStyle: 'black',
+						})
+					);
+				} else {
+					marker.addLayer(
+						L.marker(position.latLng, {
+							icon: L.icon({
+								iconUrl: __arrowIcon,
+								iconSize: [20, 20],
+							}),
+							// NB the following option is added by "leaflet-rotate"
+							rotation: angle * L.DomUtil.RAD_TO_DEG,
+							interactive: false,
+						})
+					);
+				}
 			}
-			zoomLayers[zoom].addLayer(marker);
+
+			// create distance markers
+			if (options.distance && i % 2 == 0) {
+				if (preferCanvas) {
+					marker.addLayer(
+						new L.DistanceMarker(position.latLng, {
+							label: text, // TODO: handle text rotation (leaflet-rotate)
+							radius: 7,
+							fillColor: '#fff',
+							fillOpacity: 1,
+							fillStyle: 'black',
+							color: '#777',
+							weight: 1,
+							interactive: false,
+						})
+					);
+				} else {
+					marker.addLayer(
+						L.marker(position.latLng, {
+							title: text,
+							icon: L.divIcon({
+								className: options.cssClass,
+								html: text,
+								iconSize: options.iconSize
+							}),
+							interactive: false,
+						})
+					);
+				}
+			}
 		}
 
-		var currentZoomLevel = 0;
-		var markerLayer = this;
-		var updateMarkerVisibility = function() {
-			var oldZoom = currentZoomLevel;
-			var newZoom = currentZoomLevel = map.getZoom();
-
+		const updateMarkerVisibility = () => {
+			let oldZoom = this._lastZoomLevel || 0;
+			let newZoom = map.getZoom();
 			if (newZoom > oldZoom) {
-				for (var i = oldZoom + 1; i <= newZoom; ++i) {
-					if (zoomLayers[i] !== undefined) {
-						markerLayer.addLayer(zoomLayers[i]);
+				for (let i = oldZoom + 1; i <= newZoom; ++i) {
+					if (this._zoomLayers[i] !== undefined) {
+						this.addLayer(this._zoomLayers[i]);
 					}
 				}
 			} else if (newZoom < oldZoom) {
-				for (var i = oldZoom; i > newZoom; --i) {
-					if (zoomLayers[i] !== undefined) {
-						markerLayer.removeLayer(zoomLayers[i]);
+				for (let i = oldZoom; i > newZoom; --i) {
+					if (this._zoomLayers[i] !== undefined) {
+						this.removeLayer(this._zoomLayers[i]);
 					}
 				}
 			}
+			this._lastZoomLevel = newZoom;
 		};
 		map.on('zoomend', updateMarkerVisibility);
-
-		this._layers = {}; // need to initialize before adding markers to this LayerGroup
 		updateMarkerVisibility();
 	},
 
-	_minimumZoomLevelForItem: function (item, showAllLevel) {
-		var zoom = showAllLevel;
-		var i = item;
+	_minimumZoomLevelForItem: function (i, zoom) {
 		while (i > 0 && i % 2 === 0) {
 			--zoom;
 			i = Math.floor(i / 2);
@@ -133,9 +293,9 @@ L.Polyline.include({
 	onAdd: function (map) {
 		this._originalOnAdd(map);
 
-		var opts = this.options.distanceMarkers || {};
-		if (this._distanceMarkers === undefined && this.options.distanceMarkers) {
-			this._distanceMarkers = new L.DistanceMarkers(this, map, opts);
+		let opts = this.options.distanceMarkers || {};
+		if (this.options.distanceMarkers) {
+			this._distanceMarkers = this._distanceMarkers || new L.DistanceMarkers(this, map, opts);
 		}
 		if (opts.lazy === undefined || opts.lazy === false) {
 			this.addDistanceMarkers();

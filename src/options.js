@@ -9,7 +9,11 @@ export var Options = {
 	collapsed: false,
 	detached: true,
 	distance: true,
-	distanceMarkers: false,
+	distanceMarkers: {
+		lazy: true,
+		distance: true,
+		arrow: false
+	},
 	decimalsX: 2,
 	decimalsY: 0,
 	dragging: !L.Browser.mobile,
