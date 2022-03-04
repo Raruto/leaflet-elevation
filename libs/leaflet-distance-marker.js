@@ -121,6 +121,8 @@ L.DistanceMarkers = L.LayerGroup.extend({
 		offset: 1000,
 		showAll: 12,
 		textFunction: (distance, i, offset) => i,
+		distance: true,
+		direction: false,
 	},
 	initialize: function (line, map, options) {
 
@@ -167,18 +169,14 @@ L.DistanceMarkers = L.LayerGroup.extend({
 			// Generate distance marker label
 			let text = options.textFunction.call(this, distance, i, options.offset);
 
-			// Grouping layer of generated markers (arrow + distance)
-			let marker = L.layerGroup();
-
-			// Grouping layer of visible layers (at zoom level)
+			// Grouping layer of visible layers at zoom level (arrow + distance)
 			let zoom = this._minimumZoomLevelForItem(i, showAll);
-			this._zoomLayers[zoom] = this._zoomLayers[zoom] || L.layerGroup()
-			this._zoomLayers[zoom].addLayer(marker);
+			let markers = this._zoomLayers[zoom] = this._zoomLayers[zoom] || L.layerGroup()
 
 			// create arrow markers
-			if (options.arrows && ((options.distance && i % 2 == 1) || !options.distance)) {
+			if (options.direction && ((options.distance && i % 2 == 1) || !options.distance)) {
 				if (preferCanvas) {
-					marker.addLayer(
+					markers.addLayer(
 						new L.DistanceMarker(p1, {
 							radius: 0,
 							icon: {
@@ -196,10 +194,10 @@ L.DistanceMarkers = L.LayerGroup.extend({
 						})
 					);
 				} else {
-					marker.addLayer(
+					markers.addLayer(
 						L.marker(position.latLng, {
 							icon: L.icon({
-								iconUrl: __arrowIcon,
+								iconUrl: this.__arrowIcon,
 								iconSize: [20, 20],
 							}),
 							// NB the following option is added by "leaflet-rotate"
@@ -213,7 +211,7 @@ L.DistanceMarkers = L.LayerGroup.extend({
 			// create distance markers
 			if (options.distance && i % 2 == 0) {
 				if (preferCanvas) {
-					marker.addLayer(
+					markers.addLayer(
 						new L.DistanceMarker(position.latLng, {
 							label: text, // TODO: handle text rotation (leaflet-rotate)
 							radius: 7,
@@ -226,7 +224,7 @@ L.DistanceMarkers = L.LayerGroup.extend({
 						})
 					);
 				} else {
-					marker.addLayer(
+					markers.addLayer(
 						L.marker(position.latLng, {
 							title: text,
 							icon: L.divIcon({

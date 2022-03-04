@@ -12,7 +12,7 @@ export var Options = {
 	distanceMarkers: {
 		lazy: true,
 		distance: true,
-		arrow: false
+		direction: false
 	},
 	decimalsX: 2,
 	decimalsY: 0,
