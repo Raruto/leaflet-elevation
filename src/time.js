@@ -56,16 +56,17 @@ Elevation.addInitHook(function() {
 					point.meta.time = new Date(Date.now())
 				}
 			}
+			let time = point.meta.time;
 			// Handle timezone offset
-			if (point.meta.time.getTime() - point.meta.time.getTimezoneOffset() * 60 * 1000 === 0) {
-				point.meta.time = 0;
+			if (time.getTime() - time.getTimezoneOffset() * 60 * 1000 === 0) {
+				time = 0;
 			}
-			return point.meta.time.getTime();
+			return time;
 		},
 		update: function(time, i) {
 			this.track_info.time   = (this.track_info.time || 0) + Math.abs(this._data[i].time - this._data[i > 0 ? i - 1 : i].time);
 			this._data[i].duration = this.track_info.time;
-			return new Date(time);
+			return time;
 		}
 	});
 
