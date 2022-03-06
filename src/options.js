@@ -12,7 +12,7 @@ export var Options = {
 	distanceMarkers: {
 		lazy: true,
 		distance: true,
-		direction: false
+		direction: true
 	},
 	decimalsX: 2,
 	decimalsY: 0,
@@ -59,15 +59,15 @@ export var Options = {
 	theme: "lightblue-theme",
 	summary: 'inline',
 	slope: false,
+	slopeDeltaMax: undefined,
+	slopeRange: undefined,
 	speed: false,
-	sLimit: undefined,
+	speedDeltaMax: undefined,
+	speedRange: undefined,
 	time: false,
 	timeFactor: 3600,
 	timeFormat: false,
 	timestamps: false,
-	sDeltaMax: undefined,
-	sInterpolation: "curveStepAfter",
-	sRange: undefined,
 	width: 600,
 	waypoints: true,
 	wptIcons: {

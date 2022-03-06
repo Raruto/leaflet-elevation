@@ -114,15 +114,16 @@ L.DistanceMarker = L.CircleMarker.extend({
 });
 
 L.DistanceMarkers = L.LayerGroup.extend({
-	__arrowIcon: "data:image/svg+xml,%3Csvg transform='rotate(90)' xmlns='http://www.w3.org/2000/svg' width='560px' height='560px' viewBox='0 0 560 560'%3E%3Cpath stroke-width='35' fill='%23FFF' stroke='%23000' d='M280,40L522,525L280,420L38,525z'/%3E%3C/svg%3E",
 	options: {
 		cssClass: 'dist-marker',
 		iconSize: [12, 12],
+		arrowSize: [10, 10],
+		arrowUrl: "data:image/svg+xml,%3Csvg transform='rotate(90)' xmlns='http://www.w3.org/2000/svg' width='560px' height='560px' viewBox='0 0 560 560'%3E%3Cpath stroke-width='35' fill='%23000' stroke='%23FFF' d='M280,40L522,525L280,420L38,525z'/%3E%3C/svg%3E",
 		offset: 1000,
 		showAll: 12,
 		textFunction: (distance, i, offset) => i,
 		distance: true,
-		direction: false,
+		direction: true,
 	},
 	initialize: function (line, map, options) {
 
@@ -180,10 +181,10 @@ L.DistanceMarkers = L.LayerGroup.extend({
 						new L.DistanceMarker(p1, {
 							radius: 0,
 							icon: {
-								url: this.__arrowIcon, //image link
-								size: [20, 20],        //image size ( default [40, 40] )
-								rotate: 0,             //image base rotate ( default 0 )
-								offset: { x: 0, y: 0 },//image offset ( default { x: 0, y: 0 } )
+								url: options.arrowUrl,   //image link
+								size: options.arrowSize, //image size ( default [40, 40] )
+								rotate: 0,               //image base rotate ( default 0 )
+								offset: { x: 0, y: 0 },  //image offset ( default { x: 0, y: 0 } )
 							},
 							rotation: angle,
 							interactive: false,
@@ -197,8 +198,8 @@ L.DistanceMarkers = L.LayerGroup.extend({
 					markers.addLayer(
 						L.marker(position.latLng, {
 							icon: L.icon({
-								iconUrl: this.__arrowIcon,
-								iconSize: [20, 20],
+								iconUrl: options.arrowUrl,
+								iconSize: options.arrowSize,
 							}),
 							// NB the following option is added by "leaflet-rotate"
 							rotation: angle * L.DomUtil.RAD_TO_DEG,

@@ -90,6 +90,22 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
+	 * TODO: Create a base class to handle custom data attributes (heart rate, cadence, temperature, ...)
+	 * 
+	 * @link https://leafletjs.com/examples/extending/extending-3-controls.html#handlers
+	 */
+	// addHandler: function (name, HandlerClass) {
+	// 	if (HandlerClass) {
+	// 		let handler = this[name] = new HandlerClass(this);
+	// 		this.handlers.push(handler);
+	// 		if (this.options[name]) {
+	// 			handler.enable();
+	// 		}
+	// 	}
+	// 	return this;
+	// },
+
+	/**
 	 * Disable chart brushing.
 	 */
 	disableBrush: function() {
@@ -133,7 +149,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Get default zoom level when "followMarker" is true.
+	 * Get default zoom level (followMarker: true).
 	 */
 	getZFollow: function() {
 		return this.options.zFollow;
@@ -156,6 +172,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._markedSegments = L.polyline([]);
 		this._chartEnabled   = true,
 		this.track_info      = {};
+		this.handlers        = [];
 
 		L.setOptions(this, options);
 
@@ -208,7 +225,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Load elevation data (GPX, GeoJSON or KML).
+	 * Load elevation data (GPX, GeoJSON, KML or TCX).
 	 */
 	load: function(data) {
 		this._parseFromString(data).then( geojson => geojson ? this._loadLayer(geojson) : this._loadFile(data));
@@ -283,7 +300,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Set default zoom level when "followMarker" is true.
+	 * Set default zoom level (followMarker: true).
 	 */
 	setZFollow: function(zoom) {
 		this.options.zFollow = zoom;
@@ -343,20 +360,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			// Inspired by L.GPX layer properties
 			point.meta = point.meta ?? { time: null, ele: null, hr: null, cad: null, atemp: null };
 			
-			// "alt" property is generated inside "leaflet"
-			if ("alt" in point) point.meta.ele = point.alt;
-
 			// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
 			let props = (properties && properties.coordinateProperties) || properties;
-			if (props) {
-				if("coordTimes" in props)     point.meta.time = new Date(Date.parse(props.coordTimes[i]));
-				else if("times" in props)     point.meta.time = new Date(Date.parse(props.times[i]));
-				else if("time" in props)      point.meta.time = new Date(Date.parse((typeof props.time === 'object' ? props.time[i] : props.time)));
-				if ("heartRates" in props)    point.meta.hr   = parseInt(props.heartRates[i]);
-				else if("heartRate" in props) point.meta.hr   = parseInt((typeof props.heartRate === 'object' ? props.heartRate[i] : props.heartRate));
-				else if("heart" in props)     point.meta.hr   = parseInt((typeof props.heart === 'object' ? props.heart[i] : props.heart));
-				// TODO: ask to "@tmcw/toGeoJSON" for "cadence" and "temperature" implementation
-			}
+
+			this.fire("elepoint_init", { point: point, props: props, id: i });
 
 			this._addPoint(
 				point.lat ?? point[1], 
@@ -364,10 +371,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				point.alt ?? point.meta.ele ?? point[2]
 			);
 
-			this._fireEvt("elepoint_added", { point: point, index: this._data.length - 1 });
+			this.fire("elepoint_added", { point: point, index: this._data.length - 1 });
 		});
 
-		this._fireEvt("eletrack_added", { coords: coords, index: this._data.length - 1 });
+		this.fire("eletrack_added", { coords: coords, index: this._data.length - 1 });
 	},
 
 	/*
@@ -385,7 +392,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			latlng: L.latLng(x, y, z)
 		});
 
-		this._fireEvt("eledata_updated", { index: this._data.length - 1 });
+		this.fire("eledata_updated", { index: this._data.length - 1 });
 	},
 
 	_addLayer: function(layer) {
@@ -572,7 +579,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Generate "svg" chart DOM element.
+	 * Generate "svg" chart (DOM element).
 	 */
 	_initChart: function(container) {
 		let opts    = this.options;
@@ -602,7 +609,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		chart
 			.on('reset_drag',     this._hideMarker,                     this)
-			.on('mouse_enter',    this._fireEvt.bind('elechart_enter'), this)
+			.on('mouse_enter',    this._mouseenterHandler,              this)
 			.on('dragged',        this._dragendHandler,                 this)
 			.on('mouse_move',     this._mousemoveHandler,               this)
 			.on('mouse_out',      this._mouseoutHandler,                this)
@@ -612,10 +619,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.on('margins_updated',this._resizeChart,                    this);
 
 
-		this._fireEvt("elechart_axis");
-		if (this.options.legend) this._fireEvt("elechart_legend");
+		this.fire("elechart_axis");
 
-		this._fireEvt("elechart_init");
+		if (this.options.legend) this.fire("elechart_legend");
+
+		this.fire("elechart_init");
 	},
 
 	_initLayer: function() {
@@ -641,7 +649,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._renderer               = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
 		this._marker                 = new Marker(this.options);
 
-		this._fireEvt("elechart_marker");
+		this.fire("elechart_marker");
 	},
 
 	/**
@@ -772,7 +780,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._hideMarker();
 		this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
 
-		this._fireEvt("elechart_dragged");
+		this.fire("elechart_dragged");
+	},
+
+	/**
+	 * Trigger mouseenter event
+	 */
+	_mouseenterHandler: function(e) {
+		this.fire('elechart_enter');
 	},
 
 	/*
@@ -796,8 +811,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				_.addClass(this._map.getContainer(), 'elechart-hover');
 			}
 
-			this._fireEvt("elechart_change", { data: item, xCoord: xCoord });
-			this._fireEvt("elechart_hover",  { data: item, xCoord: xCoord });
+			this.fire("elechart_change", { data: item, xCoord: xCoord });
+			this.fire("elechart_hover",  { data: item, xCoord: xCoord });
 		}
 	},
 
@@ -817,7 +832,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 			this._updateMarker(item);
 
-			this._fireEvt("elechart_change", { data: item, xCoord: xCoord });
+			this.fire("elechart_change", { data: item, xCoord: xCoord });
 		}
 	},
 
@@ -834,7 +849,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			_.removeClass(this._map.getContainer(), 'elechart-hover');
 		}
 
-		this._fireEvt("elechart_leave");
+		this.fire("elechart_leave");
 	},
 
 	/**
@@ -920,13 +935,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Add a point of interest over the diagram
-	 */
-	_registerCheckPoint: function(props) {
-		this.on("elechart_updated", () => this._chart._registerCheckPoint(props));
-	},
-
-	/**
 	 * Add chart profile to diagram
 	 */
 	_registerAreaPath: function(props) {
@@ -947,6 +955,60 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this.on("elechart_axis", () => this._chart._registerAxisScale(props));
 	},
 
+	/**
+	 * Add a point of interest over the diagram
+	 */
+	_registerCheckPoint: function(props) {
+		this.on("elechart_updated", () => this._chart._registerCheckPoint(props));
+	},
+
+
+	/**
+	 * Base handler for iterative track statistics (dist, time, z, slope, speed, acceleration, ...)
+	 */
+	 _registerDataAttribute: function(props) {
+		// save here a reference to last used point
+		let lastValid = null; 
+
+		// parse of "coordinateProperties" for later usage
+		if (props.init) {
+			this.on("elepoint_init", (e) => props.init.call(this, e));
+		}
+
+		// iteration
+		this.on("elepoint_added", (e) => {
+
+			// check and fix missing data on last added point
+			if (props.skipNull === false) {
+				let curr = this._data[e.index][props.name];
+				if(e.index > 0) {
+					let prev = this._data[e.index - 1][props.name];
+					if (isNaN(prev)) {
+						if (!isNaN(lastValid) && !isNaN(curr)) {
+							prev   = (lastValid + curr) / 2;
+						} else if (!isNaN(lastValid)) {
+							prev   = lastValid;
+						} else if (!isNaN(curr)) {
+							prev   = curr;
+						}
+						if (!isNaN(prev)) return this._data.splice(e.index - 1, 1);
+						this._data[e.index - 1][props.name] = prev;
+					}
+				}
+				// update reference to last used point (ie. if it has data)
+				if (!isNaN(curr)) {
+					lastValid = curr;
+				}
+			}
+
+			// retrieve point value
+			this._data[e.index][props.name] = props.fetch.call(this, e.index, e.point);
+
+			// update here some mixins (eg. "track_info", value validators, ...)
+			if(props.update) this._data[e.index][props.name] = props.update.call(this, this._data[e.index][props.name], e.index, e.point)
+		});
+	},
+	
 	/**
 	 * Add chart or marker tooltip info
 	 */
@@ -1030,7 +1092,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Collapse or Expand current chart control.
+	 * Collapse or Expand chart control.
 	 */
 	_toggle: function() {
 		if (_.hasClass(this._container, "elevation-expanded"))
@@ -1040,7 +1102,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Sets the view of the map (center and zoom). Useful when "followMarker" is true.
+	 * Update map center and zoom (followMarker: true)
 	 */
 	_setMapView: function(item) {
 		if (!this.options.followMarker || !this._map) return;
@@ -1080,15 +1142,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_updateChart: function() {
 		if (/*!this._data.length ||*/ !this._chart || !this._container) return;
 
-		this._fireEvt("elechart_axis");
-		this._fireEvt("elechart_area");
+		this.fire("elechart_axis");
+		this.fire("elechart_area");
 
 		this._chart.update({ data: this._data, options: this.options });
 
 		this._x     = this._chart._x;
 		this._y     = this._chart._y;
 
-		this._fireEvt('elechart_updated');
+		this.fire('elechart_updated');
 	},
 
 	/*
@@ -1131,7 +1193,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._summary.reset();
 
 		if (this.options.summary) {
-			this._fireEvt("elechart_summary");
+			this.fire("elechart_summary");
+			this._summary.update();
 		}
 		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
 			this._summary._container.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
@@ -1143,7 +1206,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				} else if (this.options.downloadLink == 'link' || this.options.downloadLink === true) {
 					event.confirm();
 				}
-				this._fireEvt('eletrack_download', event);
+				this.fire('eletrack_download', event);
 			};
 		};
 	},

@@ -23,12 +23,11 @@ _For a working example see one of the following demos:_
 - [loading individual .gpx tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
 - [loading multiple .gpx tracks (hover to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
 - [loading multiple .gpx tracks (click to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
-- [loading heart rate data (coding a custom plugin)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
-- [loading a dynamic runner (coding a custom plugin)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
-- [snapping mouse over layer buffer (leaflet-almostover)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
-- [translating plugin labels (leaflet-i18n)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
+- [translating plugin labels](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
 - [using .gpx waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
 - [using .geojson waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
+- [using custom attributes (heart rate)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
+- [using custom markers (dynamic runner)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
 
 <br/>
 
@@ -38,6 +37,7 @@ _For a working example see one of the following demos:_
 - [custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
 - [custom summary](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-summary.html)
 - [follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
+- [layer almostover](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
 - [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
 - [speed chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_speed-chart.html)
 

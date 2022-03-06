@@ -344,6 +344,9 @@ export var Chart = L.Class.extend({
 	},
 
 	_registerAreaPath: function(props) {
+		if (props.scale == 'y') props.scale = this._y;
+		else if (props.scale == 'x') props.scale = this._x;
+
 		let opts = this.options;
 
 		if (!props.xAttr) props.xAttr = opts.xAttr;
@@ -368,10 +371,16 @@ export var Chart = L.Class.extend({
 	},
 
 	_registerAxisGrid: function(props) {
+		if (props.scale == 'y') props.scale = this._y;
+		else if(props.scale == 'x') props.scale = this._x;
+
 		this._props.grids[props.name || props.axis] = props;
 	},
 
 	_registerAxisScale: function(props) {
+		if (props.scale == 'y') props.scale = this._y;
+		else if(props.scale == 'x') props.scale = this._x;
+
 		let opts  = this.options;
 		let scale = props.scale;
 
@@ -433,6 +442,7 @@ export var Chart = L.Class.extend({
 	},
 
 	_registerTooltip: function(props) {
+		props.order = props.order ?? 100;
 		this._props.tooltipItems[props.name] = props;
 	},
 

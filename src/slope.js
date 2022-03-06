@@ -12,100 +12,116 @@ Elevation.addInitHook(function() {
 
 	slope.label          = opts.slopeLabel || '%';
 
-	if (this.options.slope != "summary") {
+	this._registerDataAttribute({
+		name: 'slope',
+		// init: () => {
+		// 	// this.track_info.ascent    = 0;         // Total Ascent
+		// 	// this.track_info.descent   = 0;         // Total Descent
+		// 	// this.track_info.slope_max = -Infinity; // Slope Max
+		// 	// this.track_info.slope_min = +Infinity; // Slope Min
+		// 	// this.track_info.slope_avg = 0;         // Acceleration Avg
+		// },
+		fetch: (i) => {
+			let data  = this._data;
+			let dx    = (data[i].dist - data[i > 0 ? i - 1 : i].dist) * 1000;
+			let dz    = data[i].z - data[i > 0 ? i - 1 : i].z;
+			return (!isNaN(dz) && dx !== 0) ? (dz / dx) * 100 : 0; // slope in % = ( height / length ) * 100;
+		},
+		update: (slope, i) => {
+			this.track_info.ascent    = this.track_info.ascent    || 0;         // Total Ascent
+			this.track_info.descent   = this.track_info.descent   || 0;         // Total Descent
+			this.track_info.slope_max = this.track_info.slope_max || -Infinity; // Slope Max
+			this.track_info.slope_min = this.track_info.slope_min || +Infinity; // Slope Min
+			this.track_info.slope_avg = this.track_info.slope_avg || 0;         // Acceleration Avg
 
-		this._registerAxisScale({
-			axis       : "y",
-			position   : "right",
-			scale      : {
-				min        : -1,
-				max        : +1,
-			},
-			tickPadding: 16,
-			label      : slope.label,
-			labelX     : 25,
-			labelY     : -8,
-			name       : 'slope'
-		});
+			let track = this.track_info;
+			let data  = this._data;
+			let dz    = data[i].z - data[i > 0 ? i - 1 : i].z;
 
-		this._registerAreaPath({
-			name         : 'slope',
-			label        : 'Slope',
-			yAttr        : 'slope',
-			scaleX       : 'distance',
-			scaleY       : 'slope',
-			color        : '#F00',
-			strokeColor  : '#000',
-			strokeOpacity: "0.5",
-			fillOpacity  : "0.25",
-		});
-
-	}
-
-	this.on("eledata_updated", function(e) {
-		let data  = this._data;
-		let i     = e.index;
-		let z     = data[i].z;
-		let delta = (data[i].dist - data[i > 0 ? i - 1 : i].dist) * 1000;
-
-		// Slope / Gain
-		let track = this.track_info;
-		let tAsc  = track.ascent    || 0; // Total Ascent
-		let tDes  = track.descent   || 0; // Total Descent
-		let sMax  = track.slope_max || 0; // Slope Max
-		let sMin  = track.slope_min || 0; // Slope Min
-		let slope = 0;
-
-		if (!isNaN(z)) {
-			let deltaZ  = i > 0 ? z - data[i - 1].z : 0;
-			if (deltaZ > 0)      tAsc += deltaZ;
-			else if (deltaZ < 0) tDes -= deltaZ;
-			// slope in % = ( height / length ) * 100
-			if (delta !== 0)     slope = (deltaZ / delta) * 100;
-		}
-
-		// Try to smooth "crazy" slope values.
-		if (this.options.sDeltaMax) {
-			let deltaS    = i > 0 ? slope - data[i - 1].slope : 0;
-			let maxDeltaS = this.options.sDeltaMax;
-			if (Math.abs(deltaS) > maxDeltaS) {
-				slope       = data[i - 1].slope + maxDeltaS * Math.sign(deltaS);
+			// Try to smooth "crazy" acceleration values.
+			if (this.options.slopeDeltaMax) {
+				let delta    = slop - data[i > 0 ? i - 1 : i].slope;
+				let deltaMax = this.options.slopeDeltaMax;
+				if (Math.abs(delta) > deltaMax) {
+					slope = data[i - 1].slope + deltaMax * Math.sign(delta);
+				}
 			}
+
+			// Range of acceptable slope values.
+			slope = _.clamp(slope, this.options.slopeRange);
+
+			if (dz > 0)      this.track_info.ascent += dz;
+			else if (dz < 0) this.track_info.descent -= dz;
+
+			if (slope > track.slope_max) track.slope_max = slope;
+			if (slope < track.slope_min) track.slope_min = slope;
+
+			track.slope_avg = (slope + track.slope_avg) / 2.0;
+
+			return L.Util.formatNum(slope, 2);;
 		}
+	});
 
-		// Range of acceptable slope values.
-		slope = _.clamp(slope, this.options.sRange);
+	this._registerAxisScale({
+		axis       : "y",
+		position   : "right",
+		scale      : {
+			min        : -1,
+			max        : +1,
+		},
+		tickPadding: 16,
+		label      : slope.label,
+		labelX     : 25,
+		labelY     : -8,
+		name       : 'slope',
+		visbile    : this.options.slope != "summary"
+	});
 
-		track.ascent    = tAsc;
-		track.descent   = tDes;
-		track.slope_max = slope > sMax ? slope : sMax;
-		track.slope_min = slope < sMin ? slope : sMin;
-
-		data[i].slope   = L.Util.formatNum(slope, 2);
+	this._registerAreaPath({
+		name         : 'slope',
+		label        : 'Slope',
+		yAttr        : 'slope',
+		scaleX       : 'distance',
+		scaleY       : 'slope',
+		color        : '#F00',
+		strokeColor  : '#000',
+		strokeOpacity: "0.5",
+		fillOpacity  : "0.25",
+		visbile      : this.options.slope != "summary"
 	});
 
 	this._registerTooltip({
 		name: 'slope',
 		chart: (item) => L._("m: ") + item.slope + slope.label,
-		marker: (item) => Math.round(item.slope) + slope.label
+		marker: (item) => Math.round(item.slope) + slope.label,
+		order: 40,
 	});
 
 	this._registerSummary({
 		"ascent"  : {
 			label: "Total Ascent: ",
-			value: (track) => Math.round(track.ascent || 0) + '&nbsp;' + (this.options.imperial ? 'ft' : 'm')
+			value: (track) => Math.round(track.ascent || 0) + '&nbsp;' + (this.options.imperial ? 'ft' : 'm'),
+			order: 40
 		},
 		"descent"  : {
 			label: "Total Descent: ",
-			value: (track) => Math.round(track.descent || 0) + '&nbsp;' + (this.options.imperial ? 'ft' : 'm')
+			value: (track) => Math.round(track.descent || 0) + '&nbsp;' + (this.options.imperial ? 'ft' : 'm'),
+			order: 40
 		},
 		"minslope": {
 			label: "Min Slope: ",
-			value: (track) => Math.round(track.slope_min || 0) + '&nbsp;' + slope.label
+			value: (track) => Math.round(track.slope_min || 0) + '&nbsp;' + slope.label,
+			order: 40
 		},
 		"maxslope": {
 			label: "Max Slope: ",
-			value: (track) => Math.round(track.slope_max || 0) + '&nbsp;' + slope.label
+			value: (track) => Math.round(track.slope_max || 0) + '&nbsp;' + slope.label,
+			order: 40
+		},
+		"avgslope": {
+			label: "Avg Slope: ",
+			value: (track) => Math.round(track.slope_avg || 0) + '&nbsp;' + slope.label,
+			order: 40
 		}
 	});
 

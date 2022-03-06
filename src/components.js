@@ -150,7 +150,10 @@ export const PositionMarker = ({
 
 		let label;
 
-		for (var i in labels) {
+		Object
+		.keys(labels)
+		.sort((a, b) => labels[a].order - labels[b].order) // TODO: any performance issues?
+		.forEach((i)=> {
 			label = text.select(".height-focus-" + labels[i].name);
 
 			if (!label.size()) {
@@ -160,7 +163,8 @@ export const PositionMarker = ({
 			}
 
 			label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item));
-		}
+
+		});
 
 		text.select('tspan').attr("dy", text.selectAll('tspan').size() > 1 ? "-1.5em" : "0em" );
 		text.selectAll('tspan').attr("x", xCoord + 5);
@@ -274,17 +278,20 @@ export const Tooltip = ({
 
 		let label;
 
-		for (let i in labels) {
-			label = text.select(".mouse-focus-label-" + labels[i].name);
+		Object
+			.keys(labels)
+			.sort((a, b) => labels[a].order - labels[b].order) // TODO: any performance issues?
+			.forEach((i)=> {
+				label = text.select(".mouse-focus-label-" + labels[i].name);
 
-			if (!label.size()) {
-				label = text.append("svg:tspan", ".mouse-focus-label-x")
-					.attr("class", "mouse-focus-label-" + labels[i].name)
-					.attr("dy", "1.5em");
-			}
+				if (!label.size()) {
+					label = text.append("svg:tspan", ".mouse-focus-label-x")
+						.attr("class", "mouse-focus-label-" + labels[i].name)
+						.attr("dy", "1.5em");
+				}
 
-			label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item));
-		}
+				label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item));
+			});
 
 		text.select('tspan').attr("dy", "1em");
 		text.selectAll('tspan').attr("x", xAlign);

@@ -15,7 +15,7 @@ Elevation.addInitHook(function() {
 	 * Common AVG speeds:
 	 * ----------------------
 	 *  slow walk = 1.8  km/h
-	 *  walking   = 3.6  km/h
+	 *  walking   = 3.6  km/h <-- default: 3.6
 	 *  running   = 10.8 km/h
 	 *  cycling   = 18   km/h
 	 *  driving   = 72   km/h
@@ -32,6 +32,42 @@ Elevation.addInitHook(function() {
 	}
 
 	opts.xTimeFormat = opts.xTimeFormat || ((t) => _.formatTime(t).split("'")[0]);
+
+	this._registerDataAttribute({
+		name: 'time',
+		init: function({ point, props, id }) {
+			// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
+			if (props) {
+				if("coordTimes" in props)     point.meta.time = new Date(Date.parse(props.coordTimes[id]));
+				else if("times" in props)     point.meta.time = new Date(Date.parse(props.times[id]));
+				else if("time" in props)      point.meta.time = new Date(Date.parse((typeof props.time === 'object' ? props.time[id] : props.time)));
+			}
+		},
+		fetch: function(i, point) {
+			// Add missing timestamps (see: options.timeAVGSpeed)
+			if (!point.meta || !point.meta.time) {
+				point.meta = point.meta || {};
+				if(i > 0) {
+					let dx = (this._data[i].dist - this._data[i - 1].dist);
+					let t0 = this._data[i - 1].time.getTime();
+					let dt = ( dx / this._timeAVGSpeed) * this.options.timeFactor * 1000;
+					point.meta.time = new Date(t0 + dt);
+				} else {
+					point.meta.time = new Date(Date.now())
+				}
+			}
+			// Handle timezone offset
+			if (point.meta.time.getTime() - point.meta.time.getTimezoneOffset() * 60 * 1000 === 0) {
+				point.meta.time = 0;
+			}
+			return point.meta.time.getTime();
+		},
+		update: function(time, i) {
+			this.track_info.time   = (this.track_info.time || 0) + Math.abs(this._data[i].time - this._data[i > 0 ? i - 1 : i].time);
+			this._data[i].duration = this.track_info.time;
+			return new Date(time);
+		}
+	});
 
 	if (opts.time && opts.time != "summary" && !L.Browser.mobile) {
 
@@ -63,60 +99,25 @@ Elevation.addInitHook(function() {
 
 	}
 
-	this.on('elepoint_added', function(e) {
-		let data = this._data;
-		let i    = e.index;
-
-		// Add missing timestamps (see: options.timeAVGSpeed)
-		if (!e.point.meta || !e.point.meta.time) {
-			e.point.meta = e.point.meta || {};
-			let delta = (data[i].dist - data[i > 0 ? i - 1 : i].dist);
-			let speed = this._timeAVGSpeed;
-			e.point.meta.time = new Date(
-				(
-					i > 0
-						? data[i - 1].time.getTime() + ((( delta / speed) * opts.timeFactor) * 1000)
-						: Date.now()
-				)
-			);
-		}
-
-		let time = e.point.meta.time;
-
-		// Handle timezone offset
-		if (time.getTime() - time.getTimezoneOffset() * 60 * 1000 === 0) {
-			time = 0;
-		}
-
-		let currT    = time;
-		let prevT    = i > 0 ? data[i - 1].time : currT;
-
-		let deltaT   = Math.abs(currT - prevT);
-		let duration = (this.track_info.time || 0) + deltaT;
-
-		this.track_info.time = duration;
-
-		data[i].time         = time;
-		data[i].duration     = duration;
-	});
-
-
 	if (this.options.timestamps) {
 		this._registerTooltip({
 			name: 'date',
-			chart: (item) => L._("t: ") + this.options.timeFormat(item.time)
+			chart: (item) => L._("t: ") + this.options.timeFormat(item.time),
+			order: 20,
 		});
 	}
 
 	if (this.options.time) {
 		this._registerTooltip({
 			name: 'time',
-			chart: (item) => L._("T: ") + _.formatTime(item.duration || 0)
+			chart: (item) => L._("T: ") + _.formatTime(item.duration || 0),
+			order: 20
 		});
 		this._registerSummary({
 			"tottime"  : {
 				label: "Total Time: ",
-				value: (track) => _.formatTime(track.time || 0)
+				value: (track) => _.formatTime(track.time || 0),
+				order: 20
 			}
 		});
 	}

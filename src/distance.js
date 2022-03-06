@@ -16,62 +16,53 @@ Elevation.addInitHook(function() {
 		distance.label      = opts.xLabel;
 	}
 
-	this.on("eledata_updated", function(e) {
-		let data = this._data;
-		let i    = e.index;
-
-		let track = this.track_info;
-		let dist  = track.distance || 0;
-
-		let curr = data[i].latlng;
-		let prev = i > 0 ? data[i - 1].latlng : curr;
-
-		let delta = curr.distanceTo(prev) * opts.distanceFactor;
-
-		dist += Math.round(delta / 1000 * 100000) / 100000; // handles floating points calc
-
-		track.distance = dist;
-
-		data[i].dist = dist;
-	});
-
-	this.on("elechart_axis", function() {
-
-		this._chart._registerAxisGrid({
-			axis      : "x",
-			position  : "bottom",
-			scale     : this._chart._x,
-		});
-
+	this._registerDataAttribute({
+		name: 'dist',
+		init: () => {
+			// this.track_info.distance = 0;
+		},
+		fetch: (i) => {
+			let delta = this._data[i].latlng.distanceTo(this._data[i > 0 ? i - 1 : i].latlng) * opts.distanceFactor;
+			return Math.round(delta / 1000 * 100000) / 100000; // handles floating points calc
+		},
+		update: (distance) => {
+			this.track_info.distance = this.track_info.distance || 0;
+			this.track_info.distance += distance;
+			return this.track_info.distance;
+		}
 	});
 
 	if (this.options.distance != "summary") {
 
-		this.on("elechart_axis", function() {
-
-			this._chart._registerAxisScale({
-				axis    : "x",
-				position: "bottom",
-				scale   : this._chart._x,
-				label   : distance.label,
-				labelY  : 25,
-				labelX  : () => this._width() + 6,
-				name    : "distance",
-			});
-
+		this._registerAxisScale({
+			axis    : "x",
+			position: "bottom",
+			scale   : "x", // this._chart._x,
+			label   : distance.label,
+			labelY  : 25,
+			labelX  : () => this._width() + 6,
+			name    : "distance",
 		});
 
 	}
 
+	this._registerAxisGrid({
+		axis      : "x",
+		position  : "bottom",
+		scale     : "x" // this._chart._x,
+	});
+
 	this._registerTooltip({
 		name: 'x',
 		chart: (item) => L._("x: ") + d3.format("." + opts.decimalsX + "f")(item[opts.xAttr]) + " " + distance.label,
+		order: 20
 	});
 
 	this._registerSummary({
 		"totlen"  : {
 			label: "Total Length: ",
-			value: (track) => (track.distance || 0).toFixed(2) + '&nbsp;' + distance.label
+			value: (track) => (track.distance || 0).toFixed(2) + '&nbsp;' + distance.label,
+			order: 10
 		}
 	});
 
