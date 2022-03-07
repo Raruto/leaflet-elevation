@@ -62,33 +62,35 @@ Elevation.addInitHook(function() {
 		}
 	});
 
-	this._registerAxisScale({
-		axis       : "y",
-		position   : "right",
-		scale      : {
-			min        : -1,
-			max        : +1,
-		},
-		tickPadding: 16,
-		label      : slope.label,
-		labelX     : 25,
-		labelY     : -8,
-		name       : 'slope',
-		visbile    : this.options.slope != "summary"
-	});
+	if (this.options.slope != "summary") {
 
-	this._registerAreaPath({
-		name         : 'slope',
-		label        : 'Slope',
-		yAttr        : 'slope',
-		scaleX       : 'distance',
-		scaleY       : 'slope',
-		color        : '#F00',
-		strokeColor  : '#000',
-		strokeOpacity: "0.5",
-		fillOpacity  : "0.25",
-		visbile      : this.options.slope != "summary"
-	});
+		this._registerAxisScale({
+			axis       : "y",
+			position   : "right",
+			scale      : {
+				min        : -1,
+				max        : +1,
+			},
+			tickPadding: 16,
+			label      : slope.label,
+			labelX     : 25,
+			labelY     : -8,
+			name       : 'slope',
+		});
+
+		this._registerAreaPath({
+			name         : 'slope',
+			label        : 'Slope',
+			yAttr        : 'slope',
+			scaleX       : 'distance',
+			scaleY       : 'slope',
+			color        : '#F00',
+			strokeColor  : '#000',
+			strokeOpacity: "0.5",
+			fillOpacity  : "0.25",
+		});
+
+	}
 
 	this._registerTooltip({
 		name: 'slope',

@@ -62,35 +62,38 @@ Elevation.addInitHook(function() {
 		}
 	});
 
-	this._registerAxisScale({
-		axis    : "y",
-		position: "left",
-		scale   : "y", // this._chart._y,
-		label   : altitude.label,
-		labelX  : -3,
-		labelY  : -8,
-		name    : "altitude",
-		visbile : this.options.altitude != "summary"
-	});
-
 	this._registerAxisGrid({
 		axis      : "y",
 		position  : "left",
 		scale     : "y" // this._chart._y,
 	});
 
-	this._registerAreaPath({
-		name         : 'altitude',
-		label        : 'Altitude',
-		scaleX       : 'distance',
-		scaleY       : 'altitude',
-		color        : color.area || theme,
-		strokeColor  : opts.detached ? color.stroke : '#000',
-		strokeOpacity: "1",
-		fillOpacity  : opts.detached ? (color.alpha || '0.8') : 1,
-		preferCanvas : opts.preferCanvas,
-		visbile      : this.options.altitude != "summary"
-	});
+	if (this.options.altitude != "summary") {
+
+		this._registerAxisScale({
+			axis    : "y",
+			position: "left",
+			scale   : "y", // this._chart._y,
+			label   : altitude.label,
+			labelX  : -3,
+			labelY  : -8,
+			name    : "altitude",
+		});
+
+		this._registerAreaPath({
+			name         : 'altitude',
+			label        : 'Altitude',
+			scaleX       : 'distance',
+			scaleY       : 'altitude',
+			className    : 'area',
+			color        : color.area || theme,
+			strokeColor  : opts.detached ? color.stroke : '#000',
+			strokeOpacity: "1",
+			fillOpacity  : opts.detached ? (color.alpha || '0.8') : 1,
+			preferCanvas : opts.preferCanvas,
+		});
+
+	}
 
 	this._registerTooltip({
 		name: 'y',

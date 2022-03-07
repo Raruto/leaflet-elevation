@@ -28,7 +28,7 @@
 }
 
 .elevation-control.elevation .background {
-  background-color: rgba(70, 130, 180, 0.2);
+  background-color: var(--ele-bg, rgba(70, 130, 180, 0.2));
   border-radius: 5px;
   overflow: visible;
   display: block;
@@ -38,13 +38,13 @@
 
 .elevation-control.elevation .axis line,
 .elevation-control.elevation .axis path {
-  stroke: #2D1130;
+  stroke: var(--ele-stroke, #2D1130);
   stroke-width: 1;
   fill: none;
 }
 
 .elevation-control.elevation .grid .tick line {
-  stroke: #EEE;
+  stroke: var(--ele-tick, #EEE);
   stroke-width: 1px;
   shape-rendering: crispEdges;
 }
@@ -68,14 +68,14 @@
 }
 
 .elevation-control.elevation .area {
-  fill: #4682B4;
-  stroke: #000;
+  fill: var(--ele-area, #4682B4);
+  stroke: var(--ele-fill-stroke, #000);
   stroke-width: 1.2;
   paint-order: stroke fill;
 }
 
 .elevation-detached .elevation-control.elevation .area {
-  fill-opacity: 0.8;
+  fill-opacity: var(--ele-detached-opacity, 0.8);
 }
 
 .elevation-control.elevation .horizontal-drag-line {
@@ -104,7 +104,7 @@
 }
 
 .elevation-control.elevation .mouse-focus-line {
-  stroke: #0D1821;
+  stroke: var(--ele-focus, #0D1821);
   stroke-width: 1;
   pointer-events: none;
 }
@@ -128,7 +128,7 @@
 }
 
 .elevation-control.elevation .brush .selection {
-  fill: rgba(23, 74, 117, 0.4);
+  fill: var(--ele-brush, rgba(23, 74, 117, 0.4));
   stroke: none;
   fill-opacity: unset;
 }
@@ -207,7 +207,7 @@
 }
 
 .elevation-control.elevation .elevation-toggle-icon {
-  background: url(../images/elevation.svg) no-repeat center center;
+  background: var(--ele-icon, url(../images/elevation-lime.svg)) no-repeat center center;
 }
 
 .elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button {
@@ -240,8 +240,8 @@
 
 .leaflet-elevation-pane .height-focus,
 .leaflet-overlay-pane .height-focus {
-  stroke: #000;
-  fill: #FFF;
+  stroke: var(--ele-hfocus-stroke, #000);
+  fill: var(--ele-hfocus-fill, #FFF);
 }
 
 .leaflet-elevation-pane .height-focus.line,
@@ -277,176 +277,80 @@
 }
 
 .elevation-polyline {
+  stroke: var(--ele-poly, #000);
   filter: drop-shadow(1px 1px 0 #FFF) drop-shadow(-1px -1px 0 #FFF) drop-shadow(1px -1px 0 #FFF) drop-shadow(-1px 1px 0 #FFF);
 }
 
-.elevation-placeholder {
-  margin: auto;
-  height: auto;
-  width: 100%;
-}
-
-.elevation-placeholder~* {
-  display: none !important;
-}
-
 /* LIME THEME //////////////////////////////////////////////// */
-.lime-theme.elevation-control.elevation .background {
-  background-color: rgba(156, 194, 34, 0.2);
-}
-
-.lime-theme.elevation-control.elevation .axis line,
-.lime-theme.elevation-control.elevation .axis path {
-  stroke: #566B13;
-}
-
-.lime-theme.elevation-control.elevation .grid .tick line {
-  stroke: #CCC;
-}
-
-.lime-theme.elevation-control.elevation .brush .selection {
-  fill: rgba(99, 126, 11, 0.4);
-}
-
-.lime-theme.elevation-control.elevation .elevation-toggle-icon {
-  background: url(../images/elevation-lime.svg) no-repeat center center;
-}
-
-.lime-theme.elevation-control.elevation .area {
-  fill: #9CC222;
-}
-
-.lime-theme.elevation-control.elevation .mouse-focus-line {
-  stroke: #101404;
-}
-
-.lime-theme.height-focus {
-  stroke: #000;
-  fill: #9CC222;
-}
-
-.lime-theme.elevation-polyline {
-  stroke: #566B13;
+.lime-theme {
+  --ele-bg: rgba(156, 194, 34, 0.2);
+  --ele-stroke: #566B13;
+  --ele-area: #9CC222;
+  --ele-tick: #CCC;
+  --ele-brush: rgba(99, 126, 11, 0.4);
+  --ele-focus: #101404;
+  --ele-icon: url(../images/elevation-lime.svg);
+  --ele-poly: #566B13;
+  --ele-hfocus-stroke: #000;
+  --ele-hfocus-fill: #9CC222;
 }
 
 /* STEELBLUE THEME //////////////////////////////////////////////// */
-.steelblue-theme.elevation-control.elevation .background {
-  background-color: rgba(70, 130, 180, 0.2);
-}
-
-.steelblue-theme.elevation-control.elevation .axis line,
-.steelblue-theme.elevation-control.elevation .axis path {
-  stroke: #0D1821;
-}
-
-.steelblue-theme.elevation-control.elevation .brush .selection {
-  fill: rgba(23, 74, 117, 0.4);
-}
-
-.steelblue-theme.elevation-control.elevation .elevation-toggle-icon {
-  background: url(../images/elevation-steelblue.svg) no-repeat center center;
-}
-
-.steelblue-theme.elevation-control.elevation .area {
-  fill: #4682B4;
-}
-
-.steelblue-theme.elevation-control.elevation .mouse-focus-line {
-  stroke: #0D1821;
-}
-
-.steelblue-theme.height-focus {
-  stroke: #000;
-  fill: #4682B4;
-}
-
-.steelblue-theme.elevation-polyline {
-  stroke: #4682B4;
+.steelblue-theme {
+  --ele-bg: rgba(70, 130, 180, 0.2);
+  --ele-stroke: #0D1821;
+  --ele-area: #4682B4;
+  --ele-brush: rgba(23, 74, 117, 0.4);
+  --ele-focus: #0D1821;
+  --ele-icon: url(../images/elevation-steelblue.svg);
+  --ele-poly: #4682B4;
+  --ele-hfocus-stroke: #000;
+  --ele-hfocus-fill: #4682B4;
 }
 
 /* PURPLE THEME //////////////////////////////////////////////// */
-.purple-theme.elevation-control.elevation .background {
-  background-color: rgba(115, 44, 123, 0.2);
-}
-
-.purple-theme.elevation-control.elevation .axis line,
-.purple-theme.elevation-control.elevation .axis path {
-  stroke: #2D1130;
-}
-
-.purple-theme.elevation-control.elevation .brush .selection {
-  fill: rgba(74, 14, 80, 0.4);
-}
-
-.purple-theme.elevation-control.elevation .elevation-toggle-icon {
-  background: url(../images/elevation-purple.svg) no-repeat center center;
-}
-
-.purple-theme.elevation-control.elevation .area {
-  fill: #732C7B;
-}
-
-.purple-theme.elevation-control.elevation .mouse-focus-line {
-  stroke: #000;
-}
-
-.purple-theme.height-focus {
-  stroke: #000;
-  fill: #732C7B;
-}
-
-.purple-theme.elevation-polyline {
-  stroke: #732C7B;
+.purple-theme {
+  --ele-bg: rgba(115, 44, 123, 0.2);
+  --ele-stroke: #2D1130;
+  --ele-area: #732C7B;
+  --ele-brush: rgba(74, 14, 80, 0.4);
+  --ele-focus: #000;
+  --ele-icon: url(../images/elevation-purple.svg);
+  --ele-poly: #732C7B;
+  --ele-hfocus-stroke: #000;
+  --ele-hfocus-fill: #732C7B;
 }
 
 /* YELLOW THEME //////////////////////////////////////////////// */
-.yellow-theme.elevation-control.elevation .area {
-  fill: #FF0;
-}
-
-.yellow-theme.elevation-polyline {
-  stroke: #FF0;
+.yellow-theme {
+  --ele-area: #FF0;
+  --ele-poly: #FF0;
 }
 
 /* RED THEME //////////////////////////////////////////////// */
-.red-theme.elevation-control.elevation .area {
-  fill: #F00;
-}
-
-.red-theme.elevation-polyline {
-  stroke: #F00;
+.red-theme {
+  --ele-area: #F00;
+  --ele-poly: #F00;
 }
 
 /* MAGENTA THEME //////////////////////////////////////////////// */
-.magenta-theme.elevation-control.elevation .background {
-  background-color: rgba(255, 255, 255, 0.47);
-}
-
-.magenta-theme.elevation-control.elevation .area {
-  fill: #FF005E;
-}
-
-.magenta-theme.elevation-polyline {
-  stroke: #FF005E;
+.magenta-theme {
+  --ele-bg: rgba(255, 255, 255, 0.47);
+  --ele-area: #FF005E;
+  --ele-poly: #FF005E;
 }
 
 /* LIGHTBLUE THEME //////////////////////////////////////////////// */
-.lightblue-theme.elevation-control.elevation .area {
-  fill: #3366CC;
-  stroke: #000;
+.lightblue-theme {
+  --ele-area: #3366CC;
+  --ele-fill-stroke: #4682B4;
+  --ele-poly: #3366CC;
+  --ele-hfocus-stroke: #000;;
+  --ele-hfocus-fill: #FFFFFF;
+  --ele-detached-opacity: 0.45;
 }
 
 .elevation-detached .lightblue-theme.elevation-control.elevation .area {
-  fill-opacity: 0.45;
-  stroke: #3366CC;
-}
-
-.lightblue-theme.height-focus {
-  stroke: #000;
-  fill: #FFFFFF;
-}
-
-.lightblue-theme.elevation-polyline {
   stroke: #3366CC;
 }
 

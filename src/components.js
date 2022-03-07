@@ -1,3 +1,4 @@
+/** TODO: get copmuted styles of theese values form actual "CSS vars" */
 export const Colors = {
 	'lightblue': { area: '#3366CC', alpha: 0.45, stroke: '#3366CC' },
 	'magenta'  : { area: '#FF005E' },
@@ -30,10 +31,11 @@ export const Path = ({
 	strokeColor,
 	strokeOpacity,
 	fillOpacity,
+	className = ''
 }) => {
 	let path = d3.create('svg:path')
 
-	if (name) path.classed(name, true);
+	if (name) path.classed(name + ' ' + className, true);
 
 	path.style("pointer-events", "none");
 
@@ -180,7 +182,8 @@ export const LegendItem = ({
 	height,
 	margins = {},
 	color,
-	path
+	path,
+	className = ''
 }) => {
 	return g => {
 		g
@@ -206,7 +209,8 @@ export const LegendItem = ({
 			.attr("fill", color)
 			.attr("stroke", "#000")
 			.attr("stroke-opacity", "0.5")
-			.attr("fill-opacity", "0.25");
+			.attr("fill-opacity", "0.25")
+			.attr("class", className);
 
 		g.append('svg:text')
 			.text(L._(label || name))

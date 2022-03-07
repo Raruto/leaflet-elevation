@@ -361,10 +361,11 @@ export var Chart = L.Class.extend({
 
 		if (opts.legend) {
 			this._props.legendItems[props.name] = {
-				name   : props.name,
-				label  : props.label,
-				color  : props.color,
-				path   : path
+				name     : props.name,
+				label    : props.label,
+				color    : props.color,
+				className: props.className,
+				path     : path
 			};
 		}
 
