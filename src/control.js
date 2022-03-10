@@ -14,10 +14,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER:   'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
 	__LDISTANCEM:    '../libs/leaflet-distance-marker.min.js',
+	__LCHART:        '../src/components/chart.js',
+	__LMARKER:       '../src/components/marker.js',
+	__LSUMMARY:      '../src/components/summary.js',
 	__modulesFolder: '../src/handlers/',
-	__LCHART:        '../src/chart.js',
-	__LMARKER:       '../src/marker.js',
-	__LSUMMARY:      '../src/summary.js',
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data

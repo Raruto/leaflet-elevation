@@ -1,4 +1,4 @@
-import * as D3 from './components.js';
+import * as D3 from './d3.js';
 
 const _ = L.Control.Elevation.Utils;
 

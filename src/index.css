@@ -246,7 +246,7 @@
 .leaflet-elevation-pane .height-focus,
 .leaflet-overlay-pane .height-focus {
   stroke: #000;
-  fill: var(--ele-area, #FFF);
+  fill: var(--ele-circle, var(--ele-area, #FFF));
 }
 
 .leaflet-elevation-pane .height-focus.line,
@@ -334,6 +334,7 @@
   --ele-area: #3366CC;
   --ele-alpha: 0.45;
   --ele-stroke: #4682B4;
+  --ele-circle: #fff;
 }
 
 .elevation-detached .lightblue-theme.elevation-control.elevation .area {
