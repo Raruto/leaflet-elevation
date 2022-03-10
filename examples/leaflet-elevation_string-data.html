@@ -37,13 +37,19 @@
     }
   </style>
 
+  <!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
   <!-- leaflet-ui -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
   <!-- leaflet-elevation -->
-  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" />
-  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" />
+  <script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script>
 
   <style>
     .elevation-data {
@@ -91,7 +97,7 @@
   </div>
 
   <script>
-    var opts = {
+    let opts = {
       map: {
         mapTypeId: 'topo',
         center: [41.4583, 12.7059],
@@ -134,20 +140,17 @@
       },
     };
 
-    var map = L.map('map', opts.map);
+    let map = L.map('map', opts.map);
 
-    var controlElevation = L.control.elevation(opts.elevationControl.options);
+    let controlElevation = L.control.elevation(opts.elevationControl.options);
 
     controlElevation.addTo(map);
 
     // Hidden Map
-    controlElevation
-      .on('elechart_change', (e) => {
-        setTimeout(function() {
-          map.invalidateSize();
-        }, 201);
-        map.setView(e.data.latlng, map.getZoom());
-      });
+    controlElevation.on('elechart_change', ({data}) => {
+      setTimeout(() => map.invalidateSize(), 201);
+      map.setView(data.latlng, map.getZoom());
+    });
 
     // HTML Buttons
     let data = document.querySelector('.elevation-data');

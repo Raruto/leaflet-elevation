@@ -1,14 +1,3 @@
-/** TODO: get copmuted styles of theese values form actual "CSS vars" */
-export const Colors = {
-	'lightblue': { area: '#3366CC', alpha: 0.45, stroke: '#3366CC' },
-	'magenta'  : { area: '#FF005E' },
-	'yellow'   : { area: '#FF0' },
-	'purple'   : { area: '#732C7B' },
-	'steelblue': { area: '#4682B4' },
-	'red'      : { area: '#F00' },
-	'lime'     : { area: '#9CC222', line: '#566B13' }
-};
-
 export const Area = ({
 	width,
 	height,
@@ -78,7 +67,7 @@ export const Axis = ({
 
 		let axisScale = d3["axis" + position.replace(/\b\w/g, l => l.toUpperCase())]()
 			.scale(scale)
-			.ticks(ticks)
+			.ticks(typeof ticks === 'function' ? ticks() : ticks)
 			.tickPadding(tickPadding)
 			.tickSize(tickSize)
 			.tickFormat(tickFormat);
@@ -153,20 +142,20 @@ export const PositionMarker = ({
 		let label;
 
 		Object
-		.keys(labels)
-		.sort((a, b) => labels[a].order - labels[b].order) // TODO: any performance issues?
-		.forEach((i)=> {
-			label = text.select(".height-focus-" + labels[i].name);
+			.keys(labels)
+			.sort((a, b) => labels[a].order - labels[b].order) // TODO: any performance issues?
+			.forEach((i)=> {
+				label = text.select(".height-focus-" + labels[i].name);
 
-			if (!label.size()) {
-				label = text.append("svg:tspan")
-					.attr("class", "height-focus-" + labels[i].name)
-					.attr("dy", "1.5em");
-			}
+				if (!label.size()) {
+					label = text.append("svg:tspan")
+						.attr("class", "height-focus-" + labels[i].name /*+ " " + "order-" + labels[i].order*/)
+						.attr("dy", "1.5em");
+				}
 
-			label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item));
+				label.text(typeof labels[i].value !== "function" ? labels[i].value : labels[i].value(item));
 
-		});
+			});
 
 		text.select('tspan').attr("dy", text.selectAll('tspan').size() > 1 ? "-1.5em" : "0em" );
 		text.selectAll('tspan').attr("x", xCoord + 5);
@@ -290,7 +279,7 @@ export const Tooltip = ({
 
 				if (!label.size()) {
 					label = text.append("svg:tspan", ".mouse-focus-label-x")
-						.attr("class", "mouse-focus-label-" + labels[i].name)
+						.attr("class", "mouse-focus-label-" + labels[i].name /*+ " " + "order-" + labels[i].order*/)
 						.attr("dy", "1.5em");
 				}
 
@@ -448,8 +437,7 @@ export const Domain = ({
 	forceBounds,
 	scale
 }) => function(data) {
-	attr = attr || name;
-	if (scale && scale.attr) attr = scale.attr;
+	attr = (scale && scale.attr) || attr || name;
 	let domain = data && data.length ? d3.extent(data, d => d[attr]) : [0, 1];
 	if (typeof min !== "undefined" && (min < domain[0] || forceBounds)) {
 		domain[0] = min;
@@ -498,8 +486,8 @@ export const Chart = ({
 	ruler,
 }) => {
 
-	const _width   = width - margins.left - margins.right;
-	const _height  = height - margins.top - margins.bottom;
+	const w = width - margins.left - margins.right;
+	const h = height - margins.top - margins.bottom;
 
 	// SVG Container
 	const svg   = d3.create("svg:svg").attr("class", "background");
@@ -518,16 +506,16 @@ export const Chart = ({
 	};
 
 	// SVG Paths
-	const mask          = panes.area.append("svg:mask").attr("id", 'elevation-clipper').attr('fill-opacity', 1);
-	const maskRect      = mask.append("svg:rect").attr('class', 'zoom').attr('fill', 'white'); // white = transparent
+	const mask          = panes.area   .append("svg:mask")         .attr("id", 'elevation-clipper').attr('fill-opacity', 1);
+	const maskRect      = mask         .append("svg:rect")         .attr('class', 'zoom')          .attr('fill', 'white'); // white = transparent
 
 	// Canvas Paths
-	const foreignObject = panes.area.append('svg:foreignObject').attr('mask', 'url(#' + mask.attr('id') + ')');
-	const canvas        = foreignObject.append('xhtml:canvas').attr('class', 'canvas-plot');
+	const foreignObject = panes.area   .append('svg:foreignObject').attr('mask', 'url(#' + mask.attr('id') + ')');
+	const canvas        = foreignObject.append('xhtml:canvas')     .attr('class', 'canvas-plot');
 	const context       = canvas.node().getContext('2d');
 
 	// Add tooltip
-	panes.tooltip.call(Tooltip({ xCoord: 0, yCoord: 0, height: _height, width : _width, labels: {} }));
+	panes.tooltip.call(Tooltip({ xCoord: 0, yCoord: 0, height: h, width : w, labels: {} }));
 
 	// Add the brushing
 	let brush   = d3.brushX().on('start.cursor end.cursor brush.cursor', () => panes.brush.select(".overlay").attr('cursor', null));
@@ -558,57 +546,37 @@ export const Chart = ({
 		ruler,
 	}) => {
 
-		const _width   = width - margins.left - margins.right;
-		const _height  = height - margins.top - margins.bottom;
+		const w = width - margins.left - margins.right;
+		const h = height - margins.top - margins.bottom;
 
-		svg.attr("viewBox", `0 0 ${width} ${height}`)
-			.attr("width", width)
-			.attr("height", height);
-
-		g.attr("transform", "translate(" + margins.left + "," + margins.top + ")");
+		svg          .attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`);
+		g            .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
 
 		// Partially fix: https://github.com/Raruto/leaflet-elevation/issues/123
 		if(/Mac|iPod|iPhone|iPad/.test(navigator.platform) && /AppleWebkit/i.test(navigator.userAgent)) {
-			canvas
-			.style("transform", "translate(" + margins.left + "px," + margins.top + "px)");
+			canvas   .style("transform", "translate(" + margins.left + "px," + margins.top + "px)");
 		}
 
-		maskRect
-			.attr("x", 0)
-			.attr("y", 0)
-			.attr("width", _width)
-			.attr("height", _height);
-
-		foreignObject
-			.attr('width', _width)
-			.attr('height', _height);
-
-		canvas
-			.attr('width', _width)
-			.attr('height', _height);
+		maskRect     .attr("width", w).attr("height", h).attr("x", 0).attr("y", 0);
+		foreignObject.attr('width', w).attr('height', h);
+		canvas       .attr('width', w).attr('height', h);
 
 		if (ruler) {
-			panes.ruler.call(Ruler({ height: _height, width: _width }));
+			panes.ruler.call(Ruler({ height: h, width: w }));
 		}
 
-		panes.brush.call(brush.extent( [ [0,0], [_width, _height] ] ));
+		panes.brush.call(brush.extent( [ [0,0], [w, h] ] ));
 		panes.brush.select(".overlay").attr('cursor', null);
 
-		chart._width  = _width;
-		chart._height = _height;
+		chart._width  = w;
+		chart._height = h;
 
-		chart.svg.dispatch('resize', { detail: { width: _width, height: _height } } );
+		chart.svg.dispatch('resize', { detail: { width: w, height: h } } );
 
 	};
 
-	chart.pane = (name) => {
-		if (!panes[name]) {
-			panes[name] = g.append('g').attr("class", name);
-		}
-		return panes[name];
-	}
-
-	chart.get = (name) => utils[name];
+	chart.pane = (name) => (panes[name] || (panes[name] = g.append('g').attr("class", name)));
+	chart.get  = (name) => utils[name];
 
 	chart._resize({ width, height, margins});
 

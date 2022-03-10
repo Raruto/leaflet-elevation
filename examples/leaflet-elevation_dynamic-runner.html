@@ -26,6 +26,11 @@
 			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
 		}
 
+		.runner.height-focus {
+			stroke:#000;
+ 			fill:#fff
+		}
+
 		/** Get rid of mouse events over the chart */
 		.elevation-control.elevation svg * {
 			pointer-events: none;
@@ -40,13 +45,19 @@
 		}
 	</style>
 
+	<!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script>
 
 </head>
 
@@ -80,7 +91,7 @@
 
 			// Update map and chart "markers" from latlng
 			setPositionFromLatLng: function(latlng) {
-				this._mousemoveLayerHandler({latlng: latlng});
+				this._onMouseMoveLayer({latlng: latlng});
 			},
 
 			tick: function (runner, dist = 0, inc = 0.1) {
@@ -116,9 +127,19 @@
 		});
 	</script>
 
+	<!-- Override default translations -->
+	<script>
+		L.registerLocale('en', {
+			"You are here: ": "You are here: ",
+			"y: "           : "y: ",
+			"x: "           : "x: "
+		});
+		L.setLocale('en');
+	</script>
+
 	<!-- And finally initialize map and controls -->
 	<script>
-		var opts = {
+		let opts = {
 			map: {
 				center: [41.4583, 12.7059],
 				zoom: 5,
@@ -144,30 +165,21 @@
 			},
 		};
 
-		var map = new L.Map('map', opts.map);
+		let map = L.map('map', opts.map);
 
-		var controlElevation = L.control.elevation(opts.elevationControl.options);
+		let controlElevation = L.control.elevation(opts.elevationControl.options);
 
-		controlElevation.on('eledata_loaded', function(e) {
+		controlElevation.on('eledata_loaded', () => {
 			// Dynamically generate chart markers
 			[50, 100, 150, 200, 250].forEach(d => controlElevation.addCheckpoint({ dist: d, label: d + ' km' }));
 
-			// Start here a custom "walking" runner
+			// Start custom "walking" runner
 			let runner = controlElevation.addRunner({ dist: 0 });
 			controlElevation.tick(runner)
 		});
 
 		controlElevation.load(opts.elevationControl.url);
 		controlElevation.addTo(map);
-	</script>
-
-	<script>
-		L.registerLocale('en', {
-			"You are here: ": "You are here: ",
-			"y: "           : "y: ",
-			"x: "           : "x: "
-		});
-		L.setLocale('en');
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"

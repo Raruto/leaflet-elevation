@@ -20,13 +20,19 @@
 		}
 	</style>
 
+	<!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://server.arcgisonline.com">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script>
 
 	<style>
 	.elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button,
@@ -41,7 +47,7 @@
 	}
 	</style>
 
-  <!-- CHANGE ME: custom lime-theme colors -->
+	<!-- Custom "lime-theme" colors -->
 	<style>
 	.lime-theme.height-focus.circle-lower {
 		fill: #FFF;
@@ -67,7 +73,7 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-		var opts = {
+		let opts = {
 			map: {
 				mapTypeId: 'satellite',
 				center: [41.4583, 12.7059],
@@ -107,20 +113,13 @@
 			},
 		};
 
-		var map = new L.Map('map', opts.map);
+		let map = L.map('map', opts.map);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+		let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
 
-		var controlZoom = new L.Control.Zoom(opts.zoomControl);
-		var controlElevation = L.control.elevation(opts.elevationControl.options);
-		var controlLayer = L.control.layers(null, null, opts.layersControl.options);
+		controlElevation.load(opts.elevationControl.url);
 
-		controlLayer.addTo(map);
-
-		controlElevation.loadChart(map);
-		controlElevation.loadData(opts.elevationControl.url);
-
-		map.on('eledata_loaded', function(e) {
-			controlLayer.addOverlay(e.layer, e.name);
-		});
+		map.on('eledata_loaded', ({layer, name}) => controlLayer.addOverlay(layer, name));
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"

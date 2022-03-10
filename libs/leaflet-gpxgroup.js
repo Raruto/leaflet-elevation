@@ -189,7 +189,7 @@ L.GpxGroup = L.Class.extend({
     });
 
     
-    this._elevation.lazyLoad(this._elevation.__LGEOMUTIL).then(() => {
+    this._elevation.import(this._elevation.__LGEOMUTIL).then(() => {
       route.addTo(this._layers);
 
       route.eachLayer((layer) => this._onEachRouteLayer(route, layer));
@@ -279,7 +279,7 @@ L.GpxGroup = L.Class.extend({
 
     if (route && route.isSelected()) {
       if (!eleDiv) {
-        elevation.loadChart(this._map);
+        elevation.addTo(this._map);
       }
       route.getLayers().forEach(function(layer) {
         if (layer instanceof L.Polyline) {

@@ -36,6 +36,11 @@
   user-select: none;
 }
 
+.elevation-control.elevation .axis .tick,
+.elevation-control.elevation .axis .domain {
+  pointer-events: none;
+}
+
 .elevation-control.elevation .axis line,
 .elevation-control.elevation .axis path {
   stroke: var(--ele-axis, #2D1130);
@@ -260,20 +265,20 @@
   stroke-width: 2px;
 }
 
-.elevation-waypoint-icon:before {
-  background: url(../images/elevation-pushpin.svg) no-repeat center center / contain;
+.elevation-waypoint-icon:before,
+.elevation-position-icon:before {
   content: "";
   width: 100%;
   height: 100%;
   display: inline-block;
 }
 
+.elevation-waypoint-icon:before {
+  background: url(../images/elevation-pushpin.svg) no-repeat center center / contain;
+}
+
 .elevation-position-icon:before {
   background: url(../images/elevation-position.svg) no-repeat center center / contain;
-  content: "";
-  width: 100%;
-  height: 100%;
-  display: inline-block;
 }
 
 .elevation-polyline {

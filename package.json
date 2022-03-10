@@ -57,7 +57,7 @@
 	"peerDependencies": {
 		"leaflet": "^1.7.0",
 		"d3": "6.5.0",
-		"@tmcw/togeojson": "4.5.0"
+		"@tmcw/togeojson": "4.6.0"
 	},
 	"dependencies": {
 		"leaflet-i18n": "^0.3.1",

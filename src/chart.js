@@ -1,8 +1,8 @@
-import 'leaflet-i18n';
-import * as _  from './utils';
-import * as D3 from './components';
+import * as D3 from './components.js';
 
-export var Chart = L.Class.extend({
+const _ = L.Control.Elevation.Utils;
+
+export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
@@ -10,7 +10,7 @@ export var Chart = L.Class.extend({
 		this.options       = opts;
 		this.control       = control;
 
-		this._data         = [];
+		this._data         = control._data || [];
 
 		// cache registered components
 		this._props        = {
@@ -31,10 +31,13 @@ export var Chart = L.Class.extend({
 		this._brushEnabled = opts.dragging;
 		this._zoomEnabled  = opts.zooming;
 
+		opts.xTicks = this._xTicks();
+		opts.yTicks = this._yTicks();
+		
 		let chart       = this._chart = D3.Chart(opts);
 
 		// SVG Container
-		let svg         = this._container = chart.svg;
+		this._container = chart.svg;
 
 		// Panes
 		this._grid      = chart.pane('grid');
@@ -49,23 +52,23 @@ export var Chart = L.Class.extend({
 		this._initScale();
 
 		// Helpers
-		this._mask  = chart.get('mask');
+		this._mask      = chart.get('mask');
 		this._context   = chart.get('context');
 		this._brush     = chart.get('brush');
 
-		this._zoom = d3.zoom();
-		this._drag = d3.drag();
+		this._zoom      = d3.zoom();
+		this._drag      = d3.drag();
 
 		// Interactions
 		this._initInteractions();
 
 		// svg.on('resize', (e)=>console.log(e.detail));
 
-		// Handle multi-track segments (BETA)
+		// Handle multi-track segments
 		this._maskGaps = [];
-		control.on('eletrack_added', (e) => {
-			this._maskGaps.push(e.index);
-			control.once('eledata_updated', (e) => this._maskGaps.push(e.index));
+		control.on('eletrack_added', ({index}) => {
+			this._maskGaps.push(index);
+			control.once('elepoint_added', ({index}) => this._maskGaps.push(index));
 		});
 
 	},
@@ -75,6 +78,9 @@ export var Chart = L.Class.extend({
 			if (props.data) this._data = props.data;
 			if (props.options) this.options = props.options;
 		}
+
+		this.options.xTicks = this._xTicks();
+		this.options.yTicks = this._yTicks();
 
 		this._updateScale();
 		this._updateArea();
@@ -94,14 +100,13 @@ export var Chart = L.Class.extend({
 		this._hideDiagramIndicator()
 		this._area.selectAll('path').attr("d", "M0 0");
 		this._context.clearRect(0, 0, this._width(), this._height());
+		this._mask.selectAll(".gap").remove();
+		this._maskGaps = [];
 
 		// if (this._path) {
 			// this._x.domain([0, 1]);
 			// this._y.domain([0, 1]);
 		// }
-
-		this._maskGaps = [];
-		this._mask.selectAll(".gap").remove();
 	},
 
 	_drawPath: function(name) {
@@ -119,12 +124,10 @@ export var Chart = L.Class.extend({
 			)
 		);
 
-		if (path.classed('leaflet-hidden')) return;
-
-		if (this.options.preferCanvas) {
-			_.drawCanvas(this._context, path);
-		} else {
-			this._area.append(() => path.node());
+		if (!path.classed('leaflet-hidden')) {
+			this.options.preferCanvas
+				? _.drawCanvas(this._context, path)
+				: _.append(this._area.node(), path.node());
 		}
 	},
 
@@ -142,29 +145,27 @@ export var Chart = L.Class.extend({
 	 * Initialize "d3-brush".
 	 */
 	_initBrush: function(e) {
-		const brush   = (e) => {
-			if (!this._data.length) return;
-			let extent  = e.selection;
-			if (extent) {
-				let start = this._findIndexForXCoord(extent[0]);
-				let end   = this._findIndexForXCoord(extent[1]);
+		const brush   = ({selection}) => {
+			if (selection && this._data.length) {
+				let start = this._findIndexForXCoord(selection[0]);
+				let end   = this._findIndexForXCoord(selection[1]);
 				this.fire('dragged', { dragstart: this._data[start], dragend: this._data[end] });
 			}
 		}
 
 		const focus   = (e) => {
-			if (!this._data.length) return;
-			if (e.type == 'brush' && !e.sourceEvent) return;
-			let rect    = this._chart.panes.brush.select('.overlay').node();
-			let coords  = d3.pointers(e, rect)[0];
-			let xCoord  = coords[0];
-			let item    = this._data[this._findIndexForXCoord(xCoord)];
+			if (this._data.length && (e.type != 'brush' /*|| e.sourceEvent*/)) {
+				let rect    = this._chart.panes.brush.select('.overlay').node();
+				let coords  = d3.pointers(e, rect)[0];
+				let xCoord  = coords[0];
+				let item    = this._data[this._findIndexForXCoord(xCoord)];
 
-			this.fire("mouse_move", { item: item, xCoord: xCoord });
+				this.fire("mouse_move", { item: item, xCoord: xCoord });
+			}
 		};
 
 		this._brush
-			.filter((e) => this._brushEnabled && !e.shiftKey && !e.button)
+			.filter(({shiftKey, button}) => !shiftKey && !button && this._brushEnabled)
 			.on("end.update", brush)
 			.on("brush.update", focus);
 
@@ -184,11 +185,11 @@ export var Chart = L.Class.extend({
 
 		const zoom    = this._zoom;
 
-		const onStart = (e) => {
-			if (e.sourceEvent && e.sourceEvent.type == "mousedown") svg.style('cursor', 'grabbing');
-			if (e.transform.k == 1 && e.transform.x == 0) {
+		const onStart = ({transform, sourceEvent}) => {
+			if (sourceEvent && sourceEvent.type == "mousedown") svg.style('cursor', 'grabbing');
+			if (transform.k == 1 && transform.x == 0) {
 				this._container.classed('zoomed', true);
-				// Apply d3-zoom (bind <clipPath> mask)
+				// Apply d3-zoom and bind <mask>
 				if (this._mask) {
 					this._point.attr('mask', 'url(#' + this._mask.attr('id') + ')');
 				}
@@ -196,10 +197,10 @@ export var Chart = L.Class.extend({
 			this.zooming = true;
 		};
 
-		const onEnd  = (e) => {
-			if (e.transform.k ==1 && e.transform.x == 0){
+		const onEnd  = ({transform}) => {
+			if (transform.k ==1 && transform.x == 0) {
 				this._container.classed('zoomed', false);
-				// Apply d3-zoom (bind <clipPath> mask)
+				// Reset d3-zoom and remove <mask>
 				if (this._mask) {
 					this._point.attr('mask', null);
 				}
@@ -208,15 +209,15 @@ export var Chart = L.Class.extend({
 			svg.style('cursor', '');
 		};
 
-		const onZoom = (e) => {
+		const onZoom = ({transform, sourceEvent}) => {
 			// TODO: find a faster way to redraw the chart.
 			this.zooming = false;
 			this._updateScale(); // hacky way for restoring x scale when zooming out
 			this.zooming = true;
-			this._scales.distance = this._x = e.transform.rescaleX(this._x); // calculate x scale at zoom level
-			if (this._scales.time) this._scales.time = e.transform.rescaleX(this._scales.time); // calculate x scale at zoom level
+			this._scales.distance = this._x = transform.rescaleX(this._x); // calculate x scale at zoom level
+			if (this._scales.time) this._scales.time = transform.rescaleX(this._scales.time); // calculate x scale at zoom level
 			this._resetDrag();
-			if (e.sourceEvent && e.sourceEvent.type == "mousemove") {
+			if (sourceEvent && sourceEvent.type == "mousemove") {
 				this._hideDiagramIndicator();
 			}
 			this.fire('zoom');
@@ -232,7 +233,7 @@ export var Chart = L.Class.extend({
 				[margin.left, -Infinity],
 				[this._width() - margin.right, Infinity]
 			])
-			.filter((e) => this._zoomEnabled && (e.shiftKey || e.buttons == 4))
+			.filter(({shiftKey, buttons}) => (shiftKey || buttons == 4) && this._zoomEnabled)
 			.on("start", onStart)
 			.on("end", onEnd)
 			.on("zoom", onZoom);
@@ -254,21 +255,17 @@ export var Chart = L.Class.extend({
 	 * Toggle chart data on legend click
 	 */
 	_initLegend: function() {
-		this._container.on('legend_clicked', (e) => {
-			let { path, legend, name, enabled } = e.detail;
-
-			if (!path) return;
-
-			let label = _.select('text', legend);
-			let rect  = _.select('rect', legend);
-
-			_.toggleStyle(label, 'text-decoration-line', 'line-through', enabled);
-			_.toggleStyle(rect,  'fill-opacity',         '0',            enabled);
-			_.toggleClass(path,  'leaflet-hidden',                       enabled);
-
-			this._updateArea();
-
-			this.fire("elepath_toggle", { path, name, legend, enabled })
+		this._container.on('legend_clicked', ({detail}) => {
+			let { path, legend, name, enabled } = detail;
+			if (path) {
+				let label = _.select('text', legend);
+				let rect  = _.select('rect', legend);
+				_.toggleStyle(label, 'text-decoration-line', 'line-through', enabled);
+				_.toggleStyle(rect,  'fill-opacity',         '0',            enabled);
+				_.toggleClass(path,  'leaflet-hidden',                       enabled);
+				this._updateArea();
+				this.fire("elepath_toggle", { path, name, legend, enabled })
+			}
 		});
 	},
 
@@ -290,26 +287,25 @@ export var Chart = L.Class.extend({
 		};
 
 		const position  = (e, d) => {
-			let yMax      = this._height();
 			let yCoord    = d3.pointers(e, this._area.node())[0][1];
-			let y         = yCoord > 0 ? (yCoord < yMax ? yCoord : yMax) : 0;
-			let z         = this._y.invert(y);
-			let data      = L.extend(this._ruler.data()[0], { y: y });
+			let yMax      = this._height();
+			let y         = _.clamp(yCoord, [0, yMax]);
 
 			this._ruler
-				.data([data])
+				.data([L.extend(this._ruler.data()[0], { y: y })])
 				.attr("transform", d => "translate(" + d.x + "," + d.y + ")")
 				.classed('active', y < yMax);
 
-			this._container.select(".horizontal-drag-label")
-				.text(formatNum(z) + " " + (this.options.imperial ? 'ft' : 'm'));
+			this._container
+				.select(".horizontal-drag-label")
+				.text(formatNum(this._y.invert(y)) + " " + (this.options.imperial ? 'ft' : 'm'));
 
 			this.fire('ruler_filter', { coords: yCoord < yMax && yCoord > 0 ? this._findCoordsForY(yCoord) : [] });
 		}
 
 		drag
-		.on("start end", label)
-		.on("drag", position);
+			.on("start end", label)
+			.on("drag", position);
 
 		this._ruler.call(drag);
 
@@ -353,10 +349,8 @@ export var Chart = L.Class.extend({
 		if (!props.yAttr) props.yAttr = opts.yAttr;
 		if (typeof props.preferCanvas === "undefined") props.preferCanvas = opts.preferCanvas;
 
-		let path = D3.Path(props);
-
 		// Save paths in memory for latter usage
-		this._paths[props.name]       = path;
+		this._paths[props.name]       = D3.Path(props);;
 		this._props.areas[props.name] = props;
 
 		if (opts.legend) {
@@ -365,7 +359,7 @@ export var Chart = L.Class.extend({
 				label    : props.label,
 				color    : props.color,
 				className: props.className,
-				path     : path
+				path     : this._paths[props.name]
 			};
 		}
 
@@ -406,11 +400,14 @@ export var Chart = L.Class.extend({
 		}
 
 		if (!props.ticks) {
-			if (props.axis == 'x')      props.ticks = opts.xTicks;
-			else if (props.axis == 'y') props.ticks = opts.yTicks;
+			if (props.axis == 'x')      props.ticks = this._xTicks.bind(this);
+			else if (props.axis == 'y') props.ticks = this._yTicks.bind(this);
 		}
 
 		this._props.axes[props.name] = props;
+
+		if (props.name == this.options.yScale) this._y = scale;
+		if (props.name == this.options.xScale) this._x = scale;
 
 		return scale;
 	},
@@ -421,16 +418,17 @@ export var Chart = L.Class.extend({
 	_registerCheckPoint: function(point) {
 		if (!this._data.length) return;
 
+		const {xAttr, yAttr} = this.options;
 		let item, x, y;
 
 		if (point.latlng) {
 			item = this._data[this._findIndexForLatLng(point.latlng)];
-			x    = this._x(item.dist);
-			y    = this._y(item.z);
-		} else if (!isNaN(point.dist)) {
-			x    = this._x(point.dist);
+			x    = this._x(item[xAttr]);
+			y    = this._y(item[yAttr]);
+		} else if (!isNaN(point[xAttr])) {
+			x    = this._x(point[xAttr]);
 			item = this._data[this._findIndexForXCoord(x)]
-			y    = this._y(item.z);
+			y    = this._y(item[yAttr]);
 		} 
 
 		this._point.call(D3.CheckPoint({
@@ -443,57 +441,46 @@ export var Chart = L.Class.extend({
 	},
 
 	_registerTooltip: function(props) {
-		props.order = props.order ?? 100;
+		props.order = props.order ?? 1000;
 		this._props.tooltipItems[props.name] = props;
 	},
 
 	_updateArea: function() {
-		let paths = this._paths;
 		// Reset and update chart profiles
 		this._context.clearRect(0, 0, this._width(), this._height());
-		for (var i in paths) {
-			if (!paths[i].classed('leaflet-hidden')) {
-				this._drawPath(i);
-			}
-		}
+		_.each(this._paths, (path, i) => !path.classed('leaflet-hidden') && this._drawPath(i));
 	},
 
 	_updateAxis: function() {
 
 		let opts = this.options;
 
-		// Reset chart axis.
-		this._grid.selectAll('g').remove();
-		this._axis.selectAll('g').remove();
-
-		let grids = this._props.grids;
-		let axes  = this._props.axes;
-		let props, axis, grid;
-
-		let gridOpts = {
+		const gridOpts = {
 			width     : this._width(),
 			height    : this._height(),
 			tickFormat: "",
 		};
-		let axesOpts  = {
+
+		const axesOpts  = {
 			width  : this._width(),
 			height : this._height(),
 		};
 
-		// Render grids
-		for (let i in grids) {
-			props = L.extend({}, gridOpts, grids[i]);
-			grid  = D3.Grid(props);
-			this._grid.call(grid);
-		}
+		// Reset grids
+		this._grid.selectAll('g').remove();
+		_.each(this._props.grids, (grid, i) => {
+			if (opts[i] !== false && opts[i] !== 'summary') {
+				this._grid.call(D3.Grid(L.extend({}, gridOpts, grid)))
+			}
+		});
 
-		// Render axis
-		for (let i in axes) {
-			if (opts[i] === false || opts[i] === 'summary') continue;
-			props = L.extend({}, axesOpts, axes[i]);
-			axis  = D3.Axis(props);
-			this._axis.call(axis);
-		}
+		// Rest axis
+		this._axis.selectAll('g').remove();
+		_.each(this._props.axes,  (axis, i) => {
+			if (opts[i] !== false && opts[i] !== 'summary') {
+				this._axis.call(D3.Axis(L.extend({}, axesOpts, axis)));
+			}
+		});
 
 		// Adjust axis scale positions
 		this._axis
@@ -516,27 +503,26 @@ export var Chart = L.Class.extend({
 	},
 
 	_updateClipper: function() {
-		let margin = this.options.margins;
+		const { xAttr, margins } = this.options;
+		const data = this._data;
 
 		this._zoom
 			.scaleExtent([1, 10])
 			.extent([
-				[margin.left, 0],
-				[this._width() - margin.right, this._height()]
+				[margins.left, 0],
+				[this._width() - margins.right, this._height()]
 			])
 			.translateExtent([
-				[margin.left, -Infinity],
-				[this._width() - margin.right, Infinity]
+				[margins.left, -Infinity],
+				[this._width() - margins.right, Infinity]
 			]);
 
-		// Apply svg mask on multi-track segments (BETA)
+		// Apply svg mask on multi-track segments
 		this._mask.selectAll(".gap").remove()
 		this._maskGaps.forEach((d, i) => {
 			if(i >= this._maskGaps.length - 2) return;
-			let d1 = this._data[this._maskGaps[i]];
-			let d2 = this._data[this._maskGaps[i + 1]];
-			let x1 = this._x(this._data[this._findIndexForLatLng(d1.latlng)].dist);
-			let x2 = this._x(this._data[this._findIndexForLatLng(d2.latlng)].dist);
+			let x1 = this._x(data[this._findIndexForLatLng(data[this._maskGaps[i]].latlng)][xAttr]);
+			let x2 = this._x(data[this._findIndexForLatLng(data[this._maskGaps[i + 1]].latlng)][xAttr]);
 			this._mask
 				.append("rect")
 				.attr("x", x1)
@@ -545,7 +531,7 @@ export var Chart = L.Class.extend({
 				.attr("height", this._height())
 				.attr('class', 'gap')
 				.attr('fill-opacity', '0.8')
-				.attr("fill", 'black');  // black = hide
+				.attr("fill", 'black');  // hide = black (mask)
 		});
 	},
 
@@ -553,27 +539,23 @@ export var Chart = L.Class.extend({
 
 		if (this.options.legend === false) return;
 
-		let legends = this._props.legendItems;
-		let legend;
+		const legendOpts = {
+			width  : this._width(),
+			height : this._height(),
+			margins: this.options.margins,
+		};
 
 		// Reset legend items
 		this._legend.selectAll('g').remove();
-		for (var i in legends) {
-			legend = D3.LegendItem(
-				L.extend({
-					width  : this._width(),
-					height : this._height(),
-					margins: this.options.margins,
-				}, legends[i])
-			)
-			this._legend.append("g").call(legend);
-		}
+		_.each(this._props.legendItems, (legend) => {
+			this._legend.append("g").call(D3.LegendItem(L.extend(legendOpts, legend)));
+		});
 
 		// Get legend items
 		let items  = this._legend.selectAll('.legend-item');
 
 		// Calculate legend item positions
-		let n    = items.nodes().length;
+		let n      = items.nodes().length;
 		let v      = Array(Math.floor(n / 2)).fill(null).map((d, i) => (i + 1) * 2 - (1 - Math.sign(n % 2)));
 		let rev    = v.slice().reverse().map((d) => -(d));
 
@@ -646,14 +628,18 @@ export var Chart = L.Class.extend({
 	 * Calculates chart width.
 	 */
 	_width: function() {
-		return this._chart._width;
+		if (this._chart) this._chart._width;
+		const { width, margins } = this.options;
+		return width - margins.left - margins.right;
 	},
 
 	/**
 	 * Calculates chart height.
 	 */
 	_height: function() {
-		return this._chart._height;
+		if (this._chart) return this._chart._height;
+		const { height, margins } = this.options;
+		return height - margins.top - margins.bottom;
 	},
 
 	/*
@@ -665,7 +651,7 @@ export var Chart = L.Class.extend({
 
 		// save indexes of elevation values above the horizontal line
 		const list = data.reduce((array, item, index) => {
-			if (item.z >= z) array.push(index);
+			if (item[this.options.yAttr] >= z) array.push(index);
 			return array;
 		}, []);
 
@@ -750,4 +736,20 @@ export var Chart = L.Class.extend({
 	_hideDiagramIndicator: function() {
 		this._tooltip.attr("display", 'none');
 	},
+
+	/**
+	 * Calculate chart xTicks
+	 */
+	_xTicks: function() {
+	if (this.__xTicks) this.__xTicks = this.options.xTicks;
+	return this.__xTicks || Math.round(this._width() / 75);
+},
+
+	/**
+	 * Calculate chart yTicks
+	 */
+	_yTicks: function() {
+		if (this.__yTicks) this.__yTicks = this.options.yTicks;
+		return this.__yTicks || Math.round(this._height() / 30);
+	}
 });

@@ -1,9 +1,5 @@
 import 'leaflet-i18n';
 import * as _      from './utils';
-import * as D3     from './components';
-import { Chart }   from './chart';
-import { Marker }  from './marker';
-import { Summary } from './summary';
 import { Options } from './options';
 
 export const Elevation = L.Control.Elevation = L.Control.extend({
@@ -11,19 +7,23 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
 	options: Options,
-	__mileFactor: 0.621371,
-	__footFactor: 3.28084,
-	__D3:          'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
-	__TOGEOJSON:   'https://unpkg.com/@tmcw/togeojson@4.5.0/dist/togeojson.umd.js',
-	__LGEOMUTIL:   'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
-	__LALMOSTOVER: 'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
-	__LDISTANCEM:  'https://unpkg.com/@raruto/leaflet-elevation@1.9.6/libs/leaflet-distance-marker.min.js',
+	__mileFactor: 0.621371, // 1 km = (0.621371 mi)
+	__footFactor: 3.28084,  // 1 m  = (3.28084 ft)
+	__D3:            'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
+	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@4.6.0/dist/togeojson.umd.js',
+	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
+	__LALMOSTOVER:   'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
+	__LDISTANCEM:    '../libs/leaflet-distance-marker.min.js',
+	__modulesFolder: '../src/handlers/',
+	__LCHART:        '../src/chart.js',
+	__LMARKER:       '../src/marker.js',
+	__LSUMMARY:      '../src/summary.js',
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
 	 */
 	addData: function(d, layer) {
-		this.lazyLoad(this.__D3)
+		this.import(this.__D3)
 			.then(() => {
 				if (typeof layer === "undefined" && d.on) {
 					layer = d;
@@ -52,10 +52,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Reset data and display
 	 */
 	clear: function() {
-		if (this._marker) this._marker.remove();
-		if (this._chart)  this._clearChart();
-		if (this._layers) this._clearLayers();
-		if (this._markers) this._clearMarkers();
+		if (this._marker)        this._marker.remove();
+		if (this._chart)         this._clearChart();
+		if (this._layers)        this._clearLayers(this._layers);
+		if (this._markers)       this._clearLayers(this._markers);
+		if (this._circleMarkers) this._clearLayers(this._circleMarkers);
 
 		this._data      = [];
 		this.track_info = {};
@@ -67,7 +68,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	_clearChart: function() {
 		if (this._events && this._events.elechart_updated) {
-			this._events.elechart_updated.forEach(e => this.off('elechart_updated', e.fn, e.ctx));
+			this._events.elechart_updated.forEach(({fn, ctx}) => this.off('elechart_updated', fn, ctx));
 		}
 		if (this._chart && this._chart._container) {
 			this._chart._container.selectAll('g.point .point').remove();
@@ -75,17 +76,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 	},
 
-	_clearLayers: function() {
-		if (this._layers && this._layers.eachLayer) {
-			this._layers.eachLayer(l => l.remove())
-			this._layers.clearLayers();
-		}
-	},
-
-	_clearMarkers: function() {
-		if (this._markers && this._markers.eachLayer) {
-			this._markers.eachLayer(l => l.remove())
-			this._markers.clearLayers();
+	_clearLayers: function(l) {
+		l = l || this._layers;
+		if (l && l.eachLayer) {
+			l.eachLayer(f => f.remove())
+			l.clearLayers();
 		}
 	},
 
@@ -144,8 +139,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	getBounds: function(data) {
-		data = data || this._data;
-		return L.latLngBounds(data.map((d) => d.latlng));
+		return L.latLngBounds((data || this._data).map((d) => d.latlng));
 	},
 
 	/**
@@ -165,63 +159,54 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	/**
 	 * Initialize chart control "options" and "container".
 	 */
-	initialize: function(options) {
+	initialize: function(opts) {
+
+		opts = L.setOptions(this, opts);
+
 		this._data           = [];
 		this._layers         = L.featureGroup();
 		this._markers        = L.featureGroup();
+		this._circleMarkers  = L.featureGroup();
 		this._markedSegments = L.polyline([]);
-		this._chartEnabled   = true,
+		this._start          = (opts.trkStart || Options.trkStart);
+		this._end            = (opts.trkEnd || Options.trkEnd);
+		this._chartEnabled   = true;
+		this._yCoordMax      = -Infinity;
 		this.track_info      = {};
-		this.handlers        = [];
+		//  this.handlers        = [];
 
-		L.setOptions(this, options);
+		if (opts.followMarker)             this._setMapView = _.throttle(this._setMapView, 300, this);
+		if (opts.legend)                   opts.margins.bottom += 30;
+		if (opts.theme)                    opts.polylineSegments.className += ' ' + opts.theme;
+		if (opts.wptIcons === true)        opts.wptIcons = Options.wptIcons;
+		if (opts.distanceMarkers === true) opts.distanceMarkers = Options.distanceMarkers;
+		if (opts.trkStart)                 this._start.addTo(this._circleMarkers);
+		if (opts.trkEnd)                   this._end.addTo(this._circleMarkers);
 
-		if (this.options.followMarker)             this._setMapView = L.Util.throttle(this._setMapView, 300, this);
-		if (this.options.legend)                   this.options.margins.bottom += 30;
-		if (this.options.theme)                    this.options.polylineSegments.className += ' ' + this.options.theme;
-		if (this.options.wptIcons === true)        this.options.wptIcons = Options.wptIcons;
-		if (this.options.distanceMarkers === true) this.options.distanceMarkers = Options.distanceMarkers;
 
-		this._markedSegments.setStyle(this.options.polylineSegments);
+		this._markedSegments.setStyle(opts.polylineSegments);
 
 		// Leaflet canvas renderer colors
-		L.extend(D3.Colors, this.options.colors || {});
+		L.extend(_.Colors, opts.colors || {});
 
 		// Various stuff
 		this._fixCanvasPaths();
 		this._fixTooltipSize();
+
 	},
 
 	/**
 	 * Javascript scripts downloader (lazy loader)
 	 */
-	lazyLoad: function(src, condition = false, loader = '') {
-		if (!this.options.lazyLoadJS) {
-			return Promise.resolve();
-		}
+	import: function(src, condition) {
 		switch(src) {
-			case this.__D3:
-				loader    = '_d3LazyLoader';
-				condition = typeof d3 !== 'object';
-			break;
-			case this.__TOGEOJSON:
-				loader    = '_togeojsonLazyLoader';
-				condition = typeof toGeoJSON !== 'object';
-			break;
-			case this.__LGEOMUTIL:
-				loader    = '_geomutilLazyLoader';
-				condition = typeof L.GeometryUtil !== 'object';
-			break;
-			case this.__LALMOSTOVER:
-				loader    = '_almostoverLazyLoader';
-				condition = typeof L.Handler.AlmostOver  !== 'function';
-			break;
-			case this.__LDISTANCEM:
-				loader    = '_distanceMarkersLazyLoader';
-				condition = typeof L.DistanceMarkers  !== 'function';
-			break;
+			case this.__D3:          condition = typeof d3 !== 'object'; break;
+			case this.__TOGEOJSON:   condition = typeof toGeoJSON !== 'object'; break;
+			case this.__LGEOMUTIL:   condition = typeof L.GeometryUtil !== 'object'; break;
+			case this.__LALMOSTOVER: condition = typeof L.Handler.AlmostOver  !== 'function'; break;
+			case this.__LDISTANCEM:  condition = typeof L.DistanceMarkers  !== 'function'; break;
 		}
-		return L.Control.Elevation[loader] = _.lazyLoader(src, condition, L.Control.Elevation[loader]);
+		return condition !== false ? import(src) : Promise.resolve();
 	},
 
 	/**
@@ -239,33 +224,23 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._map = map;
 
 		let container = this._container = _.create("div", "elevation-control elevation " + this.options.theme + " " + (this.options.detached ? '' : 'leaflet-control'));
-		
-		this.lazyLoad(this.__D3)
-			.then(() => {
-				this._initButton(container);
-				this._initChart(container);
-				this._initSummary(container);
-				this._initMarker(map);
-				this._initLayer(map);
 
-				map
-					.on('zoom viewreset zoomanim',       this._hideMarker,    this)
-					.on('resize',                        this._resetView,     this)
-					.on('resize',                        this._resizeChart,   this)
-					.on('rotate',                        this._rotateMarker,  this)
-					.on('mousedown',                     this._resetDrag,     this);
+		let modules = [
+			"Distance",
+			"Time",
+			"Altitude",
+			"Slope",
+			"Speed",
+			"Acceleration",
+			...this.options.handlers
+		].filter(m => false !== this.options[typeof m == "string" && m.toLowerCase()]);
 
-				_.on(map.getContainer(), 'mousewheel', this._resetDrag,       this);
-				_.on(map.getContainer(), 'touchstart', this._resetDrag,       this);
-				_.on(document,           'keydown',    this._keydownHandler,  this);
-
-				this
-					.on('eledata_added eledata_loaded',  this._updateChart,   this)
-					.on('eledata_added eledata_loaded',  this._updateSummary, this);
-
-				this._updateChart();
-				this._updateSummary();
-			});
+		this._loadModules(modules);	// Inject here required modules (data handlers)
+		this._initButton(container);
+		this._initChart(container);
+		this._initSummary(container);
+		this._initMarker(map);
+		this._initLayer(map);
 
 		return container;
 	},
@@ -278,18 +253,18 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._container = null;
 
 		map
-			.off('zoom viewreset zoomanim',       this._hideMarker,    this)
-			.off('resize',                        this._resetView,     this)
-			.off('resize',                        this._resizeChart,   this)
-			.off('mousedown',                     this._resetDrag,     this);
+			.off('zoom viewreset zoomanim',      this._hideMarker,    this)
+			.off('resize',                       this._resetView,     this)
+			.off('resize',                       this._resizeChart,   this)
+			.off('mousedown',                    this._resetDrag,     this);
 
-		_.off(map.getContainer(), 'mousewheel', this._resetDrag,       this);
-		_.off(map.getContainer(), 'touchstart', this._resetDrag,       this);
-		_.off(document,           'keydown',    this._keydownHandler,  this);
+		_.off(map.getContainer(), 'mousewheel',  this._resetDrag,     this);
+		_.off(map.getContainer(), 'touchstart',  this._resetDrag,     this);
+		_.off(document,           'keydown',     this._onKeyDown,     this);
 
 		this
-			.off('eledata_added eledata_loaded',  this._updateChart,   this)
-			.off('eledata_added eledata_loaded',  this._updateSummary, this);
+			.off('eledata_added eledata_loaded', this._updateChart,   this)
+			.off('eledata_added eledata_loaded', this._updateSummary, this);
 	},
 
 	/**
@@ -336,7 +311,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					break;
 
 				default:
-					console.warn('Unsopperted GeoJSON feature geometry type:' + geom.type);
+					return console.warn('Unsopperted GeoJSON feature geometry type:' + geom.type);
 			}
 		}
 		if (d.type === "FeatureCollection") {
@@ -357,11 +332,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_addGeoJSONData: function(coords, properties) {
 		coords.forEach((point, i) => {
 
-			// Inspired by L.GPX layer properties
-			point.meta = point.meta ?? { time: null, ele: null, hr: null, cad: null, atemp: null };
+			// GARMIN_EXTENSIONS = ["hr", "cad", "atemp", "wtemp", "depth", "course", "bearing"];
+			point.meta = point.meta ?? { time: null, ele: null };
 			
 			// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
-			let props = (properties && properties.coordinateProperties) || properties;
+			let props  = (properties && properties.coordinateProperties) || properties;
+
+			point.prev = (attr) => (attr ? this._data[i > 0 ? i - 1 : 0][attr] : this._data[i > 0 ? i - 1 : 0]);
 
 			this.fire("elepoint_init", { point: point, props: props, id: i });
 
@@ -372,6 +349,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			);
 
 			this.fire("elepoint_added", { point: point, index: this._data.length - 1 });
+
+			if (this._yCoordMax < this._data[this._data.length - 1][this.options.yAttr]) this._yCoordMax = this._data[this._data.length - 1][this.options.yAttr];
 		});
 
 		this.fire("eletrack_added", { coords: coords, index: this._data.length - 1 });
@@ -399,7 +378,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (layer) this._layers.addLayer(layer)
 		// Postpone adding the distance markers (lazy: true)
 		if (layer && this.options.distanceMarkers && this.options.distanceMarkers.lazy) {
-			layer.on('add remove', (e) => L.DistanceMarkers && e.target instanceof L.Polyline && e.target[e.type + 'DistanceMarkers']());
+			layer.on('add remove', ({target, type}) => L.DistanceMarkers && target instanceof L.Polyline && target[type + 'DistanceMarkers']());
 		}
 	},
 
@@ -412,17 +391,18 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_initAlmostOverHandler: function(map, layer) {
 		if(!map || !this.options.almostOver) return;
-		this.lazyLoad(this.__LGEOMUTIL)
-			.then(() => this.lazyLoad(this.__LALMOSTOVER))
-			.then(() => {
-					map.addHandler('almostOver', L.Handler.AlmostOver)
-					if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
-						map.almostOver.addLayer(layer);
-						map
-							.on('almost:move', (e) => this._mousemoveLayerHandler(e))
-							.on('almost:out',  (e) => this._mouseoutHandler(e));
-					}
-			});
+		Promise.all([
+			this.import(this.__LGEOMUTIL),
+			this.import(this.__LALMOSTOVER)
+		]).then(() => {
+			map.addHandler('almostOver', L.Handler.AlmostOver)
+			if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
+				map.almostOver.addLayer(layer);
+				map
+					.on('almost:move', (e) => this._onMouseMoveLayer(e))
+					.on('almost:out',  (e) => this._onMouseOut(e));
+			}
+		});
 	},
 
 	/**
@@ -431,9 +411,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_initDistanceMarkers: function(map, layer) {
 		if (!map) return;
 		if (this.options.distanceMarkers) {
-			this.lazyLoad(this.__LGEOMUTIL)
-				.then(() => this.lazyLoad(this.__LDISTANCEM))
-				.then(() => this.options.polyline && layer.addTo(map));
+			Promise.all([
+				this.import(this.__LGEOMUTIL),
+				this.import(this.__LDISTANCEM)
+			]).then(() => this.options.polyline && layer.addTo(map) && this._circleMarkers.bringToFront());
 		} else if (this.options.polyline) {
 			layer.addTo(map);
 		}
@@ -459,7 +440,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_initMapIntegrations: function(control, layer) {
 		let map   = control._map;
-		if (control._map) {
+		if (control._data.length) {
+			control._start.setLatLng(control._data[0].latlng);
+			control._end.setLatLng(control._data[control._data.length -1].latlng);
+		}
+		if (map) {
+			control._circleMarkers.addTo(map);
 			map.once('layeradd', (e) => control.options.autofitBounds && control.fitBounds(layer.getBounds()));
 			if (!L.Browser.mobile) {
 				control._initAlmostOverHandler(map, layer);
@@ -492,12 +478,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_fixCanvasPaths: function() {
 		let oldProto = L.Canvas.prototype._fillStroke;
 		let control  = this;
+
+		let theme      = this.options.theme.replace('-theme', '');
+		let color      = _.Colors[theme] || {};
+
 		L.Canvas.include({
 			_fillStroke: function(ctx, layer) {
 				if (control._layers.hasLayer(layer)) {
 
-					let theme      = control.options.theme.replace('-theme', '');
-					let color      = D3.Colors[theme] || {};
 					let options    = layer.options;
 
 					options.color  = color.line || color.area || theme;
@@ -528,12 +516,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_fixTooltipSize: function() {
 		this.on('elechart_init', () =>
-			this.once('elechart_change elechart_hover', e => {
+			this.once('elechart_change elechart_hover', ({data, xCoord}) => {
 				if (this._chartEnabled) {
-					this._chart._showDiagramIndicator(e.data, e.xCoord);
-					this._chart._showDiagramIndicator(e.data, e.xCoord);
+					this._chart._showDiagramIndicator(data, xCoord);
+					this._chart._showDiagramIndicator(data, xCoord);
 				}
-				this._updateMarker(e.data);
+				this._updateMarker(data);
 			})
 		);
 	},
@@ -560,15 +548,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this._map) this._map.fire(type, data, propagate);
 	},
 
-	/**
-	 * Calculates chart height.
-	 */
-	_height: function() {
-		if (this._chart) return this._chart._height();
-		let opts = this.options;
-		return opts.height - opts.margins.top - opts.margins.bottom;
-	},
-
 	/*
 	 * Hides the position/height indicator marker drawn onto the map
 	 */
@@ -584,9 +563,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_initChart: function(container) {
 		let opts    = this.options;
 
-		opts.xTicks = this._xTicks();
-		opts.yTicks = this._yTicks();
-
 		if (opts.detached) {
 			let { offsetWidth, offsetHeight}             = this.eleDiv;
 			if (offsetWidth > 0)             opts.width  = offsetWidth;
@@ -598,42 +574,66 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if (opts._maxWidth > clientWidth) opts.width = clientWidth - 30;
 		}
 
-		let chart = this._chart = new Chart(opts, this);
+		Promise.all([
+			this.import(this.__D3),
+			this.import(this.__LCHART)
+		]).then((m) => {
 
-		this._x     = this._chart._x;
-		this._y     = this._chart._y;
+			let chart = this._chart = new (m[1] || Elevation).Chart(opts, this);
+	
+			this._x     = this._chart._x;
+			this._y     = this._chart._y;
+	
+			d3
+				.select(container)
+				.call(chart.render())
+	
+			chart
+				.on('reset_drag',      this._hideMarker,     this)
+				.on('mouse_enter',     this._onMouseEnter,   this)
+				.on('dragged',         this._onDragEnd,      this)
+				.on('mouse_move',      this._onMouseMove,    this)
+				.on('mouse_out',       this._onMouseOut,     this)
+				.on('ruler_filter',    this._onRulerFilter,  this)
+				.on('zoom',            this._updateChart,    this)
+				.on('elepath_toggle',  this._onToggleChart,  this)
+				.on('margins_updated', this._resizeChart,    this);
+	
+	
+			this.fire("elechart_axis");
+	
+			if (this.options.legend) this.fire("elechart_legend");
+	
+			this.fire("elechart_init");
 
-		d3
-			.select(container)
-			.call(chart.render())
+			map
+				.on('zoom viewreset zoomanim',      this._hideMarker,    this)
+				.on('resize',                       this._resetView,     this)
+				.on('resize',                       this._resizeChart,   this)
+				.on('rotate',                       this._rotateMarker,  this)
+				.on('mousedown',                    this._resetDrag,     this);
 
-		chart
-			.on('reset_drag',     this._hideMarker,                     this)
-			.on('mouse_enter',    this._mouseenterHandler,              this)
-			.on('dragged',        this._dragendHandler,                 this)
-			.on('mouse_move',     this._mousemoveHandler,               this)
-			.on('mouse_out',      this._mouseoutHandler,                this)
-			.on('ruler_filter',   this._rulerFilterHandler,             this)
-			.on('zoom',           this._updateChart,                    this)
-			.on('elepath_toggle', this._toggleChartHandler,             this)
-			.on('margins_updated',this._resizeChart,                    this);
+			_.on(map.getContainer(), 'mousewheel',  this._resetDrag,     this);
+			_.on(map.getContainer(), 'touchstart',  this._resetDrag,     this);
+			_.on(document,           'keydown',     this._onKeyDown,     this);
 
+			this
+				.on('eledata_added eledata_loaded', this._updateChart,   this)
+				.on('eledata_added eledata_loaded', this._updateSummary, this);
 
-		this.fire("elechart_axis");
+			this._updateChart();
+			this._updateSummary();
+		});
 
-		if (this.options.legend) this.fire("elechart_legend");
-
-		this.fire("elechart_init");
 	},
 
 	_initLayer: function() {
 		this._layers
-			.on('layeradd layerremove', (e) => {
-				let layer = e.layer
+			.on('layeradd layerremove', ({layer, type}) => {
 				let node  = layer.getElement && layer.getElement();
-				_.toggleClass(node,  this.options.polyline.className + ' ' + this.options.theme, e.type == 'layeradd');
-				_.toggleEvent(layer, "mousemove", this._mousemoveLayerHandler.bind(this),        e.type == 'layeradd')
-				_.toggleEvent(layer, "mouseout",  this._mouseoutHandler.bind(this),              e.type == 'layeradd');
+				_.toggleClass(node,  this.options.polyline.className + ' ' + this.options.theme, type == 'layeradd');
+				_.toggleEvent(layer, "mousemove", this._onMouseMoveLayer.bind(this),             type == 'layeradd')
+				_.toggleEvent(layer, "mouseout",  this._onMouseOut.bind(this),                   type == 'layeradd');
 			});
 	},
 
@@ -647,9 +647,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		if (this._renderer) this._renderer.remove()
 		this._renderer               = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
-		this._marker                 = new Marker(this.options);
 
-		this.fire("elechart_marker");
+		Promise.all([
+			this.import(this.__D3),
+			this.import(this.__LMARKER)
+		]).then((m) => {
+			this._marker             = new (m[1] || Elevation).Marker(this.options, this);
+			this.fire("elechart_marker");
+		});
 	},
 
 	/**
@@ -684,15 +689,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	_initSummary: function(container) {
-		this._summary = new Summary({ summary: this.options.summary }, this);
+		this.import(this.__LSUMMARY).then((m)=>{
+			this._summary = new (m || Elevation).Summary({ summary: this.options.summary }, this);
 
-		d3.select(container).call(this._summary.render());
-	},
-
-	_keydownHandler: function(e) {
-		if(!this.options.detached && e.key === "Escape"){
-			this._collapse()
-		};
+			this.on('elechart_init', () => {
+				d3.select(container).call(this._summary.render());
+			});
+		});
 	},
 
 	/**
@@ -706,6 +709,31 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this._parseFromString(data)
 					.then( geojson => geojson && this._loadLayer(geojson));
 			}).catch((err) => console.warn(err));
+	},
+
+	/**
+	 * Dynamically import only required javascript modules (code splitting)
+	 */
+	_loadModules: function(handlers) {
+		// First map known classnames (eg. "Altitude" --> L.Control.Elevation.Altitude)
+		handlers = handlers.map((h) => typeof h === 'string' && typeof L.Control.Elevation[h] !== "undefined" ? L.Control.Elevation[h] : h);
+		// Then load optional classes and custom imports (eg. "Cadence" --> import('../src/handlers/cadence.js'))
+		Promise.
+			all(
+				handlers
+					.filter(h => typeof h === 'string' || h instanceof Promise)
+					.map(file => file instanceof Promise ? file : this.import(this.__modulesFolder + file.toLowerCase() + '.js'))
+			)
+			.then((m) => {
+				_.each(m, (exported) => {
+					let fn = Object.keys(exported)[0];
+					if (fn && typeof L.Control.Elevation[fn] === "undefined" ) {
+						handlers[fn] = L.Control.Elevation[fn] = exported[fn];
+						
+					}
+				});
+				_.each(handlers, h => this._registerHandler(h));
+			});
 	},
 
 	/**
@@ -768,78 +796,78 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			},
 		});
 
-		control.lazyLoad(control.__D3).then(() => {
+		control.import(control.__D3).then(() => {
 			control._initMapIntegrations(control, layer);
-			control._fireEvt("eledata_loaded", { data: geojson, layer: layer, name: control.track_info.name, track_info: control.track_info })
+			control._fireEvt("eledata_loaded", { data: geojson, layer: layer, name: control.track_info.name, track_info: control.track_info });
 		});
 
 		return layer;
 	},
 
-	_dragendHandler: function(e) {
+	_onDragEnd: function({ dragstart, dragend}) {
 		this._hideMarker();
-		this.fitBounds(L.latLngBounds([e.dragstart.latlng, e.dragend.latlng]));
+		this.fitBounds(L.latLngBounds([dragstart.latlng, dragend.latlng]));
 
 		this.fire("elechart_dragged");
 	},
 
+	_onKeyDown: function({key}) {
+		if(!this.options.detached && key === "Escape"){
+			this._collapse()
+		};
+	},
+
 	/**
-	 * Trigger mouseenter event
+	 * Trigger mouseenter event.
 	 */
-	_mouseenterHandler: function(e) {
+	_onMouseEnter: function() {
 		this.fire('elechart_enter');
 	},
 
 	/*
 	 * Handles the moueseover the chart and displays distance and altitude level.
 	 */
-	_mousemoveHandler: function(e) {
-		if (!this._data.length || !this._chartEnabled) {
-			return;
-		}
-		let item = this._findItemForX(e.xCoord);
+	_onMouseMove: function({xCoord}) {
+		if (this._chartEnabled && this._data.length) {
+			let item = this._findItemForX(xCoord);
+			if (item) {
+				if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
 
-		if (item) {
-			let xCoord = e.xCoord;
+				this._updateMarker(item);
+				this._setMapView(item);
 
-			if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
+				if (this._map) {
+					_.addClass(this._map.getContainer(), 'elechart-hover');
+				}
 
-			this._updateMarker(item);
-			this._setMapView(item);
-
-			if (this._map) {
-				_.addClass(this._map.getContainer(), 'elechart-hover');
+				this.fire("elechart_change", { data: item, xCoord: xCoord });
+				this.fire("elechart_hover",  { data: item, xCoord: xCoord });
 			}
-
-			this.fire("elechart_change", { data: item, xCoord: xCoord });
-			this.fire("elechart_hover",  { data: item, xCoord: xCoord });
 		}
 	},
 
 	/*
 	 * Handles mouseover events of the data layers on the map.
 	 */
-	_mousemoveLayerHandler: function(e) {
-		if (!this._data.length) {
-			return;
-		}
-
-		let item = this._findItemForLatLng(e.latlng);
-		if (item) {
-			let xCoord = item.xDiagCoord;
-
-			if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
-
-			this._updateMarker(item);
-
-			this.fire("elechart_change", { data: item, xCoord: xCoord });
+	_onMouseMoveLayer: function({latlng}) {
+		if (this._data.length) {
+			let item = this._findItemForLatLng(latlng);
+			if (item) {
+				let xCoord = item.xDiagCoord;
+	
+				if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
+	
+				this._updateMarker(item);
+	
+				this.fire("elechart_change", { data: item, xCoord: xCoord });
+			}
 		}
 	},
 
 	/*
 	 * Handles the moueseout over the chart.
 	 */
-	_mouseoutHandler: function() {
+	_onMouseOut: function() {
 		if (!this.options.detached) {
 			this._hideMarker();
 			this._chart._hideDiagramIndicator();
@@ -850,6 +878,33 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		this.fire("elechart_leave");
+	},
+
+	/**
+	 * Handles the drag event over the ruler filter.
+	 */
+	_onRulerFilter: function({coords}) {
+		this._updateMapSegments(coords);
+	},
+
+	/**
+	 * Toggle chart data on legend click
+	 */
+	_onToggleChart: function({ name, enabled }) {
+
+		this._chartEnabled = this._chart._hasActiveLayers();
+
+		// toggle layer visibility on empty chart
+		this._layers.eachLayer(layer => _.toggleClass(layer.getElement && layer.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
+
+		// toggle option value (eg. altitude = { 'disabled' || 'enabled' })
+		this.options[name] = !enabled && this.options[name] == 'disabled' ? 'enabled' : 'disabled';
+
+		// remove marker on empty chart
+		if (!this._chartEnabled) {
+			this._chart._hideDiagramIndicator();
+			this._marker.remove();
+		}
 	},
 
 	/**
@@ -866,7 +921,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_parseFromString: function(data) {
 		return new Promise(resolve =>
-			this.lazyLoad(this.__TOGEOJSON).then(() => {
+			this.import(this.__TOGEOJSON).then(() => {
 				let geojson;
 				try {
 					geojson = this._parseFromXMLString(data.trim());
@@ -967,22 +1022,31 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Base handler for iterative track statistics (dist, time, z, slope, speed, acceleration, ...)
 	 */
 	 _registerDataAttribute: function(props) {
+
+		// parse of "coordinateProperties" for later usage
+		if (props.coordPropsToMeta) {
+			this.on("elepoint_init", (e) => props.coordPropsToMeta.call(this, e));
+		}
+
+		// prevent excessive variabile instanstations
+		let i, curr, prev, attr;
+
 		// save here a reference to last used point
 		let lastValid = null; 
 
-		// parse of "coordinateProperties" for later usage
-		if (props.init) {
-			this.on("elepoint_init", (e) => props.init.call(this, e));
-		}
-
 		// iteration
-		this.on("elepoint_added", (e) => {
+		this.on("elepoint_added", ({index, point}) => {
+			i = index;
+
+			prev = curr ?? this._data[i]; // same as: this._data[i > 0 ? i - 1 : i]
+			curr = this._data[i];
+			attr = props.attr || props.name;
 
 			// check and fix missing data on last added point
 			if (props.skipNull === false) {
-				let curr = this._data[e.index][props.name];
-				if(e.index > 0) {
-					let prev = this._data[e.index - 1][props.name];
+				let curr = this._data[i][attr];
+				if(i > 0) {
+					let prev = this._data[i - 1][attr];
 					if (isNaN(prev)) {
 						if (!isNaN(lastValid) && !isNaN(curr)) {
 							prev   = (lastValid + curr) / 2;
@@ -991,8 +1055,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 						} else if (!isNaN(curr)) {
 							prev   = curr;
 						}
-						if (!isNaN(prev)) return this._data.splice(e.index - 1, 1);
-						this._data[e.index - 1][props.name] = prev;
+						if (!isNaN(prev)) return this._data.splice(i - 1, 1);
+						this._data[i - 1][attr] = prev;
 					}
 				}
 				// update reference to last used point (ie. if it has data)
@@ -1002,25 +1066,107 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			}
 
 			// retrieve point value
-			this._data[e.index][props.name] = props.fetch.call(this, e.index, e.point);
+			curr[attr] = props.pointToAttr.call(this, point, i);
 
-			// update here some mixins (eg. "track_info", value validators, ...)
-			if(props.update) this._data[e.index][props.name] = props.update.call(this, this._data[e.index][props.name], e.index, e.point)
+			// update "track_info" stats (min, max, avg, ...)
+			if (props.stats) {
+				for (const key in props.stats) {
+					let sname = (props.statsName || attr) + (key != '' ? '_' : '');
+					this.track_info[sname + key] = props.stats[key].call(this, curr[attr], this.track_info[sname + key]);
+				}
+			}
+
+			// Limit "crazy" delta values.
+			if (props.deltaMax) {
+				curr[attr] =_.wrapDelta(curr[attr], prev[attr], props.deltaMax);
+			}
+			
+			// Range of acceptable values.
+			if (props.clampRange) {
+				curr[attr] = _.clamp(curr[attr], props.clampRange);
+			}
+
+			// Limit floating point precision.
+			if (!isNaN(props.decimals)) {
+				curr[attr] = _.round(curr[attr], props.decimals);
+			}
+
+			// update here some mixins (eg. complex "track_info" stuff)
+			if(props.onPointAdded) props.onPointAdded.call(this, curr[attr], i, point);
 		});
+	},
+
+	/**
+	 * Parse a module definition and attach related function listeners
+	 */
+	_registerHandler: function(props) {
+
+		// eg. L.Control.Altitude
+		if (typeof props === "function") {
+			return this._registerHandler(props.call(this));
+		}
+
+		// eg. "altitude" == true
+		if (this.options[props.name] || props.required) {
+
+			this._registerDataAttribute({
+				name: props.name,
+				attr: props.attr,
+				skipNull: props.skipNull,
+				deltaMax: props.deltaMax,
+				clampRange: props.clampRange,
+				decimals: props.decimals,
+				coordPropsToMeta: _.coordPropsToMeta(props.coordinateProperties, props.meta || props.name, props.coordPropsToMeta),
+				pointToAttr: props.pointToAttr,
+				onPointAdded: props.onPointAdded,
+				stats: props.stats,
+				statsName: props.statsName,
+			});
+
+			if (props.grid) {
+				props.grid.name = props.grid.name || props.name;
+				this._registerAxisGrid(props.grid);
+			}
+
+			if (this.options[props.name] !== "summary") {
+				if (props.scale) {
+					props.scale.name = props.scale.name || props.name;
+					props.scale.label = props.scale.label || props.unit;
+					this._registerAxisScale(props.scale);
+				}
+				if (props.path) {
+					props.path.name = props.path.name || props.name;
+					this._registerAreaPath(props.path);
+				}
+			}
+
+			if (props.tooltips) {
+				_.each(props.tooltips, t => {
+					if (t) {
+						t.name = t.name || props.name;
+						this._registerTooltip(t)
+					}
+				});
+			} else if (props.tooltip) {
+				props.tooltip.name = props.tooltip.name || props.name;
+				this._registerTooltip(props.tooltip)
+			}
+
+			if (props.summary) {
+				for (const key in props.summary) {
+					props.summary[key].unit = props.summary[key].unit || props.unit;
+				}
+				this._registerSummary(props.summary);
+			}
+		}
 	},
 	
 	/**
 	 * Add chart or marker tooltip info
 	 */
 	_registerTooltip: function(props) {
-		if (props.chart) {
-			let label = L.extend({}, props, { value: props.chart });
-			this.on("elechart_init",   () => this._chart._registerTooltip(label));
-		}
-		if (props.marker) {
-			let label = L.extend({}, props, { value: props.marker });
-			this.on("elechart_marker", () => this._marker._registerTooltip(label));
-		}
+		props.chart  && this.on("elechart_init",   () => this._chart._registerTooltip(L.extend({}, props, { value: props.chart })));
+		props.marker && this.on("elechart_marker", () => this._marker._registerTooltip(L.extend({}, props, { value: props.marker })));
 	},
 
 	/**
@@ -1054,85 +1200,39 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Hacky way for handling chart resize. Deletes it and redraw chart.
 	 */
 	_resizeChart: function() {
-		if(!this._container) return;
-
-		// prevent displaying chart on resize if hidden
-		if (_.style(this._container, "display") == "none") return;
-
-		let opts = this.options;
-
-		let newWidth;
-
-		if (opts.detached) {
-			newWidth = (this.eleDiv || this._container).offsetWidth;
-		} else {
-			let { clientWidth } = this._map.getContainer();
-			newWidth = opts._maxWidth > clientWidth ? clientWidth - 30 : opts._maxWidth;
-		}
-		
-		if (newWidth) {
-			let chart  = this._chart;
-			opts.width = newWidth;
-			if (chart && chart._chart) {
-				chart._chart._resize(opts);
-				opts.xTicks = this._xTicks();
-				opts.yTicks = this._yTicks();
-				this._updateChart();
+		if (this._container && _.style(this._container, "display") != "none") {
+			let opts = this.options;
+			let newWidth = opts.detached ? (this.eleDiv || this._container).offsetWidth : _.clamp(opts._maxWidth, [0, this._map.getContainer().clientWidth - 30]);
+			if (newWidth) {
+				opts.width = newWidth;
+				if (this._chart && this._chart._chart) {
+					this._chart._chart._resize(opts);
+					this._updateChart();
+				}
 			}
+			this._updateMapSegments();
 		}
-
-		this._updateMapSegments();
-	},
-
-	/**
-	 * Handles the drag event over the ruler filter.
-	 */
-	_rulerFilterHandler: function(e) {
-		this._updateMapSegments(e.coords);
 	},
 
 	/**
 	 * Collapse or Expand chart control.
 	 */
 	_toggle: function() {
-		if (_.hasClass(this._container, "elevation-expanded"))
-			this._collapse();
-		else
-			this._expand();
+		_.hasClass(this._container, "elevation-expanded") ? this._collapse() : this._expand();
 	},
 
 	/**
 	 * Update map center and zoom (followMarker: true)
 	 */
 	_setMapView: function(item) {
-		if (!this.options.followMarker || !this._map) return;
-		let zoom = this._map.getZoom();
-		let z    = this.options.zFollow;
-		if (typeof z === "number") {
-			this._map.setView(item.latlng, (zoom < z ? z : zoom), { animate: true, duration: 0.25 });
-		} else if (!this._map.getBounds().contains(item.latlng)) {
-			this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
-		}
-	},
-
-	/**
-	 * Toggle chart data on legend click
-	 */
-	_toggleChartHandler: function(e) {
-		let { name, enabled } = e;
-
-		this._chartEnabled = this._chart._hasActiveLayers();
-
-		// toggle layer visibility on empty chart
-		this._layers.eachLayer(layer => _.toggleClass(layer.getElement && layer.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
-
-		// toggle option value (eg. altitude = { 'disabled' || 'disabled' })
-		this.options[name] = !enabled && this.options[name] == 'disabled' ? 'enabled' : 'disabled';
-
-		// remove marker on empty chart
-		if (!this._chartEnabled) {
-			this._chart._hideDiagramIndicator();
-			this._marker.remove();
+		if (this._map && this.options.followMarker) {
+			let zoom = this._map.getZoom();
+			let z    = this.options.zFollow;
+			if (typeof z === "number") {
+				this._map.setView(item.latlng, (zoom < z ? z : zoom), { animate: true, duration: 0.25 });
+			} else if (!this._map.getBounds().contains(item.latlng)) {
+				this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
+			}
 		}
 	},
 
@@ -1140,17 +1240,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Calculates [x, y] domain and then update chart.
 	 */
 	_updateChart: function() {
-		if (/*!this._data.length ||*/ !this._chart || !this._container) return;
-
-		this.fire("elechart_axis");
-		this.fire("elechart_area");
-
-		this._chart.update({ data: this._data, options: this.options });
-
-		this._x     = this._chart._x;
-		this._y     = this._chart._y;
-
-		this.fire('elechart_updated');
+		if (this._chart && this._container) {
+			this.fire("elechart_axis");
+			this.fire("elechart_area");
+	
+			this._chart.update({ data: this._data, options: this.options });
+	
+			this._x     = this._chart._x;
+			this._y     = this._chart._y;
+	
+			this.fire('elechart_updated');		
+		}
 	},
 
 	/*
@@ -1161,7 +1261,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._marker.update({
 				map         : this._map,
 				item        : item,
-				maxElevation: this.track_info.elevation_max || 0,
+				yCoordMax   : this._yCoordMax || 0,
 				options     : this.options
 			});
 		}
@@ -1190,6 +1290,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Update chart summary.
 	 */
 	_updateSummary: function() {
+		if (!this._summary) return;
+
 		this._summary.reset();
 
 		if (this.options.summary) {
@@ -1198,8 +1300,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
 			this._summary._container.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
-			_.select('.download a', this._summary._container).onclick = (e) => {
-				e.preventDefault();
+			_.select('.download a', this._summary._container).onclick = ({preventDefault}) => {
+				preventDefault();
 				let event = { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this, this._downloadURL) };
 				if (this.options.downloadLink == 'modal' && typeof CustomEvent === "function") {
 					document.dispatchEvent(new CustomEvent("eletrack_download", { detail: event }));
@@ -1217,24 +1319,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_width: function() {
 		if (this._chart) return this._chart._width();
-		let opts = this.options;
-		return opts.width - opts.margins.left - opts.margins.right;
+		const { width, margins } = this.options;
+		return width - margins.left - margins.right;
 	},
 
 	/**
-	 * Calculate chart xTicks
+	 * Calculates chart height.
 	 */
-	_xTicks: function() {
-		if (this.__xTicks) this.__xTicks = this.options.xTicks;
-		return this.__xTicks || Math.round(this._width() / 75);
+	_height: function() {
+		if (this._chart) return this._chart._height();
+		const { height, margins } = this.options;
+		return height - margins.top - margins.bottom;
 	},
-
-	/**
-	 * Calculate chart yTicks
-	 */
-	_yTicks: function() {
-		if (this.__yTicks) this.__yTicks = this.options.yTicks;
-		return this.__yTicks || Math.round(this._height() / 30);
-	}
 
 });

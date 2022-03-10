@@ -27,13 +27,19 @@
     }
   </style>
 
+  <!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+  <link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
   <!-- leaflet-ui -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
   <!-- leaflet-elevation -->
-  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" />
-  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" />
+  <script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script>
 
   <style>
     .data-summary {
@@ -100,7 +106,7 @@
   </div>
 
   <script>
-    var opts = {
+    let opts = {
       map: {
         center: [41.4583, 12.7059],
         zoom: 5,
@@ -133,28 +139,22 @@
       },
     };
 
-    var map = new L.Map('map', opts.map);
+    let map = L.map('map', opts.map);
 
-    var controlElevation = L.control.elevation(opts.elevationControl.options);
-    var controlLayer = L.control.layers(null, null, opts.layersControl.options);
+    let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+    let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
 
-    controlLayer.addTo(map);
-    controlElevation.addTo(map);
+    controlElevation.on('eledata_loaded', ({layer, name, track_info}) => {
+      let q = document.querySelector.bind(document);
 
-    controlElevation.on('eledata_loaded', function(e) {
-      var q = document.querySelector.bind(document);
-      var track = e.track_info;
-      var layer = e.layer;
+      controlLayer.addOverlay(layer, name);
 
-      controlLayer.addOverlay(e.layer, e.name);
-
-      // Default Summary info
-      q('.totlen .summaryvalue').innerHTML = track.distance.toFixed(2) + " km";
-      q('.maxele .summaryvalue').innerHTML = track.elevation_max.toFixed(2) + " m";
-      q('.minele .summaryvalue').innerHTML = track.elevation_min.toFixed(2) + " m";
       // Custom Summary info
-      q('.gain .summaryvalue').innerHTML = "+" + track.ascent.toFixed(0) + " m";
-      q('.loss .summaryvalue').innerHTML = "-" + track.descent.toFixed(0) + " m";
+      q('.totlen .summaryvalue').innerHTML = track_info.distance.toFixed(2) + " km";
+      q('.maxele .summaryvalue').innerHTML = track_info.elevation_max.toFixed(2) + " m";
+      q('.minele .summaryvalue').innerHTML = track_info.elevation_min.toFixed(2) + " m";
+      q('.gain .summaryvalue').innerHTML   = "+" + track_info.ascent.toFixed(0) + " m";
+      q('.loss .summaryvalue').innerHTML   = "-" + track_info.descent.toFixed(0) + " m";
     });
 
     controlElevation.load(opts.elevationControl.data);

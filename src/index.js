@@ -36,19 +36,9 @@
 
 import 'leaflet-i18n';
 import * as _ from './utils';
-import * as D3 from './components';
-import { Chart } from './chart';
 import { Elevation } from './control';
-import './distance';
-import './time';
-import './altitude';
-import './slope';
-import './speed';
-import './acceleration';
 
 Elevation.Utils = _;
-Elevation.Components = D3;
-Elevation.Chart = Chart;
 
 /* Temporary fix for empty values evaluated as false (leaflet-i18n v0.3.1) */
 (function(){
@@ -60,19 +50,5 @@ Elevation.Chart = Chart;
 		return proto.call(null, string, data);
 	};
 })();
-
-// Alias deprecated functions
- Elevation.addInitHook(function() {
-	this.enableDragging      = this.enableBrush;
-	this.disableDragging     = this.disableBrush;
-	this.loadChart           = this.addTo;
-	this.loadData            = this.load;
-	this.loadGPX             = this.load;
-	this.loadGeoJSON         = this.load;
-	this.loadXML             = this.load;
-	this.loadFile            = this.load;
-	this._addGPXData         = this._addGeoJSONData;
-	this._registerFocusLabel = this._registerTooltip;
-});
 
 L.control.elevation = (options) => new Elevation(options);

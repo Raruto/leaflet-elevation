@@ -29,13 +29,19 @@
     }
   </style>
 
+	<!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
   <!-- leaflet-ui -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
   <!-- leaflet-elevation -->
-  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" />
-  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script>
 
 	<style>
 	.elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button,
@@ -75,7 +81,7 @@
   <div id="map" class="leaflet-map"></div>
 
   <script>
-    var opts = {
+    let opts = {
       map: {
         mapTypeId: 'topo',
         center: [41.4583, 12.7059],
@@ -100,6 +106,7 @@
           collapsed: true,
           detached: false,
           autohide: true,
+          almostOver: true,
         },
       },
       layersControl: {
@@ -110,19 +117,14 @@
       },
     };
 
-    var map = new L.Map('map', opts.map);
+    let map = L.map('map', opts.map);
 
-    var controlElevation = L.control.elevation(opts.elevationControl.options);
-    var controlLayer = L.control.layers(null, null, opts.layersControl.options);
+    let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+    let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
 
-    controlLayer.addTo(map);
+    controlElevation.load(opts.elevationControl.url);
 
-    controlElevation.loadChart(map);
-    controlElevation.loadData(opts.elevationControl.url);
-
-    map.on('eledata_loaded', function(e) {
-      controlLayer.addOverlay(e.layer, e.name);
-    });
+    map.on('eledata_loaded', ({layer, name}) => controlLayer.addOverlay(layer, name));
   </script>
 
   <p class="help">move mouse over the chart icon...</p>

@@ -17,13 +17,19 @@
 		}
 	</style>
 
+	<!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script>
 
 	<style>
 		.elevation-summary.inline-summary {
@@ -41,7 +47,7 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-		var mylocale = {
+		let mylocale = {
 			"Total Length: ": "L: ",
 			"Max Elevation: ": "E Max: ",
 			"Min Elevation: ": "E Min: ",
@@ -96,14 +102,10 @@
 			},
 		};
 
-		let map = new L.Map('map', opts.map);
+		let map = L.map('map', opts.map);
 
-		let controlElevation = L.control.elevation(opts.elevationControl.options);
-		let controlLayer = L.control.layers(null, null, opts.layersControl.options);
-
-		controlLayer.addTo(map);
-
-		controlElevation.loadChart(map);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+		let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
 
 		let tracks = opts.elevationControl.tracks;
 		let i = 0;
@@ -114,9 +116,7 @@
 			loadTrace(tracks[track].url, i++);
 		}
 
-		layers.on('tracks_loaded', () => {
-			console.dir("Tracks Loaded: ", layers.getLayers())
-		});
+		layers.on('tracks_loaded', () => console.dir("Tracks Loaded: ", layers.getLayers()));
 
 		function loadTrace(url, i) {
 			return fetch(url)

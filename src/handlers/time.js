@@ -1,9 +1,6 @@
-import 'leaflet-i18n';
-import * as _        from './utils';
-import * as D3       from './components';
-import { Elevation } from './control';
+export function Time() {
 
-Elevation.addInitHook(function() {
+	const _ = L.Control.Elevation.Utils;
 
 	let opts = this.options;
 	let time = {};
@@ -33,46 +30,31 @@ Elevation.addInitHook(function() {
 
 	opts.xTimeFormat = opts.xTimeFormat || ((t) => _.formatTime(t).split("'")[0]);
 
-	this._registerDataAttribute({
+	return {
 		name: 'time',
-		init: function({ point, props, id }) {
-			// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
-			if (props) {
-				if("coordTimes" in props)     point.meta.time = new Date(Date.parse(props.coordTimes[id]));
-				else if("times" in props)     point.meta.time = new Date(Date.parse(props.times[id]));
-				else if("time" in props)      point.meta.time = new Date(Date.parse((typeof props.time === 'object' ? props.time[id] : props.time)));
-			}
-		},
-		fetch: function(i, point) {
+		required: (this.options.speed || this.options.acceleration || this.options.timestamps),
+		coordinateProperties: ["coordTimes", "times", "time"],
+		coordPropsToMeta: _.parseDate,
+		pointToAttr: function(point, i) {
 			// Add missing timestamps (see: options.timeAVGSpeed)
 			if (!point.meta || !point.meta.time) {
 				point.meta = point.meta || {};
 				if(i > 0) {
 					let dx = (this._data[i].dist - this._data[i - 1].dist);
 					let t0 = this._data[i - 1].time.getTime();
-					let dt = ( dx / this._timeAVGSpeed) * this.options.timeFactor * 1000;
-					point.meta.time = new Date(t0 + dt);
+					point.meta.time = new Date(t0 + ( dx / this._timeAVGSpeed) * this.options.timeFactor * 1000);
 				} else {
 					point.meta.time = new Date(Date.now())
 				}
 			}
-			let time = point.meta.time;
 			// Handle timezone offset
-			if (time.getTime() - time.getTimezoneOffset() * 60 * 1000 === 0) {
-				time = 0;
-			}
+			let time = (point.meta.time.getTime() - point.meta.time.getTimezoneOffset() * 60 * 1000 !== 0) ? point.meta.time : 0;
+			// Update duration
+			this._data[i].duration = i > 0 ? (this._data[i - 1].duration || 0) + Math.abs(time - this._data[i - 1].time) : 0;
 			return time;
 		},
-		update: function(time, i) {
-			this.track_info.time   = (this.track_info.time || 0) + Math.abs(this._data[i].time - this._data[i > 0 ? i - 1 : i].time);
-			this._data[i].duration = this.track_info.time;
-			return time;
-		}
-	});
-
-	if (opts.time && opts.time != "summary" && !L.Browser.mobile) {
-
-		this._registerAxisScale({
+		onPointAdded: (_, i) => this.track_info.time = this._data[i].duration,
+		scale: (opts.time && opts.time != "summary" && !L.Browser.mobile) && {
 			axis       : "x",
 			position   : "top",
 			scale      : {
@@ -83,6 +65,7 @@ Elevation.addInitHook(function() {
 			labelY     : -10,
 			labelX     : () => this._width(),
 			name       : "time",
+			ticks      : () => _.clamp(this._chart._xTicks() / 2, [4, +Infinity]),
 			tickFormat : (d)  => (d == 0 ? '' : opts.xTimeFormat(d)),
 			onAxisMount: axis => {
 				axis.select(".domain")
@@ -96,31 +79,25 @@ Elevation.addInitHook(function() {
 					.attr('stroke-dasharray', 2)
 					.attr('opacity', 0.75);
 				}
-		});
-
-	}
-
-	if (this.options.timestamps) {
-		this._registerTooltip({
-			name: 'date',
-			chart: (item) => L._("t: ") + this.options.timeFormat(item.time),
-			order: 20,
-		});
-	}
-
-	if (this.options.time) {
-		this._registerTooltip({
-			name: 'time',
-			chart: (item) => L._("T: ") + _.formatTime(item.duration || 0),
-			order: 20
-		});
-		this._registerSummary({
+		},
+		tooltips: [
+			(this.options.time) && {
+				name: 'time',
+				chart: (item) => L._("T: ") + _.formatTime(item.duration || 0),
+				order: 20
+			},
+			(this.options.timestamps) && {
+				name: 'date',
+				chart: (item) => L._("t: ") + this.options.timeFormat(item.time),
+				order: 21,
+			}
+		],
+		summary: (this.options.time) && {
 			"tottime"  : {
 				label: "Total Time: ",
 				value: (track) => _.formatTime(track.time || 0),
 				order: 20
 			}
-		});
-	}
-
-});
+		}
+	};
+}

@@ -27,13 +27,19 @@
 		}
 	</style>
 
+	<!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script>
 
 	<!-- leaflet-filelayer -->
 	<script src="https://unpkg.com/@tmcw/togeojson@4.5.0/dist/togeojson.umd.js"></script>
@@ -98,7 +104,7 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-		var opts = {
+		let opts = {
 			map: {
 				center: [45.4169, -121.7144],
 				zoom: 10,
@@ -133,10 +139,10 @@
 			},
 		};
 
-		var map = new L.Map('map', opts.map);
-		var layer;
+		let map = L.map('map', opts.map);
+		let layer;
 
-		var controlElevation = L.control.elevation(opts.elevationControl.options);
+		let controlElevation = L.control.elevation(opts.elevationControl.options);
 
 		// FileLayer
 		L.Control.FileLayerLoad.TITLE = 'Load local GPX file';
@@ -144,7 +150,7 @@
 			'<svg title="upload a gpx file" style="width: 20px;height: 100%;" version="1.1" id="folder" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30px" height="30px" viewBox="0 0 450.583 450.584" style="enable-background:new 0 0 450.583 450.584;" xml:space="preserve"><g fill="#000000"><path d="M448.21,188.658c-1.897-2.242-4.688-3.535-7.629-3.535H9.999c-2.938,0-5.729,1.293-7.629,3.535c-1.898,2.242-2.717,5.207-2.234,8.106l29.547,177.704c1.838,11.158,11.379,19.256,22.688,19.256h345.842c11.31,0,20.851-8.098,22.687-19.24l29.549-177.72C450.929,193.864,450.111,190.899,448.21,188.658z"/><path d="M413.984,104.678c0-7.661-6.211-13.874-13.875-13.874H194.212V70.735c0-7.664-6.211-13.875-13.873-13.875H50.472c-7.662,0-13.873,6.211-13.873,13.875v82.418h377.386L413.984,104.678L413.984,104.678z"/></g></svg>'
 			+ '<p class="help">Click on the icon to browse and load local files on the map.</p>';
 
-		var fileLayer = L.Control.fileLayerLoad({
+		let fileLayer = L.Control.fileLayerLoad({
 			formats: ['.gpx'],
 			position: "topleft",
 			fitBounds: true,

@@ -1,6 +1,4 @@
-import 'leaflet-i18n';
-import * as _ from './utils';
-import * as D3 from './components';
+const _ = L.Control.Elevation.Utils;
 
 export var Summary = L.Class.extend({
 	initialize: function(opts, control) {
@@ -30,13 +28,14 @@ export var Summary = L.Class.extend({
 		.keys(this.labels)
 		.sort((a, b) => this.labels[a].order - this.labels[b].order) // TODO: any performance issues?
 		.forEach((i)=> {
-			this.append(i, L._(this.labels[i].label), typeof this.labels[i].value !== "function" ? this.labels[i].value : this.labels[i].value(this.control.track_info));
+			let value = typeof this.labels[i].value !== "function" ? this.labels[i].value : this.labels[i].value(this.control.track_info, this.labels[i].unit || '');
+			this.append(i /*+ " order-" + this.labels[i].order*/, L._(this.labels[i].label), value, this.labels[i].order);
 		});
 	},
 
 	_registerSummary: function(data) {
 		for (let i in data) {
-			data[i].order = data[i].order ?? 100;
+			data[i].order = data[i].order ?? 1000;
 			this.labels[i] = data[i];
 		}
 	}

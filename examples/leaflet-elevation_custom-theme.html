@@ -27,18 +27,24 @@
     }
   </style>
 
+  <!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+  <link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
   <!-- leaflet-ui -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
   <!-- leaflet-elevation -->
-  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" />
-  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" />
+  <script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script>
 
   <!-- CHANGE ME: custom-theme colors -->
   <style>
      .custom-theme.elevation-control.elevation .area path.altitude,
-     .custom-theme .legend-altitude rect {
+     .custom-theme .legend-altitude rect.area {
       fill: rgba(255, 255, 255, 0.85);  /* fallback color */
       fill: url(#herringbone-pattern);    /* svg pattern (optional) */
       fill-opacity: 0.8;
@@ -142,7 +148,7 @@
   </div>
 
   <script>
-    var opts = {
+    let opts = {
       map: {
         center: [41.4583, 12.7059],
         zoom: 5,
@@ -177,29 +183,24 @@
       },
     };
 
-    var map = new L.Map('map', opts.map);
+    let map = L.map('map', opts.map);
 
-    var controlElevation = L.control.elevation(opts.elevationControl.options);
-    var controlLayer = L.control.layers(null, null, opts.layersControl.options);
+    let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+    let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
 
-    controlLayer.addTo(map);
-    controlElevation.loadChart(map);
+    map.on('eledata_loaded', ({layer, name, track_info}) => {
+      let q = document.querySelector.bind(document);
 
-    map.on('eledata_loaded', function(e) {
-      var q = document.querySelector.bind(document);
-      var track = e.track_info;
+      controlLayer.addOverlay(layer, name);
 
-      controlLayer.addOverlay(e.layer, e.name);
-
-      // Default Summary info
-      q('.totlen .summaryvalue').innerHTML = track.distance.toFixed(2) + " km";
-      q('.maxele .summaryvalue').innerHTML = track.elevation_max.toFixed(2) + " m";
-      q('.minele .summaryvalue').innerHTML = track.elevation_min.toFixed(2) + " m";
       // Custom Summary info
-      q('.tottime .summaryvalue').innerHTML = L.Control.Elevation.Utils.formatTime(track.time);
+      q('.totlen .summaryvalue').innerHTML  = track_info.distance.toFixed(2) + " km";
+      q('.maxele .summaryvalue').innerHTML  = track_info.elevation_max.toFixed(2) + " m";
+      q('.minele .summaryvalue').innerHTML  = track_info.elevation_min.toFixed(2) + " m";
+      q('.tottime .summaryvalue').innerHTML = L.Control.Elevation.Utils.formatTime(track_info.time);
     });
 
-    controlElevation.loadData(opts.elevationControl.data);
+    controlElevation.load(opts.elevationControl.data);
   </script>
 
   <a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed; top: 10px; left: calc(50% - 60px); z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>

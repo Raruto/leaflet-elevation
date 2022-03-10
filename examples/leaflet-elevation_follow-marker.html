@@ -27,6 +27,12 @@
 		}
 	</style>
 
+	<!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
@@ -38,8 +44,8 @@
 	<!-- <script src="leaflet-almostover@1.0.1/src/leaflet.almostover.js"></script> -->
 
 	<!-- leaflet-elevation -->
-	<!-- <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css" /> -->
-	<!-- <script src="https://unpkg.com/@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js"></script> -->
+	<!-- <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css" /> -->
+	<!-- <script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js"></script> -->
 
 </head>
 
@@ -48,15 +54,15 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-		var opts = {
+		let opts = {
 			map: {
 				center: [41.4583, 12.7059],
 				zoom: 5,
 				fullscreenControl: false,
 				resizerControl: true,
 				plugins: [
-					'@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css',
-					'@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js'
+					'@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css',
+					'@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js'
 				]
 			},
 			elevationControl: {
@@ -77,19 +83,14 @@
 			},
 		};
 
-		var map = L.map('map', opts.map);
+		let map = L.map('map', opts.map);
 
 		map.on('plugins_loaded', function(){
 
-			let controlElevation = L.control.elevation(opts.elevationControl.options);
-			let controlLayer = L.control.layers(null, null, opts.layersControl.options);
+			let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+			let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
 
-			controlElevation.addTo(map);
-			controlLayer.addTo(map);
-
-			controlElevation.on('eledata_loaded', function(e) {
-				controlLayer.addOverlay(e.layer, e.name);
-			});
+			controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addOverlay(layer, name));
 
 			controlElevation.load(opts.elevationControl.url);
 		});

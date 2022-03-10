@@ -16,10 +16,14 @@
     }
   </style>
 
-  <!-- Leaflet (JS/CSS) -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
 
-  <!-- Leaflet-UI -->
+  <!-- leaflet-ui -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
   <style>
@@ -35,7 +39,7 @@
   <div id="map"></div>
 
   <script>
-    var opts = {
+    let opts = {
       map: {
         center: [41.4583, 12.7059],
         zoom: 5,
@@ -48,11 +52,11 @@
           "@tmcw/togeojson@4.5.0/dist/togeojson.umd.js",
           "leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js",
           "leaflet-almostover@1.0.1/src/leaflet.almostover.js",
-          "@raruto/leaflet-elevation@1.9.6/libs/leaflet-distance-marker.min.css",
-          "@raruto/leaflet-elevation@1.9.6/libs/leaflet-distance-marker.min.js",
-          "@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.css",
-          "@raruto/leaflet-elevation@1.9.6/dist/leaflet-elevation.min.js",
-          "@raruto/leaflet-elevation@1.9.6/libs/leaflet-gpxgroup.min.js",
+          "@raruto/leaflet-elevation@2.0.0/libs/leaflet-distance-marker.min.css",
+          "@raruto/leaflet-elevation@2.0.0/libs/leaflet-distance-marker.min.js",
+          "@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.css",
+          "@raruto/leaflet-elevation@2.0.0/dist/leaflet-elevation.min.js",
+          "@raruto/leaflet-elevation@2.0.0/libs/leaflet-gpxgroup.min.js",
           // "../libs/leaflet-distance-marker.css",
           // "../libs/leaflet-distance-marker.js",
           // "../dist/leaflet-elevation.css",
@@ -75,7 +79,7 @@
       },
     };
 
-    var tracks = [
+    let tracks = [
       "tracks/20131006.gpx",
       "tracks/20131110.gpx",
       "tracks/20131229.gpx",
@@ -104,7 +108,7 @@
       // "demo.geojson",
     ];
 
-    var points = [
+    let points = [
       {latlng:[47.5854438, 18.8260240], name:"Éles-kő"},
       {latlng:[47.5838863, 18.8235221], name:"Ilona-lak"},
       {latlng:[47.5689002, 18.8909285], name:"Bronz-barlang"},
@@ -124,9 +128,9 @@
       {latlng:[47.5934486, 18.8812427], name:"Fülkés-kő"},
     ];
 
-    var map = L.map('map', opts.map);
+    let map = L.map('map', opts.map);
 
-    var routes;
+    let routes;
 
     map.on('plugins_loaded', function(e) {
 

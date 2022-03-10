@@ -31,6 +31,12 @@
 		}
 	</style>
 
+	<!-- (OPTIONAL) performance optimizations -->
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@latest/dist/leaflet-src.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@latest/dist/leaflet-ui-src.js"></script>
@@ -49,6 +55,10 @@
 
 	<!-- <script src="https://unpkg.com/leaflet-geometryutil@0.9.1/src/leaflet.geometryutil.js"></script>
 	<script src="../libs/leaflet-distance-marker.js"></script> -->
+
+	<script type="module" src="../src/chart.js"></script>
+	<script type="module" src="../src/summary.js"></script>
+	<script type="module" src="../src/marker.js"></script>
 
 	<!-- leaflet-elevation -->
 	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
@@ -75,7 +85,7 @@
 				zoom: 5,
 				fullscreenControl: false,
 				resizerControl: true,
-				preferCanvas: true,
+				preferCanvas: false,
 				rotate: true,
 				bearing: 15,
 				rotateControl: {
@@ -107,8 +117,8 @@
 				// url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
 				// url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
 				options: {
-					preferCanvas: true,
-					theme: "lightblue-theme",
+					preferCanvas: false,
+					theme: "lime-theme",
 					collapsed: false,
 					autohide: false,
 					autofitBounds: true,
@@ -139,7 +149,6 @@
 					wptIcons: true,
 					wptLabels: true,
 					almostOver: true,
-					lazyLoadJS: true,
 					downloadLink: true,
 				},
 			},
@@ -202,7 +211,7 @@
 			/**
 			* Wait for D3.js and then load some custom checkpoints 
 			*/
-			// L.Control.Elevation._d3LazyLoader.then(() => { 
+			// controlElevation.import(controlElevation.__D3).then(() => { 
 				let points = [
 					{ lat: 44.928208, lng: 9.913177, label: "Fiorenzuola d'Arda" },
 					{ lat: 44.867153, lng: 10.06313, label: "Fidenza" },

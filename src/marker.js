@@ -1,11 +1,12 @@
-import 'leaflet-i18n';
-import * as _  from './utils';
-import * as D3 from './components';
+import * as D3 from './components.js';
+
+const _ = L.Control.Elevation.Utils;
 
 export var Marker = L.Class.extend({
 
-	initialize: function(options) {
+	initialize: function(options, control) {
 		this.options = options;
+		this.control = control
 
 		switch(this.options.marker) {
 			case 'elevation-line':
@@ -51,14 +52,18 @@ export var Marker = L.Class.extend({
 					let point = this._map.latLngToLayerPoint(this._latlng);
 					point     = L.extend({}, props.item, this._map._rotate ? this._map.rotatedPointToMapPanePoint(point) : point);
 
+					let yMax = (this.control._height() / props.yCoordMax * point[this.options.yAttr]);
+
+					if(!isFinite(yMax) || isNaN(yMax)) yMax = 0;
+
 					this._container.classed("leaflet-hidden", false);
 					this._container.call(D3.PositionMarker({
 						theme : this.options.theme,
 						xCoord: point.x,
 						yCoord: point.y,
-						length: point.y - (this._height() / props.maxElevation * point.z), // normalized Y
+						length: point.y - yMax, // normalized Y
 						labels: this._labels,
-						item: point
+						item: point,
 					}));
 				}
 			break;
@@ -82,14 +87,6 @@ export var Marker = L.Class.extend({
 
 	getLatLng: function() {
 		return this._latlng;
-	},
-
-	/**
-	 * Calculates chart height.
-	 */
-	_height: function() {
-		let opts = this.options;
-		return opts.height - opts.margins.top - opts.margins.bottom;
 	},
 
 	_registerTooltip: function(props) {
