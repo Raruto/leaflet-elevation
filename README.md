@@ -241,6 +241,7 @@ var map = L.map('map', {
 - https://wordpress.org/plugins/extensions-leaflet-map/
 - https://github.com/der-stefan/OpenTopoMap
 - https://gpx.n-peloton.fr/
+- https://walkaholic.me/map
 
 </details>
     
