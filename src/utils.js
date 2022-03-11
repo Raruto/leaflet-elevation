@@ -88,11 +88,11 @@ export function formatTime(t) {
  * Loop and extract GPX Extensions handled by "@tmcw/toGeoJSON" (eg. "coordinateProperties" > "times")
  */
 export function coordPropsToMeta(coordProps, name, parser) {
-	return coordProps && (({props, point, id}) => {
+	return coordProps && (({props, point, id, isMulti }) => {
 		if (props) {
 			for (const key of coordProps) {
 				if (key in props) {
-					point.meta[name] = (parser || parseInt).call(this, props[key], id);
+					point.meta[name] = (parser || parseInt).call(this, (isMulti ? props[key][isMulti] : props[key]), id);
 					break;
 				}
 			}

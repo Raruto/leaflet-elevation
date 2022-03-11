@@ -25,9 +25,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	addData: function(d, layer) {
 		this.import(this.__D3)
 			.then(() => {
-				if (typeof layer === "undefined" && d.on) {
-					layer = d;
-				}
+				layer = layer ?? (d.on && d);
 				this._addData(d);
 				this._addLayer(layer);
 				this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
@@ -296,51 +294,44 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			return;
 		}
 
-		/**
-		 * Standard GeoJSON --> doesn't handle "time", "heart", …
-		 */
-		let geom = d.geometry;
-		if (geom) {
-			switch (geom.type) {
-				case 'LineString':
-					this._addGeoJSONData(geom.coordinates);
-					break;
-
-				case 'MultiLineString':
-					_.each(geom.coordinates, coords => this._addGeoJSONData(coords));
-					break;
-
-				default:
-					return console.warn('Unsopperted GeoJSON feature geometry type:' + geom.type);
+		// Standard GeoJSON
+		if (d.type === "FeatureCollection" ) {
+			return _.each(d.features, feature => this._addData(feature));
+		} else if (d.type === "Feature") {
+			let geom = d.geometry;
+			if (geom) {
+				switch (geom.type) {
+					case 'LineString':		return this._addGeoJSONData(geom.coordinates, d.properties);
+					case 'MultiLineString': return _.each(geom.coordinates, (coords, i) => this._addGeoJSONData(coords, d.properties, i));
+					case 'Point':
+					default:				return console.warn('Unsopperted GeoJSON feature geometry type:' + geom.type);
+				}
 			}
 		}
-		if (d.type === "FeatureCollection") {
-			_.each(d.features, feature => this._addData(feature));
+
+		// Fallback for leaflet layers (eg. L.Gpx)
+		if (d._latlngs) {
+			return this._addGeoJSONData(d._latlngs, d.feature && d.feature.properties);
 		}
 
-		/**
-		 * Extended GeoJSON --> rely on leaflet implementation
-		 */
-		if (d._latlngs) {
-			this._addGeoJSONData(d._latlngs, d.feature && d.feature.properties);
-		}
 	},
 
 	/*
 	 * Parsing of GeoJSON data lines and their elevation in z-coordinate
 	 */
-	_addGeoJSONData: function(coords, properties) {
+	_addGeoJSONData: function(coords, properties, nestingLevel) {
+
+		// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
+		let props  = (properties && properties.coordinateProperties) || properties;
+
 		coords.forEach((point, i) => {
 
 			// GARMIN_EXTENSIONS = ["hr", "cad", "atemp", "wtemp", "depth", "course", "bearing"];
 			point.meta = point.meta ?? { time: null, ele: null };
 			
-			// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
-			let props  = (properties && properties.coordinateProperties) || properties;
-
 			point.prev = (attr) => (attr ? this._data[i > 0 ? i - 1 : 0][attr] : this._data[i > 0 ? i - 1 : 0]);
 
-			this.fire("elepoint_init", { point: point, props: props, id: i });
+			this.fire("elepoint_init", { point: point, props: props, id: i, isMulti: nestingLevel });
 
 			this._addPoint(
 				point.lat ?? point[1], 
@@ -380,10 +371,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (layer && this.options.distanceMarkers && this.options.distanceMarkers.lazy) {
 			layer.on('add remove', ({target, type}) => L.DistanceMarkers && target instanceof L.Polyline && target[type + 'DistanceMarkers']());
 		}
+		return layer;
 	},
 
 	_addMarker: function(marker) {
 		if (marker) this._markers.addLayer(marker)
+		return marker;
 	},
 
 	/**
@@ -716,7 +709,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_loadModules: function(handlers) {
 		// First map known classnames (eg. "Altitude" --> L.Control.Elevation.Altitude)
-		handlers = handlers.map((h) => typeof h === 'string' && typeof L.Control.Elevation[h] !== "undefined" ? L.Control.Elevation[h] : h);
+		handlers = handlers.map((h) => typeof h === 'string' && typeof Elevation[h] !== "undefined" ? Elevation[h] : h);
 		// Then load optional classes and custom imports (eg. "Cadence" --> import('../src/handlers/cadence.js'))
 		Promise.
 			all(
@@ -727,8 +720,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.then((m) => {
 				_.each(m, (exported) => {
 					let fn = Object.keys(exported)[0];
-					if (fn && typeof L.Control.Elevation[fn] === "undefined" ) {
-						handlers[fn] = L.Control.Elevation[fn] = exported[fn];
+					if (fn && typeof Elevation[fn] === "undefined" ) {
+						handlers[fn] = Elevation[fn] = exported[fn];
 						
 					}
 				});
@@ -740,65 +733,48 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Simple GeoJSON data loader (L.GeoJSON).
 	 */
 	_loadLayer: function(geojson) {
-		let control = this;
+		let { polyline, theme, waypoints, wptIcons, wptLabels, distanceMarkers } = this.options;
+		let style = L.extend({}, polyline);
 
-		let { wptIcons, wptLabels } = control.options;
+		if (theme) {
+			style.className += ' ' + theme;
+		}
+
+		if (geojson.name) {
+			this.track_info.name = geojson.name;
+		}
 
 		let layer = L.geoJson(geojson, {
-			distanceMarkers: control.options.distanceMarkers,
-			style: (feature) => {
-				let style = L.extend({}, control.options.polyline);
-				if (control.options.theme) {
-					style.className += ' ' + control.options.theme;
-				}
-				return style;
-			},
+			distanceMarkers: distanceMarkers,
+			style: style,
 			pointToLayer: (feature, latlng) => {
-				if (!control.options.waypoints) return;
-
-				let prop   = feature.properties;
-				let desc   = prop.desc ?? '';
-				let name   = prop.name ?? '';
-				let sym    = (prop.sym ?? name).replace(' ', '-').replace('"', '').replace("'", '').toLowerCase();
-
-				// Handle chart waypoints (dots)
-				if ([true, 'dots'].includes(control.options.waypoints)) {
-					control._registerCheckPoint({
-						latlng: latlng,
-						label: ([true, 'dots'].includes(wptLabels) ? name : '')
-					});
-				}
-
-				// Handle map waypoints (markers)
-				if ([true, 'markers'].includes(control.options.waypoints) && wptIcons != false) {
-					// generate and cache appropriate icon symbol
-					if (!wptIcons.hasOwnProperty(sym)) {
-						wptIcons[sym] = L.divIcon(
-							L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } )
-						);
+				if (waypoints) {
+					let { desc, name, sym } = feature.properties;
+					desc = desc || '';
+					name = name || '';
+					// Handle chart waypoints (dots)
+					if ([true, 'dots'].includes(waypoints)) {
+						this._registerCheckPoint({
+							latlng: latlng,
+							label : ([true, 'dots'].includes(wptLabels) ? name : '')
+						});
 					}
-					let marker = L.marker(latlng, { icon: wptIcons[sym] });
-					if ([true, 'markers'].includes(wptLabels) && (name || desc)) {
-						let content = decodeURI("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : ''));
-						marker.bindPopup(content, { className: 'elevation-popup', keepInView: true }).openPopup();
-						marker.bindTooltip(content, { className: 'elevation-tooltip', direction: 'auto', sticky: true, opacity: 1 }).openTooltip();
+					// Handle map waypoints (markers)
+					if ([true, 'markers'].includes(waypoints) && wptIcons != false) {
+						return this._registerMarker({
+							latlng : latlng,
+							sym    : (sym ?? name).replace(' ', '-').replace('"', '').replace("'", '').toLowerCase(),
+							content: [true, 'markers'].includes(wptLabels) && (name || desc) && decodeURI("<b>" + name + "</b>" + (desc.length > 0 ? '<br>' + desc : ''))
+						});
 					}
-					control._addMarker(marker);
-					control.fire('waypoint_added', { point: marker, element: latlng, properties: prop });
-					return marker;
 				}
 			},
-			onEachFeature: (feature, layer) => {
-				if (feature.geometry && feature.geometry.type != 'Point') {
-					control.addData(layer);
-					control.track_info = L.extend({}, control.track_info, { name: geojson.name });
-				} 
-			},
+			onEachFeature: (feature, layer) => feature.geometry && feature.geometry.type != 'Point' && this.addData(feature, layer),
 		});
 
-		control.import(control.__D3).then(() => {
-			control._initMapIntegrations(control, layer);
-			control._fireEvt("eledata_loaded", { data: geojson, layer: layer, name: control.track_info.name, track_info: control.track_info });
+		this.import(this.__D3).then(() => {
+			this._initMapIntegrations(this, layer);
+			this._fireEvt("eledata_loaded", { data: geojson, layer: layer, name: this.track_info.name, track_info: this.track_info });
 		});
 
 		return layer;
@@ -929,8 +905,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					geojson = this._parseFromGeoJSONString(data.toString());
 				}
 				if (geojson) {
-					geojson = this._prepareMultiLineStrings(geojson);
-					geojson = this._prepareAdditionalProperties(geojson);
+					geojson.name = geojson.name || (this._downloadURL || '').split('/').pop().split('#')[0].split('?')[0];
 				}
 				resolve(geojson);
 			})
@@ -956,37 +931,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		let geojson  = toGeoJSON[type](xml);
 		geojson.name = name.length > 0 ? (Array.from(name).find(tag => tag.parentElement.tagName == "trk") ?? name[0]).textContent : '';
 		return geojson;
-	},
-
-	/**
-	 * Extend GeoJSON properties (name, time, ...)
-	 */
-	 _prepareAdditionalProperties: function(geojson) {
-		if (!geojson.name && this._downloadURL) {
-			geojson.name = this._downloadURL.split('/').pop().split('#')[0].split('?')[0];
-		}
-		return geojson;
-	},
-
-	/**
-	 * Just a temporary fix for MultiLineString data (trk > trkseg + trkseg),
-	 * just split them into seperate LineStrings (trk > trkseg, trk > trkseg)
-	 * 
-	 * @link https://github.com/Raruto/leaflet-elevation/issues/56
-	 */
-	_prepareMultiLineStrings: function(geojson) {
-		geojson.features.forEach(feauture => {
-			if (feauture.geometry.type == "MultiLineString") {
-				feauture.geometry.coordinates.forEach(coords => {
-					geojson.features.push({
-						geometry: { type: 'LineString', coordinates: coords },
-						properties: feauture.properties,
-						type: 'Feature'
-					});
-				});
-			} 
-		});
-		return geojson.features.filter(feauture => feauture.geometry.type != "MultiLineString");
 	},
 
 	/**
@@ -1106,59 +1050,78 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			return this._registerHandler(props.call(this));
 		}
 
+		let {
+			name,
+			attr,
+			required,
+			skipNull,
+			deltaMax,
+			clampRange,
+			decimals,
+			meta,
+			unit,
+			coordinateProperties,
+			coordPropsToMeta,
+			pointToAttr,
+			onPointAdded,
+			stats,
+			statsName,
+			grid,
+			scale,
+			path,
+			tooltip,
+			summary
+		} = props;
+
 		// eg. "altitude" == true
-		if (this.options[props.name] || props.required) {
+		if (this.options[name] || required) {
 
 			this._registerDataAttribute({
-				name: props.name,
-				attr: props.attr,
-				skipNull: props.skipNull,
-				deltaMax: props.deltaMax,
-				clampRange: props.clampRange,
-				decimals: props.decimals,
-				coordPropsToMeta: _.coordPropsToMeta(props.coordinateProperties, props.meta || props.name, props.coordPropsToMeta),
-				pointToAttr: props.pointToAttr,
-				onPointAdded: props.onPointAdded,
-				stats: props.stats,
-				statsName: props.statsName,
+				name,
+				attr,
+				skipNull,
+				deltaMax,
+				clampRange,
+				decimals,
+				coordPropsToMeta: _.coordPropsToMeta(coordinateProperties, meta || name, coordPropsToMeta),
+				pointToAttr,
+				onPointAdded,
+				stats,
+				statsName,
 			});
 
-			if (props.grid) {
-				props.grid.name = props.grid.name || props.name;
-				this._registerAxisGrid(props.grid);
+			if (grid) {
+				this._registerAxisGrid(L.extend({ name }, grid));
 			}
 
-			if (this.options[props.name] !== "summary") {
-				if (props.scale) {
-					props.scale.name = props.scale.name || props.name;
-					props.scale.label = props.scale.label || props.unit;
-					this._registerAxisScale(props.scale);
-				}
-				if (props.path) {
-					props.path.name = props.path.name || props.name;
-					this._registerAreaPath(props.path);
-				}
+			if (this.options[name] !== "summary") {
+				if (scale) this._registerAxisScale(L.extend({ name, label: unit }, scale));
+				if (path)  this._registerAreaPath(L.extend({ name }, path));
 			}
 
-			if (props.tooltips) {
-				_.each(props.tooltips, t => {
-					if (t) {
-						t.name = t.name || props.name;
-						this._registerTooltip(t)
-					}
-				});
-			} else if (props.tooltip) {
-				props.tooltip.name = props.tooltip.name || props.name;
-				this._registerTooltip(props.tooltip)
+			if (tooltip || props.tooltips) {
+				_.each([tooltip, ...(props.tooltips || [])], t => t && this._registerTooltip(L.extend({ name }, t)));
 			}
 
-			if (props.summary) {
-				for (const key in props.summary) {
-					props.summary[key].unit = props.summary[key].unit || props.unit;
-				}
-				this._registerSummary(props.summary);
+			if (summary) {
+				_.each(summary, (s, k) => summary[k] = L.extend({ unit }, s));
+				this._registerSummary(summary);
 			}
 		}
+	},
+
+	_registerMarker({latlng, sym, content}) {
+		let { wptIcons } = this.options;
+		// generate and cache appropriate icon symbol
+		if (!wptIcons.hasOwnProperty(sym)) {
+			wptIcons[sym] = L.divIcon(L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } ));
+		}
+		let marker = L.marker(latlng, { icon: wptIcons[sym] });
+		if (content) {
+			marker.bindPopup(content, { className: 'elevation-popup', keepInView: true }).openPopup();
+			marker.bindTooltip(content, { className: 'elevation-tooltip', direction: 'auto', sticky: true, opacity: 1 }).openTooltip();
+		}
+		return this._addMarker(marker)
 	},
 	
 	/**

@@ -143,102 +143,107 @@ L.DistanceMarkers = L.LayerGroup.extend({
 		// Get line coords as an array
 		let coords = typeof line.getLatLngs == 'function' ? line.getLatLngs() : line;
 
-		// Get accumulated line lengths as well as overall length
-		let accumulated = L.GeometryUtil.accumulatedLengths(line);
-		let length = accumulated.length > 0 ? accumulated[accumulated.length - 1] : 0;
+		// Handle "MultiLineString" features
+		coords = L.LineUtil.isFlat(coords) ? [coords] : coords;
 
-		// count = Number of distance markers to be added
-		// j = Position in accumulated line length array
-		for (let i = 1, count = Math.floor(length / options.offset), j = 0; i <= count; ++i) {
+		coords.forEach(latlngs => {
+			// Get accumulated line lengths as well as overall length
+			let accumulated = L.GeometryUtil.accumulatedLengths(latlngs);
+			let length = accumulated.length > 0 ? accumulated[accumulated.length - 1] : 0;
 
-			let distance = options.offset * i;
+			// count = Number of distance markers to be added
+			// j = Position in accumulated line length array
+			for (let i = 1, count = Math.floor(length / options.offset), j = 0; i <= count; ++i) {
 
-			// Find the first accumulated distance that is greater than the distance of this marker
-			while (j < accumulated.length - 1 && accumulated[j] < distance) ++j;
+				let distance = options.offset * i;
 
-			// Grab two nearest points either side marker position
-			let p1 = coords[j - 1];
-			let p2 = coords[j];
-			let m_line = L.polyline([p1, p2]);
+				// Find the first accumulated distance that is greater than the distance of this marker
+				while (j < accumulated.length - 1 && accumulated[j] < distance) ++j;
 
-			// and create a simple line to interpolate on
-			let ratio = (distance - accumulated[j - 1]) / (accumulated[j] - accumulated[j - 1]);
-			let position = L.GeometryUtil.interpolateOnLine(map, m_line, ratio);
-			let delta = map.project(p2).subtract(map.project(p1));
-			let angle = Math.atan2(delta.y, delta.x);
+				// Grab two nearest points either side marker position
+				let p1 = latlngs[j - 1];
+				let p2 = latlngs[j];
+				let m_line = L.polyline([p1, p2]);
 
-			// Generate distance marker label
-			let text = options.textFunction.call(this, distance, i, options.offset);
+				// and create a simple line to interpolate on
+				let ratio = (distance - accumulated[j - 1]) / (accumulated[j] - accumulated[j - 1]);
+				let position = L.GeometryUtil.interpolateOnLine(map, m_line, ratio);
+				let delta = map.project(p2).subtract(map.project(p1));
+				let angle = Math.atan2(delta.y, delta.x);
 
-			// Grouping layer of visible layers at zoom level (arrow + distance)
-			let zoom = this._minimumZoomLevelForItem(i, showAll);
-			let markers = this._zoomLayers[zoom] = this._zoomLayers[zoom] || L.layerGroup()
+				// Generate distance marker label
+				let text = options.textFunction.call(this, distance, i, options.offset);
 
-			// create arrow markers
-			if (options.direction && ((options.distance && i % 2 == 1) || !options.distance)) {
-				if (preferCanvas) {
-					markers.addLayer(
-						new L.DistanceMarker(p1, {
-							radius: 0,
-							icon: {
-								url: options.arrowUrl,   //image link
-								size: options.arrowSize, //image size ( default [40, 40] )
-								rotate: 0,               //image base rotate ( default 0 )
-								offset: { x: 0, y: 0 },  //image offset ( default { x: 0, y: 0 } )
-							},
-							rotation: angle,
-							interactive: false,
-							// label: '⮞', //'➜',
-							// font: 'normal 20pt "Helvetica Neue", Arial, Helvetica, sans-serif',
-							// fillStyle: 'white',//'#3366CC',
-							// strokeStyle: 'black',
-						})
-					);
-				} else {
-					markers.addLayer(
-						L.marker(position.latLng, {
-							icon: L.icon({
-								iconUrl: options.arrowUrl,
-								iconSize: options.arrowSize,
-							}),
-							// NB the following option is added by "leaflet-rotate"
-							rotation: angle * L.DomUtil.RAD_TO_DEG,
-							interactive: false,
-						})
-					);
+				// Grouping layer of visible layers at zoom level (arrow + distance)
+				let zoom = this._minimumZoomLevelForItem(i, showAll);
+				let markers = this._zoomLayers[zoom] = this._zoomLayers[zoom] || L.layerGroup()
+
+				// create arrow markers
+				if (options.direction && ((options.distance && i % 2 == 1) || !options.distance)) {
+					if (preferCanvas) {
+						markers.addLayer(
+							new L.DistanceMarker(p1, {
+								radius: 0,
+								icon: {
+									url: options.arrowUrl,   //image link
+									size: options.arrowSize, //image size ( default [40, 40] )
+									rotate: 0,               //image base rotate ( default 0 )
+									offset: { x: 0, y: 0 },  //image offset ( default { x: 0, y: 0 } )
+								},
+								rotation: angle,
+								interactive: false,
+								// label: '⮞', //'➜',
+								// font: 'normal 20pt "Helvetica Neue", Arial, Helvetica, sans-serif',
+								// fillStyle: 'white',//'#3366CC',
+								// strokeStyle: 'black',
+							})
+						);
+					} else {
+						markers.addLayer(
+							L.marker(position.latLng, {
+								icon: L.icon({
+									iconUrl: options.arrowUrl,
+									iconSize: options.arrowSize,
+								}),
+								// NB the following option is added by "leaflet-rotate"
+								rotation: angle * L.DomUtil.RAD_TO_DEG,
+								interactive: false,
+							})
+						);
+					}
+				}
+
+				// create distance markers
+				if (options.distance && i % 2 == 0) {
+					if (preferCanvas) {
+						markers.addLayer(
+							new L.DistanceMarker(position.latLng, {
+								label: text, // TODO: handle text rotation (leaflet-rotate)
+								radius: 7,
+								fillColor: '#fff',
+								fillOpacity: 1,
+								fillStyle: 'black',
+								color: '#777',
+								weight: 1,
+								interactive: false,
+							})
+						);
+					} else {
+						markers.addLayer(
+							L.marker(position.latLng, {
+								title: text,
+								icon: L.divIcon({
+									className: options.cssClass,
+									html: text,
+									iconSize: options.iconSize
+								}),
+								interactive: false,
+							})
+						);
+					}
 				}
 			}
-
-			// create distance markers
-			if (options.distance && i % 2 == 0) {
-				if (preferCanvas) {
-					markers.addLayer(
-						new L.DistanceMarker(position.latLng, {
-							label: text, // TODO: handle text rotation (leaflet-rotate)
-							radius: 7,
-							fillColor: '#fff',
-							fillOpacity: 1,
-							fillStyle: 'black',
-							color: '#777',
-							weight: 1,
-							interactive: false,
-						})
-					);
-				} else {
-					markers.addLayer(
-						L.marker(position.latLng, {
-							title: text,
-							icon: L.divIcon({
-								className: options.cssClass,
-								html: text,
-								iconSize: options.iconSize
-							}),
-							interactive: false,
-						})
-					);
-				}
-			}
-		}
+		});
 
 		const updateMarkerVisibility = () => {
 			let oldZoom = this._lastZoomLevel || 0;
