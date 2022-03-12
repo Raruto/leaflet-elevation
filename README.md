@@ -244,7 +244,7 @@ var map = L.map('map', {
 - https://walkaholic.me/map
 
 </details>
-    
+
 _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
 
 ---
@@ -260,3 +260,5 @@ _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Inte
 **Contributors:** [MrMufflon](https://github.com/MrMufflon/Leaflet.Elevation), [HostedDinner](https://github.com/HostedDinner/Leaflet.Elevation), [ADoroszlai](http://ADoroszlai.github.io/joebed/), [Raruto](https://github.com/Raruto/leaflet-elevation)
 
 ---
+
+Check out [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for more information on supporting the development of this library.
