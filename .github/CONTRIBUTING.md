@@ -1,9 +1,7 @@
 ## Contributing
 
-[fork]: https://github.com/github/template-parts/fork
-[pr]: https://github.com/github/template-parts/compare
-[style]: https://github.com/styleguide/ruby
-[code-of-conduct]: CODE_OF_CONDUCT.md
+[fork]: https://github.com/Raruto/leaflet-elevation/fork
+[pr]: https://github.com/Raruto/leaflet-elevation/compare
 
 Hi there! We're thrilled that you'd like to contribute to this project. Your help is essential for keeping it great.
 
