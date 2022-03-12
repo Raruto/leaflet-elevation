@@ -214,6 +214,70 @@ export const LegendItem = ({
 	}
 };
 
+export const LegendSmall = ({
+	width,
+	height,
+	items,
+	onClick
+}) => {
+	return g => {
+		let idx = 0;
+
+		g.data([{
+			x: width,
+			y: height + 40
+		}]).attr("transform", d => "translate(" + d.x + "," + d.y + ")").classed('legend-switcher');
+
+		// let label  = g.selectAll(".legend-switcher-label")  .data([{ idx: 0 }]);
+		let label = g.append('svg:text')
+						.attr("class", "legend-switcher-label")
+						.attr("text-anchor", "end")
+						.attr("x", -25)
+						.attr("y", 5)
+						.on("mousedown", (e, d) => setIdx(L.Util.wrapNum((idx + 1), [0, items.length])));
+
+		let symbol = g.selectAll(".legend-switcher-symbol").data([
+			{ type: d3.symbolTriangle, x: 0,   y: 3, angle: 0,   size: 50, id: "down" },
+			{ type: d3.symbolTriangle, x: -13, y: 0, angle: 180, size: 50, id: "up" }
+		]);
+
+		symbol.exit().remove();
+		label.exit().remove();
+	
+		symbol.enter()
+			.append("svg:path")
+			.attr("class", "legend-switcher-symbol")
+			.attr("cursor", 'pointer')
+			.attr("fill", "#000")
+			.merge(symbol)
+			.attr("d", 
+				d3.symbol()
+				.type(d => d.type)
+				.size(d => d.size)
+			)
+			.attr("transform", d => "translate(" + d.x + "," + d.y + ") rotate(" + d.angle + ")")
+			.on("mousedown", (e, d) => setIdx(L.Util.wrapNum((d.id === "up" ? idx + 1 : idx - 1), [0, items.length])));
+
+		const setIdx = (id) => {
+			idx = id;
+			// label.enter()
+			// 	.append('text')
+			// 	.attr("class", "legend-switcher-label")
+			// 	.attr("text-anchor", "end")
+			// 	.attr("x", -25)
+			// 	.attr("y", 5)
+			// 	.merge(label.data([{ idx: id }]))
+			// 	.text(d => items.length ? (items[idx][0].toUpperCase() + items[idx].slice(1)) : '')
+			// 	.on("mousedown", (e, d) => setIdx(L.Util.wrapNum((idx + 1), [0, items.length])));
+			label.text(items.length ? (items[idx][0].toUpperCase() + items[idx].slice(1)) : '');
+			onClick(items[idx]);
+		};
+		setIdx(0);
+		
+		return g;
+	};
+};
+
 export const Tooltip = ({
 	xCoord,
 	yCoord,
@@ -300,27 +364,21 @@ export const Ruler = ({
 	return g => {
 
 		g.data([{
-				"x": 0,
-				"y": height,
+				x: 0,
+				y: height,
 			}])
 			.attr("transform", d => "translate(" + d.x + "," + d.y + ")");
 
-		let rect   = g.selectAll('.horizontal-drag-rect')
-			.data([{ w: width }]);
-
-		let line   = g.selectAll('.horizontal-drag-line')
-			.data([{ w: width }]);
-
-		let label  = g.selectAll('.horizontal-drag-label')
-			.data([{ w: width - 8 }]);
-
+		let rect   = g.selectAll('.horizontal-drag-rect').data([{ w: width }]);
+		let line   = g.selectAll('.horizontal-drag-line').data([{ w: width }]);
+		let label  = g.selectAll('.horizontal-drag-label').data([{ w: width - 8 }]);
 		let symbol = g.selectAll('.horizontal-drag-symbol')
 			.data([{
-				"type": d3.symbolTriangle,
-				"x": width + 7,
-				"y": 0,
-				"angle": -90,
-				"size": 50
+				type: d3.symbolTriangle,
+				x: width + 7,
+				y: 0,
+				angle: -90,
+				size: 50
 			}]);
 
 		rect.exit().remove();

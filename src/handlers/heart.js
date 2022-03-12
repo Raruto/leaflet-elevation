@@ -13,8 +13,8 @@ export function Heart() {
             axis       : "y",
             position   : "left",
             scale      : { min: -1, max: +1 },
-            tickPadding: 16,
-            labelX     : -18,
+            tickPadding: 25,
+            labelX     : -30,
             labelY     : -8,
         },
         path: {

@@ -139,9 +139,9 @@ export const iSum = (iVal, sum) => iVal + (sum || 0);
 /**
  * Alias for some leaflet core functions
  */
-export const { on, off }  = L.DomEvent;
-export const { throttle } = L.Util;
-export const { hasClass } = L.DomUtil;
+export const { on, off }           = L.DomEvent;
+export const { throttle, wrapNum } = L.Util;
+export const { hasClass }          = L.DomUtil;
 
 /**
  * Limit floating point precision

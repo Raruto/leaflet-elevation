@@ -85,6 +85,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		this._updateScale();
 		this._updateArea();
 		this._updateAxis();
+		this._updateMargins();
 		this._updateLegend();
 		this._updateClipper();
 
@@ -536,80 +537,88 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	},
 
 	_updateLegend: function () {
-
-		if (this.options.legend === false) return;
-
-		const legendOpts = {
-			width  : this._width(),
-			height : this._height(),
-			margins: this.options.margins,
-		};
-
-		// Reset legend items
-		this._legend.selectAll('g').remove();
-		_.each(this._props.legendItems, (legend) => {
-			this._legend.append("g").call(D3.LegendItem(L.extend(legendOpts, legend)));
-		});
-
+		let xAxesB  = this._axis.selectAll('.x.axis.bottom').nodes().length;
+		
 		// Get legend items
-		let items  = this._legend.selectAll('.legend-item');
+		let items = Object.keys(this._paths);
 
 		// Calculate legend item positions
-		let n      = items.nodes().length;
+		let n      = items.length;
 		let v      = Array(Math.floor(n / 2)).fill(null).map((d, i) => (i + 1) * 2 - (1 - Math.sign(n % 2)));
 		let rev    = v.slice().reverse().map((d) => -(d));
 
+		// push a fake element to handle center alignment (odd numbers)
 		if (n % 2 !== 0) {
 			rev.push(0);
 		}
 		v = rev.concat(v);
 
+		// Reset legend items
+		this._legend.selectAll('g').remove();
+		_.each(this._props.legendItems, (legend) => {
+			this._legend.append("g").call(
+				D3.LegendItem(L.extend({
+					width  : this._width(),
+					height : this._height(),
+					margins: this.options.margins,
+				}, legend))
+			);
+		});
+
+		// Reset legend items
+		this._legend.append("g").call(
+			D3.LegendSmall({
+				width  : this._width(),
+				height : this._height(),
+				items  : items,
+				onClick: (selected) => {
+					_.each(items, name => this._togglePath(name, selected == name, true));
+					this._updateArea();
+				}
+			})
+		);
+		
+		_.each(items, (name, i) => {
+			// Adjust legend item positions
+			this._legend.select('[data-name=' + name + ']').attr("transform", "translate(" + (v[i] * 55) + ", " + (xAxesB * 2) + ")");
+			// Set initial state (disabled controls)
+			this._togglePath(name, !(name in this.options && this.options[name] == 'disabled'), true);
+		});
+
+	},
+
+	_updateMargins: function() {
 		// Get chart margins
 		let xAxesB  = this._axis.selectAll('.x.axis.bottom').nodes().length;
-		let marginB = 30 + (xAxesB * 2);
-		let marginR = n * 30;
+		let xAxesL  = this._axis.selectAll('.y.axis.left').nodes().length;
+		let xAxesR  = this._axis.selectAll('.y.axis.right').nodes().length;
+		let marginB = 60 + (xAxesB * 2);
+		let marginL = 10 + (xAxesL * 30);
+		let marginR = 40 + (xAxesR * 30);
 
-		// Adjust chart right margins
-		if (n && this.options.margins.right < marginR) {
+		let marginsUpdated = false
+
+		// Adjust right margin
+		if (xAxesR && this.options.margins.right < marginR) {
 			this.options.margins.right  = marginR;
-			this.fire('margins_updated');
+			marginsUpdated = true;
 		}
 
-		// Adjust chart bottom margins
+		// Adjust left margin
+		if(xAxesL && this.options.margins.left < marginL) {
+			this.options.margins.left = marginL;
+			marginsUpdated = true;
+		}
+
+		// Adjust bottom margin
 		if(xAxesB && this.options.margins.bottom < marginB) {
 			this.options.margins.bottom = marginB;
-			this.fire('margins_updated');
+			marginsUpdated = true;
 		}
 
-		items
-			.each((d, i, n) => {
-
-				let legend  = d3.select(n[i]);
-				let rect    = legend.select('rect');
-				let name    = legend.attr('data-name');
-				let path    = this._paths[name];
-
-				let tx      = v[i] * 55;
-				let ty      = xAxesB * 2;
-
-				legend
-
-				// Adjust legend item positions
-				.attr("transform", "translate(" + tx + ", " + ty + ")");
-
-				// Set initial state (disabled controls)
-				if (name in this.options && this.options[name] == 'disabled') {
-					path.classed('leaflet-hidden', true);
-					legend.select('text').style('text-decoration-line', 'line-through');
-					legend.select('rect').style('fill-opacity', '0');
-				}
-
-				// Apply d3-zoom (bind <clipPath> mask)
-				if (this._mask) {
-					path.attr('mask', 'url(#' + this._mask.attr('id') + ')');
-				}
-
-			});
+		if (marginsUpdated) {
+			this.fire('margins_updated');
+		}
 	},
 
 	_updateScale: function() {
@@ -731,6 +740,21 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 				labels: this._props.tooltipItems,
 				item: item
 			}));
+	},
+
+	_togglePath(name, enabled = true, lazy = false) {
+		let path    = this._paths[name];
+		let legend  = this._container.select('.legend [data-name=' + name + ']');
+		path.classed('leaflet-hidden', !enabled);
+		legend.select('text').style('text-decoration-line', enabled ? '' : 'line-through');
+		legend.select('rect').style('fill-opacity', enabled ? '': '0');
+		// Apply d3-zoom (bind <clipPath> mask)
+		if (this._mask) {
+			path.attr('mask', 'url(#' + this._mask.attr('id') + ')');
+		}
+		if (!lazy) {
+			this._updateArea();
+		}
 	},
 
 	_hideDiagramIndicator: function() {

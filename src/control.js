@@ -593,10 +593,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				.on('margins_updated', this._resizeChart,    this);
 	
 	
-			this.fire("elechart_axis");
-	
-			if (this.options.legend) this.fire("elechart_legend");
-	
 			this.fire("elechart_init");
 
 			map
@@ -1205,7 +1201,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_updateChart: function() {
 		if (this._chart && this._container) {
 			this.fire("elechart_axis");
-			this.fire("elechart_area");
 	
 			this._chart.update({ data: this._data, options: this.options });
 	
@@ -1253,27 +1248,26 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Update chart summary.
 	 */
 	_updateSummary: function() {
-		if (!this._summary) return;
-
-		this._summary.reset();
-
-		if (this.options.summary) {
-			this.fire("elechart_summary");
-			this._summary.update();
+		if (this._summary) {
+			this._summary.reset();
+			if (this.options.summary) {
+				this.fire("elechart_summary");
+				this._summary.update();
+			}
+			if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
+				this._summary._container.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
+				_.select('.download a', this._summary._container).onclick = ({preventDefault}) => {
+					preventDefault();
+					let event = { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this, this._downloadURL) };
+					if (this.options.downloadLink == 'modal' && typeof CustomEvent === "function") {
+						document.dispatchEvent(new CustomEvent("eletrack_download", { detail: event }));
+					} else if (this.options.downloadLink == 'link' || this.options.downloadLink === true) {
+						event.confirm();
+					}
+					this.fire('eletrack_download', event);
+				};
+			}
 		}
-		if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
-			this._summary._container.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
-			_.select('.download a', this._summary._container).onclick = ({preventDefault}) => {
-				preventDefault();
-				let event = { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this, this._downloadURL) };
-				if (this.options.downloadLink == 'modal' && typeof CustomEvent === "function") {
-					document.dispatchEvent(new CustomEvent("eletrack_download", { detail: event }));
-				} else if (this.options.downloadLink == 'link' || this.options.downloadLink === true) {
-					event.confirm();
-				}
-				this.fire('eletrack_download', event);
-			};
-		};
 	},
 
 

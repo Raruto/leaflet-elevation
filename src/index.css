@@ -60,6 +60,7 @@
 }
 
 .elevation-control.elevation .axis text,
+.elevation-control.elevation .legend text,
 .elevation-control.elevation .point text {
   fill: #000;
   font-weight: 700;
