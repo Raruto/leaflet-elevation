@@ -21,7 +21,7 @@ For those wishing to try, clone this repository into your localhost folder and i
 
 3. `npm run dev`
 
-After that you can start developing inside the src and test folders (open "http://localhost/leaflet-elevation/test" in your browser to see your changes).
+After that you can start developing inside the `src` and `test` folders (open "http://localhost/leaflet-elevation/test" in your browser to see your changes).
 
 ## Submitting a pull request
 
