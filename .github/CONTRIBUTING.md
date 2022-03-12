@@ -9,6 +9,20 @@ Contributions to this project are [released](https://help.github.com/articles/gi
 
 By participating in this project you agree to abide by its terms.
 
+## Developing locally
+
+For those wishing to try, clone this repository into your localhost folder and inside move to the leaflet-elevation folder
+
+0. `git clone https://github.com/raruto/leaflet-elevation` (inside your localhost folder, eg. `/var/www`)
+
+1. `cd leaflet-elevation`
+
+2. `npm i`
+
+3. `npm run dev`
+
+After that you can start developing inside the src and test folders (open "http://localhost/leaflet-elevation/test" in your browser to see your changes).
+
 ## Submitting a pull request
 
 0. [Fork][fork] and clone the repository
