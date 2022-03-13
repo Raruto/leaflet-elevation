@@ -1240,8 +1240,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			}
 			if (this.options.downloadLink && this._downloadURL) { // TODO: generate dynamically file content instead of using static file urls.
 				this._summary._container.innerHTML += '<span class="download"><a href="#">' + L._('Download') + '</a></span>'
-				_.select('.download a', this._summary._container).onclick = ({preventDefault}) => {
-					preventDefault();
+				_.select('.download a', this._summary._container).onclick = (e) => {
+					e.preventDefault();
 					let event = { downloadLink: this.options.downloadLink, confirm: _.saveFile.bind(this, this._downloadURL) };
 					if (this.options.downloadLink == 'modal' && typeof CustomEvent === "function") {
 						document.dispatchEvent(new CustomEvent("eletrack_download", { detail: event }));
