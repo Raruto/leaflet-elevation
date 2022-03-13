@@ -351,7 +351,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		if (typeof props.preferCanvas === "undefined") props.preferCanvas = opts.preferCanvas;
 
 		// Save paths in memory for latter usage
-		this._paths[props.name]       = D3.Path(props);;
+		this._paths[props.name]       = D3.Path(props);
 		this._props.areas[props.name] = props;
 
 		if (opts.legend) {
@@ -555,6 +555,8 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 		// Reset legend items
 		this._legend.selectAll('g').remove();
+
+		// Render legend items
 		_.each(this._props.legendItems, (legend) => {
 			this._legend.append("g").call(
 				D3.LegendItem(L.extend({
@@ -565,18 +567,20 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 			);
 		});
 
-		// Reset legend items
-		this._legend.append("g").call(
-			D3.LegendSmall({
-				width  : this._width(),
-				height : this._height(),
-				items  : items,
-				onClick: (selected) => {
-					_.each(items, name => this._togglePath(name, selected == name, true));
-					this._updateArea();
-				}
-			})
-		);
+		// Render legend item switcher
+		if (n > 1) {
+			this._legend.append("g").call(
+				D3.LegendSmall({
+					width  : this._width(),
+					height : this._height(),
+					items  : items,
+					onClick: (selected) => {
+						_.each(items, name => this._togglePath(name, selected == name, true));
+						this._updateArea();
+					}
+				})
+			);
+		}
 		
 		_.each(items, (name, i) => {
 			// Adjust legend item positions

@@ -5,38 +5,32 @@
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+	
+	<style>@import '../libs/fullpage.css';</style>
+
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.4/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.4/dist/leaflet-elevation.min.js"></script>
+
 	<style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			height: 100%;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-		}
-
-		.leaflet-map {
-			height: 55%;
-			max-height: 100vh;
-		}
-
-		.elevation-div {
-			height: 25%;
-			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-		}
-
 		.runner.height-focus {
 			stroke:#000;
  			fill:#fff
 		}
-
 		/** Get rid of mouse events over the chart */
-		.elevation-control.elevation svg * {
+		.elevation-control svg * {
 			pointer-events: none;
 		}
 		/** Restore click on legend control */
-		.elevation-control.elevation svg .legend * { 
+		.elevation-control svg .legend * { 
 			pointer-events: all;
 		}
 		/** Get rid of mouse events over the layer */
@@ -44,38 +38,21 @@
 			pointer-events: none !important;
 		}
 	</style>
-
-	<!-- (OPTIONAL) performance optimizations -->
-	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
-	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
-	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
-	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
-
-	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
-
-	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.3/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.3/dist/leaflet-elevation.min.js"></script>
-
 </head>
 
 <body>
 
 	<div id="map" class="leaflet-map"></div>
 
-	<!-- Let's define here some custom functions -->
+	<!-- Custom markers -->
 	<script>
 		L.Control.Elevation.include({
-
 			addCheckpoint: function(checkpoint) {
 				return this._registerCheckPoint({ // <-- NB these are private functions use them at your own risk!
 						latlng: this._findItemForX(this._x(checkpoint.dist)).latlng,
 						label: checkpoint.label || ''
 					});
 			},
-
 			addRunner: function(runner) {
 				let x = this._x(runner.dist);
 				let y = this._y(this._findItemForX(x).z)
@@ -88,18 +65,14 @@
 					.attr("cy", y);
 				return g;
 			},
-
-			// Update map and chart "markers" from latlng
 			setPositionFromLatLng: function(latlng) {
-				this._onMouseMoveLayer({latlng: latlng});
+				this._onMouseMoveLayer({latlng: latlng}); // Update map and chart "markers" from latlng
 			},
-
 			tick: function (runner, dist = 0, inc = 0.1) {
 				dist = (dist <= this.track_info.distance - inc) ? dist + inc : 0;
 				this.updateRunnerPos(runner, dist);
 				setTimeout(() => this.tick(runner, dist), 150);
 			},
-
 			updateRunnerPos: function(runner, pos) {
 				let x    = this._x(pos);
 				let curr = this._findItemForX(x);
@@ -111,7 +84,7 @@
 		});
 	</script>
 
-	<!-- Add here a custom tooltip -->
+	<!-- Custom tooltips -->
 	<script>
 		L.Control.Elevation.addInitHook(function(){
 			this._registerTooltip({
@@ -137,7 +110,7 @@
 		L.setLocale('en');
 	</script>
 
-	<!-- And finally initialize map and controls -->
+	<!-- Initialize map and controls -->
 	<script>
 		let opts = {
 			map: {
@@ -182,8 +155,7 @@
 		controlElevation.addTo(map);
 	</script>
 
-	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-		 width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

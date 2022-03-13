@@ -197,10 +197,10 @@ There are multiple options to achieve this:
 * check out [this example](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
 * Or add the following lines for custom colors.
 ```css
-.elevation-control.elevation .area {
+.elevation-control .area {
     fill: red;
 }
-.elevation-control.elevation .background {
+.elevation-control .background {
     background-color: white;
 ```
 </details>

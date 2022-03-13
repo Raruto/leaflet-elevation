@@ -205,7 +205,6 @@ export const LegendItem = ({
 			.text(L._(label || name))
 			.attr("x", (width / 2) + 5)
 			.attr("font-size", 10)
-			.style("text-decoration-thickness", "2px")
 			.style("font-weight", "700")
 			.attr('y', height + margins.bottom / 2)
 			.attr('dy', "0.75em");

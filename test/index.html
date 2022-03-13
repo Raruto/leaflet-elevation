@@ -5,64 +5,26 @@
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-	<style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			height: 100%;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-		}
-
-		.leaflet-map {
-			height: 55%;
-			max-height: 100vh;
-		}
-
-		.elevation-div {
-			height: 25%;
-			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-		}
-
-		.leaflet-control-layers {
-			user-select: none;
-		}
-
-		.elevation-waypoint-icon.poi::before {
-			background-image: url(../images/elevation-poi.png);
-		}
-	</style>
-
-	<!-- (OPTIONAL) performance optimizations -->
 	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
 	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
 	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
 
+	<style>@import '../libs/fullpage.css';</style>
+
+	<style>
+		/* .leaflet-control-layers {
+			user-select: none;
+		}
+
+		.elevation-waypoint-icon.poi::before {
+			background-image: url(../images/elevation-poi.png);
+		} */
+	</style>
+
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@latest/dist/leaflet-src.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@latest/dist/leaflet-ui-src.js"></script>
-
-	<!-- toGeoJSON -->
-	<!-- <script src='https://unpkg.com/@tmcw/togeojson@4.1.0/dist/togeojson.umd.js'></script> -->
-
-	<!-- D3 -->
-	<!-- <script src="https://unpkg.com/d3@6.5.0/dist/d3.min.js"></script> -->
-
-	<!-- leaflet-geometryutil -->
-	<!-- <script src="https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js"></script> -->
-
-	<!-- leaflet-almostover -->
-	<!-- <script src="https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js"></script> -->
-
-	<!-- <script src="https://unpkg.com/leaflet-geometryutil@0.9.1/src/leaflet.geometryutil.js"></script>
-	<script src="../libs/leaflet-distance-marker.js"></script> -->
-
-	<!-- <script type="module" src="../src/components/chart.js"></script>
-	<script type="module" src="../src/components/summary.js"></script>
-	<script type="module" src="../src/components/marker.js"></script> -->
 
 	<!-- leaflet-elevation -->
 	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
@@ -70,8 +32,6 @@
 
 	<link rel="stylesheet" href="../libs/leaflet-ruler.css" />
 	<script src="../libs/leaflet-ruler.js"></script>
-	<script src="../libs/leaflet-distance-marker.js"></script>
-
 </head>
 
 <body>
@@ -183,14 +143,15 @@
 				// url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
 				// url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
 				options: {
-					preferCanvas: true,
-					theme: "lime-theme",
+					preferCanvas: false,
+					theme: "lightblue-theme",
 					collapsed: false,
 					autohide: false,
 					autofitBounds: true,
 					position: "bottomleft",
 					detached: true,
-					summary: false, //"inline",
+					closeBtn: true,
+					summary: "inline",
 					imperial: false,
 					altitude: true,
 					distance: true,
@@ -199,14 +160,14 @@
 					acceleration: "summary",
 					time: true, //"summary",
 					timestamps: true,
-					legend: true,
-					downloadLink: false,
 					cadence: "disabled",
 					heart: "disabled",
-					handlers: [ 'Cadence', 'Heart' ],
+					handlers: [ 'Distance', 'Time', 'Altitude', 'Slope', 'Speed', 'Acceleration', 'Cadence', 'Heart' ],
+					downloadLink: true,
 					followMarker: true,
 					// zFollow: 13,
 					ruler: true,
+					legend: true,
 					// polyline: false,
 					// marker: 'position-marker',
 					// dragging: true,
@@ -235,22 +196,20 @@
 			controlElevation.clear();
 			controlElevation.redraw();
 
+			controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 
-			controlElevation.on('eledata_loaded', function(e) {
-				if (!controlLayer._map) controlLayer.addTo(map);
-				let seeds = [];
-				ruler._toggleMeasure();
-				e.layer.eachLayer((trkseg) => {
-					if(trkseg.feature.geometry.type != "Point") {
-						controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties.name);
-						(trkseg.feature.geometry.type != 'MultiLineString' ? [trkseg._latlngs] : trkseg._latlngs).forEach(l => {
-							ruler._addPoint(l[0]);
-							ruler._addPoint(l[l.length-1]);
-							ruler._closePath();
-						});
-					}
-				});
-			});
+			// controlElevation.on('eledata_loaded', function(e) {
+			// 	ruler._toggleMeasure();
+			// 	e.layer.eachLayer((trkseg) => {
+			// 		if(trkseg.feature.geometry.type != "Point") {
+			// 			(trkseg.feature.geometry.type != 'MultiLineString' ? [trkseg._latlngs] : trkseg._latlngs).forEach(l => {
+			// 				ruler._addPoint(l[0]);
+			// 				ruler._addPoint(l[l.length-1]);
+			// 				ruler._closePath();
+			// 			});
+			// 		}
+			// 	});
+			// });
 
 			controlElevation.on('elechart_init elechart_axis', function(e) {
 				// this._updateSelectionBox();
@@ -345,8 +304,7 @@
 		L.setLocale('it');
 	</script>
 
-	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-		 width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

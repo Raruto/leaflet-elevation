@@ -2,50 +2,43 @@
 <html>
 
 <head>
-  <title>leaflet-elevation.js</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-  <style>
-    html,
-    body,
-    .leaflet-map{
-      height: 100%;
-      width: 100%;
-      padding: 0px;
-      margin: 0px;
-    }
-
-    .help {
-      top: 60%;
-      position: absolute;
-      text-align: center;
-      left: 0;
-      right: 0;
-      font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
-      font-style: italic;
-      opacity: 0.5;
-      font-size: 0.9rem;
-      z-index: -1;
-    }
-  </style>
-
-	<!-- (OPTIONAL) performance optimizations -->
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
 	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
 	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
 
-  <!-- leaflet-ui -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
+	<style>@import '../libs/fullpage.css';</style>
 
-  <!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.3/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.3/dist/leaflet-elevation.min.js"></script>
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.4/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.4/dist/leaflet-elevation.min.js"></script>
 
 	<style>
-	.elevation-control.elevation.elevation-expanded .elevation-toggle-icon.close-button,
-	.lime-theme.elevation-control.elevation .elevation-toggle-icon {
+		.help {
+			top: 60%;
+			position: absolute;
+			text-align: center;
+			left: 0;
+			right: 0;
+			font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
+			font-style: italic;
+			opacity: 0.5;
+			font-size: 0.9rem;
+			z-index: -1;
+		}
+	</style>
+
+	<!-- Blink animation -->
+	<style>
+	.elevation-control.elevation.elevation-expanded .elevation-toggle-icon,
+	.lime-theme.elevation-control .elevation-toggle-icon {
 		animation: BLINK-ANIMATION 1s linear 3;
 		background-color: #ff0;
 	}
@@ -56,7 +49,7 @@
 	}
 	</style>
 
-	<!-- CHANGE ME: custom lime-theme colors -->
+	<!-- Custom theme colors -->
 	<style>
 	.lime-theme.height-focus.circle-lower {
 		fill: #FFF;
@@ -74,63 +67,61 @@
 		stroke-dasharray: 4;
 	}
 	</style>
-
 </head>
 
 <body>
-  <div id="map" class="leaflet-map"></div>
+	<div id="map" class="leaflet-map"></div>
 
-  <script>
-    let opts = {
-      map: {
-        mapTypeId: 'topo',
-        center: [41.4583, 12.7059],
-        zoom: 5,
-        fullscreenControl: false,
-        pegmanControl: false,
-        locateControl: false,
-        searchControl: false,
-        resizerControl: false,
-        layersControl: true,
-        zoomControl: true,
-        minimapControl: false,
-        rotateControl: false,
-        loadingControl: false,
+	<script>
+		let opts = {
+			map: {
+				mapTypeId: 'topo',
+				center: [41.4583, 12.7059],
+				zoom: 5,
+				fullscreenControl: false,
+				pegmanControl: false,
+				locateControl: false,
+				searchControl: false,
+				resizerControl: false,
+				layersControl: true,
+				zoomControl: true,
+				minimapControl: false,
+				rotateControl: false,
+				loadingControl: false,
 				gestureHandling: false,
-      },
-      elevationControl: {
-        url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
-        options: {
-          position: "bottomleft",
-          theme: "lime-theme",
-          collapsed: true,
-          detached: false,
-          autohide: true,
-          almostOver: true,
-        },
-      },
-      layersControl: {
-        options: {
-          collapsed: false,
-          position: "topright",
-        },
-      },
-    };
+			},
+			elevationControl: {
+				url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
+				options: {
+					position: "bottomleft",
+					theme: "lime-theme",
+					collapsed: true,
+					detached: false,
+					autohide: true,
+					almostOver: true,
+				},
+			},
+			layersControl: {
+				options: {
+					collapsed: false,
+					position: "topright",
+				},
+			},
+		};
 
-    let map = L.map('map', opts.map);
+		let map = L.map('map', opts.map);
 
-    let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
-    let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+		let controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-    controlElevation.load(opts.elevationControl.url);
+		controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 
-    map.on('eledata_loaded', ({layer, name}) => controlLayer.addOverlay(layer, name));
-  </script>
+		controlElevation.load(opts.elevationControl.url);
+	</script>
 
-  <p class="help">move mouse over the chart icon...</p>
+	<p class="help">move mouse over the chart icon...</p>
 
-	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-     width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

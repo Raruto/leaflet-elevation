@@ -2,165 +2,149 @@
 <html>
 
 <head>
-  <title>leaflet-elevation.js</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-  <style>
-    html,
-    body,
-    .leaflet-map,
-    .elevation-div {
-      height: 100%;
-      width: 100%;
-      padding: 0px;
-      margin: 0px;
-    }
-
-    .leaflet-map {
-      height: 55%;
-      max-height: 100vh;
-    }
-
-    .elevation-div.elevation-detached {
-      height: 35%;
-      font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-    }
-  </style>
-
-  <!-- (OPTIONAL) performance optimizations -->
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
-  <link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
 	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
 
-  <!-- leaflet-ui -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
+	<style>@import '../libs/fullpage.css';</style>
 
-  <!-- leaflet-elevation -->
-  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.3/dist/leaflet-elevation.min.css" />
-  <script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.3/dist/leaflet-elevation.min.js"></script>
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
-  <style>
-    .data-summary {
-      font-family: Verdana, Arial, Helvetica, sans-serif;
-      font-size: 12px;
-      padding: 0 45px;
-    }
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.4/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.4/dist/leaflet-elevation.min.js"></script>
 
-    .data-summary .summarylabel {
-      font-weight: bold;
-    }
+	<style>
+		.data-summary {
+			font-family: Verdana, Arial, Helvetica, sans-serif;
+			font-size: 12px;
+			padding: 0 45px;
+		}
 
-    .data-summary .summarylabel,
-    .data-summary .summaryvalue {
-      display: inline-block;
-      min-width: 100px;
-    }
+		.data-summary .summarylabel {
+			font-weight: bold;
+		}
 
-    .data-row {
-      margin-bottom: 1em;
-    }
-  </style>
+		.data-summary .summarylabel,
+		.data-summary .summaryvalue {
+			display: inline-block;
+			min-width: 100px;
+		}
+
+		.data-row {
+			margin-bottom: 1em;
+		}
+
+		.elevation-detached.elevation-collapsed .elevation-toggle-icon {
+			top: 1.5em;
+		}
+	</style>
 </head>
 
 <body>
 
-  <div id="map" class="leaflet-map"></div>
-  <div id="elevation-div" class="elevation-div"></div>
+	<div id="map" class="leaflet-map"></div>
+	<div id="elevation-div" class="elevation-div"></div>
 
-  <div id="data-summary" class="data-summary">
+	<div id="data-summary" class="data-summary">
 
-    <div class="data-row">
+		<div class="data-row">
 
-      <span class="totlen">
-        <span class="summarylabel">Total Length: </span>
-        <span class="summaryvalue">0</span>
-      </span>
+			<span class="totlen">
+				<span class="summarylabel">Total Length: </span>
+				<span class="summaryvalue">0</span>
+			</span>
 
-      <span class="maxele">
-        <span class="summarylabel">Max Elevation: </span>
-        <span class="summaryvalue">0</span>
-      </span>
+			<span class="maxele">
+				<span class="summarylabel">Max Elevation: </span>
+				<span class="summaryvalue">0</span>
+			</span>
 
-      <span class="minele">
-        <span class="summarylabel">Min Elevation: </span>
-        <span class="summaryvalue">0</span>
-      </span>
+			<span class="minele">
+				<span class="summarylabel">Min Elevation: </span>
+				<span class="summaryvalue">0</span>
+			</span>
 
-    </div>
-    <div class="data-row">
+		</div>
+		<div class="data-row">
 
-      <span class="gain">
-        <span class="summarylabel">Gain: </span>
-        <span class="summaryvalue">0</span>
-      </span>
+			<span class="gain">
+				<span class="summarylabel">Gain: </span>
+				<span class="summaryvalue">0</span>
+			</span>
 
-      <span class="loss">
-        <span class="summarylabel">Loss: </span>
-        <span class="summaryvalue">0</span>
-      </span>
+			<span class="loss">
+				<span class="summarylabel">Loss: </span>
+				<span class="summaryvalue">0</span>
+			</span>
 
-    </div>
+		</div>
 
-  </div>
+	</div>
 
-  <script>
-    let opts = {
-      map: {
-        center: [41.4583, 12.7059],
-        zoom: 5,
-        fullscreenControl: false,
-        resizerControl: true,
-        preferCanvas: false,
-        rotate: true,
-        // bearing: 45,
-        rotateControl: {
-          closeOnZeroBearing: true
-        },
-      },
-      elevationControl: {
-        data: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
-        options: {
-          theme: "lightblue-theme",
-          detached: true,
-          elevationDiv: "#elevation-div",
-          summary: false,
-          downloadLink: false,
-          slope: "summary",
-          speed: "summary",
-          time: "summary",
-        },
-      },
-      layersControl: {
-        options: {
-          collapsed: false,
-        },
-      },
-    };
+	<script>
+		let opts = {
+			map: {
+				center: [41.4583, 12.7059],
+				zoom: 5,
+				fullscreenControl: false,
+				resizerControl: true,
+				preferCanvas: false,
+				rotate: true,
+				// bearing: 45,
+				rotateControl: {
+					closeOnZeroBearing: true
+				},
+			},
+			elevationControl: {
+				data: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+				options: {
+					theme: "lightblue-theme",
+					collapsed: true,
+					detached: true,
+					elevationDiv: "#elevation-div",
+					summary: false,
+					downloadLink: false,
+					slope: "summary",
+					speed: "summary",
+					time: "summary",
+					almostOver: true,
+				},
+			},
+			layersControl: {
+				options: {
+					collapsed: false,
+				},
+			},
+		};
 
-    let map = L.map('map', opts.map);
+		let map = L.map('map', opts.map);
 
-    let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
-    let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+		let controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-    controlElevation.on('eledata_loaded', ({layer, name, track_info}) => {
-      let q = document.querySelector.bind(document);
+		controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 
-      controlLayer.addOverlay(layer, name);
+		// Custom Summary info
+		controlElevation.on('eledata_loaded', ({layer, name, track_info}) => {
+			let q = document.querySelector.bind(document);
+			q('.totlen .summaryvalue').innerHTML = track_info.distance.toFixed(2) + " km";
+			q('.maxele .summaryvalue').innerHTML = track_info.elevation_max.toFixed(2) + " m";
+			q('.minele .summaryvalue').innerHTML = track_info.elevation_min.toFixed(2) + " m";
+			q('.gain .summaryvalue').innerHTML   = "+" + track_info.ascent.toFixed(0) + " m";
+			q('.loss .summaryvalue').innerHTML   = "-" + track_info.descent.toFixed(0) + " m";
+		});
 
-      // Custom Summary info
-      q('.totlen .summaryvalue').innerHTML = track_info.distance.toFixed(2) + " km";
-      q('.maxele .summaryvalue').innerHTML = track_info.elevation_max.toFixed(2) + " m";
-      q('.minele .summaryvalue').innerHTML = track_info.elevation_min.toFixed(2) + " m";
-      q('.gain .summaryvalue').innerHTML   = "+" + track_info.ascent.toFixed(0) + " m";
-      q('.loss .summaryvalue').innerHTML   = "-" + track_info.descent.toFixed(0) + " m";
-    });
+		controlElevation.load(opts.elevationControl.data);
+	</script>
 
-    controlElevation.load(opts.elevationControl.data);
-  </script>
-
-  <a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed; top: 10px; left: calc(50% - 60px); z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed; top: 10px; left: calc(50% - 60px); z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

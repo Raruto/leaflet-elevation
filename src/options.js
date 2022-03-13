@@ -2,10 +2,11 @@ import * as _ from './utils';
 
 export var Options = {
 	autofitBounds: true,
-	autohide: !L.Browser.mobile,
+	autohide: false,
 	autohideMarker: true,
 	almostover: true,
 	altitude: true,
+	closeBtn: true,
 	collapsed: false,
 	detached: true,
 	distance: true,
@@ -66,7 +67,13 @@ export var Options = {
 	zFollow: false,
 	zooming: !L.Browser.Mobile,
 
-	// Quite uncommon and undocumented options (quite useless)
+	// Quite uncommon and undocumented options
+	margins: { top: 30, right: 30, bottom: 30, left: 40 },
+	height: (screen.height * 0.3) || 200,
+	width: (screen.width * 0.6) || 600,
+	xTicks: undefined,
+	yTicks: undefined,
+
 	decimalsX: 2,
 	decimalsY: 0,
 	forceAxisBounds: false,
@@ -74,11 +81,4 @@ export var Options = {
 	skipNullZCoords: false,
 	yAxisMax: undefined,
 	yAxisMin: undefined,
-
-	// Probably no longer functional as expected (internally overwritten)
-	margins: { top: 30, right: 30, bottom: 30, left: 40 },
-	height: 200,
-	width: 600,
-	xTicks: undefined,
-	yTicks: undefined,
 };

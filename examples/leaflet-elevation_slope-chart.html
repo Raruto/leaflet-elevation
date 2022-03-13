@@ -5,42 +5,20 @@
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-	<style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			height: 100%;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-		}
-
-		.leaflet-map {
-			height: 55%;
-			max-height: 100vh;
-		}
-
-		.elevation-div {
-			height: 25%;
-			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-		}
-	</style>
-
-	<!-- (OPTIONAL) performance optimizations -->
 	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
 	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
 	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
+
+	<style>@import '../libs/fullpage.css';</style>
 
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.3/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.3/dist/leaflet-elevation.min.js"></script>
-
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.0.4/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.0.4/dist/leaflet-elevation.min.js"></script>
 </head>
 
 <body>
@@ -75,20 +53,15 @@
 		};
 
 		let map = L.map('map', opts.map);
-		let controlElevation = L.control.elevation(opts.elevationControl.options);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
 		let controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-		controlElevation.load(opts.elevationControl.url);
-		controlElevation.addTo(map);
+		controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 
-		map.on('eledata_loaded', ({layer, name}) => {
-			if (!controlLayer._map) controlLayer.addTo(map);
-			controlLayer.addOverlay(layer, name);
-		});
+		controlElevation.load(opts.elevationControl.url);
 	</script>
 
-	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-		 width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

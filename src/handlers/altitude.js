@@ -5,7 +5,7 @@ export function Altitude() {
 	let opts       = this.options;
 	let altitude   = {};
 
-	let theme           = opts.theme.replace('-theme', '');
+	let theme           = opts.theme.split(' ')[0].replace('-theme', '');
 	let color           = _.Colors[theme] || {};
 
 	opts.altitudeFactor = opts.imperial ? this.__footFactor : (opts.altitudeFactor || 1); // 1 m = (1 m)

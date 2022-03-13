@@ -7,8 +7,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
 	options: Options,
-	__mileFactor: 0.621371, // 1 km = (0.621371 mi)
-	__footFactor: 3.28084,  // 1 m  = (3.28084 ft)
+	__mileFactor:     0.621371, // 1 km = (0.621371 mi)
+	__footFactor:     3.28084,  // 1 m  = (3.28084 ft)
 	__D3:            'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
 	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@4.6.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
@@ -37,9 +37,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	addTo: function(map) {
 		if (this.options.detached) {
-			let eleDiv = this._initElevationDiv();
-			if (!eleDiv.isConnected) _.insert(map.getContainer(), eleDiv, 'afterend');
-			_.append(eleDiv, this.onAdd(map));
+			let parent = _.select(this.options.elevationDiv);
+			let eleDiv = this.onAdd(map);
+			parent ? _.append(parent, eleDiv) : _.insert(map.getContainer(), eleDiv, 'afterend');
 		} else {
 			L.Control.prototype.addTo.call(this, map);
 		}
@@ -221,7 +221,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	onAdd: function(map) {
 		this._map = map;
 
-		let container = this._container = _.create("div", "elevation-control elevation " + this.options.theme + " " + (this.options.detached ? '' : 'leaflet-control'));
+		let container = this._container = _.create("div", "elevation-control " + this.options.theme + " " + (this.options.detached ? 'elevation-detached' : 'leaflet-control'), this.options.detached ? { id: 'elevation-' + _.randomId() } : {});
+
+		if (!this.eleDiv) this.eleDiv = container;
 
 		let modules = [
 			"Distance",
@@ -414,21 +416,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	/**
-	 * Adds the control to the given "detached" div.
-	 */
-	_initElevationDiv: function() {
-		let eleDiv = _.select(this.options.elevationDiv);
-		if (!eleDiv) {
-			this.options.elevationDiv = '#elevation-div_' + _.randomId();
-			eleDiv                    = _.create('div', 'leaflet-control elevation elevation-div', { id: this.options.elevationDiv.substr(1) });
-		}
-		if (this.options.detached) {
-			_.replaceClass(eleDiv, 'leaflet-control', 'elevation-detached');
-		}
-		return this.eleDiv = eleDiv;
-	},
-
-	/**
 	 * Initialize "L.AlmostOver" and "L.DistanceMarkers"
 	 */
 	_initMapIntegrations: function(control, layer) {
@@ -446,6 +433,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			} else if (control.options.polyline) {
 				layer.addTo(map);
 			}
+			map.invalidateSize();
 		} else {
 			console.warn("Undefined elevation map object");;
 		}
@@ -472,7 +460,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		let oldProto = L.Canvas.prototype._fillStroke;
 		let control  = this;
 
-		let theme      = this.options.theme.replace('-theme', '');
+		let theme      = this.options.theme.split(' ')[0].replace('-theme', '');
 		let color      = _.Colors[theme] || {};
 
 		L.Canvas.include({
@@ -657,23 +645,19 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				.disableScrollPropagation(container);
 		}
 
-		if (!this.options.detached) {
-			let link = this._button = _.create('a', "elevation-toggle elevation-toggle-icon" + (this.options.autohide ? "" : " close-button"), { href: '#', title: L._('Elevation') }, container);
+		this.options.collapsed ? this._collapse() : this._expand();
 
-			if (this.options.collapsed) {
-				this._collapse();
-				if (this.options.autohide) {
-					_.on(container, 'mouseover', this._expand,   this);
-					_.on(container, 'mouseout',  this._collapse, this);
-				} else {
-					_.on(link, 'click', L.DomEvent.stop);
-					_.on(link, 'click', this._toggle, this);
-				}
+		if (this.options.autohide) {
+			_.on(container, 'mouseover', this._expand,   this);
+			_.on(container, 'mouseout',  this._collapse, this);
+			this._map.on('click', this._collapse, this);
+		}
 
-				_.on(link, 'focus', this._toggle, this);
-
-				this._map.on('click', this._collapse, this);
-			}
+		if (this.options.closeBtn) {
+			let link = this._button = _.create('a', "elevation-toggle-icon", { href: '#', title: L._('Elevation'), }, container);
+			_.on(link, 'click', L.DomEvent.stop);
+			_.on(link, 'click', this._toggle, this);
+			_.on(link, 'focus', this._toggle, this);
 		}
 	},
 
