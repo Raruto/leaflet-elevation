@@ -9,17 +9,10 @@
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
 	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
 	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js" as="script">
-	<style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			height: 100%;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-		}
+	
+	<style>@import '../libs/fullpage.css';</style>
 
+	<style>
 		.leaflet-map {
 			max-height: 65vh;
 			height: 0;
@@ -88,6 +81,7 @@
 				options: {
 				theme: "magenta-theme", //default: lime-theme
 				detached: true,
+				closeBtn: false,
 				elevationDiv: "#elevation-div",
 				},
 			},
@@ -102,14 +96,13 @@
 
 		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
 
-		controlElevation.load(opts.elevationControl.url);
-
 		// Hidden Map
 		controlElevation.on('elechart_change', ({data}) => {
-		setTimeout(() => map.invalidateSize(), 201);
-		map.setView(data.latlng, map.getZoom());
+			setTimeout(() => map.invalidateSize(), 201);
+			map.setView(data.latlng, map.getZoom());
 		});
 
+		controlElevation.load(opts.elevationControl.url);
 	</script>
 
 	<p class="help">move mouse over the chart...</p>

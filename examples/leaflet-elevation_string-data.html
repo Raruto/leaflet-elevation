@@ -12,6 +12,27 @@
 
 	<style>@import '../libs/fullpage.css';</style>
 
+	<style>
+		.leaflet-map {
+			max-height: 100vh;
+			position: absolute;
+			top: 35%;
+			height: 0;
+			right: 0;
+			opacity: 0;
+			transition: height 0.2s linear;
+		}
+
+		.elevation-div.elevation-detached {
+			min-height: 35%;
+		}
+
+		.leaflet-map.elechart-hover {
+			height: 65%;
+			opacity: 1;
+		}
+	</style>
+
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
@@ -92,6 +113,7 @@
 					theme: "purple-theme",
 					collapsed: false,
 					detached: true,
+					closeBtn: false,
 					elevationDiv: "#elevation-div",
 					summary: "inline",
 					marker: 'position-marker',
