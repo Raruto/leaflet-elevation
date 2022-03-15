@@ -18,6 +18,7 @@ export var Options = {
 	imperial: false,
 	legend: true,
 	handlers: [],
+	hotline: 'elevation',
 	marker: 'elevation-line',
 	markerIcon: L.divIcon({
 		className: 'elevation-position-marker',

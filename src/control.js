@@ -13,6 +13,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@4.6.0/dist/togeojson.umd.js',
 	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
 	__LALMOSTOVER:   'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
+	__LHOTLINE:      '../libs/leaflet-hotline.min.js',
 	__LDISTANCEM:    '../libs/leaflet-distance-marker.min.js',
 	__LCHART:        '../src/components/chart.js',
 	__LMARKER:       '../src/components/marker.js',
@@ -415,6 +416,37 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 	},
 
+	_initHotLine: function(map, layer) {
+		if (this.options.hotline) {
+			let prop = typeof this.options.hotline == 'string' ? this.options.hotline : 'elevation';
+			this.import(this.__LHOTLINE)
+				.then(() => {
+					this._hotline = L.featureGroup();
+					layer.setStyle({opacity: 0});
+					layer.eachLayer((trkseg) => {
+						if(trkseg.feature.geometry.type != "Point") {
+							let geo = L.geoJson(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2])});
+							L.hotline(geo.toGeoJSON().features[0].geometry.coordinates, {
+								min: isFinite(this.track_info[prop + '_min']) ? this.track_info[prop + '_min'] : 0,
+								max: isFinite(this.track_info[prop + '_max']) ? this.track_info[prop + '_max'] : 1,
+								palette: {
+									0.0: '#008800',
+									0.5: '#ffff00',
+									1.0: '#ff0000'
+								},
+								weight: 5,
+								outlineColor: '#000000',
+								outlineWidth: 1
+							}).addTo(this._hotline);
+						}
+					});
+				if (map) {
+					this._hotline.addTo(map);
+				}
+			});
+		}
+	},
+
 	/**
 	 * Initialize "L.AlmostOver" and "L.DistanceMarkers"
 	 */
@@ -428,6 +460,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			control._circleMarkers.addTo(map);
 			map.once('layeradd', (e) => control.options.autofitBounds && control.fitBounds(layer.getBounds()));
 			if (!L.Browser.mobile) {
+				control._initHotLine(map, layer);
 				control._initAlmostOverHandler(map, layer);
 				control._initDistanceMarkers(map, layer);
 			} else if (control.options.polyline) {
@@ -444,6 +477,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_collapse: function() {
 		_.replaceClass(this._container, 'elevation-expanded', 'elevation-collapsed');
+		if (this._map) this._map.invalidateSize();
 	},
 
 	/*
@@ -451,6 +485,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_expand: function() {
 		_.replaceClass(this._container, 'elevation-collapsed', 'elevation-expanded');
+		if (this._map) this._map.invalidateSize();
 	},
 
 	/**
