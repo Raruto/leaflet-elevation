@@ -417,16 +417,23 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	_initHotLine: function(map, layer) {
+		this._hotline = L.featureGroup();
 		if (this.options.hotline) {
+			layer.on('add', () => {
+				this._hotline.eachLayer(line => {
+					this._hotline.addTo(layer._map);
+					if (line._renderer)
+					line._renderer._container.parentElement.insertBefore(line._renderer._container, line._renderer._container.parentElement.firstChild);
+				});
+			});
 			let prop = typeof this.options.hotline == 'string' ? this.options.hotline : 'elevation';
 			this.import(this.__LHOTLINE)
 				.then(() => {
-					this._hotline = L.featureGroup();
 					layer.setStyle({opacity: 0});
 					layer.eachLayer((trkseg) => {
 						if(trkseg.feature.geometry.type != "Point") {
 							let geo = L.geoJson(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2])});
-							L.hotline(geo.toGeoJSON().features[0].geometry.coordinates, {
+							let line = L.hotline(geo.toGeoJSON().features[0].geometry.coordinates, {
 								min: isFinite(this.track_info[prop + '_min']) ? this.track_info[prop + '_min'] : 0,
 								max: isFinite(this.track_info[prop + '_max']) ? this.track_info[prop + '_max'] : 1,
 								palette: {
@@ -440,9 +447,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 							}).addTo(this._hotline);
 						}
 					});
-				if (map) {
-					this._hotline.addTo(map);
-				}
 			});
 		}
 	},
