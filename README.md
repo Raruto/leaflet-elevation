@@ -261,6 +261,10 @@ var map = L.map('map', {
 
 _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
 
+### Changelog
+
+All notable changes to this project are documented in the [releases](https://github.com/Raruto/leaflet-elevation/releases) page.
+
 ---
 
 **Compatibile with:**
