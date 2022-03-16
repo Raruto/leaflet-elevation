@@ -186,6 +186,20 @@ _For a working example see one of the following demos:_
     </script>
     ```
 
+### Build Guide
+
+For those wishing to try cloning this repository into a local development folder (eg. /var/www):
+
+```shell
+git clone git@github.com:Raruto/leaflet-elevation.git
+cd ./leaflet-elevation
+
+npm i         # install dependencies
+npm run dev   # auto-generate "dist" files
+```
+
+After that you can start developing inside the `src` and `test` folders (eg. open "http://localhost/leaflet-elevation/test" in your browser to preview changes). Check also [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for some information about it.
+
 ### FAQ
 
 <details>
@@ -261,4 +275,4 @@ _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Inte
 
 ---
 
-Check out [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for more information on supporting the development of this library.
+**License:** GPL-3.0+
