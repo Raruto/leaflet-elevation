@@ -45,6 +45,7 @@
 	},
 	"homepage": "https://github.com/Raruto/leaflet-elevation#readme",
 	"devDependencies": {
+		"postcss": "^8.4.8",
 		"postcss-copy": "^7.1.0",
 		"postcss-import": "^14.0.2",
 		"rollup": "^2.70.0",
@@ -56,11 +57,8 @@
 	},
 	"peerDependencies": {
 		"leaflet": "^1.7.0",
+		"leaflet-i18n": "^0.3.1",
 		"d3": "6.5.0",
 		"@tmcw/togeojson": "4.6.0"
-	},
-	"dependencies": {
-		"leaflet-i18n": "^0.3.1",
-		"postcss": "^8.4.8"
 	}
 }

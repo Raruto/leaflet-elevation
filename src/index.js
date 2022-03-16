@@ -34,21 +34,9 @@
  *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-import 'leaflet-i18n';
 import * as _ from './utils';
 import { Elevation } from './control';
 
 Elevation.Utils = _;
-
-/* Temporary fix for empty values evaluated as false (leaflet-i18n v0.3.1) */
-(function(){
-	let proto = L.i18n.bind({});
-	L.i18n = L._ = (string, data) => {
-		if (L.locale && L.locales[L.locale] && L.locales[L.locale][string] == "") {
-			L.locales[L.locale][string] = "\u200B";
-		}
-		return proto.call(null, string, data);
-	};
-})();
 
 L.control.elevation = (options) => new Elevation(options);

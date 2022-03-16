@@ -1,6 +1,10 @@
-import 'leaflet-i18n';
 import * as _      from './utils';
 import { Options } from './options';
+
+// "leaflet-i18n" fallback
+if (!L._ || !L.i18n) {
+	L._ = L.i18n = (string, data) => string;
+}
 
 export const Elevation = L.Control.Elevation = L.Control.extend({
 
