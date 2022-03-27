@@ -11,7 +11,7 @@ Describe your issue here.
 * link to your project: __url or screenshots__
 
 ### Steps to reproduce
-Tell everyone how to reproduce this issue. Please provide a working demo (you can use [this template](https://jsfiddle.net/wgckfu03/) as a base), otherwise, you can edit the following in order to other some portions of your code:
+Tell everyone how to reproduce this issue. Please provide a working demo (you can use [this online template](https://jsfiddle.net/wgckfu03/) as a base), otherwise, you can edit the following in order to show other some portions of your code:
 
 ```js
 var map = new L.Map('map');
