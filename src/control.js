@@ -582,14 +582,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Generate "svg" chart (DOM element).
 	 */
 	_initChart: function(container) {
-		let opts    = this.options;
+		let opts = this.options;
+		let map  = this._map;
 
 		if (opts.detached) {
 			let { offsetWidth, offsetHeight}             = this.eleDiv;
 			if (offsetWidth > 0)             opts.width  = offsetWidth;
 			if (offsetHeight > 20)           opts.height = offsetHeight - 20; // 20 = horizontal scrollbar size.
 		} else {
-			let { clientWidth }                          = this._map.getContainer();
+			let { clientWidth }                          = map.getContainer();
 			opts._maxWidth                               = opts._maxWidth > opts.width ? opts._maxWidth : opts.width;
 			this._container.style.maxWidth               = opts._maxWidth + 'px';
 			if (opts._maxWidth > clientWidth) opts.width = clientWidth - 30;
