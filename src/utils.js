@@ -131,10 +131,10 @@ export const randomId      = ()                   => Math.random().toString(36).
 /**
  * TODO: use generators instead? (ie. "yield")
  */
-export const iMax = (iVal, max) => (iVal > max ? iVal : max) || -Infinity; 
-export const iMin = (iVal, min) => (iVal < min ? iVal : min) || +Infinity;
-export const iAvg = (iVal, avg) => (iVal + (avg || 0)) / 2.0;
-export const iSum = (iVal, sum) => iVal + (sum || 0);
+export const iMax = (iVal, max) => (iVal > max ? iVal : max) ?? -Infinity; 
+export const iMin = (iVal, min) => (iVal < min ? iVal : min) ?? +Infinity;
+export const iAvg = (iVal, avg, idx) => (iVal + (avg ?? 0) * (idx - 1)) / idx;
+export const iSum = (iVal, sum) => iVal + (sum ?? 0);
 
 /**
  * Alias for some leaflet core functions

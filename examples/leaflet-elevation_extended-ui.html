@@ -50,9 +50,9 @@
 				coordinateProperties: ["heart", "heartRates", "heartRate"], // List of GPX Extensions ("coordinateProperties") to be handled by "@tmcw/toGeoJSON"
 				pointToAttr: (point, i) => (point.hr ?? point.meta.hr ?? point.prev('heart')) || 0,
 				stats: {
-					max: (heart, max) => (heart > max ? heart : max) || -Infinity,
-					min: (heart, min) => (heart < min ? heart : min) || +Infinity,
-					avg: (heart, avg) => (heart + (avg || 0)) / 2.0,
+					max: (heart, max) => (heart > max ? heart : max) ?? -Infinity,
+					min: (heart, min) => (heart < min ? heart : min) ?? +Infinity,
+					avg: (iVal, avg, idx) => (iVal + (avg ?? 0) * (idx - 1)) / idx,
 				},
 				scale: {
 					axis       : "y",
@@ -105,9 +105,9 @@
 		// 		coordinateProperties: ["cads", "cadences", "cad", "cadence"], // List of GPX Extensions ("coordinateProperties") to be handled by "@tmcw/toGeoJSON"
 		// 		pointToAttr: (point, i) => (point.cad ?? point.meta.cad ?? point.prev('cadence')) || 0,
 		// 		stats: {
-		// 			max: (cad, max) => (cad > max ? cad : max) || -Infinity,
-		// 			min: (cad, min) => (cad < min ? cad : min) || +Infinity,
-		// 			avg: (cad, avg) => (cad + (avg || 0)) / 2.0,
+		// 			max: (cad, max) => (cad > max ? cad : max) ?? -Infinity,
+		// 			min: (cad, min) => (cad < min ? cad : min) ?? +Infinity,
+		// 			avg: (iVal, avg, idx) => (iVal + (avg ?? 0) * (idx - 1)) / idx,
 		// 		},
 		// 		scale: {
 		// 			axis       : "y",
