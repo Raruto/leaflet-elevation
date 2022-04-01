@@ -52,7 +52,7 @@
 				stats: {
 					max: (heart, max) => (heart > max ? heart : max) ?? -Infinity,
 					min: (heart, min) => (heart < min ? heart : min) ?? +Infinity,
-					avg: (iVal, avg, idx) => (iVal + (avg ?? 0) * (idx - 1)) / idx,
+					avg: (heart, avg, idx) => (heart + (avg ?? 0) * (idx - 1)) / idx,
 				},
 				scale: {
 					axis       : "y",
@@ -107,7 +107,7 @@
 		// 		stats: {
 		// 			max: (cad, max) => (cad > max ? cad : max) ?? -Infinity,
 		// 			min: (cad, min) => (cad < min ? cad : min) ?? +Infinity,
-		// 			avg: (iVal, avg, idx) => (iVal + (avg ?? 0) * (idx - 1)) / idx,
+		// 			avg: (cad, avg, idx) => (cad + (avg ?? 0) * (idx - 1)) / idx,
 		// 		},
 		// 		scale: {
 		// 			axis       : "y",
