@@ -2,6 +2,7 @@
 /.github
 /examples
 /test
+/spec
 .jshintrc
 .gitattributes
 .babelrc
