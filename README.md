@@ -197,6 +197,8 @@ cd ./leaflet-elevation
 
 npm i         # install dependencies
 npm run dev   # auto-generate "dist" files
+npm run build # generate "dist" files (once)
+npm run test  # test "spec" files (once)
 ```
 
 After that you can start developing inside the `src` and `test` folders (eg. open "http://localhost/leaflet-elevation/test" in your browser to preview changes). Check also [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for some information about it.
