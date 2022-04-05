@@ -730,22 +730,18 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		// First map known classnames (eg. "Altitude" --> L.Control.Elevation.Altitude)
 		handlers = handlers.map((h) => typeof h === 'string' && typeof Elevation[h] !== "undefined" ? Elevation[h] : h);
 		// Then load optional classes and custom imports (eg. "Cadence" --> import('../src/handlers/cadence.js'))
-		return Promise.
-			all(
-				handlers
-					.filter(h => typeof h === 'string' || h instanceof Promise)
-					.map(file => file instanceof Promise ? file : this.import(this.__modulesFolder + file.toLowerCase() + '.js'))
-			)
-			.then((m) => {
-				_.each(m, (exported) => {
-					let fn = Object.keys(exported)[0];
-					if (fn && typeof Elevation[fn] === "undefined" ) {
-						handlers[fn] = Elevation[fn] = exported[fn];
-						
-					}
-				});
-				_.each(handlers, h => this._registerHandler(h));
+		let modules = handlers
+			.filter(h => typeof h === 'string' || h instanceof Promise)
+			.map(file => file instanceof Promise ? file : this.import(this.__modulesFolder + file.toLowerCase() + '.js'));
+		return Promise.all(modules).then((m) => {
+			_.each(m, (exported) => {
+				let fn = Object.keys(exported)[0];
+				if (fn) {
+					handlers[fn] = Elevation[fn] = (Elevation[fn] ?? exported[fn]);
+				}
 			});
+			_.each(handlers, h => ["function", "object"].includes(typeof h) && this._registerHandler(h));
+		});
 	},
 
 	/**

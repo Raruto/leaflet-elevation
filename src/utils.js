@@ -92,7 +92,7 @@ export function coordPropsToMeta(coordProps, name, parser) {
 		if (props) {
 			for (const key of coordProps) {
 				if (key in props) {
-					point.meta[name] = (parser || parseInt).call(this, (isMulti ? props[key][isMulti] : props[key]), id);
+					point.meta[name] = (parser || parseNumeric).call(this, (isMulti ? props[key][isMulti] : props[key]), id);
 					break;
 				}
 			}
@@ -103,7 +103,7 @@ export function coordPropsToMeta(coordProps, name, parser) {
 /**
  * Extract numeric property (id) from GeoJSON object
  */
-export const parseInt  = (property, id) => window.parseInt((typeof property === 'object' ? property[id] : property));
+export const parseNumeric  = (property, id) => parseInt((typeof property === 'object' ? property[id] : property));
 
 /**
  * Extract datetime property (id) from GeoJSON object
@@ -131,10 +131,10 @@ export const randomId      = ()                   => Math.random().toString(36).
 /**
  * TODO: use generators instead? (ie. "yield")
  */
-export const iMax = (iVal, max) => (iVal > max ? iVal : max) ?? -Infinity; 
-export const iMin = (iVal, min) => (iVal < min ? iVal : min) ?? +Infinity;
-export const iAvg = (iVal, avg, idx) => (iVal + (avg ?? 0) * (idx - 1)) / idx;
-export const iSum = (iVal, sum) => iVal + (sum ?? 0);
+export const iMax = (iVal, max = -Infinity) => (iVal > max ? iVal : max); 
+export const iMin = (iVal, min = +Infinity) => (iVal < min ? iVal : min);
+export const iAvg = (iVal, avg = 0, idx = 1) => (iVal + avg * (idx - 1)) / idx;
+export const iSum = (iVal, sum = 0) => iVal + sum;
 
 /**
  * Alias for some leaflet core functions

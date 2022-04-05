@@ -563,7 +563,7 @@ export const Chart = ({
 	};
 
 	// SVG Paths
-	const mask          = panes.area   .append("svg:mask")         .attr("id", 'elevation-clipper').attr('fill-opacity', 1);
+	const mask          = panes.area   .append("svg:mask")         .attr("id", 'elevation-clipper-' + Math.random().toString(36).substr(2, 9)).attr('fill-opacity', 1);
 	const maskRect      = mask         .append("svg:rect")         .attr('class', 'zoom')          .attr('fill', 'white'); // white = transparent
 
 	// Canvas Paths
