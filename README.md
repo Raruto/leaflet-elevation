@@ -26,7 +26,7 @@ _For a working example see one of the following demos:_
 - [loading multiple maps](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_multiple-maps.html)
 - [translating plugin labels](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
 - [using custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
-- [using .gpx extensions (cadence + heart)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
+- [using .gpx extensions (cadence, heart, pace)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
 - [using .gpx waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
 - [using .geojson waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
 
@@ -124,14 +124,14 @@ _For a working example see one of the following demos:_
         // Speed chart profile: true || "summary" || "disabled" || false
         speed: false,
 
-        // Display time info: true || "summary" || false
-        time: false,
-
-        // Display distance info: true || "summary"
-        distance: true,
-
-        // Display altitude info: true || "summary"
+        // Altitude chart profile: true || "summary" || "disabled" || false
         altitude: true,
+
+        // Display time info: true || "summary" || false
+        time: true,
+
+        // Display distance info: true || "summary" || false
+        distance: true,
 
         // Summary track info style: "inline" || "multiline" || false
         summary: 'multiline',

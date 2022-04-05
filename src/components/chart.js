@@ -83,11 +83,11 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		this.options.yTicks = this._yTicks();
 
 		this._updateScale();
-		this._updateArea();
 		this._updateAxis();
 		this._updateMargins();
 		this._updateLegend();
 		this._updateClipper();
+		this._updateArea();
 
 		return this;
 	},

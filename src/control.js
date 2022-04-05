@@ -232,17 +232,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		if (!this.eleDiv) this.eleDiv = container;
 
-		let modules = [
-			"Distance",
-			"Time",
-			"Altitude",
-			"Slope",
-			"Speed",
-			"Acceleration",
-			...this.options.handlers
-		].filter(m => false !== this.options[typeof m == "string" && m.toLowerCase()]);
-
-		this._loadModules(modules).then(() => { // Inject here required modules (data handlers)
+		this._loadModules(this.options.handlers).then(() => { // Inject here required modules (data handlers)
 			this._initChart(container);
 			this._initButton(container);
 			this._initSummary(container);
@@ -730,14 +720,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		// First map known classnames (eg. "Altitude" --> L.Control.Elevation.Altitude)
 		handlers = handlers.map((h) => typeof h === 'string' && typeof Elevation[h] !== "undefined" ? Elevation[h] : h);
 		// Then load optional classes and custom imports (eg. "Cadence" --> import('../src/handlers/cadence.js'))
-		let modules = handlers
-			.filter(h => typeof h === 'string' || h instanceof Promise)
-			.map(file => file instanceof Promise ? file : this.import(this.__modulesFolder + file.toLowerCase() + '.js'));
+		let modules = handlers.map(file => (typeof file === 'string' && this.import(this.__modulesFolder + file.toLowerCase() + '.js')) || (file instanceof Promise && file) || Promise.resolve());
 		return Promise.all(modules).then((m) => {
-			_.each(m, (exported) => {
-				let fn = Object.keys(exported)[0];
+			_.each(m, (exported, i) => {
+				let fn = exported && Object.keys(exported)[0];
 				if (fn) {
-					handlers[fn] = Elevation[fn] = (Elevation[fn] ?? exported[fn]);
+					handlers[i] = Elevation[fn] = (Elevation[fn] ?? exported[fn]);
 				}
 			});
 			_.each(handlers, h => ["function", "object"].includes(typeof h) && this._registerHandler(h));

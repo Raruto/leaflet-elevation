@@ -17,7 +17,7 @@ export var Options = {
 	followMarker: true,
 	imperial: false,
 	legend: true,
-	handlers: [],
+	handlers: ["Distance", "Time", "Altitude", "Slope", "Speed", "Acceleration"],
 	hotline: 'elevation',
 	marker: 'elevation-line',
 	markerIcon: L.divIcon({
@@ -46,7 +46,7 @@ export var Options = {
 	summary: 'inline',
 	slope: false,
 	speed: false,
-	time: false,
+	time: true,
 	timeFactor: 3600,
 	timestamps: false,
 	trkStart: L.circleMarker([0,0], { className: 'start-marker', radius: 6, weight: 2, color: '#fff', fillColor: '#00d800', fillOpacity: 1, interactive: false }),

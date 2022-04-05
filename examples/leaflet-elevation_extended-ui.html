@@ -29,7 +29,7 @@
 		}
 
 		/** Hide useful legend items */
-		.elevation-summary > :not(.totlen, .tottime, .avgspeed, .minbpm, .maxbpm, .avgbpm, .minrpm, .maxrpm, .avgrpm, .download) {
+		.elevation-summary > :not(.totlen, .tottime, .avgspeed, .minbpm, .maxbpm, .avgbpm, .minrpm, .maxrpm, .avgrpm, .minpace, .maxpace, .avgpace, .download) {
 			display: none !important;
 		}
 	</style>
@@ -152,6 +152,72 @@
 		// 		}
 		// 	};
 		// }
+
+		L.Control.Elevation.MyPace = function() {
+
+			let opts = this.options;
+			let pace = {};
+			pace.label      = opts.paceLabel  || L._(opts.imperial ? 'min/mi' : 'min/km');
+			opts.paceFactor = opts.paceFactor || 60; // 1 min = 60 sec
+
+			return {
+				name: 'pace',
+				unit: pace.label,
+				decimals: 2,
+				pointToAttr: (point, i) => {
+					let dx   = (this._data[i].dist - this._data[i > 0 ? i - 1 : i].dist) * 1000;
+					let dt   = this._data[i].time - this._data[ i > 0 ? i - 1 : i].time;
+					return dx > 0 ? Math.abs((dt / dx) / opts.paceFactor) : 0;
+				},
+				stats: {
+					max: (pace, max = -Infinity) => (pace > max ? pace : max),
+					min: (pace, min = +Infinity) => (pace < min ? pace : min),
+					avg: (pace, avg = 0, idx = 1) => (pace + avg * (idx - 1)) / idx,
+				},
+				scale : {
+					axis       : "y",
+					position   : "right",
+					scale      : { min : 0, max : +1 },
+					tickPadding: 16,
+					labelX     : 25,
+					labelY     : -8,
+				},
+				path: {
+					// name         : 'pace',
+					label        : 'Pace',
+					yAttr        : "pace",
+					scaleX       : 'distance',
+					scaleY       : 'pace',
+					color        : '#03ffff',
+					strokeColor  : '#000',
+					strokeOpacity: "0.5",
+					fillOpacity  : "0.25",
+				},
+				tooltip: {
+					chart: (item) => L._('pace: ') + item.pace + " " + pace.label,
+					marker: (item) => Math.round(item.pace) + " " + pace.label,
+					order: 55,
+				},
+				summary: {
+					"minpace"  : {
+						label: "Min Pace: ",
+						value: (track, unit) => Math.round(track.pace_min || 0) + '&nbsp;' + unit,
+						order: 55
+					},
+					"maxpace"  : {
+						label: "Max Pace: ",
+						value: (track, unit) => Math.round(track.pace_max || 0) + '&nbsp;' + unit,
+						order: 56
+					},
+					"avgpace": {
+						label: "Avg Pace: ",
+						value: (track, unit) => Math.round(track.pace_avg || 0) + '&nbsp;' + unit,
+						order: 57
+					},
+				}
+			};
+		}
+
 	</script>
 
 	<script>
@@ -178,6 +244,7 @@
 					slope: false,        // true || "disabled",
 					speed: "disabled",   // true || false,
 					time: true,
+					pace: true,
 					timestamps: true,
 					distance: true,
 					distanceMarkers: true,
@@ -186,12 +253,21 @@
 					heart: true,                              // <-- Intial state of your custom option (true || "summary" || false)
 					cadence: true,                            // <-- Intial state of your custom option (true || "summary" || false)
 					handlers: [                               // <-- A list of: Dynamic imports || "ClassName" || function Name() { return { /* a custom object definition */ } }
+						'Distance',                           // <-- same as: import("../src/handlers/distance.js")
+						'Time',                               // <-- same as: import("../src/handlers/time.js")
+						'Altitude',                           // <-- same as: import("../src/handlers/altitude.js")
+						'Slope',                              // <-- same as: import("../src/handlers/slope.js")
+						'Speed',                              // <-- same as: import("../src/handlers/speed.js")
+						'Acceleration',                       // <-- same as: import("../src/handlers/acceleration.js")
+						// 'Pace',                            // <-- same as: import("../src/handlers/pace.js")
 						// "Heart",                           // <-- same as: import("../src/handlers/heart.js")
 						// "Cadence",                         // <-- same as: import("../src/handlers/cadence.js")
 						// import('../src/handlers/heart.js'),
 						import('../src/handlers/cadence.js'),
-						L.Control.Elevation.MyHeart,          // <-- see custom functions declared above 
+						// import('../src/handlers/pace.js'),
+						L.Control.Elevation.MyHeart,          // <-- see custom functions declared above
 						// L.Control.Elevation.MyCadence,     // <-- see custom functions declared above
+						L.Control.Elevation.MyPace,           // <-- see custom functions declared above
 					],
 					// yAttr: 'heart',                        // <-- sometimes useful when (altitude: false)
 					// yScale: 'heart',                       // <-- sometimes useful when (altitude: false)
