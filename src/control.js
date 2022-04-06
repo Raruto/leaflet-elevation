@@ -30,10 +30,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	addData: function(d, layer) {
 		this.import(this.__D3)
 			.then(() => {
-				layer = layer ?? (d.on && d);
-				this._addData(d);
-				this._addLayer(layer);
-				this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
+				if (this._modulesLoaded) {
+					layer = layer ?? (d.on && d);
+					this._addData(d);
+					this._addLayer(layer);
+					this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
+				} else {
+					this.once('modules_loaded', () => this.addData(d,layer));
+				}
 			});
 	},
 
@@ -238,6 +242,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._initSummary(container);
 			this._initMarker(map);
 			this._initLayer(map);
+			this._modulesLoaded = true;
+			this.fire('modules_loaded');
 		});
 
 		this.fire('add');
@@ -306,7 +312,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if (geom) {
 				switch (geom.type) {
 					case 'LineString':		return this._addGeoJSONData(geom.coordinates, d.properties);
-					case 'MultiLineString': return _.each(geom.coordinates, (coords, i) => this._addGeoJSONData(coords, d.properties, i));
+					case 'MultiLineString':	return _.each(geom.coordinates, (coords, i) => this._addGeoJSONData(coords, d.properties, i));
 					case 'Point':
 					default:				return console.warn('Unsopperted GeoJSON feature geometry type:' + geom.type);
 				}
