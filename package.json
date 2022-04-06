@@ -23,9 +23,11 @@
 		"javascript",
 		"elevation",
 		"highchart",
+		"kml",
 		"altitude",
 		"gpx",
-		"gps-visualizer"
+		"gps-visualizer",
+		"tcx"
 	],
 	"author": {
 		"name": "Felix “MrMufflon” Bache",

@@ -196,7 +196,7 @@ git clone git@github.com:Raruto/leaflet-elevation.git
 cd ./leaflet-elevation
 
 npm i         # install dependencies
-npm run dev   # auto-generate "dist" files
+npm run watch # auto-generate "dist" files
 npm run build # generate "dist" files (once)
 npm run test  # test "spec" files (once)
 ```
