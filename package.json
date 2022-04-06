@@ -1,11 +1,13 @@
 {
 	"name": "@raruto/leaflet-elevation",
-	"version": "1.7.3",
+	"version": "2.2.2",
 	"description": "A Leaflet plugin that allows to add elevation profiles using d3js",
+	"type": "module",
 	"main": "dist/leaflet-elevation.min.js",
+	"browser": "dist/leaflet-elevation.min.js",
 	"module": "src/index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "node spec/index.js",
 		"build": "rollup -c build/rollup.config.js",
 		"watch": "rollup -c build/rollup.config.js --watch",
 		"dev": "npm run watch",
@@ -21,9 +23,11 @@
 		"javascript",
 		"elevation",
 		"highchart",
+		"kml",
 		"altitude",
 		"gpx",
-		"gps-visualizer"
+		"gps-visualizer",
+		"tcx"
 	],
 	"author": {
 		"name": "Felix “MrMufflon” Bache",
@@ -45,24 +49,23 @@
 	},
 	"homepage": "https://github.com/Raruto/leaflet-elevation#readme",
 	"devDependencies": {
-		"@babel/core": "^7.10.2",
-		"@babel/preset-env": "^7.10.2",
-		"@rollup/plugin-babel": "^5.0.3",
+		"jsdom": "^19.0.0",
+		"leaflet": "^1.7.1",
+		"postcss": "^8.4.8",
 		"postcss-copy": "^7.1.0",
-		"postcss-import": "^12.0.1",
-		"rollup": "^2.2.0",
+		"postcss-import": "^14.0.2",
+		"rollup": "^2.70.0",
 		"rollup-plugin-commonjs": "^10.1.0",
 		"rollup-plugin-git-version": "^0.3.1",
 		"rollup-plugin-node-resolve": "^5.2.0",
-		"rollup-plugin-postcss": "^2.5.0",
-		"rollup-plugin-terser": "^7.0.2"
+		"rollup-plugin-postcss": "^4.0.2",
+		"rollup-plugin-terser": "^7.0.2",
+		"uvu": "^0.5.3"
 	},
 	"peerDependencies": {
-		"leaflet": "^1.6.0",
-		"leaflet-gpx": "^1.5.0",
-		"d3": "5.15.0"
-	},
-	"dependencies": {
-		"leaflet-i18n": "^0.3.1"
+		"leaflet": "^1.7.0",
+		"leaflet-i18n": "^0.3.1",
+		"d3": "6.5.0",
+		"@tmcw/togeojson": "4.6.0"
 	}
 }

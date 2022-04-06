@@ -34,20 +34,9 @@
  *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-import 'leaflet-i18n';
 import * as _ from './utils';
-import * as D3 from './components';
-import { Chart } from './chart';
 import { Elevation } from './control';
-import './distance';
-import './altitude';
-import './time';
-import './slope';
-import './speed';
-import './acceleration';
 
 Elevation.Utils = _;
-Elevation.Components = D3;
-Elevation.Chart = Chart;
 
 L.control.elevation = (options) => new Elevation(options);

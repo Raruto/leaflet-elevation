@@ -69,36 +69,25 @@ L.Mixin.Selection = {
 
 L.Control.LayersLegend = L.Control.Layers.extend({
   _onInputClick: function() {
-    var inputs = this._layerControlInputs,
-      input, layer;
-    var addedLayers = [],
-      removedLayers = [];
-
     this._handlingClick = true;
 
-    for (var i = inputs.length - 1; i >= 0; i--) {
-      input = inputs[i];
-      layer = this._getLayer(input.layerId).layer;
-
+    this._layerControlInputs.reduceRight((_,input) => {
       if (input.checked) {
         this._map.fireEvent("legend_selected", {
-          layer: layer,
+          layer: this._getLayer(input.layerId).layer,
           input: input,
         }, true);
-
-      }
-    }
+      return input;
+     }
+    }, 0);
 
     this._handlingClick = false;
 
     this._refocusOnMap();
-
   }
 });
 
-L.control.layersLegend = function(baseLayers, overlays, options) {
-  return new L.Control.LayersLegend(baseLayers, overlays, options);
-};
+L.control.layersLegend = (baseLayers, overlays, options) => new L.Control.LayersLegend(baseLayers, overlays, options);
 
 L.GeoJSON.include(L.Mixin.Selectable);
 
@@ -124,7 +113,7 @@ L.GpxGroup = L.Class.extend({
     elevation: true,
     elevation_options: {
       theme: 'yellow-theme',
-      detachedView: true,
+      detached: true,
       elevationDiv: '#elevation-div',
     },
     distanceMarkers: true,
@@ -137,33 +126,19 @@ L.GpxGroup = L.Class.extend({
 
     L.Util.setOptions(this, options);
 
-    this._count = 0;
+    this._count       = 0;
     this._loadedCount = 0;
-    this._tracks = tracks;
-    this._routes = {};
-    this._layers = L.featureGroup();
-    this._markers = L.featureGroup();
-    this._elevation = L.control.elevation(this.options.elevation_options);
-    this._legend = L.control.layersLegend(null, null, this.options.legend_options);
+    this._tracks      = tracks;
+    this._layers      = L.featureGroup();
+    this._markers     = L.featureGroup();
+    this._elevation   = L.control.elevation(this.options.elevation_options);
+    this._legend      = L.control.layersLegend(null, null, this.options.legend_options);
 
-    var icon = L.icon(this.options.points_options.icon);
-    this.options.points.forEach(function(poi) {
-      var marker = L.marker(poi.latlng, {
-        icon: icon
-      });
-      marker.bindTooltip(poi.name, {
-        direction: 'auto'
-      });
-      marker.addTo(this._markers);
-    }, this);
-
-    if (typeof L.DistanceMarkers === "undefined") {
-      this.options.distanceMarkers = false;
-    }
-
-    if (typeof this.options.filename === "undefined") {
-      this.options.filename = false;
-    }
+    this.options.points.forEach((poi) => 
+      L
+        .marker(poi.latlng, { icon: L.icon(this.options.points_options.icon) })
+        .bindTooltip(poi.name, { direction: 'auto' }).addTo(this._markers)
+    );
 
   },
 
@@ -184,46 +159,22 @@ L.GpxGroup = L.Class.extend({
   },
 
   addTrack: function(track) {
-    fetch(track).then(response => {
-      if (response.ok) {
-        response.text().then(doc => {
-          let geojson;
-          doc = doc.trim();
-
-          try {
-            let xml  = (new DOMParser()).parseFromString(doc, "text/xml");
-            let type = xml.documentElement.tagName.toLowerCase(); // "kml" or "gpx"
-            let name = xml.getElementsByTagName('name');
-            if (!(type in toGeoJSON)) {
-              type = xml.documentElement.tagName == "TrainingCenterDatabase" ? 'tcx' : 'gpx';
-            }
-            geojson = toGeoJSON[type](xml);
-            geojson.name = name.length > 0 ? Array.from(name).find(tag => tag.parentElement.tagName == "trk").textContent : '';
-          } catch (e) {
-            try {
-              geojson = JSON.parse(doc.toString());
-            } catch (e) {
-              console.warn("Error parsing track: " + track);
-            }
-          }
-          if (!geojson.name || this.options.filename) {
-            geojson.name = track.split('/').pop().split('#')[0].split('?')[0];
-            geojson.name = geojson.name.substr(0, geojson.name.lastIndexOf('.'));
-          }
+    fetch(track)
+      .then(response => response.ok && response.text())
+      .then(text => this._elevation._parseFromString(text))
+      .then(geojson => {
+        if(geojson) {
+          geojson.name = geojson.name || (geojson[0] && geojson[0].properties.name) || track.split('/').pop().split('#')[0].split('?')[0];
           this._loadRoute(geojson);
-        });
-      }
-    });
+        }
+      });
   },
 
   _loadRoute: function(data) {
     if (!data) return;
 
-    var colors = this._uniqueColors(this._tracks.length);
-    var color = colors[this._count++];
-
     var line_style = {
-      color: color,
+      color: this._uniqueColors(this._tracks.length)[this._count++],
       opacity: 0.75,
       weight: 5,
       distanceMarkers: this.options.distanceMarkers_options,
@@ -237,15 +188,17 @@ L.GpxGroup = L.Class.extend({
       filter: feature => feature.geometry.type != "Point",
     });
 
-    route.addTo(this._layers);
-    this._routes[route._leaflet_id] = route;
+    
+    this._elevation.import(this._elevation.__LGEOMUTIL).then(() => {
+      route.addTo(this._layers);
 
-    route.eachLayer((layer) => this._onRouteLayer(route, layer));
-    this._onRouteLoaded(route);
+      route.eachLayer((layer) => this._onEachRouteLayer(route, layer));
+      this._onEachRouteLoaded(route);
+    });
 
   },
 
-  _onRouteLayer: function(route, layer) {
+  _onEachRouteLayer: function(route, layer) {
     var polyline = layer;
 
     route.on('selected', L.bind(this._onRouteSelected, this, route, polyline));
@@ -254,10 +207,25 @@ L.GpxGroup = L.Class.extend({
     polyline.on('mouseout', L.bind(this._onRouteMouseOut, this, route, polyline));
     polyline.on('click', L.bind(this._onRouteClick, this, route, polyline));
 
-    polyline.bindTooltip(route.options.name, {
-      direction: 'auto',
-      sticky: true,
-    });
+    polyline.bindTooltip(route.options.name, { direction: 'auto', sticky: true, });
+  },
+
+  _onEachRouteLoaded: function(route) {
+    if (this.options.legend) {
+      this._legend.addBaseLayer(route, '<svg id="legend_' + route._leaflet_id + '" width="25" height="10" version="1.1" xmlns="http://www.w3.org/2000/svg">' + '<line x1="0" x2="50" y1="5" y2="5" stroke="' + route.options.originalStyle.color + '" fill="transparent" stroke-width="5" /></svg>' + ' ' + route.options.name);
+    }
+    
+    this.fire('route_loaded', { route: route });
+
+    if (++this._loadedCount === this._tracks.length) {
+      this.fire('loaded');
+      if (this.options.flyToBounds) {
+        this._map.flyToBounds(this.getBounds(), { duration: 0.25, easeLinearity: 0.25, noMoveStart: true });
+      }
+      if (this.options.legend) {
+        this._legend.addTo(this._map);
+      }
+    }
   },
 
   highlight: function(route, polyline) {
@@ -282,20 +250,14 @@ L.GpxGroup = L.Class.extend({
         L.DomUtil.get('legend_' + route._leaflet_id).parentNode.previousSibling.click();
       }
     }
-    this.fire('route_mouseover', {
-      route: route,
-      polyline: polyline
-    });
+    this.fire('route_mouseover', { route: route, polyline: polyline });
   },
 
   _onRouteMouseOut: function(route, polyline) {
     if (!route.isSelected()) {
       this.unhighlight(route, polyline);
     }
-    this.fire('route_mouseout', {
-      route: route,
-      polyline: polyline
-    });
+    this.fire('route_mouseout', { route: route, polyline: polyline });
   },
 
   _onRouteClick: function(route, polyline) {
@@ -308,28 +270,6 @@ L.GpxGroup = L.Class.extend({
     }
   },
 
-  _onRouteLoaded: function(route) {
-    if (this.options.legend) {
-      this._legend.addBaseLayer(route, '<svg id="legend_' + route._leaflet_id + '" width="25" height="10" version="1.1" xmlns="http://www.w3.org/2000/svg">' + '<line x1="0" x2="50" y1="5" y2="5" stroke="' + route.options.originalStyle.color + '" fill="transparent" stroke-width="5" /></svg>' + ' ' + route.options.name);
-    }
-    this.fire('route_loaded', {
-      route: route,
-    });
-    if (++this._loadedCount === this._tracks.length) {
-      this.fire('loaded');
-      if (this.options.flyToBounds) {
-        this._map.flyToBounds(this.getBounds(), {
-          duration: 0.25,
-          easeLinearity: 0.25,
-          noMoveStart: true
-        });
-      }
-      if (this.options.legend) {
-        this._legend.addTo(this._map);
-      }
-    }
-  },
-
   _onSelectionChanged: function(e) {
     var elevation = this._elevation;
     var eleDiv = elevation.getContainer();
@@ -339,7 +279,7 @@ L.GpxGroup = L.Class.extend({
 
     if (route && route.isSelected()) {
       if (!eleDiv) {
-        elevation.loadChart(this._map);
+        elevation.addTo(this._map);
       }
       route.getLayers().forEach(function(layer) {
         if (layer instanceof L.Polyline) {
@@ -355,8 +295,9 @@ L.GpxGroup = L.Class.extend({
   },
 
   _onLegendSelected: function(e) {
-    var layers = this._layers._layers;
+    var parent = e.input.closest('.leaflet-control-layers-list');
     var route = e.layer;
+
     if (!route.isSelected()) {
       this.setSelection(route);
       for (var i in route._layers) {
@@ -365,88 +306,27 @@ L.GpxGroup = L.Class.extend({
       this._map.flyToBounds(e.layer.getBounds());
     }
 
-    var parent = e.input.closest('.leaflet-control-layers-list');
-    var offset = e.input.offsetTop - parent.offsetTop;
+    parent.scroll({ top: (e.input.offsetTop - parent.offsetTop) || 0, behavior: 'smooth' });
 
-    parent.scroll({
-        top: offset || 0,
-        behavior: 'smooth'
-      }
-    );
-
-    for (var j in layers) {
-      var selected = layers[j].isSelected();
-      var legend = L.DomUtil.get('legend_' + layers[j]._leaflet_id);
-      legend.querySelector("line").style.stroke = selected ? this.options.highlight.color : "";
-      legend.parentNode.style.fontWeight = selected ? "700" : "";
-    }
+    this._layers.eachLayer(layer => {
+      var legend = L.DomUtil.get('legend_' + layer._leaflet_id);
+      legend.querySelector("line").style.stroke = layer.isSelected() ? this.options.highlight.color : "";
+      legend.parentNode.style.fontWeight = layer.isSelected() ? "700" : "";
+    });
   },
 
   _uniqueColors: function(count) {
-    if (count === 0) return [];
-    if (count === 1) return ['#0000ff'];
-    var increment = 1 / count;
-    var colors = [];
-    for (var i = 0; i < count; ++i) {
-      var hue = i * increment;
-      var rgb = this._hsvToRgb(hue, 1, 0.7);
-      var hex = '#' + this._rgbToHex(rgb[0], rgb[1], rgb[2]);
-      colors.push(hex);
-    }
-    return colors;
+    return count === 1 ? ['#0000ff'] : new Array(count).fill(null).map((_,i) => this._hsvToHex(i * (1 / count), 1, 0.7));
   },
 
-  _hsvToRgb: function(h, s, v) {
-    var r, g, b;
-
+  _hsvToHex: function(h, s, v) {
     var i = Math.floor(h * 6);
     var f = h * 6 - i;
     var p = v * (1 - s);
     var q = v * (1 - f * s);
     var t = v * (1 - (1 - f) * s);
-
-    switch (i % 6) {
-      case 0:
-        r = v;
-        g = t;
-        b = p;
-        break;
-      case 1:
-        r = q;
-        g = v;
-        b = p;
-        break;
-      case 2:
-        r = p;
-        g = v;
-        b = t;
-        break;
-      case 3:
-        r = p;
-        g = q;
-        b = v;
-        break;
-      case 4:
-        r = t;
-        g = p;
-        b = v;
-        break;
-      case 5:
-        r = v;
-        g = p;
-        b = q;
-        break;
-    }
-
-    return [r * 255, g * 255, b * 255];
-  },
-
-  _rgbToHex: function(r, g, b) {
-    return this._byteToHex(r) + this._byteToHex(g) + this._byteToHex(b);
-  },
-
-  _byteToHex: function(n) {
-    return ((n >> 4) & 0x0F).toString(16) + (n & 0x0F).toString(16);
+    var rgb = { 0: [v, t, p], 1: [q, v, p], 2: [p, v, t], 3: [p, q, v], 4: [t, p, v], 5: [v, p, q] }[i % 6];
+    return rgb.map(d => d * 255).reduce((hex, byte) => hex + ((byte >> 4) & 0x0F).toString(16) + (byte & 0x0F).toString(16), "#");
   },
 
   removeFrom: function(map) {
@@ -458,6 +338,4 @@ L.GpxGroup = L.Class.extend({
 L.GpxGroup.include(L.Mixin.Events);
 L.GpxGroup.include(L.Mixin.Selection);
 
-L.gpxGroup = function(tracks, options) {
-  return new L.GpxGroup(tracks, options);
-};
+L.gpxGroup = (tracks, options) => new L.GpxGroup(tracks, options);

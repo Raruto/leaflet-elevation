@@ -17,38 +17,31 @@ _For a working example see one of the following demos:_
 - [loading .geojson file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-data.html)
 - [loading .kml file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_kml-data.html)
 - [loading .tcx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_tcx-data.html)
-- [loading strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
-- [loading geojson group](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
-- [loading local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
+- [loading a local .gpx file](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_upload-gpx.html)
+- [loading data from a textarea](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_string-data.html)
+- [loading individual .geojson tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-group.html)
+- [loading individual .gpx tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
+- [loading multiple .gpx tracks (hover to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
+- [loading multiple .gpx tracks (click to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
+- [loading multiple maps](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_multiple-maps.html)
+- [translating plugin labels](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
+- [using custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
+- [using .gpx extensions (cadence, heart, pace)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
+- [using .gpx waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
+- [using .geojson waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
+
 
 <br/>
 
-- [custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
+- [autohide map](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-map.html)
+- [autohide chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-chart.html)
+- [collapsible button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
 - [custom summary](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-summary.html)
-- [close button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
+- [follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
+- [layer almostover](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
 - [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
 - [speed chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_speed-chart.html)
-- [i18n strings](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
-
-<br/>
-
-- [hoverable chart / hidden map](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-map.html)
-- [hoverable chart / hidden chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-chart.html)
-- [hoverable tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
-- [toggable tracks](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-tracks.html)
-- [toggable charts](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
-
-<br/>
-
-- [waypoint icons / gpx](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
-- [waypoint icons / geojson](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html)
-
-<br/>
-
-- [almost over](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
-- [follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
-- [dynamic runner](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
-- [extended ui](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
+- [walking marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
 
 ---
 
@@ -69,8 +62,8 @@ _For a working example see one of the following demos:_
     <style> html, body, #map, #elevation-div { height: 100%; width: 100%; padding: 0; margin: 0; } #map { height: 75%; } #elevation-div {	height: 25%; font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif; } </style>
 
     <!-- leaflet-ui -->
-    <script src="https://unpkg.com/leaflet@1.3.2/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-ui@0.2.0/dist/leaflet-ui.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js"></script>
 
     <!-- leaflet-elevation -->
     <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css" />
@@ -131,14 +124,14 @@ _For a working example see one of the following demos:_
         // Speed chart profile: true || "summary" || "disabled" || false
         speed: false,
 
-        // Display time info: true || "summary" || false
-        time: false,
-
-        // Display distance info: true || "summary"
-        distance: true,
-
-        // Display altitude info: true || "summary"
+        // Altitude chart profile: true || "summary" || "disabled" || false
         altitude: true,
+
+        // Display time info: true || "summary" || false
+        time: true,
+
+        // Display distance info: true || "summary" || false
+        distance: true,
 
         // Summary track info style: "inline" || "multiline" || false
         summary: 'multiline',
@@ -158,10 +151,13 @@ _For a working example see one of the following demos:_
         // Toggle "leaflet-distance-markers" integration
         distanceMarkers: false,
 
-        // Display track waypoints
+        // Display track datetimes: true || false
+        timestamps: false,
+
+        // Display track waypoints: true || "markers" || "dots" || false
         waypoints: true,
 
-        // Custom waypoint icons (associative array of <sym> tags)
+        // Toggle custom waypoint icons: true || { associative array of <sym> tags } || false
         wptIcons: {
           '': L.divIcon({
             className: 'elevation-waypoint-marker',
@@ -171,13 +167,16 @@ _For a working example see one of the following demos:_
           }),
         },
 
+        // Toggle waypoint labels: true || "markers" || "dots" || false
+        wptLabels: true,
+
         // Render chart profiles as Canvas or SVG Paths
-        preferCanvas: true
+        preferCanvas: true,
 
       };
 
       // Instantiate map (leaflet-ui).
-      var map = new L.Map('map', { mapTypeId: 'terrain', center: [41.4583, 12.7059], zoom: 5 });
+      var map = L.map('map', { mapTypeId: 'terrain', center: [41.4583, 12.7059], zoom: 5 });
 
       // Instantiate elevation control.
       var controlElevation = L.control.elevation(elevation_options).addTo(map);
@@ -187,6 +186,22 @@ _For a working example see one of the following demos:_
 
     </script>
     ```
+
+### Build Guide
+
+For those wishing to try cloning this repository into a local development folder (eg. /var/www):
+
+```shell
+git clone git@github.com:Raruto/leaflet-elevation.git
+cd ./leaflet-elevation
+
+npm i         # install dependencies
+npm run watch # auto-generate "dist" files
+npm run build # generate "dist" files (once)
+npm run test  # test "spec" files (once)
+```
+
+After that you can start developing inside the `src` and `test` folders (eg. open "http://localhost/leaflet-elevation/test" in your browser to preview changes). Check also [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for some information about it.
 
 ### FAQ
 
@@ -199,10 +214,10 @@ There are multiple options to achieve this:
 * check out [this example](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
 * Or add the following lines for custom colors.
 ```css
-.elevation-control.elevation .area {
+.elevation-control .area {
     fill: red;
 }
-.elevation-control.elevation .background {
+.elevation-control .background {
     background-color: white;
 ```
 </details>
@@ -233,16 +248,38 @@ var map = L.map('map', {
 ```
 </details>
 
+<details>
+  <summary>3. Some real world projects based on this plugin?</summary><br>
+
+- https://parcours.scasb.org/
+- https://velocat.ru/velo/phpBB3/map.php
+- https://plugins.qgis.org/plugins/track_profile_2_web/
+- https://wordpress.org/plugins/os-datahub-maps/
+- https://wordpress.org/plugins/extensions-leaflet-map/
+- https://github.com/der-stefan/OpenTopoMap
+- https://gpx.n-peloton.fr/
+- https://walkaholic.me/map
+
+</details>
+
 _Related: [Leaflet-UI presets](https://github.com/raruto/leaflet-ui), [QGIS Integration](https://github.com/faunalia/trackprofile2web)_
+
+### Changelog
+
+All notable changes to this project are documented in the [releases](https://github.com/Raruto/leaflet-elevation/releases) page.
 
 ---
 
 **Compatibile with:**
-[![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.6.0-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
+[![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.7.0-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
 [![d3.js v6 compatibile!](https://img.shields.io/badge/d3.js-6.5-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
-[![@tmcw/togeojson v4.3.0 compatibile!](https://img.shields.io/badge/@tmcw/togeojson-4.3-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
+[![@tmcw/togeojson v4.6.0 compatibile!](https://img.shields.io/badge/@tmcw/togeojson-4.6-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
 
 
 ---
 
 **Contributors:** [MrMufflon](https://github.com/MrMufflon/Leaflet.Elevation), [HostedDinner](https://github.com/HostedDinner/Leaflet.Elevation), [ADoroszlai](http://ADoroszlai.github.io/joebed/), [Raruto](https://github.com/Raruto/leaflet-elevation)
+
+---
+
+**License:** GPL-3.0+

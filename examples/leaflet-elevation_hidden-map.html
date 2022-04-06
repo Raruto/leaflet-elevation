@@ -2,126 +2,112 @@
 <html>
 
 <head>
-  <title>leaflet-elevation.js</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-  <style>
-    html,
-    body,
-    .leaflet-map,
-    .elevation-div {
-      height: 100%;
-      width: 100%;
-      padding: 0px;
-      margin: 0px;
-    }
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js" as="script">
+	
+	<style>@import '../libs/fullpage.css';</style>
 
-    .leaflet-map {
-      max-height: 65vh;
-      height: 0;
-      right: 0;
-      opacity: 0;
-      transition: height 0.2s linear;
-    }
+	<style>
+		.leaflet-map {
+			max-height: 65vh;
+			height: 0;
+			right: 0;
+			opacity: 0;
+			transition: height 0.2s linear;
+		}
 
-    .elevation-div.elevation-detached {
-      min-height: 35vh;
-      font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-    }
+		.elevation-div.elevation-detached {
+			min-height: 35vh;
+			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+		}
 
-    .leaflet-map.elechart-hover {
-      height: 100%;
-      opacity: 1;
-    }
+		.leaflet-map.elechart-hover {
+			height: 100%;
+			opacity: 1;
+		}
 
-    .help {
-      top: 60%;
-      position: absolute;
-      text-align: center;
-      left: 0;
-      right: 0;
-      font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
-      font-style: italic;
-      opacity: 0.5;
-      font-size: 0.9rem;
-      z-index: -1;
-    }
-  </style>
+		.help {
+			top: 60%;
+			position: absolute;
+			text-align: center;
+			left: 0;
+			right: 0;
+			font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
+			font-style: italic;
+			opacity: 0.5;
+			font-size: 0.9rem;
+			z-index: -1;
+		}
+	</style>
 
-  <!-- leaflet-ui -->
-  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js"></script>
 
-  <!-- leaflet-elevation -->
-  <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.min.css" />
-  <script src="https://unpkg.com/@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.min.js"></script>
-
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.js"></script>
 </head>
 
 <body>
 
-  <div id="elevation-div" class="elevation-div"></div>
-  <div id="map" class="leaflet-map"></div>
+	<div id="elevation-div" class="elevation-div"></div>
+	<div id="map" class="leaflet-map"></div>
 
-  <script>
-    var opts = {
-      map: {
-        mapTypeId: 'topo',
-        center: [41.4583, 12.7059],
-        zoom: 5,
-        fullscreenControl: false,
-        pegmanControl: false,
-        locateControl: false,
-        searchControl: false,
-        resizerControl: false,
-        layersControl: false,
-        zoomControl: false,
-        minimapControl: false,
-        rotateControl: false,
-        loadingControl: false,
-      },
-      elevationControl: {
-        url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
-        options: {
-          theme: "magenta-theme", //default: lime-theme
-          detached: true,
-          elevationDiv: "#elevation-div",
-        },
-      },
-      layersControl: {
-        options: {
-          collapsed: false,
-        },
-      },
-    };
+	<script>
+		let opts = {
+			map: {
+				mapTypeId: 'topo',
+				center: [41.4583, 12.7059],
+				zoom: 5,
+				fullscreenControl: false,
+				pegmanControl: false,
+				locateControl: false,
+				searchControl: false,
+				resizerControl: false,
+				layersControl: false,
+				zoomControl: false,
+				minimapControl: false,
+				rotateControl: false,
+				loadingControl: false,
+			},
+			elevationControl: {
+				url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
+				options: {
+				theme: "magenta-theme", //default: lime-theme
+				detached: true,
+				closeBtn: false,
+				elevationDiv: "#elevation-div",
+				},
+			},
+			layersControl: {
+				options: {
+				collapsed: false,
+				},
+			},
+		};
 
-    var map = new L.Map('map', opts.map);
+		let map = L.map('map', opts.map);
 
-    var controlElevation = L.control.elevation(opts.elevationControl.options);
-    var controlLayer = L.control.layers(null, null, opts.layersControl.options);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
 
-    controlElevation.loadChart(map);
-    controlElevation.loadData(opts.elevationControl.url);
+		// Hidden Map
+		controlElevation.on('elechart_change', ({data}) => {
+			setTimeout(() => map.invalidateSize(), 201);
+			map.setView(data.latlng, map.getZoom());
+		});
 
-    map.on('eledata_loaded', function(e) {
-      controlLayer.addOverlay(e.layer, e.name);
-    });
+		controlElevation.load(opts.elevationControl.url);
+	</script>
 
-    // Hidden Map
-    controlElevation
-      .on('elechart_change', (e) => {
-        setTimeout(function() {
-          map.invalidateSize();
-        }, 201);
-        map.setView(e.data.latlng, map.getZoom());
-      });
+	<p class="help">move mouse over the chart...</p>
 
-  </script>
-
-  <p class="help">move mouse over the chart...</p>
-
-  <a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 10px;left: calc(50% - 88px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-      width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 10px;left: calc(50% - 88px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

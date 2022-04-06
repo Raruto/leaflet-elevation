@@ -5,25 +5,20 @@
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-	<style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			height: 100%;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-		}
-	</style>
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js" as="script">
+
+	<style>@import '../libs/fullpage.css';</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.js"></script>
 
 	<style>
 		.elevation-summary.inline-summary {
@@ -33,7 +28,6 @@
 			text-align: center;
 		}
 	</style>
-
 </head>
 
 <body>
@@ -41,14 +35,16 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-		var mylocale = {
+		let mylocale = {
 			"Total Length: ": "L: ",
 			"Max Elevation: ": "E Max: ",
 			"Min Elevation: ": "E Min: ",
+			"Avg Elevation: ": "E Avg: ",
 			"Total Ascent: ": "A: ",
 			"Total Descent: ": "D: ",
 			"Min Slope: ": "S Min: ",
 			"Max Slope: ": "S Max: ",
+			"Avg Slope: ": "S Avg: ",
 		};
 
 		L.registerLocale('it', mylocale);
@@ -94,14 +90,10 @@
 			},
 		};
 
-		let map = new L.Map('map', opts.map);
+		let map = L.map('map', opts.map);
 
-		let controlElevation = L.control.elevation(opts.elevationControl.options);
-		let controlLayer = L.control.layers(null, null, opts.layersControl.options);
-
-		controlLayer.addTo(map);
-
-		controlElevation.loadChart(map);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+		let controlLayer = L.control.layers(null, null, opts.layersControl.options).addTo(map);
 
 		let tracks = opts.elevationControl.tracks;
 		let i = 0;
@@ -112,9 +104,7 @@
 			loadTrace(tracks[track].url, i++);
 		}
 
-		layers.on('tracks_loaded', () => {
-			console.dir("Tracks Loaded: ", layers.getLayers())
-		});
+		layers.on('tracks_loaded', () => console.dir("Tracks Loaded: ", layers.getLayers()));
 
 		function loadTrace(url, i) {
 			return fetch(url)
@@ -147,8 +137,7 @@
 		}
 	</script>
 
-	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-		 width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

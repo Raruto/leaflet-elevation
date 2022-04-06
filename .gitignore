@@ -1,6 +1,7 @@
 node_modules/
 npm-debug.log
-build/*.min.js
-src/*.min.js
-src/*.min.css
+build/**/*.min.js
+spec/**/*.min.js
+src/**/*.min.js
+src/**/*.min.css
 dist/

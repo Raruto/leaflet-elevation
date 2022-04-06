@@ -5,60 +5,272 @@
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-	<style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			height: 100%;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-		}
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js" as="script">
 
-		.leaflet-map {
-			height: 55%;
-			max-height: 100vh;
-		}
-
-		.elevation-div {
-			height: 25%;
-			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-		}
-	</style>
+	<style>@import '../libs/fullpage.css';</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@latest/dist/leaflet-src.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@latest/dist/leaflet-ui-src.js"></script>
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.1.2/dist/leaflet-elevation.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.1.3/dist/leaflet-elevation.js"></script>
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.1.3/libs/extended-ui.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.js"></script>
 
+	<style>
+		/** Custom legend item color (see: "heart" option) */
+		.legend-item.legend-heart rect {
+			stroke: #f00;
+			fill-opacity: 0;
+			stroke-opacity: 0.85;
+		}
+
+		/** Hide useful legend items */
+		.elevation-summary > :not(.totlen, .tottime, .avgspeed, .minbpm, .maxbpm, .avgbpm, .minrpm, .maxrpm, .avgrpm, .minpace, .maxpace, .avgpace, .download) {
+			display: none !important;
+		}
+	</style>
 </head>
 
 <body>
 
 	<div id="map" class="leaflet-map"></div>
 
+	<!-- Custom chart handlers -->
 	<script>
-		var opts = {
+
+		L.Control.Elevation.MyHeart = function() {
+			return {
+				name: 'heart',      // <-- Your custom option name (eg. "heart: true")
+				unit: 'bpm',
+				meta: 'hr',         // <-- point.meta.hr
+				coordinateProperties: ["heart", "heartRates", "heartRate"], // List of GPX Extensions ("coordinateProperties") to be handled by "@tmcw/toGeoJSON"
+				pointToAttr: (point, i) => (point.hr ?? point.meta.hr ?? point.prev('heart')) || 0,
+				stats: {
+					max: (heart, max = -Infinity) => (heart > max ? heart : max),
+					min: (heart, min = +Infinity) => (heart < min ? heart : min),
+					avg: (heart, avg = 0, idx = 1) => (heart + avg * (idx - 1)) / idx,
+				},
+				scale: {
+					axis       : "y",
+					position   : "left",
+					scale      : { min: -1, max : +1 },
+					tickPadding: 16,
+					labelX     : -18,
+					labelY     : -8,
+				},
+				path: {
+					label        : 'ECG',
+					yAttr        : 'heart',
+					scaleX       : 'distance',
+					scaleY       : 'heart',
+					color        : 'white',
+					strokeColor  : 'red',
+					strokeOpacity: "0.85",
+					fillOpacity  : "0.1",
+				},
+				tooltip: {
+					chart: (item) => L._("hr: ") + item.heart + " " + 'bpm',
+					marker: (item) => Math.round(item.heart) + " " + 'bpm',
+					order: 1
+				},
+				summary: {
+					"minbpm": {
+						label: "Min BPM: ",
+						value: (track, unit) => Math.round(track.heart_min || 0) + '&nbsp;' + unit,
+						// order: 30
+					},
+					"maxbpm": {
+						label: "Max BPM: ",
+						value: (track, unit) => Math.round(track.heart_max || 0) + '&nbsp;' + unit,
+						// order: 30
+					},
+					"avgbpm": {
+						label: "Avg BPM: ",
+						value: (track, unit) => Math.round(track.heart_avg || 0) + '&nbsp;' + unit,
+						// order: 20
+					},
+				}
+			};
+		};
+
+		// L.Control.Elevation.MyCadence = function() {
+		// 	return {
+		// 		name: 'cadence',    // <-- Your custom option name (eg. "cadence: true")
+		// 		unit: 'rpm',
+		// 		meta: 'cad',        // <-- point.meta.cad
+		// 		coordinateProperties: ["cads", "cadences", "cad", "cadence"], // List of GPX Extensions ("coordinateProperties") to be handled by "@tmcw/toGeoJSON"
+		// 		pointToAttr: (point, i) => (point.cad ?? point.meta.cad ?? point.prev('cadence')) || 0,
+		// 		stats: {
+		// 			max: (cad, max = -Infinity) => (cad > max ? cad : max),
+		// 			min: (cad, min = +Infinity) => (cad < min ? cad : min),
+		// 			avg: (cad, avg = 0, idx = 1) => (cad + avg * (idx - 1)) / idx,
+		// 		},
+		// 		scale: {
+		// 			axis       : "y",
+		// 			position   : "right",
+		// 			scale      : { min: -1, max: +1 },
+		// 			tickPadding: 16,
+		// 			labelX     : 25,
+		// 			labelY     : -8,
+		// 		},
+		// 		path: {
+		// 			label        : 'RPM',
+		// 			yAttr        : 'cadence',
+		// 			scaleX       : 'distance',
+		// 			scaleY       : 'cadence',
+		// 			color        : '#FFF',
+		// 			strokeColor  : 'blue',
+		// 			strokeOpacity: "0.85",
+		// 			fillOpacity  : "0.1",
+		// 		},
+		// 		tooltip: {
+		// 			name: 'cadence',
+		// 			chart: (item) => L._("cad: ") + item.cadence + " " +  'rpm',
+		// 			marker: (item) => Math.round(item.cadence) + " "  + 'rpm',
+		// 			order: 1
+		// 		},
+		// 		summary: {
+		// 			"minrpm": {
+		// 				label: "Min RPM: ",
+		// 				value: (track, unit) =>  Math.round(track.cadence_min || 0) + '&nbsp;' + unit,
+		// 				order: 30
+		// 			},
+		// 			"maxrpm": {
+		// 				label: "Max RPM: ",
+		// 				value: (track, unit) => Math.round(track.cadence_max || 0) + '&nbsp;' + unit,
+		// 				order: 30
+		// 			},
+		// 			"avgrpm": {
+		// 				label: "Avg RPM: ",
+		// 				value: (track, unit) => Math.round(track.cadence_avg || 0) + '&nbsp;' + unit,
+		// 				order: 20
+		// 			},
+		// 		}
+		// 	};
+		// }
+
+		L.Control.Elevation.MyPace = function() {
+
+			let opts = this.options;
+			let pace = {};
+			pace.label      = opts.paceLabel  || L._(opts.imperial ? 'min/mi' : 'min/km');
+			opts.paceFactor = opts.paceFactor || 60; // 1 min = 60 sec
+
+			return {
+				name: 'pace',
+				unit: pace.label,
+				decimals: 2,
+				pointToAttr: (point, i) => {
+					let dx   = (this._data[i].dist - this._data[i > 0 ? i - 1 : i].dist) * 1000;
+					let dt   = this._data[i].time - this._data[ i > 0 ? i - 1 : i].time;
+					return dx > 0 ? Math.abs((dt / dx) / opts.paceFactor) : 0;
+				},
+				stats: {
+					max: (pace, max = -Infinity) => (pace > max ? pace : max),
+					min: (pace, min = +Infinity) => (pace < min ? pace : min),
+					avg: (pace, avg = 0, idx = 1) => (pace + avg * (idx - 1)) / idx,
+				},
+				scale : {
+					axis       : "y",
+					position   : "right",
+					scale      : { min : 0, max : +1 },
+					tickPadding: 16,
+					labelX     : 25,
+					labelY     : -8,
+				},
+				path: {
+					// name         : 'pace',
+					label        : 'Pace',
+					yAttr        : "pace",
+					scaleX       : 'distance',
+					scaleY       : 'pace',
+					color        : '#03ffff',
+					strokeColor  : '#000',
+					strokeOpacity: "0.5",
+					fillOpacity  : "0.25",
+				},
+				tooltip: {
+					chart: (item) => L._('pace: ') + item.pace + " " + pace.label,
+					marker: (item) => Math.round(item.pace) + " " + pace.label,
+					order: 55,
+				},
+				summary: {
+					"minpace"  : {
+						label: "Min Pace: ",
+						value: (track, unit) => Math.round(track.pace_min || 0) + '&nbsp;' + unit,
+						order: 55
+					},
+					"maxpace"  : {
+						label: "Max Pace: ",
+						value: (track, unit) => Math.round(track.pace_max || 0) + '&nbsp;' + unit,
+						order: 56
+					},
+					"avgpace": {
+						label: "Avg Pace: ",
+						value: (track, unit) => Math.round(track.pace_avg || 0) + '&nbsp;' + unit,
+						order: 57
+					},
+				}
+			};
+		}
+
+	</script>
+
+	<script>
+		let opts = {
 			map: {
 				center: [41.4583, 12.7059],
 				zoom: 5,
 				fullscreenControl: false,
 				resizerControl: true,
+				rotate: true,
+				preferCanvas: true,
 			},
 			elevationControl: {
-				url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
-				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+				url: "https://raruto.github.io/leaflet-elevation/examples/time.gpx",
 				options: {
 					theme: "lightblue-theme",
+					preferCanvas: true,
 					collapsed: false,
 					detached: true,
+					imperial: false,
 					summary: "inline",
-					extendedUI: true,
+					altitude: false,     // true || "disabled",
+					acceleration: false, // true || "disabled",
+					slope: false,        // true || "disabled",
+					speed: "disabled",   // true || false,
+					time: true,
+					pace: true,
+					timestamps: true,
+					distance: true,
+					distanceMarkers: true,
+					hotline: 'speed',
+					almostOver: true,
+					heart: true,                              // <-- Intial state of your custom option (true || "summary" || false)
+					cadence: true,                            // <-- Intial state of your custom option (true || "summary" || false)
+					handlers: [                               // <-- A list of: Dynamic imports || "ClassName" || function Name() { return { /* a custom object definition */ } }
+						'Distance',                           // <-- same as: import("../src/handlers/distance.js")
+						'Time',                               // <-- same as: import("../src/handlers/time.js")
+						'Altitude',                           // <-- same as: import("../src/handlers/altitude.js")
+						'Slope',                              // <-- same as: import("../src/handlers/slope.js")
+						'Speed',                              // <-- same as: import("../src/handlers/speed.js")
+						'Acceleration',                       // <-- same as: import("../src/handlers/acceleration.js")
+						// 'Pace',                            // <-- same as: import("../src/handlers/pace.js")
+						// "Heart",                           // <-- same as: import("../src/handlers/heart.js")
+						// "Cadence",                         // <-- same as: import("../src/handlers/cadence.js")
+						// import('../src/handlers/heart.js'),
+						import('../src/handlers/cadence.js'),
+						// import('../src/handlers/pace.js'),
+						L.Control.Elevation.MyHeart,          // <-- see custom functions declared above
+						// L.Control.Elevation.MyCadence,     // <-- see custom functions declared above
+						L.Control.Elevation.MyPace,           // <-- see custom functions declared above
+					],
+					// yAttr: 'heart',                        // <-- sometimes useful when (altitude: false)
+					// yScale: 'heart',                       // <-- sometimes useful when (altitude: false)
 				},
 			},
 			layersControl: {
@@ -68,21 +280,52 @@
 			},
 		};
 
-		var map = new L.Map('map', opts.map);
-		var controlElevation = L.control.elevation(opts.elevationControl.options);
-		var controlLayer = L.control.layers(null, null, opts.layersControl.options);
+		let map = L.map('map', opts.map);
+
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+		let controlLayer = L.control.layers(null, null, opts.layersControl.options);
+
+		controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 
 		controlElevation.load(opts.elevationControl.url);
-		controlElevation.addTo(map);
-
-		map.on('eledata_loaded', function(e) {
-			if (!controlLayer._map) controlLayer.addTo(map);
-			controlLayer.addOverlay(e.layer, e.name);
-		});
 	</script>
 
-	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-		 width="163"> </a>
+	<script>
+		var mylocale = {
+			"Acceleration"      : "m/s²",
+			"Altitude"          : "m",
+			"Slope"             : "%",
+			"Speed"             : "km/h",
+			// "Total Length: "    : "L: ",
+			// "Max Elevation: "   : "E Max: ",
+			// "Min Elevation: "   : "E Min: ",
+			// "Avg Elevation: "   : "E Avg: ",
+			// "Total Time: "      : "T: ",
+			// "Total Ascent: "    : "+A: ",
+			// "Total Descent: "   : "-D: ",
+			// "Min Slope: "       : "S Min: ",
+			// "Max Slope: "       : "S Max: ",
+			// "Avg Slope: "       : "S Avg: ",
+			// "Min Speed: "       : "V Min: ",
+			// "Max Speed: "       : "V Max: ",
+			// "Avg Speed: "       : "V Media: ",
+			// "Min Acceleration: ": "A Min: ",
+			// "Max Acceleration: ": "A Max: ",
+			// "Avg Acceleration: ": "A Avg: ",
+			"y: "				: "alt: ",
+			"x: "				: "dist: ",
+			"t: "				: "date: ",
+			"T: "				: "time: ",
+			"m: "				: "grade: ",
+			"v: "				: "v: ",
+			"a: "				: "a: ",
+		};
+
+		L.registerLocale('en', mylocale);
+		L.setLocale('en');
+	</script>
+
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

@@ -5,36 +5,20 @@
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js" as="script">
 
-	<!-- Leaflet -->
-	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+	<style>@import '../libs/fullpage.css';</style>
 
-	<!-- Leaflet-UI -->
-	<script src="https://unpkg.com/leaflet-ui@0.4.1/dist/leaflet-ui.js"></script>
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.js"></script>
-
-	<style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			padding: 0px;
-			margin: 0px;
-		}
-
-		.leaflet-map {
-			height: 55vh;
-			max-height: 100vh;
-		}
-
-		.elevation-div {
-			min-height: 25%;
-		}
-	</style>
-
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.js"></script>
 
 	<style>
 		.elevation-tooltip.leaflet-tooltip,
@@ -89,11 +73,16 @@
 			text-align: center;
 		}
 
+		/** POI icon */
 		.elevation-waypoint-icon.poi::before {
 			background-image: url(../images/elevation-poi.png);
 		}
-	</style>
 
+		/** PEAK icon */
+		.elevation-waypoint-icon.peak::before {
+			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='811' height='811'%3E%3Cpath fill='%23201c18' d='M160 83c-18 14-34 29-50 45A392 392 0 0 0 8 325l-7 51A405 405 0 1 0 160 83Z'/%3E%3Cpath fill='%23f6c501' d='m784 528 9-33a460 460 0 0 0 9-104 400 400 0 0 0-133-283 402 402 0 0 0-557 29 396 396 0 0 0-87 382l4 16c1 2 2 5 4 6s5-2 7-3l18-14c11-8 24-13 34-22 12-12 19-27 32-39l44-41 15-9c11-8 22-19 31-29 11-13 14-32 28-44 4-3 10-3 14-6 8-4 13-11 21-14 11-4 24-5 34-13l5-9 12-12c5-4 12-4 17-8 4-2 5-7 9-9 7-6 16-9 23-14l16-11 8-5c20-2 34 13 47 26 10 10 24 16 33 27l21 29c4 7 8 15 14 20 14 13 33 18 50 25 7 3 13 9 20 12l33 9c5 1 10 2 14 5 13 10 19 24 31 33l15 11 27 22 52 38c10 9 14 26 26 32M403 243l3 1-3-1'/%3E%3Cpath fill='%23fef9e9' d='m403 244-2 16c1 16 6 31 4 47-2 12-14 21-14 34 0 4 4 7 4 11 1 3-1 6-1 9 0 5 1 12 3 16 3 6 10 11 10 18 0 4-1 9-3 12-4 4-11 8-10 14 1 5 7 7 9 11 3 6 1 11 1 17-9-3-8-11-13-17-5-7-14-12-16-21-1-8 4-15 3-23-2-8-7-14-6-23 1-6 6-10 6-17-11 6-18 16-23 27-1 4-4 8-3 12 2 10 13 14 13 25l-14-2c-5-2-10-5-15-5-3 1-9 3-10 6-1 5 3 12 4 17 4-2 10-10 15-6 8 6-4 19 0 27 2 4 6 10 10 13 3 2 9 0 11 5 2 4 0 8-1 12-1 5-2 12 1 16 1 3 5 7 8 9 2 1 5 1 6 3 3 2 5 8 5 12 2 10-5 14-7 22-2 5 1 11 3 15 4-4 3-8 5-13 3-4 8-6 10-10s1-10 0-14c0-4 0-9-2-13-3-7-12-14-12-22 0-4 4-5 6-8 4-6 5-14 12-18 4-2 8 0 12-3s6-8 9-12 11-8 16-10c5-1 14-2 19 1 3 2 4 8 7 12 5 6 16 9 23 6v-2l-9-7c-6-7-8-17 2-21l32-10c6-2 12-4 15-10-7-5-16-5-23-9-6-3-9-10-11-16 4 0 8 1 11-2 4-3 7-10 13-10 4 0 7 5 9 8l17 27c8-1 16-3 25-3l15 3 16-1c9-1 21-4 29 1 5 4 4 12 5 18 1 5 5 9 6 14 0 4-2 7-3 11l-8-3c-1 2-2 5-1 7 0 2 3 3 5 5 4 2 8 4 11 8l18 23 6 12 8 12c4 9 0 20 11 24l-4 5c-11 9-19-5-26-12-15-16-21-38-36-54-5-5-11-15-19-12 1 6 9 10 9 16 1 4-3 7-3 11 0 6 3 12 2 18-1 4-4 8-4 12 0 3 2 5 3 8 0 5-2 17-8 18-3 1-6-1-9-1l2 8 8 8 15 17-6 3c4 7 12 10 19 14 5 3 10 9 13 15 4 9 1 20 5 29 2 7 11 10 13 18 3 8 1 17 2 25 2 8 7 15 12 21l11-9c4-4 10-8 11-13 2-5-4-11-5-15-3-6-3-14-5-20-3-5-8-9-9-14v-9c7 5 12 14 21 15-1-14-14-23-20-35-5-9-3-20-4-30-1-5-4-9-4-14-1-15 31-10 26-27l-7-17c-1-4 0-8-2-12-3-6-8-10-11-15l-4-11c-2-9-6-19 5-23 2 6 5 11 9 16h2l2-10 10 3c-11-13-28-20-40-32-10-10-17-25-30-31-14-8-30-9-45-14-7-2-13-8-20-11-18-8-37-13-52-27-5-5-8-11-12-17-7-11-14-22-23-32-8-10-20-15-29-24-7-7-15-17-24-22-6-3-14-4-21-4z'/%3E%3Cpath fill='%23201c18' d='M440 274c1 5 3 8 6 12-6 2-9 2-15 1 2 7 9 9 11 16h-16c1 5 5 8 8 13 2 4 2 8 2 13h-4c1 6 6 9 9 14l14 23c2 5-1 10 0 15 0 5 4 8 7 11 5 5 11 17 20 15-5-8-13-14-16-22-5-10-2-23-2-34 0-6-3-12-4-18v-12c6 5 9 13 15 19 6 5 13 6 19 11 4 2 10 9 14 9 2 1 5-1 7-2-4-15-22-23-32-34-3-4 2-7 0-12-6-12-18-20-27-28-5-4-9-9-16-10z'/%3E%3Cpath fill='%23fef9e9' d='M254 402c-15 5-26 15-37 26-3 3-10 5-11 8-2 3-1 7-1 10l-5 14c0 5 3 10 4 15 1 8-5 22 5 26 8 3 15-14 18-20 4-9 2-18 6-27 5-12 17-21 21-33 2-6 1-13 0-19zm504 184c4-4 7-11 9-16l10-23c1-4 4-10 3-14-2-8-12-17-16-24-6-10-17-17-26-24-2-1-8-7-11-4-3 2-1 6 0 8 3 7 11 11 13 18 2 4 0 8 0 12l2 23c2 8 7 15 11 23 3 6 4 14 5 21zm-642-76c0 14 1 30 5 44 3 12 10 22 15 33l10 23c4 12 4 27 12 37l17 18c13 9 27 15 38 27l11 17c2 5 3 11 6 15 4 7 11 12 17 18l9 13c7 8 16 16 25 23 10 7 26 7 37 10 6 2 10 7 16 8 22 6 47 7 70 7-1-6-2-16-6-21-10-11-26-12-40-14l-32-8h-18l-21-4c0-5 1-10-1-14-3-11-12-17-21-23l-12-8c-12-5-31-8-37-22-7-14-6-28-3-43 0-5 0-10 2-15 5-11 17-23 15-36 0-7-2-16-5-22l-11-15c-3-4-5-9-9-12-7-5-18-8-26-9-11-3-22 1-33-4-11-4-20-16-30-23zm-65 75h2c2-6 3-15 7-20 6-7 25-1 26-16l-2-5c-10 2-21 7-30 13-4 2-9 7-10 12 0 5 4 12 7 16zm425-18v2c4 2 12 7 13 12 0 6-6 8-2 15 4 5 8 6 13 9 3 3 6 9 6 14 0 9-8 15-9 23-1 9 4 16 6 24 2 5 0 11 1 16 2 13 11 18 22 23l-1-19c10 4 16 12 17 23 0 5-2 9 1 14 8 15 24 25 29 42 9-1 17-7 25-11-3-17-22-20-33-31-8-9-9-26-10-37h5v-8c-2-3-5-4-8-6l-16-14c-5-7-3-17-3-25 6 2 11 5 14-2-5-2-6-6-6-11 9 3 16 7 25 2-6-5-15-4-22-8l-20-14-16-11-18-22c-4-4-8-2-13 0z'/%3E%3C/svg%3E");
+		}
+	</style>
 </head>
 
 <body>
@@ -101,21 +90,24 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-		var opts = {
+		let opts = {
 			map: {
 				center: [45.4169, -121.7144],
 				zoom: 10,
 				mapTypeId: 'topo',
 				resizerControl: true,
+				preferCanvas: true,
 			},
 			elevationControl: {
 				url: "waypoints.gpx",
 				options: {
 					theme: "lightblue-theme",
+					preferCanvas: true,
 					collapsed: false,
 					detached: true,
 					useLeafletMarker: true,
 					summary: 'multiline',
+					hotline: false,
 
 					/**
 					 * Custom waypoint icons
@@ -123,31 +115,45 @@
 					// wptIcons: {
 					// 	'': L.divIcon({
 					// 		className: 'elevation-waypoint-marker',
-					// 		html: '<i class="elevation-waypoint-icon"></i>',
+					// 		html: '<i class="elevation-waypoint-icon default"></i>',
 					// 		iconSize: [30, 30],
 					// 		iconAnchor: [8, 30],
 					// 	}),
 					// 	'summit': L.divIcon({
 					// 		className: 'elevation-waypoint-marker',
+					// 		html: '<i class="elevation-waypoint-icon peak"></i>',
+					// 		iconSize: [40, 40],
+					// 	}),
+					// 	'trail-head': L.divIcon({
+					// 		className: 'elevation-waypoint-marker',
+					// 		html: '<i class="elevation-waypoint-icon peak"></i>',
+					// 		iconSize: [40, 40],
+					// 	}),
+					// 	'dollar-lake': L.divIcon({
+					// 		className: 'elevation-waypoint-marker',
 					// 		html: '<i class="elevation-waypoint-icon poi"></i>',
-					// 		iconSize: [12, 12],
-					// 	})
+					// 		iconSize: [20, 20],
+					// 	}),
+					// 	'wyeast-basin': L.divIcon({
+					// 		className: 'elevation-waypoint-marker',
+					// 		html: '<i class="elevation-waypoint-icon poi"></i>',
+					// 		iconSize: [20, 20],
+					// 	}),
 					// },
 				},
 			},
 		};
 
-		var map = new L.Map('map', opts.map);
+		let map = L.map('map', opts.map);
 
-		var controlElevation = L.control.elevation(opts.elevationControl.options);
+		let controlElevation = L.control.elevation(opts.elevationControl.options);
 
 		controlElevation.load(opts.elevationControl.url);
 
 		controlElevation.addTo(map);
 	</script>
 
-	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-		 width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 

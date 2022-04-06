@@ -5,35 +5,20 @@
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-	<style>
-		html,
-		body,
-		.leaflet-map,
-		.elevation-div {
-			height: 100%;
-			width: 100%;
-			padding: 0px;
-			margin: 0px;
-		}
-
-		.leaflet-map {
-			height: 55%;
-			max-height: 100vh;
-		}
-
-		.elevation-div {
-			height: 25%;
-			font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-		}
-	</style>
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js" as="script">
+	
+	<style>@import '../libs/fullpage.css';</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.5.1/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.5/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@1.7.3/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.2.2/dist/leaflet-elevation.min.js"></script>
 
 </head>
 
@@ -42,7 +27,7 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-		var opts = {
+		let opts = {
 			map: {
 				center: [41.4583, 12.7059],
 				zoom: 5,
@@ -75,6 +60,7 @@
 					followMarker: true,
 					almostOver: true,
 					distanceMarkers: false,
+					hotline: false,
 				},
 			},
 			layersControl: {
@@ -84,17 +70,12 @@
 			},
 		};
 
-		var map = L.map('map', opts.map);
+		let map = L.map('map', opts.map);
 
-		var controlElevation = L.control.elevation(opts.elevationControl.options);
-		var controlLayer = L.control.layers(null, null, opts.layersControl.options);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+		let controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
-		controlElevation.addTo(map);
-		controlLayer.addTo(map);
-
-		controlElevation.on('eledata_loaded', function(e) {
-			controlLayer.addOverlay(e.layer, e.name);
-		});
+		controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 
 		controlElevation.load(opts.elevationControl.url);
 	</script>
@@ -111,11 +92,13 @@
 			"Total Length: "    : "L: ",
 			"Max Elevation: "   : "E Max: ",
 			"Min Elevation: "   : "E Min: ",
+			"Avg Elevation: "   : "E Avg: ",
 			"Total Time: "      : "T: ",
 			"Total Ascent: "    : "Asc: ",
 			"Total Descent: "   : "Desc: ",
 			"Min Slope: "       : "S Min: ",
 			"Max Slope: "       : "S Max: ",
+			"Avg Slope: "       : "S Avg: ",
 			"Min Speed: "       : "V Min: ",
 			"Max Speed: "       : "V Max: ",
 			"Avg Speed: "       : "V Avg: ",
@@ -127,10 +110,23 @@
 		// Enable a custom locale
 		// L.setLocale('en:18');
 
+		// You can also override a previously defined object
+		L.locales['en'] = L.extend({
+			"y: "               : "",
+			"x: "               : "",
+			"t: "               : "",
+			"T: "               : "",
+			"m: "               : "",
+			"v: "               : "",
+			"a: "               : "",
+		}, L.locales['en']);
+
+		// Switch the language
+		L.setLocale('en');
+
 	</script>
 
-	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github"
-		 width="163"> </a>
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
 
 </body>
 
