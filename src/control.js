@@ -1019,7 +1019,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if (props.stats) {
 				for (const key in props.stats) {
 					let sname = (props.statsName || attr) + (key != '' ? '_' : '');
-					this.track_info[sname + key] = props.stats[key].call(this, curr[attr], this.track_info[sname + key], index);
+					this.track_info[sname + key] = props.stats[key].call(this, curr[attr], this.track_info[sname + key], this._data.length);
 				}
 			}
 
