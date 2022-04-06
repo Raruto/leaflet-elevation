@@ -293,17 +293,20 @@
 /* YELLOW THEME /////////////////////////////////////////////////// */
 .yellow-theme {
   --ele-area: #FF0;
+  --ele-icon: url(../images/elevation-yellow.svg);
 }
 
 /* RED THEME ////////////////////////////////////////////////////// */
 .red-theme {
   --ele-area: #F00;
+  --ele-icon: url(../images/elevation-red.svg);
 }
 
 /* MAGENTA THEME ////////////////////////////////////////////////// */
 .magenta-theme {
   --ele-bg: rgba(255, 255, 255, 0.47);
   --ele-area: #FF005E;
+  --ele-icon: url(../images/elevation-magenta.svg);
 }
 
 /* LIGHTBLUE THEME //////////////////////////////////////////////// */
@@ -312,6 +315,7 @@
   --ele-alpha: 0.45;
   --ele-stroke: #4682B4;
   --ele-circle: #fff;
+  --ele-icon: url(../images/elevation-lightblue.svg);
 }
 
 .elevation-detached.lightblue-theme .area {
