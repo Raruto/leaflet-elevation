@@ -23,6 +23,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__LMARKER:       '../src/components/marker.js',
 	__LSUMMARY:      '../src/components/summary.js',
 	__modulesFolder: '../src/handlers/',
+	__btnIcon:       '../images/elevation.svg',
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
@@ -693,6 +694,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			_.on(link, 'click', L.DomEvent.stop);
 			_.on(link, 'click', this._toggle, this);
 			_.on(link, 'focus', this._toggle, this);
+			fetch(this.__btnIcon).then(r => r.ok && r.text().then(img => link.innerHTML = img));
 		}
 	},
 
