@@ -6,6 +6,9 @@ if (!L._ || !L.i18n) {
 	L._ = L.i18n = (string, data) => string;
 }
 
+// Prevent CORS issues for relative locations (dynamic import)
+const baseURL = ((document.currentScript && document.currentScript.src) || (import.meta && import.meta.url)).split("/").slice(0,-1).join("/") + '/';
+
 export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
@@ -215,7 +218,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			case this.__LGEOMUTIL:   condition = typeof L.GeometryUtil !== 'object'; break;
 			case this.__LALMOSTOVER: condition = typeof L.Handler.AlmostOver  !== 'function'; break;
 			case this.__LDISTANCEM:  condition = typeof L.DistanceMarkers  !== 'function'; break;
+			case this.__LHOTLINE:    condition = typeof L.Hotline  !== 'function'; break;
 		}
+		src = (src.startsWith('../') || src.startsWith('./') ? baseURL : '') + src;
 		return condition !== false ? import(src) : Promise.resolve();
 	},
 
