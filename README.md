@@ -99,9 +99,12 @@ _For a working example see one of the following demos:_
 
         // if (!detached) initial state of chart profile control
         collapsed: false,
-
+        
         // if (!detached) control position on one of map corners
         position: "topright",
+        
+        // Toggle close icon visibility
+        closeBtn: true,
 
         // Autoupdate map center on chart mouseover.
         followMarker: true,
@@ -150,6 +153,9 @@ _For a working example see one of the following demos:_
 
         // Toggle "leaflet-distance-markers" integration
         distanceMarkers: false,
+        
+        // Toggle "leaflet-hotline" integration
+        hotline: true,
 
         // Display track datetimes: true || false
         timestamps: false,
