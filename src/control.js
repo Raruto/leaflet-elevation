@@ -352,7 +352,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._addPoint(
 				point.lat ?? point[1], 
 				point.lng ?? point[0],
-				point.alt ?? point.meta.ele ?? point[2]
+				point.alt ?? point.meta.ele ?? (point[2] * this.options.altitudeFactor)
 			);
 
 			this.fire("elepoint_added", { point: point, index: this._data.length - 1 });
