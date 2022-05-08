@@ -26,7 +26,7 @@ export function Altitude() {
 		// },
 		pointToAttr: (point, i) => {
 			if ("alt" in point) point.meta.ele = point.alt; // "alt" property is generated inside "leaflet"
-			return this._data[i].z;
+			return this._data[i].z *= opts.altitudeFactor;
 		},
 		stats: { max: _.iMax, min: _.iMin, avg: _.iAvg },
 		grid: {
