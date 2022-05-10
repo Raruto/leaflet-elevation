@@ -426,7 +426,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.then(() => {
 				layer.eachLayer((trkseg) => {
 					if(trkseg.feature.geometry.type != "Point") {
-						let geo = L.geoJson(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2])});
+						let geo = L.geoJson(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1))});
 						let line = L.hotline(geo.toGeoJSON().features[0].geometry.coordinates, {
 							min: isFinite(this.track_info[prop + '_min']) ? this.track_info[prop + '_min'] : 0,
 							max: isFinite(this.track_info[prop + '_max']) ? this.track_info[prop + '_max'] : 1,
