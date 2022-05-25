@@ -181,8 +181,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._hotline        = L.featureGroup();
 		this._circleMarkers  = L.featureGroup();
 		this._markedSegments = L.polyline([]);
-		this._start          = (opts.trkStart || Options.trkStart);
-		this._end            = (opts.trkEnd || Options.trkEnd);
+		this._start          = L.circleMarker([0,0], (opts.trkStart || Options.trkStart));
+		this._end            = L.circleMarker([0,0], (opts.trkEnd || Options.trkEnd));
 		this._chartEnabled   = true;
 		this._yCoordMax      = -Infinity;
 		this.track_info      = {};
