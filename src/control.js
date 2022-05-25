@@ -181,8 +181,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._hotline        = L.featureGroup();
 		this._circleMarkers  = L.featureGroup();
 		this._markedSegments = L.polyline([]);
-		this._start          = (opts.trkStart || Options.trkStart);
-		this._end            = (opts.trkEnd || Options.trkEnd);
+		this._start          = L.circleMarker([0,0], (opts.trkStart || Options.trkStart));
+		this._end            = L.circleMarker([0,0], (opts.trkEnd || Options.trkEnd));
 		this._chartEnabled   = true;
 		this._yCoordMax      = -Infinity;
 		this.track_info      = {};
@@ -428,6 +428,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					if(trkseg.feature.geometry.type != "Point") {
 						let geo = L.geoJson(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1))});
 						let line = L.hotline(geo.toGeoJSON().features[0].geometry.coordinates, {
+							renderer: L.Hotline.renderer(),
 							min: isFinite(this.track_info[prop + '_min']) ? this.track_info[prop + '_min'] : 0,
 							max: isFinite(this.track_info[prop + '_max']) ? this.track_info[prop + '_max'] : 1,
 							palette: {

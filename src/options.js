@@ -49,8 +49,8 @@ export var Options = {
 	time: true,
 	timeFactor: 3600,
 	timestamps: false,
-	trkStart: L.circleMarker([0,0], { className: 'start-marker', radius: 6, weight: 2, color: '#fff', fillColor: '#00d800', fillOpacity: 1, interactive: false }),
-	trkEnd: L.circleMarker([0,0], { className: 'end-marker', radius: 6, weight: 2, color: '#fff', fillColor: '#ff0606', fillOpacity: 1, interactive: false }),
+	trkStart: { className: 'start-marker', radius: 6, weight: 2, color: '#fff', fillColor: '#00d800', fillOpacity: 1, interactive: false },
+	trkEnd: { className: 'end-marker', radius: 6, weight: 2, color: '#fff', fillColor: '#ff0606', fillOpacity: 1, interactive: false },
 	waypoints: true,
 	wptIcons: {
 		'': L.divIcon({
