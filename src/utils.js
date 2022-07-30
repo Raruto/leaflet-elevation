@@ -27,6 +27,8 @@ export function formatTime(t) {
 	if ( s === 60 ) { m++; s = 0; }
 	if ( m === 60 ) { h++; m = 0; }
 	if ( h === 24 ) { d++; h = 0; }
+	if ( !d && !h && !m ) return s.toString().padStart(2, 0) + '"';
+	if ( !d && !h ) return m.toString().padStart(2, 0) + "'" + s.toString().padStart(2, 0) + '"';
 	return (d ? d + "d " : '') + h.toString().padStart(2, 0) + ':' + m.toString().padStart(2, 0) + "'" + s.toString().padStart(2, 0) + '"';
 }
 
@@ -131,9 +133,10 @@ export const randomId      = ()                   => Math.random().toString(36).
 /**
  * TODO: use generators instead? (ie. "yield")
  */
-export const iMax = (iVal, max = -Infinity) => (iVal > max ? iVal : max); 
-export const iMin = (iVal, min = +Infinity) => (iVal < min ? iVal : min);
-export const iAvg = (iVal, avg = 0, idx = 1) => (iVal + avg * (idx - 1)) / idx;
+export const iMax = (iVal, max = -Infinity) => (iVal > max ? iVal : max);
+export const iMin = (iVal, min = +Infinity) => ((iVal && iVal < min) ? iVal : min );
+export const iMinP = (iVal, min = +Infinity) => ((iVal && iVal < min && iVal > 0) ? iVal : min );
+export const iAvg = (iVal, avg = 0, idx = 1) => (iVal && idx > 1) ? (iVal + avg * (idx - 1)) / idx : avg ;
 export const iSum = (iVal, sum = 0) => iVal + sum;
 
 /**
@@ -157,3 +160,12 @@ export const clamp     = (val, range)           => range ? (val < range[0] ? ran
  * Limit a delta difference between two values
  */
 export const wrapDelta = (curr, prev, deltaMax) => Math.abs(curr - prev) > deltaMax ? prev + deltaMax * Math.sign(curr - prev) : curr;
+
+/**
+ * Round numbers according to size
+ */
+export function tooltipvalue(value,count){
+	let comma = count - 1 - Math.floor(Math.log10(Math.abs(value)));
+	let factor = Math.pow(10,comma);
+	return Math.round(value * factor) / factor;
+}

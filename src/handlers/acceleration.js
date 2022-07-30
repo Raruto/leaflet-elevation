@@ -46,17 +46,17 @@ export function Acceleration() {
 		summary: {
 			"minacceleration"  : {
 				label: "Min Acceleration: ",
-				value: (track, unit) => Math.round(track.acceleration_min || 0) + '&nbsp;' + unit,
+				value: (track, unit) => (_.tooltipvalue(track.acceleration_min, 2) || 0) + '&nbsp;' + unit,
 				order: 60
 			},
 			"maxacceleration"  : {
 				label: "Max Acceleration: ",
-				value: (track, unit) => Math.round(track.acceleration_max || 0) + '&nbsp;' + unit,
+				value: (track, unit) => (_.tooltipvalue(track.acceleration_max, 2) || 0) + '&nbsp;' + unit,
 				order: 61
 			},
 			"avgacceleration": {
 				label: "Avg Acceleration: ",
-				value: (track, unit) => Math.round(track.acceleration_avg || 0) + '&nbsp;' + unit,
+				value: (track, unit) => (_.tooltipvalue(track.acceleration_avg, 2) || 0) + '&nbsp;' + unit,
 				order: 62
 			},
 		}

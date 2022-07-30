@@ -38,7 +38,7 @@ export function Distance() {
 		summary: opts.distance && {
 			"totlen"  : {
 				label: "Total Length: ",
-				value: (track) => (track.distance || 0).toFixed(2) + '&nbsp;' + distance.label,
+				value: (track) => (_.tooltipvalue(track.distance,2) || 0) + '&nbsp;' + distance.label,
 				order: 10
 			}
 		}

@@ -164,7 +164,7 @@ L.GpxGroup = L.Class.extend({
       .then(text => this._elevation._parseFromString(text))
       .then(geojson => {
         if(geojson) {
-          geojson.name = geojson.name || (geojson[0] && geojson[0].properties.name) || track.split('/').pop().split('#')[0].split('?')[0];
+          geojson.name = this.options.filename ? track.split('/').pop().split('.').slice(0, -1).join('.') : (geojson.name || (geojson[0] && geojson[0].properties.name) || track.split('/').pop().split('.').slice(0, -1).join('.'));
           this._loadRoute(geojson);
         }
       });

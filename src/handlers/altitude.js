@@ -61,17 +61,17 @@ export function Altitude() {
 		summary: {
 			"minele"  : {
 				label: "Min Elevation: ",
-				value: (track, unit) => (track.elevation_min || 0).toFixed(2) + '&nbsp;' + unit,
+				value: (track, unit) => (track.elevation_min || 0).toFixed(0) + '&nbsp;' + unit,
 				order: 30,
 			},
 			"maxele"  : {
 				label: "Max Elevation: ",
-				value: (track, unit) => (track.elevation_max || 0).toFixed(2) + '&nbsp;' + unit,
+				value: (track, unit) => (track.elevation_max || 0).toFixed(0) + '&nbsp;' + unit,
 				order: 31,
 			},
 			"avgele"  : {
 				label: "Avg Elevation: ",
-				value: (track, unit) => (track.elevation_avg || 0).toFixed(2) + '&nbsp;' + unit,
+				value: (track, unit) => (track.elevation_avg || 0).toFixed(0) + '&nbsp;' + unit,
 				order: 32,
 			},
 		}
