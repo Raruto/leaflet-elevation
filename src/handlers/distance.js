@@ -32,13 +32,13 @@ export function Distance() {
 		},
 		tooltip: opts.distance && {
 			name: 'x',
-			chart: (item) => L._("x: ") + _.round(item[opts.xAttr], opts.decimalsX) + " " + distance.label,
+			chart: (item) => L._("x: ") + _.tooltipvalue(item[opts.xAttr], (item[opts.xAttr] > 10 ? 3 : 2)) + " " + distance.label,
 			order: 20
 		},
 		summary: opts.distance && {
 			"totlen"  : {
 				label: "Total Length: ",
-				value: (track) => (_.tooltipvalue(track.distance,2) || 0) + '&nbsp;' + distance.label,
+				value: (track) => (_.tooltipvalue(track.distance,(track.distance > 10 ? 3 : 2)) || 0) + '&nbsp;' + distance.label,
 				order: 10
 			}
 		}

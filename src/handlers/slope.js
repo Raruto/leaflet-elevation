@@ -17,7 +17,7 @@ export function Slope() {
 		pointToAttr: (_, i) => { // slope in % = ( dy / dx ) * 100;
 			let dx    = (this._data[i].dist - this._data[i > 0 ? i - 1 : i].dist) * 1000;
 			let dy    = this._data[i][this.options.yAttr] - this._data[i > 0 ? i - 1 : i][this.options.yAttr];
-			return (!isNaN(dy) && dx !== 0) ? (dy / dx) * 100 : 0; 
+			return (!isNaN(dy) && dx !== 0) ? (dy / dx) * 100 : 0;
 		},
 		onPointAdded: (_, i) => {
 			let dz = this._data[i][this.options.yAttr] - this._data[i > 0 ? i - 1 : i][this.options.yAttr];
@@ -44,7 +44,7 @@ export function Slope() {
 			fillOpacity  : "0.25",
 		},
 		tooltip: {
-			chart: (item) => L._("m: ") + item.slope + slope.label,
+			chart: (item) => L._("m: ") + Math.round(item.slope) + slope.label,
 			marker: (item) => Math.round(item.slope) + slope.label,
 			order: 40,
 		},

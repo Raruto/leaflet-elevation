@@ -39,8 +39,8 @@ export function Acceleration() {
 			fillOpacity  : "0.25",
 		},
 		tooltip: {
-			chart: (item) => L._("a: ") + item.acceleration + " " + acceleration.label,
-			marker: (item) => Math.round(item.acceleration) + " " + acceleration.label,
+			chart: (item) => L._("a: ") + (_.tooltipvalue(item.acceleration, 2) || 0) + " " + acceleration.label,
+			marker: (item) => (_.tooltipvalue(item.acceleration,2) || 0) + " " + acceleration.label,
 			order: 60,
 		},
 		summary: {
