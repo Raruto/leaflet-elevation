@@ -32,7 +32,7 @@ export function Distance() {
 		},
 		tooltip: opts.distance && {
 			name: 'x',
-			chart: (item) => L._("x: ") + _.tooltipvalue(item[opts.xAttr], (item[opts.xAttr] > 10 ? 3 : 2)) + " " + distance.label,
+			chart: (item) => L._("x: ") + (_.tooltipvalue(item[opts.xAttr], (item[opts.xAttr] > 10 ? 3 : 2)) || 0) + " " + distance.label,
 			order: 20
 		},
 		summary: opts.distance && {

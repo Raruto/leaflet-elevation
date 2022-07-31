@@ -41,8 +41,8 @@ export function Speed() {
 			fillOpacity  : "0.25",
 		},
 		tooltip: (this.options.speed) && {
-			chart: (item) => L._('v: ') + _.tooltipvalue(item.speed,2) + " " + speed.label,
-			marker: (item) => _.tooltipvalue(item.speed,3) + " " + speed.label,
+			chart: (item) => L._('v: ') + (_.tooltipvalue(item.speed,2)  || 0) + " " + speed.label,
+			marker: (item) => (_.tooltipvalue(item.speed,3) || 0) + " " + speed.label,
 			order: 50,
 		},
 		summary: (this.options.speed) && {
