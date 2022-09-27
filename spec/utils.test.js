@@ -17,7 +17,9 @@ test('iAvg()', () => {
 test('iMin()', () => {
     let min;
     min = iMin(100, undefined); assert.is(toFixed(min), 100);  // min for [100] is 100
-    min = iMin(0, min);         assert.is(toFixed(min), 0);    // min for [100, 0] is 100
+    min = iMin(NaN, min);       assert.is(toFixed(min), 100);  // min for [100, NaN] is 100
+    min = iMin(0, min);         assert.is(toFixed(min), 0);    // min for [100, 0] is 0
+    min = iMin(min, 0);         assert.is(toFixed(min), 0);    // min for [100, 0] is 0
     min = iMin(-200, min);      assert.is(toFixed(min), -200); // min for [100, 0, -200] is -200
     min = iMin(200, min);       assert.is(toFixed(min), -200); // min for [100, -100, -200, 200] is -200
 });

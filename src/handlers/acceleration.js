@@ -17,7 +17,7 @@ export function Acceleration() {
 		pointToAttr: (_, i) => {
 			let dv     = (this._data[i].speed - this._data[i > 0 ? i - 1 : i].speed) * (1000 / opts.timeFactor);
 			let dt     = (this._data[i].time - this._data[i > 0 ? i - 1 : i].time) / 1000;
-			return dt > 0 ? Math.abs((dv / dt)) * opts.accelerationFactor : 0;
+			return dt > 0 ? Math.abs((dv / dt)) * opts.accelerationFactor : '';
 		},
 		stats: { max: _.iMax, min: _.iMin, avg: _.iAvg },
 		scale: {
@@ -39,24 +39,24 @@ export function Acceleration() {
 			fillOpacity  : "0.25",
 		},
 		tooltip: {
-			chart: (item) => L._("a: ") + item.acceleration + " " + acceleration.label,
-			marker: (item) => Math.round(item.acceleration) + " " + acceleration.label,
+			chart: (item) => L._("a: ") + _.precision(item.acceleration, 2) + " " + acceleration.label,
+			marker: (item) => _.precision(item.acceleration, 2) + " " + acceleration.label,
 			order: 60,
 		},
 		summary: {
 			"minacceleration"  : {
 				label: "Min Acceleration: ",
-				value: (track, unit) => Math.round(track.acceleration_min || 0) + '&nbsp;' + unit,
+				value: (track, unit) => _.precision(track.acceleration_min || 0, 2) + '&nbsp;' + unit,
 				order: 60
 			},
 			"maxacceleration"  : {
 				label: "Max Acceleration: ",
-				value: (track, unit) => Math.round(track.acceleration_max || 0) + '&nbsp;' + unit,
+				value: (track, unit) => _.precision(track.acceleration_max || 0, 2) + '&nbsp;' + unit,
 				order: 61
 			},
 			"avgacceleration": {
 				label: "Avg Acceleration: ",
-				value: (track, unit) => Math.round(track.acceleration_avg || 0) + '&nbsp;' + unit,
+				value: (track, unit) => _.precision(track.acceleration_avg || 0, 2) + '&nbsp;' + unit,
 				order: 62
 			},
 		}

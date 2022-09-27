@@ -131,9 +131,9 @@ export const randomId      = ()                   => Math.random().toString(36).
 /**
  * TODO: use generators instead? (ie. "yield")
  */
-export const iMax = (iVal, max = -Infinity) => (iVal > max ? iVal : max); 
-export const iMin = (iVal, min = +Infinity) => (iVal < min ? iVal : min);
-export const iAvg = (iVal, avg = 0, idx = 1) => (iVal + avg * (idx - 1)) / idx;
+export const iMax = (iVal, max = -Infinity) =>  (((typeof (iVal) === 'number') && (iVal > max)) ? iVal : max);
+export const iMin = (iVal, min = +Infinity) =>  (((typeof (iVal) === 'number') && (iVal < min)) ? iVal : min);
+export const iAvg = (iVal, avg = 0, idx = 1) => (((typeof (iVal) === 'number') && idx > 1) ? ((iVal + avg * (idx - 1)) / idx) : ((iVal && idx < 2) ? iVal : avg));
 export const iSum = (iVal, sum = 0) => iVal + sum;
 
 /**
@@ -157,3 +157,11 @@ export const clamp     = (val, range)           => range ? (val < range[0] ? ran
  * Limit a delta difference between two values
  */
 export const wrapDelta = (curr, prev, deltaMax) => Math.abs(curr - prev) > deltaMax ? prev + deltaMax * Math.sign(curr - prev) : curr;
+
+/**
+ * Round numbers according to size
+ */
+export function precision(x,n){
+	if ( typeof x == 'number')
+	return Number(parseFloat(x.toPrecision(n)).toFixed(n));
+}
