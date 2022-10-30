@@ -18,7 +18,7 @@ export function Speed() {
 		pointToAttr: (_, i) => {
 			let dx   = (this._data[i].dist - this._data[i > 0 ? i - 1 : i].dist) * 1000;
 			let dt   = this._data[i].time - this._data[ i > 0 ? i - 1 : i].time;
-			return dt > 0 ? Math.abs((dx / dt) * opts.timeFactor) * opts.speedFactor : 0;
+			return dt > 0 ? Math.abs((dx / dt) * opts.timeFactor) * opts.speedFactor : NaN;
 		},
 		stats: { max: _.iMax, min: _.iMin, avg: _.iAvg },
 		scale : (this.options.speed && this.options.speed != "summary") && {

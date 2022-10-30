@@ -1003,8 +1003,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			curr = this._data[i];
 			attr = props.attr || props.name;
 
+			// retrieve point value
+			curr[attr] = props.pointToAttr.call(this, point, i);
+
 			// check and fix missing data on last added point
-			if (props.skipNull === false) {
+			if (props.skipNull !== false) {
 				let curr = this._data[i][attr];
 				if(i > 0) {
 					let prev = this._data[i - 1][attr];
@@ -1016,7 +1019,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 						} else if (!isNaN(curr)) {
 							prev   = curr;
 						}
-						if (!isNaN(prev)) return this._data.splice(i - 1, 1);
+						// TODO: check what happens now on missing "altitude" data
+						// if (!isNaN(prev)) return this._data.splice(i - 1, 1);
 						this._data[i - 1][attr] = prev;
 					}
 				}
@@ -1025,9 +1029,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					lastValid = curr;
 				}
 			}
-
-			// retrieve point value
-			curr[attr] = props.pointToAttr.call(this, point, i);
 
 			// update "track_info" stats (min, max, avg, ...)
 			if (props.stats) {
