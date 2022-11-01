@@ -1,5 +1,5 @@
 export function Altitude() {
-
+	
 	const _  = L.Control.Elevation.Utils;
 
 	let opts       = this.options;
