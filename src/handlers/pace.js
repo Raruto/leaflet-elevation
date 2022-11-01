@@ -6,7 +6,6 @@ export function Pace() {
 	let pace = {};
 
 	pace.label      = opts.paceLabel  || L._(opts.imperial ? 'min/mi' : 'min/km');
-	pace.distunit   = L._(opts.imperial ? '/mi' : '/km');
 	opts.paceFactor = opts.paceFactor || 60; // 1 min = 60 sec
 
 	return {
@@ -41,24 +40,24 @@ export function Pace() {
 			fillOpacity  : "0.25",
 		},
 		tooltip: (this.options.pace) && {
-			chart: (item) => L._('pace: ') +  (_.formatTime(item.pace * 1000 * 60) || 0) + " " + (this.options.imperial ? '/mi' : '/km'),
-			marker: (item) => (_.formatTime(item.pace * 1000 * 60) || 0) + " " + (this.options.imperial ? '/mi' : '/km'),
+			chart: (item) => L._('pace: ') + item.pace + " " + pace.label,
+			marker: (item) => Math.round(item.pace) + " " + pace.label,
 			order: 50,
 		},
 		summary: (this.options.pace) && {
 			"minpace"  : {
 				label: "Min Pace: ",
-				value: (track, unit) => (_.formatTime(track.pace_max * 1000 * 60) || 0) + '&nbsp;' + pace.distunit,
+				value: (track, unit) => Math.round(track.pace_min || 0) + '&nbsp;' + unit,
 				order: 51
 			},
 			"maxpace"  : {
 				label: "Max Pace: ",
-				value: (track, unit) => (_.formatTime(track.pace_min * 1000 * 60) || 0) + '&nbsp;' + pace.distunit,
+				value: (track, unit) => Math.round(track.pace_max || 0) + '&nbsp;' + unit,
 				order: 51
 			},
 			"avgpace": {
 				label: "Avg Pace: ",
-				value: (track, unit) => _.formatTime( Math.abs((track.time / track.distance) / opts.paceFactor) *60) + '&nbsp;' + pace.distunit,
+				value: (track, unit) => Math.round(track.pace_avg || 0) + '&nbsp;' + unit,
 				order: 52
 			},
 		}

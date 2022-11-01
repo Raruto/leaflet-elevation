@@ -157,11 +157,3 @@ export const clamp     = (val, range)           => range ? (val < range[0] ? ran
  * Limit a delta difference between two values
  */
 export const wrapDelta = (curr, prev, deltaMax) => Math.abs(curr - prev) > deltaMax ? prev + deltaMax * Math.sign(curr - prev) : curr;
-
-/**
- * Round numbers according to size
- */
-export function precision(x,n){
-	if ( typeof x == 'number')
-	return Number(parseFloat(x.toPrecision(n)).toFixed(n));
-}

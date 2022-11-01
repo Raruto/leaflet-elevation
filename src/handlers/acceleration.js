@@ -39,24 +39,24 @@ export function Acceleration() {
 			fillOpacity  : "0.25",
 		},
 		tooltip: {
-			chart: (item) => L._("a: ") + _.precision(item.acceleration, 2) + " " + acceleration.label,
-			marker: (item) => _.precision(item.acceleration, 2) + " " + acceleration.label,
+			chart: (item) => L._("a: ") + item.acceleration + " " + acceleration.label,
+			marker: (item) => Math.round(item.acceleration) + " " + acceleration.label,
 			order: 60,
 		},
 		summary: {
 			"minacceleration"  : {
 				label: "Min Acceleration: ",
-				value: (track, unit) => _.precision(track.acceleration_min || 0, 2) + '&nbsp;' + unit,
+				value: (track, unit) => Math.round(track.acceleration_min || 0) + '&nbsp;' + unit,
 				order: 60
 			},
 			"maxacceleration"  : {
 				label: "Max Acceleration: ",
-				value: (track, unit) => _.precision(track.acceleration_max || 0, 2) + '&nbsp;' + unit,
+				value: (track, unit) => Math.round(track.acceleration_max || 0) + '&nbsp;' + unit,
 				order: 61
 			},
 			"avgacceleration": {
 				label: "Avg Acceleration: ",
-				value: (track, unit) => _.precision(track.acceleration_avg || 0, 2) + '&nbsp;' + unit,
+				value: (track, unit) => Math.round(track.acceleration_avg || 0) + '&nbsp;' + unit,
 				order: 62
 			},
 		}

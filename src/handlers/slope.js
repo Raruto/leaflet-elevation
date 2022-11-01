@@ -44,7 +44,7 @@ export function Slope() {
 			fillOpacity  : "0.25",
 		},
 		tooltip: {
-			chart: (item) => L._("m: ") + Math.round(item.slope) + slope.label,
+			chart: (item) => L._("m: ") + item.slope + slope.label,
 			marker: (item) => Math.round(item.slope) + slope.label,
 			order: 40,
 		},
