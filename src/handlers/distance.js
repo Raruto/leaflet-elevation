@@ -14,7 +14,7 @@ export function Distance() {
 		attr: 'dist',
 		unit: distance.label,
 		decimals: 5,
-		pointToAttr: (_, i) => (i > 1 ? this._data[i - 1].dist : 0) + (this._data[i].latlng.distanceTo(this._data[i > 1 ? i - 1 : i].latlng) * opts.distanceFactor) / 1000, // convert back km to meters
+		pointToAttr: (_, i) => (i > 0 ? this._data[i - 1].dist : 0) + (this._data[i].latlng.distanceTo(this._data[i > 0 ? i - 1 : i].latlng) * opts.distanceFactor) / 1000, // convert back km to meters
 		// stats: { total: _.iSum },
 		onPointAdded: (distance, i) => this.track_info.distance = distance,
 		scale: opts.distance && {
