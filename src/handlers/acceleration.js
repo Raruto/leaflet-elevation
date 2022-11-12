@@ -17,7 +17,7 @@ export function Acceleration() {
 		pointToAttr: (_, i) => {
 			let dv     = (this._data[i].speed - this._data[i > 0 ? i - 1 : i].speed) * (1000 / opts.timeFactor);
 			let dt     = (this._data[i].time - this._data[i > 0 ? i - 1 : i].time) / 1000;
-			return dt > 0 ? Math.abs((dv / dt)) * opts.accelerationFactor : undefined;
+			return dt > 0 ? Math.abs((dv / dt)) * opts.accelerationFactor : '';
 		},
 		stats: { max: _.iMax, min: _.iMin, avg: _.iAvg },
 		scale: {
