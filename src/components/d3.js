@@ -268,7 +268,7 @@ export const LegendSmall = ({
 			// 	.merge(label.data([{ idx: id }]))
 			// 	.text(d => items.length ? (items[idx][0].toUpperCase() + items[idx].slice(1)) : '')
 			// 	.on("mousedown", (e, d) => setIdx(L.Util.wrapNum((idx + 1), [0, items.length])));
-			label.text(items.length ? (items[idx][0].toUpperCase() + items[idx].slice(1)) : '');
+			label.text(items.length ? L._((items[idx][0].toUpperCase() + items[idx].slice(1))) : '');
 			onClick(items[idx]);
 		};
 		setIdx(0);
