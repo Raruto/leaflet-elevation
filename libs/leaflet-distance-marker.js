@@ -206,7 +206,7 @@ L.DistanceMarkers = L.LayerGroup.extend({
 									iconSize: options.arrowSize,
 								}),
 								// NB the following option is added by "leaflet-rotate"
-								rotation: angle * L.DomUtil.RAD_TO_DEG,
+								rotation: angle,
 								interactive: false,
 							})
 						);
