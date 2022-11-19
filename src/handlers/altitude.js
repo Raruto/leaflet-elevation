@@ -17,7 +17,6 @@ export function Altitude() {
 		meta: 'z',
 		unit: altitude.label,
 		statsName: 'elevation',
-		skipNull: this.options.skipNullZCoords,
 		deltaMax: this.options.altitudeDeltaMax,
 		clampRange: this.options.altitudeRange,
 		// init: ({point}) => {
