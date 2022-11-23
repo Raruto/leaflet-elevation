@@ -1028,14 +1028,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			// update reference to last used point
 			lastValid[attr] = curr[attr];
 
-			// update "track_info" stats (min, max, avg, ...)
-			if (props.stats) {
-				for (const key in props.stats) {
-					let sname = (props.statsName || attr) + (key != '' ? '_' : '');
-					this.track_info[sname + key] = props.stats[key].call(this, curr[attr], this.track_info[sname + key], this._data.length);
-				}
-			}
-
 			// Limit "crazy" delta values.
 			if (props.deltaMax) {
 				curr[attr] =_.wrapDelta(curr[attr], prev[attr], props.deltaMax);
@@ -1049,6 +1041,14 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			// Limit floating point precision.
 			if (!isNaN(props.decimals)) {
 				curr[attr] = _.round(curr[attr], props.decimals);
+			}
+
+			// update "track_info" stats (min, max, avg, ...)
+			if (props.stats) {
+				for (const key in props.stats) {
+					let sname = (props.statsName || attr) + (key != '' ? '_' : '');
+					this.track_info[sname + key] = props.stats[key].call(this, curr[attr], this.track_info[sname + key], this._data.length);
+				}
 			}
 
 			// update here some mixins (eg. complex "track_info" stuff)
