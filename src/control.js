@@ -990,10 +990,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		// prevent excessive variabile instanstations
-		let i, curr, prev, attr;
+		let i, curr, prev, attr = props.attr || props.name;
 
 		// save here a reference to last used point
-		let lastValid = null; 
+		let lastValid = {};
 
 		// iteration
 		this.on("elepoint_added", ({index, point}) => {
@@ -1001,41 +1001,32 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 			prev = curr ?? this._data[i]; // same as: this._data[i > 0 ? i - 1 : i]
 			curr = this._data[i];
-			attr = props.attr || props.name;
-
-			// check and fix missing data on last added point
-			if (props.skipNull === false) {
-				let curr = this._data[i][attr];
-				if(i > 0) {
-					let prev = this._data[i - 1][attr];
-					if (isNaN(prev)) {
-						if (!isNaN(lastValid) && !isNaN(curr)) {
-							prev   = (lastValid + curr) / 2;
-						} else if (!isNaN(lastValid)) {
-							prev   = lastValid;
-						} else if (!isNaN(curr)) {
-							prev   = curr;
-						}
-						if (!isNaN(prev)) return this._data.splice(i - 1, 1);
-						this._data[i - 1][attr] = prev;
-					}
-				}
-				// update reference to last used point (ie. if it has data)
-				if (!isNaN(curr)) {
-					lastValid = curr;
-				}
-			}
 
 			// retrieve point value
 			curr[attr] = props.pointToAttr.call(this, point, i);
 
-			// update "track_info" stats (min, max, avg, ...)
-			if (props.stats) {
-				for (const key in props.stats) {
-					let sname = (props.statsName || attr) + (key != '' ? '_' : '');
-					this.track_info[sname + key] = props.stats[key].call(this, curr[attr], this.track_info[sname + key], this._data.length);
+			// check and fix missing data on last added point
+			if (i > 0 && isNaN(prev[attr])) {
+				if (!isNaN(lastValid[attr]) && !isNaN(curr[attr])) {
+					prev[attr]   = (lastValid[attr] + curr[attr]) / 2;
+				} else if (!isNaN(lastValid[attr])) {
+					prev[attr]   = lastValid[attr];
+				} else if (!isNaN(curr[attr])) {
+					prev[attr]   = curr[attr];
+				}
+				// update "yAttr" and "xAttr"
+				if (props.meta) {
+					prev[props.meta] = prev[attr];
 				}
 			}
+
+			// skip to next iteration for invalid or missing data (eg. i == 0)
+			if (isNaN(curr[attr])) {
+				return;
+			}
+
+			// update reference to last used point
+			lastValid[attr] = curr[attr];
 
 			// Limit "crazy" delta values.
 			if (props.deltaMax) {
@@ -1052,8 +1043,16 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				curr[attr] = _.round(curr[attr], props.decimals);
 			}
 
+			// update "track_info" stats (min, max, avg, ...)
+			if (props.stats) {
+				for (const key in props.stats) {
+					let sname = (props.statsName || attr) + (key != '' ? '_' : '');
+					this.track_info[sname + key] = props.stats[key].call(this, curr[attr], this.track_info[sname + key], this._data.length);
+				}
+			}
+
 			// update here some mixins (eg. complex "track_info" stuff)
-			if(props.onPointAdded) props.onPointAdded.call(this, curr[attr], i, point);
+			if (props.onPointAdded) props.onPointAdded.call(this, curr[attr], i, point);
 		});
 	},
 
@@ -1071,7 +1070,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			name,
 			attr,
 			required,
-			skipNull,
 			deltaMax,
 			clampRange,
 			decimals,
@@ -1096,7 +1094,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._registerDataAttribute({
 				name,
 				attr,
-				skipNull,
+				meta,
 				deltaMax,
 				clampRange,
 				decimals,

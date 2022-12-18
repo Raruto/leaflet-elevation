@@ -17,7 +17,7 @@ export function Slope() {
 		pointToAttr: (_, i) => { // slope in % = ( dy / dx ) * 100;
 			let dx    = (this._data[i].dist - this._data[i > 0 ? i - 1 : i].dist) * 1000;
 			let dy    = this._data[i][this.options.yAttr] - this._data[i > 0 ? i - 1 : i][this.options.yAttr];
-			return (!isNaN(dy) && dx !== 0) ? (dy / dx) * 100 : 0; 
+			return dx !== 0 ? (dy / dx) * 100 : NaN; 
 		},
 		onPointAdded: (_, i) => {
 			let dz = this._data[i][this.options.yAttr] - this._data[i > 0 ? i - 1 : i][this.options.yAttr];

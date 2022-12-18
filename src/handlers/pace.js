@@ -17,7 +17,7 @@ export function Pace() {
 		pointToAttr: (_, i) => {
 			let dx   = (this._data[i].dist - this._data[i > 0 ? i - 1 : i].dist) * 1000;
 			let dt   = this._data[i].time - this._data[ i > 0 ? i - 1 : i].time;
-			return dx > 0 ? Math.abs((dt / dx) / opts.paceFactor) : 0;
+			return dx > 0 ? Math.abs((dt / dx) / opts.paceFactor) : NaN;
 		},
 		stats: { max: _.iMax, min: _.iMin, avg: _.iAvg },
 		scale : (this.options.pace && this.options.pace != "summary") && {

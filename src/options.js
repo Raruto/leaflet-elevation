@@ -79,7 +79,6 @@ export var Options = {
 	decimalsY: 0,
 	forceAxisBounds: false,
 	interpolation: "curveLinear",
-	skipNullZCoords: false,
 	yAxisMax: undefined,
 	yAxisMin: undefined,
 };
