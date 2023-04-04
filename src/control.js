@@ -173,7 +173,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	initialize: function(opts) {
 
-		opts = L.setOptions(this, opts);
+		opts = L.setOptions(this, L.extend({}, structuredClone(Options), opts)); // "deep copy" nested objects (multiple charts)
+		
 
 		this._data           = [];
 		this._layers         = L.featureGroup();
