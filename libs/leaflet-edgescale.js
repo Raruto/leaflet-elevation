@@ -30,6 +30,8 @@ L.Control.EdgeScale = L.Control.extend({
   options: {
     position: 'bottomleft',
     icon: true,
+    coords: true,
+    bar: true,
     onMove: true,
     template: '{y} | {x}', // https://en.wikipedia.org/wiki/ISO_6709
     projected: false,
@@ -58,7 +60,6 @@ L.Control.EdgeScale = L.Control.extend({
       font:            '11px/1.5 Consolas, monaco, monospace',
       writingMode:     'vertical-lr',
     },
-    scaleBar: undefined,
   },
 
   initialize: function(options) {
@@ -66,7 +67,10 @@ L.Control.EdgeScale = L.Control.extend({
   },
 
   onAdd: function (map) {
-    this._scaleBar = (new L.Control.EdgeScale.Layer(this.options.scaleBar)).addTo(map);
+
+    if (this.options.bar) {
+      this._scaleBar = (new L.Control.EdgeScale.Layer(true === this.options.bar ? {} : this.options.bar)).addTo(map);
+    }
 
     // create a DOM element and put it into overlayPane
     if (this.options.icon) {
@@ -77,20 +81,28 @@ L.Control.EdgeScale = L.Control.extend({
 
     // Control container
     this._container = L.DomUtil.create('div', 'leaflet-control-mapcentercoord');
+
     Object.assign(this._container.style, this.options.containerStyle);
 
+    if (!this.options.coords) {
+      this._container.style.display = 'none';
+    }
+
     L.DomEvent.disableClickPropagation(this._container);
+
+    this._container.innerHTML = this._getMapCenterCoord();
 
     // Add events listeners for updating coordinates & icon's position
     map.on('move', this._onMapMove, this);
     map.on('moveend', this._onMapMove, this);
 
-    this._container.innerHTML = this._getMapCenterCoord();
     return this._container;
   },
 
   onRemove: function (map) {
-    this._scaleBar.remove();
+    if (this.options.bar) {
+      this._scaleBar.remove();
+    }
 
     // remove icon's DOM elements and listeners
     if (this.options.icon) {
