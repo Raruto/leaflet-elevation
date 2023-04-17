@@ -554,7 +554,10 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
 
   _setCanvasPosition: function() {
     let lt = this._map.containerPointToLayerPoint([0, 0]);
-    if (this._map._rotate) {
+    /**
+     * @TODO add support for "leaflet-rotate"
+     */
+    if (this._map._bearing) {
       lt = this._map.rotatedPointToMapPanePoint(
         this._map.containerPointToLayerPoint(L.point(this._map._container.getBoundingClientRect()))
       );
