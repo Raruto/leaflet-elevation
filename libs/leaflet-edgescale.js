@@ -609,12 +609,12 @@ L.control.edgeScale = function (options) {
 };
 
 L.Map.mergeOptions({
-  EdgeScaleControl: false
+  edgeScaleControl: false
 });
 
 L.Map.addInitHook(function () {
-  if (this.options.EdgeScaleControl) {
-    this.EdgeScaleControl = new L.Control.EdgeScale();
-    this.addControl(this.EdgeScaleControl);
+  if (this.options.edgeScaleControl) {
+    this.edgeScaleControl = new L.Control.EdgeScale();
+    this.addControl(this.edgeScaleControl);
   }
 });

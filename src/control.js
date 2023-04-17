@@ -428,7 +428,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_initEdgeScale: function(map) {
 		return this.options.edgeScale ? Promise.all([this.import(this.__LEDGESCALE)])
 			.then(() => {
-				this._edgeScale = L.control.edgeScale('boolean' !== typeof this.options.edgeScale ? this.options.edgeScale : {}).addTo(map);
+				map.edgeScaleControl = map.edgeScaleControl || L.control.edgeScale('boolean' !== typeof this.options.edgeScale ? this.options.edgeScale : {}).addTo(map);
 			}) : Promise.resolve();
 	},
 
