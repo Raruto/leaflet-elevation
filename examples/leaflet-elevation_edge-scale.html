@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>leaflet-elevation.js</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+    <link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+    <link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+    <link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.9/dist/leaflet-ui.js" as="script">
+
+    <style> @import '../libs/fullpage.css';</style>
+
+    <!-- leaflet-ui -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-ui@0.5.9/dist/leaflet-ui.js"></script>
+
+    <!-- leaflet-elevation -->
+    <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.js"></script>
+
+    <style>
+        button {
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: white !important;
+            color: black;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body style="flex-direction: row; flex-wrap: wrap; gap: 10px;">
+
+    <div id="map" class="leaflet-map"></div>
+
+    <button id='toggleButton' style="position: fixed; top: 30px; right: 30px; background-color: #4CAF50;">TOGGLE</button>
+
+    <script>
+        let opts = {
+            map: {
+                center: [41.4583, 12.7059],
+                zoom: 5,
+                fullscreenControl: false,
+                resizerControl: true,
+                preferCanvas: true,
+                rotate: true,
+                bearing: 0,
+                rotateControl: false,
+                // rotateControl: {
+                //     closeOnZeroBearing: false
+                // },
+                minimapControl: false
+            },
+            elevationControl: {
+                tracks: [
+                    // "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
+                    "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+                    "https://raruto.github.io/leaflet-elevation/examples/waypoints.geojson",
+                    // "https://raruto.github.io/leaflet-elevation/examples/via-aurelia.gpx",
+                    // "https://raruto.github.io/leaflet-elevation/examples/time.gpx",
+                ],
+                options: {
+                    theme: "lightblue-theme",
+                    collapsed: true,
+                    autohide: false,
+                    autofitBounds: true,
+                    position: "bottomleft",
+                    detached: false,
+                    summary: "inline",
+                    imperial: false,
+                    // altitude: "disabled",
+                    slope: "disabled",
+                    speed: false,
+                    acceleration: false,
+                    time: "summary",
+                    legend: true,
+                    followMarker: true,
+                    almostOver: false,
+                    distanceMarkers: false,
+                    hotline: false,
+                    edgeScale: true,
+                },
+            },
+            layersControl: {
+                options: {
+                    collapsed: false,
+                },
+            },
+        };
+
+    const button = document.getElementById('toggleButton');
+    const { tracks } = opts.elevationControl;
+    let idx = 0;
+
+    let map = L.map('map', opts.map);
+    let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+    let controlLayer = L.control.layers(null, null, opts.layersControl.options);
+
+    controlElevation.load(tracks[idx]);
+
+    button.addEventListener('click', function() {
+        button.setAttribute('disabled', true);
+        for (let i = 0; i <= 10; i++) {
+            (function(sec) {
+                 setTimeout(function() {
+                    controlElevation.clear();
+                    controlElevation.load(tracks[++idx % tracks.length]);
+                    if (10 === sec) button.removeAttribute('disabled');
+                 }, 1000 * sec);
+             })(i);
+        }
+    });
+   </script>
+
+    <a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
+
+</body>
+
+</html>

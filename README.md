@@ -37,6 +37,7 @@ _For a working example see one of the following demos:_
 - [autohide chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-chart.html)
 - [collapsible button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
 - [custom summary](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-summary.html)
+- [edge scale control](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_edge-scale.html)
 - [follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
 - [layer almostover](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
 - [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
