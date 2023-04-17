@@ -153,6 +153,9 @@ _For a working example see one of the following demos:_
 
         // Toggle "leaflet-distance-markers" integration
         distanceMarkers: false,
+
+        // Toggle "leaflet-edgescale" integration
+        edgeScale: false,
         
         // Toggle "leaflet-hotline" integration
         hotline: true,
