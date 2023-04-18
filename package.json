@@ -49,23 +49,22 @@
 	},
 	"homepage": "https://github.com/Raruto/leaflet-elevation#readme",
 	"devDependencies": {
+		"@rollup/plugin-commonjs": "^24.1.0",
+		"@rollup/plugin-node-resolve": "^15.0.2",
+		"@rollup/plugin-terser": "^0.4.1",
 		"jsdom": "^20.0.0",
 		"leaflet": "^1.7.1",
-		"postcss": "^8.4.16",
+		"postcss": "^8.4.22",
 		"postcss-copy": "^7.1.0",
-		"postcss-import": "^15.0.0",
-		"rollup": "^2.79.0",
-		"rollup-plugin-commonjs": "^10.1.0",
-		"rollup-plugin-git-version": "^0.3.1",
-		"rollup-plugin-node-resolve": "^5.2.0",
+		"postcss-import": "^15.1.0",
+		"rollup": "^3.20.6",
 		"rollup-plugin-postcss": "^4.0.2",
-		"rollup-plugin-terser": "^7.0.2",
 		"uvu": "^0.5.6"
 	},
 	"peerDependencies": {
-		"leaflet": "^1.7.0",
-		"leaflet-i18n": "^0.3.1",
+		"@tmcw/togeojson": "4.6.0",
 		"d3": "6.5.0",
-		"@tmcw/togeojson": "4.6.0"
+		"leaflet": "^1.7.0",
+		"leaflet-i18n": "^0.3.1"
 	}
 }
