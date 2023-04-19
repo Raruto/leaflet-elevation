@@ -5,3 +5,6 @@ spec/**/*.min.js
 src/**/*.min.js
 src/**/*.min.css
 dist/
+e2e/results/
+e2e/reports/
+/playwright/.cache/

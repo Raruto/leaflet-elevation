@@ -1,70 +1,76 @@
 {
-	"name": "@raruto/leaflet-elevation",
-	"version": "2.2.8",
-	"description": "A Leaflet plugin that allows to add elevation profiles using d3js",
-	"type": "module",
-	"main": "dist/leaflet-elevation.min.js",
-	"browser": "dist/leaflet-elevation.min.js",
-	"module": "src/index.js",
-	"scripts": {
-		"test": "node spec/index.js",
-		"build": "rollup -c build/rollup.config.js",
-		"watch": "rollup -c build/rollup.config.js --watch",
-		"dev": "npm run watch",
-		"version": "npm run build && git add -A"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Raruto/leaflet-elevation.git"
-	},
-	"keywords": [
-		"leaflet",
-		"d3js",
-		"javascript",
-		"elevation",
-		"highchart",
-		"kml",
-		"altitude",
-		"gpx",
-		"gps-visualizer",
-		"tcx"
-	],
-	"author": {
-		"name": "Felix “MrMufflon” Bache",
-		"url": "https: //github.com/MrMufflon/Leaflet.Elevation"
-	},
-	"contributors": [
-		{
-			"name": "Raruto",
-			"url": "https://github.com/Raruto/leaflet-elevation"
-		},
-		{
-			"name": "Felix Bache",
-			"web": "https://github.com/HostedDinner/Leaflet.Elevation"
-		}
-	],
-	"license": "GPL-3.0",
-	"bugs": {
-		"url": "https://github.com/Raruto/leaflet-elevation/issues"
-	},
-	"homepage": "https://github.com/Raruto/leaflet-elevation#readme",
-	"devDependencies": {
-		"@rollup/plugin-commonjs": "^24.1.0",
-		"@rollup/plugin-node-resolve": "^15.0.2",
-		"@rollup/plugin-terser": "^0.4.1",
-		"jsdom": "^20.0.0",
-		"leaflet": "^1.7.1",
-		"postcss": "^8.4.22",
-		"postcss-copy": "^7.1.0",
-		"postcss-import": "^15.1.0",
-		"rollup": "^3.20.6",
-		"rollup-plugin-postcss": "^4.0.2",
-		"uvu": "^0.5.6"
-	},
-	"peerDependencies": {
-		"@tmcw/togeojson": "4.6.0",
-		"d3": "6.5.0",
-		"leaflet": "^1.7.0",
-		"leaflet-i18n": "^0.3.1"
-	}
+  "name": "@raruto/leaflet-elevation",
+  "version": "2.2.8",
+  "description": "A Leaflet plugin that allows to add elevation profiles using d3js",
+  "type": "module",
+  "main": "dist/leaflet-elevation.min.js",
+  "browser": "dist/leaflet-elevation.min.js",
+  "module": "src/index.js",
+  "scripts": {
+    "test": "npm-run-all --print-label --parallel test:e2e test:uvu",
+    "test:e2e": "playwright test",
+    "test:uvu": "node spec/index.js",
+    "build": "rollup -c build/rollup.config.js",
+    "watch": "rollup -c build/rollup.config.js --watch",
+    "dev": "npm-run-all --print-label --parallel serve watch",
+    "serve": "http-server",
+    "version": "npm run build && git add -A"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Raruto/leaflet-elevation.git"
+  },
+  "keywords": [
+    "leaflet",
+    "d3js",
+    "javascript",
+    "elevation",
+    "highchart",
+    "kml",
+    "altitude",
+    "gpx",
+    "gps-visualizer",
+    "tcx"
+  ],
+  "author": {
+    "name": "Felix “MrMufflon” Bache",
+    "url": "https: //github.com/MrMufflon/Leaflet.Elevation"
+  },
+  "contributors": [
+    {
+      "name": "Raruto",
+      "url": "https://github.com/Raruto/leaflet-elevation"
+    },
+    {
+      "name": "Felix Bache",
+      "web": "https://github.com/HostedDinner/Leaflet.Elevation"
+    }
+  ],
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Raruto/leaflet-elevation/issues"
+  },
+  "homepage": "https://github.com/Raruto/leaflet-elevation#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.32.3",
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@rollup/plugin-terser": "^0.4.1",
+    "http-server": "^14.1.1",
+    "jsdom": "^20.0.0",
+    "leaflet": "^1.7.1",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.22",
+    "postcss-copy": "^7.1.0",
+    "postcss-import": "^15.1.0",
+    "rollup": "^3.20.6",
+    "rollup-plugin-postcss": "^4.0.2",
+    "uvu": "^0.5.6"
+  },
+  "peerDependencies": {
+    "@tmcw/togeojson": "4.6.0",
+    "d3": "6.5.0",
+    "leaflet": "^1.7.0",
+    "leaflet-i18n": "^0.3.1"
+  }
 }
