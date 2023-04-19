@@ -264,7 +264,8 @@ L.Control.EdgeScale = L.Control.extend({
  *  Inspired by LatLonGraticule Leaflet plugin by: lanwei@cloudybay.com.tw
  */
 L.Control.EdgeScale.Layer = L.Layer.extend({
-  includes: L.Mixin.Events,
+
+  includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
   options: {
       opacity: 1,
