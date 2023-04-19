@@ -1,7 +1,7 @@
 // @ts-check
 import { test, expect, Route } from '@playwright/test';
 
-test.describe('leaflet-elevation.html', () => {
+test.describe('examples/leaflet-elevation.html', () => {
 
   test.beforeEach(async ({ page, context }) => {
     context.route(/.html$/, mock_cdn_urls);
