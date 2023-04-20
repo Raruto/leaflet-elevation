@@ -32,6 +32,9 @@ test.describe('examples/leaflet-elevation.html', () => {
 
 });
 
+/**
+ * Replace CDN URLs with locally developed files within Network response.
+ */
 async function mock_cdn_urls(route: Route) {
   const response = await route.fetch();
   let body = await response.text();
