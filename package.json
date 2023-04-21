@@ -7,7 +7,7 @@
   "browser": "dist/leaflet-elevation.min.js",
   "module": "src/index.js",
   "scripts": {
-    "test": "node spec/index.js",
+    "test": "uvu . ^(examples)?(src)?\\.*\\.spec\\.js$",
     "build": "rollup -c build/rollup.config.js",
     "watch": "rollup -c build/rollup.config.js --watch",
     "dev": "npm-run-all --print-label --parallel serve watch",

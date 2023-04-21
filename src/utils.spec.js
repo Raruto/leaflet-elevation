@@ -1,53 +1,15 @@
+/**
+ * src/utils.js
+ */
+
 import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
-import { exec } from 'child_process';
+import '../test/setup/jsdom.js'
 import { iAvg, iMin, iMax, iSum } from "../src/utils.js";
-import { chromium } from 'playwright';
-
-let browser, context, page, server;
-const localhost = 'http://localhost:8080';
 
 const toFixed = (n) => +n.toFixed(2);
 
-const test = suite('stats');
-
-test.before.each(async () => {
-    server = exec('http-server');
-    browser = await chromium.launch();
-    context = await browser.newContext();
-    context.route(/.html$/, mock_cdn_urls);
-    page = await context.newPage();
-    return Promise.resolve();
-});
-
-test.after.each(async () => {
-  await context.close();
-  await browser.close();
-  server.kill(); 
-});
-
-test('eledata_loaded', async () => {
-    await page.goto(localhost + '/examples/leaflet-elevation.html');
-    const gpx = await page.evaluate(() => new Promise(resolve => {
-      controlElevation.on('eledata_loaded', (gpx) => resolve(gpx));
-    }));
-    assert.is(gpx.name, 'via-emilia.gpx');
-    assert.not.type(gpx.layer, 'undefined');
-    assert.type(gpx.track_info.distance, 'number');
-});
-
-test('multiple_maps', async () => {
-    await page.goto(localhost + '/examples/leaflet-elevation_multiple-maps.html');
-    const charts = await page.evaluate(() => new Promise(resolve => {
-        resolve(charts)
-    }));
-    charts.forEach((chart) => {
-        assert.snapshot(
-            JSON.stringify(chart.options.margins),
-            JSON.stringify({ top: 30, right: 70, bottom: 90, left: 40 })
-        );
-    });
-});
+const test = suite('src/utils.js');
 
 test('iAvg()', () => {
     let avg;
@@ -86,14 +48,3 @@ test('iSum()', () => {
 });
 
 test.run();
-
-/**
- * Replace CDN URLs with locally developed files within Network response.
- */
-async function mock_cdn_urls(route) {
-    const response = await route.fetch();
-    let body = await response.text();
-    body = body.replace(new RegExp('https://unpkg.com/@raruto/leaflet-elevation@(.*?)/', 'g'), '../');
-    body = body.replace(new RegExp('@raruto/leaflet-elevation@(.*?)/', 'g'), '../');
-    route.fulfill({ response, body, headers: response.headers() });
-}
