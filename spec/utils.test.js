@@ -35,7 +35,7 @@ test('eledata_loaded', async () => {
     assert.type(gpx.track_info.distance, 'number');
 });
 
-test('multiple_maps', async (e, b,c) => {
+test('multiple_maps', async () => {
     await page.goto('http://localhost:8080/examples/leaflet-elevation_multiple-maps.html');
     const charts = await page.evaluate(() => new Promise(resolve => {
         resolve(charts)
