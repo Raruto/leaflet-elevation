@@ -1,32 +1,33 @@
 import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
+import { exec } from 'child_process';
 import { iAvg, iMin, iMax, iSum } from "../src/utils.js";
-
 import { chromium } from 'playwright';
+
+let browser, context, page, server;
+const localhost = 'http://localhost:8080';
 
 const toFixed = (n) => +n.toFixed(2);
 
 const test = suite('stats');
 
-let browser, context, page;
-
 test.before.each(async () => {
+    server = exec('http-server');
     browser = await chromium.launch();
     context = await browser.newContext();
     context.route(/.html$/, mock_cdn_urls);
     page = await context.newPage();
-    // Wait until page is fully loaded.
-    // const title = await page.innerText('title');
-    // assert.is(title, 'leaflet-elevation.js')
+    return Promise.resolve();
 });
 
 test.after.each(async () => {
   await context.close();
   await browser.close();
+  server.kill(); 
 });
 
 test('eledata_loaded', async () => {
-    await page.goto('http://localhost:8080/examples/leaflet-elevation.html');
+    await page.goto(localhost + '/examples/leaflet-elevation.html');
     const gpx = await page.evaluate(() => new Promise(resolve => {
       controlElevation.on('eledata_loaded', (gpx) => resolve(gpx));
     }));
@@ -36,7 +37,7 @@ test('eledata_loaded', async () => {
 });
 
 test('multiple_maps', async () => {
-    await page.goto('http://localhost:8080/examples/leaflet-elevation_multiple-maps.html');
+    await page.goto(localhost + '/examples/leaflet-elevation_multiple-maps.html');
     const charts = await page.evaluate(() => new Promise(resolve => {
         resolve(charts)
     }));

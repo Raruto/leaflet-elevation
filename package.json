@@ -7,9 +7,7 @@
   "browser": "dist/leaflet-elevation.min.js",
   "module": "src/index.js",
   "scripts": {
-    "test": "npm-run-all --print-label --parallel test:e2e test:uvu",
-    "test:e2e": "playwright test",
-    "test:uvu": "node spec/index.js",
+    "test": "node spec/index.js",
     "build": "rollup -c build/rollup.config.js",
     "watch": "rollup -c build/rollup.config.js --watch",
     "dev": "npm-run-all --print-label --parallel serve watch",
@@ -52,7 +50,6 @@
   },
   "homepage": "https://github.com/Raruto/leaflet-elevation#readme",
   "devDependencies": {
-    "@playwright/test": "^1.32.3",
     "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
     "@rollup/plugin-terser": "^0.4.1",
@@ -60,6 +57,7 @@
     "jsdom": "^20.0.0",
     "leaflet": "^1.7.1",
     "npm-run-all": "^4.1.5",
+    "playwright": "^1.32.3",
     "postcss": "^8.4.22",
     "postcss-copy": "^7.1.0",
     "postcss-import": "^15.1.0",
