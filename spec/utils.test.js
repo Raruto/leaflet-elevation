@@ -2,9 +2,51 @@ import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
 import { iAvg, iMin, iMax, iSum } from "../src/utils.js";
 
+import { chromium } from 'playwright';
+
 const toFixed = (n) => +n.toFixed(2);
 
 const test = suite('stats');
+
+let browser, context, page;
+
+test.before.each(async () => {
+    browser = await chromium.launch();
+    context = await browser.newContext();
+    context.route(/.html$/, mock_cdn_urls);
+    page = await context.newPage();
+    // Wait until page is fully loaded.
+    // const title = await page.innerText('title');
+    // assert.is(title, 'leaflet-elevation.js')
+});
+
+test.after.each(async () => {
+  await context.close();
+  await browser.close();
+});
+
+test('eledata_loaded', async () => {
+    await page.goto('http://localhost:8080/examples/leaflet-elevation.html');
+    const gpx = await page.evaluate(() => new Promise(resolve => {
+      controlElevation.on('eledata_loaded', (gpx) => resolve(gpx));
+    }));
+    assert.is(gpx.name, 'via-emilia.gpx');
+    assert.not.type(gpx.layer, 'undefined');
+    assert.type(gpx.track_info.distance, 'number');
+});
+
+test('multiple_maps', async (e, b,c) => {
+    await page.goto('http://localhost:8080/examples/leaflet-elevation_multiple-maps.html');
+    const charts = await page.evaluate(() => new Promise(resolve => {
+        resolve(charts)
+    }));
+    charts.forEach((chart) => {
+        assert.snapshot(
+            JSON.stringify(chart.options.margins),
+            JSON.stringify({ top: 30, right: 70, bottom: 90, left: 40 })
+        );
+    });
+});
 
 test('iAvg()', () => {
     let avg;
@@ -43,3 +85,14 @@ test('iSum()', () => {
 });
 
 test.run();
+
+/**
+ * Replace CDN URLs with locally developed files within Network response.
+ */
+async function mock_cdn_urls(route) {
+    const response = await route.fetch();
+    let body = await response.text();
+    body = body.replace(new RegExp('https://unpkg.com/@raruto/leaflet-elevation@(.*?)/', 'g'), '../');
+    body = body.replace(new RegExp('@raruto/leaflet-elevation@(.*?)/', 'g'), '../');
+    route.fulfill({ response, body, headers: response.headers() });
+}
