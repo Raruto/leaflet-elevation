@@ -6,13 +6,15 @@ import { chromium } from 'playwright';
  * Start HTTP server 
  */
 export async function setup(ctx) {
+    ctx.server = new AbortController();
+    exec('http-server', { signal: ctx.server.signal });
     ctx.localhost = 'http://localhost:8080';
-    ctx.server = exec('http-server');
     ctx.browser = await chromium.launch();
     ctx.context = await ctx.browser.newContext();
     ctx.context.route(/.html$/, mock_cdn_urls);
     ctx.page = await ctx.context.newPage();
-    return Promise.resolve();
+    console.log('done')
+
 }
 
 /**
@@ -21,7 +23,7 @@ export async function setup(ctx) {
 export async function reset(ctx) {
     await ctx.context.close();
     await ctx.browser.close();
-    ctx.server.kill(); // todo: 'SIGTERM' or 'SIGKILL' ?
+    try { ctx.server.abort(); } catch(e) { }
 }
 
 /**
@@ -48,6 +50,7 @@ export function suite() {
     test.after(reset);
     test.before.each(async ({ localhost, page }) => {
         await page.goto((new URL(arguments[0], localhost)).toString());
+        return Promise.resolve();
     });
     return test;
 }
