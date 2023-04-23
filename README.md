@@ -271,8 +271,8 @@ import '@raruto/leaflet-elevation/src/index.js';
 import '@raruto/leaflet-elevation/src/index.css';
 
 const map = L.map('map', {
-    center: [35.681, 139.767],
-    zoom: 11,
+    center: [41.4583, 12.7059]
+    zoom: 5,
 });
 
 const controlElevation = L.control.elevation({
