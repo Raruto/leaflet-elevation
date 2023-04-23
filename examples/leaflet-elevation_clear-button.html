@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.9/dist/leaflet-ui.js" as="script">
+
+	<style>
+		@import '../libs/fullpage.css';
+	</style>
+
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.5.9/dist/leaflet-ui.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="../dist/leaflet-elevation.min.css" />
+	<script src="../dist/leaflet-elevation.min.js"></script>
+
+	<style>
+		button {
+			border: none;
+			color: white;
+			padding: 15px 32px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+			margin: 4px 2px;
+			cursor: pointer;
+			font-family: monospace;
+		}
+		.update {
+			background-color: #4CAF50;
+		}
+		.toggle {
+			background-color: #ffa500;
+		}
+		.reset {
+			background-color: #f44336;
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="map" class="leaflet-map"></div>
+	<div style="position: fixed; inset: auto auto 15px 15px; display: flex; flex-direction: column-reverse;">
+		<button class="update" onclick="load_track(0)">demo.geojson</button>
+		<button class="update" onclick="load_track(1)">waypoints.geojson</button>
+		<button class="toggle" onclick="toggle_10()">Switch 10 times</button>
+		<button class="reset" onclick="load_track(-1)">Clear</button>
+	</div>
+
+
+	<script>
+		let opts = {
+			map: {
+				mapTypeId: 'satellite',
+				center: [41.4583, 12.7059],
+				zoom: 5,
+				fullscreenControl: false,
+				minimapControl: false,
+				gestureHandling: false,
+				resizerControl: false,
+				pegmanControl: false,
+				locateControl: false,
+				loadingControl: false,
+				searchControl: false,
+				preferCanvas: false,
+				rotate: true,
+				bearing: 15,
+				rotateControl: {
+					closeOnZeroBearing: true
+				},
+			},
+			elevationControl: {
+				urls: [
+					"https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+					"https://raruto.github.io/leaflet-elevation/examples/waypoints.geojson",
+				] ,
+				options: {
+					position: 'topright',
+					theme: "lime-theme",
+					detached: false,
+					collapsed: false,
+					autohide: false,
+					legend: true,
+					width: 500,
+					downloadLink: true,
+					almostOver: true,
+					distanceMarkers: { distance: false, direction: true, lazy: true },
+				},
+			},
+			layersControl: {
+				options: {
+					position: 'bottomleft',
+					collapsed: false,
+				},
+			},
+		};
+
+		let map = L.map('map', opts.map);
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+
+		controlElevation.load(opts.elevationControl.urls[opts.elevationControl.urls.length - 1]);
+
+		let count = 0;
+
+		function toggle_10() {
+			for (let i = 0; i <= 10; i++) {
+				(function (ind) {
+					setTimeout(function () {
+						load_track(count);
+					}, 1000 * ind);
+				})(i);
+			}
+		}
+
+		function load_track(id) {
+			controlElevation.clear();
+			if (opts.elevationControl.urls[id]) { 
+				controlElevation.load(opts.elevationControl.urls[id]);
+				count = ++count % opts.elevationControl.urls.length;
+			}
+		}
+	</script>
+
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
+
+</body>
+
+</html>
