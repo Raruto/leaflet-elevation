@@ -5,12 +5,14 @@
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-	<link rel="dns-prefetch" href="https://server.arcgisonline.com">
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
 	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
 	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.5.9/dist/leaflet-ui.js" as="script">
 
-	<style>@import '../libs/fullpage.css';</style>
+	<style>
+		@import '../libs/fullpage.css';
+	</style>
 
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -20,36 +22,27 @@
 	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.css" />
 	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.3.0/dist/leaflet-elevation.min.js"></script>
 
-	<!-- Blink animation -->
 	<style>
-		.elevation-control.elevation-expanded .elevation-toggle-icon,
-		.lime-theme.elevation-control .elevation-toggle-icon {
-			animation: BLINK-ANIMATION 1s linear 3;
-			background-color: #ff0;
+		button {
+			border: none;
+			color: white;
+			padding: 15px 32px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+			margin: 4px 2px;
+			cursor: pointer;
+			font-family: monospace;
 		}
-
-		@keyframes BLINK-ANIMATION {
-			0%, 49%   {	background-color: #fff; }
-			50%, 100% { }
+		.update {
+			background-color: #4CAF50;
 		}
-	</style>
-
-	<!-- Custom theme colors -->
-	<style>
-		.lime-theme.height-focus.circle-lower {
-			fill: #FFF;
+		.toggle {
+			background-color: #ffa500;
 		}
-
-		.lime-theme.elevation-polyline {
-			stroke: #FF0;
-			filter: drop-shadow(1px 1px 0 #000) drop-shadow(-1px -1px 0 #000) drop-shadow(1px -1px 0 #000) drop-shadow(-1px 1px 0 #000);
-			stroke-opacity: 1;
-		}
-
-		.lime-theme.elevation-polyline-segments {
-			stroke: #000;
-			stroke-width: 2;
-			stroke-dasharray: 4;
+		.reset {
+			background-color: #f44336;
 		}
 	</style>
 </head>
@@ -57,6 +50,12 @@
 <body>
 
 	<div id="map" class="leaflet-map"></div>
+	<div style="position: fixed; inset: auto auto 15px 15px; display: flex; flex-direction: column-reverse;">
+		<button class="update" onclick="load_track(0)">demo.geojson</button>
+		<button class="update" onclick="load_track(1)">waypoints.geojson</button>
+		<button class="toggle" onclick="toggle_10()">Switch 10 times</button>
+		<button class="reset" onclick="load_track(-1)">Clear</button>
+	</div>
 
 	<script>
 		let opts = {
@@ -80,18 +79,21 @@
 				},
 			},
 			elevationControl: {
-				url: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+				urls: [
+					"https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+					"https://raruto.github.io/leaflet-elevation/examples/waypoints.geojson",
+				] ,
 				options: {
 					position: 'topright',
 					theme: "lime-theme",
 					detached: false,
-					collapsed: true,
+					collapsed: false,
 					autohide: false,
 					legend: true,
+					width: 500,
 					downloadLink: true,
 					almostOver: true,
-					edgeScale: false,
-					distanceMarkers: { distance: false, direction: true, lazy: true }
+					distanceMarkers: { distance: false, direction: true, lazy: true },
 				},
 			},
 			layersControl: {
@@ -104,11 +106,28 @@
 
 		let map = L.map('map', opts.map);
 		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
-		let controlLayer = L.control.layers(null, null, opts.layersControl.options)
 
-		controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
+		controlElevation.load(opts.elevationControl.urls[opts.elevationControl.urls.length - 1]);
 
-		controlElevation.load(opts.elevationControl.url);
+		let count = 0;
+
+		function toggle_10() {
+			for (let i = 0; i <= 10; i++) {
+				(function (ind) {
+					setTimeout(function () {
+						load_track(count);
+					}, 1000 * ind);
+				})(i);
+			}
+		}
+
+		function load_track(id) {
+			controlElevation.clear();
+			if (opts.elevationControl.urls[id]) { 
+				controlElevation.load(opts.elevationControl.urls[id]);
+				count = ++count % opts.elevationControl.urls.length;
+			}
+		}
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 10px;left: calc(50% - 60px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>

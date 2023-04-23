@@ -22,5 +22,3 @@ global.L = {
         hasClass: () => {}
     }
 };
-
-

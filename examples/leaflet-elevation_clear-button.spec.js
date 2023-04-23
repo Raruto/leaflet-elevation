@@ -39,7 +39,6 @@ test('eledata_clear', async ({ page }) => {
     assert.is(layers.length, 0);
     assert.type(ctrl.track_info.name, 'undefined');
     assert.type(ctrl.track_info.distance, 'undefined');
-    
 });
 
 test.run();
