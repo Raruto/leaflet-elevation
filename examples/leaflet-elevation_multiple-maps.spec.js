@@ -7,7 +7,7 @@ import { suite } from '../test/setup/http_server.js';
 
 const test = suite('examples/leaflet-elevation_multiple-maps.html');
 
-test('multiple_maps', async ({ page }) => {
+test('multiple-maps', async ({ page }) => {
     const default_margins = await page.evaluate(() => new Promise(resolve => {
         resolve(L.Control.Elevation.prototype.options.margins);
     }));
