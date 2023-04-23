@@ -13,8 +13,6 @@ export async function setup(ctx) {
     ctx.context = await ctx.browser.newContext();
     ctx.context.route(/.html$/, mock_cdn_urls);
     ctx.page = await ctx.context.newPage();
-    console.log('done')
-
 }
 
 /**
@@ -50,9 +48,28 @@ export function suite() {
     test.after(reset);
     test.before.each(async ({ localhost, page }) => {
         await page.goto((new URL(arguments[0], localhost)).toString());
-        return Promise.resolve();
     });
-    return test;
+    // augment uvu `test` function with a third parameter `timeout`
+    return new Proxy(test, {
+        apply: (object, _, argsList) => {
+            return object(argsList[0], timeout(argsList[1], argsList[2]));
+        }
+    });
+}
+
+/**
+ * Sets maximum execution time for a function 
+ * 
+ * @see https://github.com/lukeed/uvu/issues/33#issuecomment-879870292 
+ */
+function timeout(handler, ms=5000) {
+    return (ctx) => {
+      let timer
+      return Promise.race([
+        handler(ctx),
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('[TIMEOUT] Maximum execution time exceeded: ' + ms + 'ms')), ms) })
+      ]).finally(() => { clearTimeout(timer) })
+    }
 }
 
 /**
