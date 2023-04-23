@@ -1,10 +1,15 @@
+/**
+ * src/utils.js
+ */
+
 import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
+import '../test/setup/jsdom.js'
 import { iAvg, iMin, iMax, iSum } from "../src/utils.js";
 
 const toFixed = (n) => +n.toFixed(2);
 
-const test = suite('stats');
+const test = suite('src/utils.js');
 
 test('iAvg()', () => {
     let avg;

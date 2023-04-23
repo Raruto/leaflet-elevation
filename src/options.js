@@ -14,6 +14,7 @@ export var Options = {
 	dragging: !L.Browser.mobile,
 	downloadLink: 'link',
 	elevationDiv: "#elevation-div",
+	edgeScale: { bar: true, icon: false, coords: false },
 	followMarker: true,
 	imperial: false,
 	legend: true,

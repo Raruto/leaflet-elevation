@@ -35,8 +35,10 @@ _For a working example see one of the following demos:_
 
 - [autohide map](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-map.html)
 - [autohide chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-chart.html)
+- [clear button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_clear-button.html)
 - [collapsible button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html)
 - [custom summary](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-summary.html)
+- [edge scale control](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_edge-scale.html)
 - [follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html)
 - [layer almostover](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html)
 - [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
@@ -153,6 +155,9 @@ _For a working example see one of the following demos:_
 
         // Toggle "leaflet-distance-markers" integration
         distanceMarkers: false,
+
+        // Toggle "leaflet-edgescale" integration
+        edgeScale: false,
         
         // Toggle "leaflet-hotline" integration
         hotline: true,
@@ -195,19 +200,19 @@ _For a working example see one of the following demos:_
 
 ### Build Guide
 
-For those wishing to try cloning this repository into a local development folder (eg. /var/www):
+Within your local development environment:
 
 ```shell
 git clone git@github.com:Raruto/leaflet-elevation.git
 cd ./leaflet-elevation
 
 npm i         # install dependencies
-npm run watch # auto-generate "dist" files
+npm run dev   # start dev server at: http://localhost:8080
 npm run build # generate "dist" files (once)
-npm run test  # test "spec" files (once)
+npm run test  # test all ".*spec.js" files (once)
 ```
 
-After that you can start developing inside the `src` and `test` folders (eg. open "http://localhost/leaflet-elevation/test" in your browser to preview changes). Check also [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for some information about it.
+After that you can start developing inside the `src` and `test` folders (eg. open "http://localhost:8080/test" in your browser to preview changes). Check also [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for some information about it.
 
 ### FAQ
 

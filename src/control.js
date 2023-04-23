@@ -22,6 +22,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__LALMOSTOVER:   'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
 	__LHOTLINE:      '../libs/leaflet-hotline.min.js',
 	__LDISTANCEM:    '../libs/leaflet-distance-marker.min.js',
+	__LEDGESCALE:    '../libs/leaflet-edgescale.min.js',
 	__LCHART:        '../src/components/chart.js',
 	__LMARKER:       '../src/components/marker.js',
 	__LSUMMARY:      '../src/components/summary.js',
@@ -218,6 +219,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			case this.__LGEOMUTIL:   condition = typeof L.GeometryUtil !== 'object'; break;
 			case this.__LALMOSTOVER: condition = typeof L.Handler.AlmostOver  !== 'function'; break;
 			case this.__LDISTANCEM:  condition = typeof L.DistanceMarkers  !== 'function'; break;
+			case this.__LEDGESCALE:  condition = typeof L.Control.EdgeScale !== 'function'; break;
 			case this.__LHOTLINE:    condition = typeof L.Hotline  !== 'function'; break;
 		}
 		src = (src.startsWith('../') || src.startsWith('./') ? baseURL : '') + src;
@@ -420,6 +422,16 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		return this.options.distanceMarkers ? Promise.all([this.import(this.__LGEOMUTIL), this.import(this.__LDISTANCEM)]) : Promise.resolve();
 	},
 
+	/**
+	 * Initialize "L.Control.EdgeScale" integration
+	 */
+	_initEdgeScale: function(map) {
+		return this.options.edgeScale ? Promise.all([this.import(this.__LEDGESCALE)])
+			.then(() => {
+				map.edgeScaleControl = map.edgeScaleControl || L.control.edgeScale('boolean' !== typeof this.options.edgeScale ? this.options.edgeScale : {}).addTo(map);
+			}) : Promise.resolve();
+	},
+
 	_initHotLine: function(layer) {
 		let prop = typeof this.options.hotline == 'string' ? this.options.hotline : 'elevation';
 		return this.options.hotline ? this.import(this.__LHOTLINE)
@@ -465,6 +477,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this._initHotLine(layer),
 				this._initAlmostOverHandler(map, layer),
 				this._initDistanceMarkers(),
+				this._initEdgeScale(map),
 			]).then(() => {
 				if	(this.options.polyline) {
 					layer.addTo(map);

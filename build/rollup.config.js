@@ -1,12 +1,14 @@
-import { terser } from "rollup-plugin-terser";
-import resolve from 'rollup-plugin-node-resolve';
-import commonJS from 'rollup-plugin-commonjs';
+import terser from '@rollup/plugin-terser';
+import resolve from '@rollup/plugin-node-resolve';
+import commonJS from '@rollup/plugin-commonjs';
 import postcss from 'rollup-plugin-postcss';
 import postcssImport from 'postcss-import';
-// import postcssCopy from 'postcss-copy';
-import rollupGitVersion from 'rollup-plugin-git-version';
 
-let plugin = require('../package.json');
+// import postcssCopy from 'postcss-copy';
+// import rollupGitVersion from 'rollup-plugin-git-version';
+
+import plugin from '../package.json' assert { type: "json" };
+
 let plugin_name = plugin.name.replace("@raruto/", "");
 
 let input = plugin.module;
@@ -15,7 +17,6 @@ let output = {
 	format: "umd",
 	sourcemap: true,
 	name: plugin_name,
-
 };
 
 let plugins = [
@@ -23,7 +24,7 @@ let plugins = [
 	commonJS({
 		include: '../node_modules/**'
 	}),
-	rollupGitVersion(),
+	// rollupGitVersion(),
 ];
 
 export default [
