@@ -276,7 +276,8 @@ const map = L.map('map', {
 });
 
 const controlElevation = L.control.elevation({
-    srcFolder: 'http://unpkg.com/@raruto/leaflet-elevation/src/' // CHANGE ME: with your own http server custom "src" folder
+    // CHANGE ME: with your own http server folder (eg. "http://custom-server/public/path/to/leaflet-elevation/src/")
+    srcFolder: 'http://unpkg.com/@raruto/leaflet-elevation/src/'
 }).addTo(map);
 
 // Load track from url (allowed data types: "*.geojson", "*.gpx", "*.tcx")
