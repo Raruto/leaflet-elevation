@@ -8,7 +8,18 @@ import { suite } from '../test/setup/http_server.js';
 const test = suite('examples/leaflet-elevation_clear-button.html');
 
 test('eledata_loaded', async ({ page }) => {
-    const gpx = await page.evaluate(() => new Promise(resolve => {
+    let gpx;
+
+    gpx = await page.evaluate(() => new Promise(resolve => {
+      load_track(0);
+      controlElevation.on('eledata_loaded', (gpx) => resolve(gpx));
+    }));
+    assert.is(gpx.name, 'demo.geojson');
+    assert.not.type(gpx.layer, 'undefined');
+    assert.type(gpx.track_info.distance, 'number');
+
+    gpx = await page.evaluate(() => new Promise(resolve => {
+      load_track(1);
       controlElevation.on('eledata_loaded', (gpx) => resolve(gpx));
     }));
     assert.is(gpx.name, 'waypoints.geojson');
