@@ -6,9 +6,6 @@ if (!L._ || !L.i18n) {
 	L._ = L.i18n = (string, data) => string;
 }
 
-// Prevent CORS issues for relative locations (dynamic import)
-const baseURL = ((document.currentScript && document.currentScript.src) || (import.meta && import.meta.url)).split("/").slice(0,-1).join("/") + '/';
-
 export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
@@ -27,7 +24,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	__LMARKER:       '../src/components/marker.js',
 	__LSUMMARY:      '../src/components/summary.js',
 	__modulesFolder: '../src/handlers/',
-	__btnIcon:       baseURL + '../images/elevation.svg',
+	__btnIcon:       '../images/elevation.svg',
 
 	/*
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
@@ -225,8 +222,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			case this.__LEDGESCALE:  condition = typeof L.Control.EdgeScale !== 'function'; break;
 			case this.__LHOTLINE:    condition = typeof L.Hotline  !== 'function'; break;
 		}
-		src = (src.startsWith('../') || src.startsWith('./') ? baseURL : '') + src;
-		return condition !== false ? import(src) : Promise.resolve();
+		return condition !== false ? import(_.resolveURL(src, this.options.srcFolder)) : Promise.resolve();
 	},
 
 	/**
@@ -716,7 +712,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			_.on(link, 'click', L.DomEvent.stop);
 			_.on(link, 'click', this._toggle, this);
 			_.on(link, 'focus', this._toggle, this);
-			fetch(this.__btnIcon).then(r => r.ok && r.text().then(img => link.innerHTML = img));
+			fetch(_.resolveURL(this.__btnIcon, this.options.srcFolder)).then(r => r.ok && r.text().then(img => link.innerHTML = img));
 		}
 	},
 

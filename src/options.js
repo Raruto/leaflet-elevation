@@ -82,4 +82,7 @@ export var Options = {
 	interpolation: "curveLinear",
 	yAxisMax: undefined,
 	yAxisMin: undefined,
+
+	// Prevent CORS issues for relative locations (dynamic import)
+	srcFolder: ((document.currentScript && document.currentScript.src) || (import.meta && import.meta.url)).split("/").slice(0,-1).join("/") + '/',
 };

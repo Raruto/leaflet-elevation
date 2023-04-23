@@ -259,8 +259,34 @@ var map = L.map('map', {
 ```
 </details>
 
+<details> <summary>3. How can I import this library as ES module?</summary>
+
+Usually, when working with a js bundler like [Vite](https://vitest.dev/) or [Webpack](https://webpack.js.org/), you need to provide to this library the full path to some dynamically imported files from the [`srcFolder`](./src/):
+
+```js
+import './your-custom-style.css';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import '@raruto/leaflet-elevation/src/index.js';
+import '@raruto/leaflet-elevation/src/index.css';
+
+const map = L.map('map', {
+    center: [35.681, 139.767],
+    zoom: 11,
+});
+
+const controlElevation = L.control.elevation({
+    srcFolder: 'http://unpkg.com/@raruto/leaflet-elevation/src/' // CHANGE ME: with your own http server custom "src" folder
+}).addTo(map);
+
+// Load track from url (allowed data types: "*.geojson", "*.gpx", "*.tcx")
+controlElevation.load("https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx");
+```
+
+</details>
+
 <details>
-  <summary>3. Some real world projects based on this plugin?</summary><br>
+  <summary>4. Some real world projects based on this plugin?</summary><br>
 
 - https://parcours.scasb.org/
 - https://velocat.ru/velo/phpBB3/map.php

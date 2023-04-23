@@ -16,6 +16,10 @@ const MIN  = SEC * 60;
 const HOUR = MIN * 60;
 const DAY  = HOUR * 24;
 
+export function resolveURL(src, baseUrl) {
+	return (new URL(src, (src.startsWith('../') || src.startsWith('./')) ? baseUrl : undefined)).toString()
+};
+
 /**
  * Convert a time (millis) to a human readable duration string (%Dd %H:%M'%S")
  */
