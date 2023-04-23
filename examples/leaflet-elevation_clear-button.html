@@ -53,7 +53,9 @@
 	<div style="position: fixed; inset: auto auto 15px 15px; display: flex; flex-direction: column-reverse;">
 		<button class="update" onclick="load_track(0)">demo.geojson</button>
 		<button class="update" onclick="load_track(1)">waypoints.geojson</button>
-		<button class="toggle" onclick="toggle_10()">Switch 10 times</button>
+		<button class="toggle" onclick="toggle(50, 0.5)">Switch 50 times</button>
+		<button class="toggle" onclick="toggle(25, 0.5)">Switch 25 times</button>
+		<button class="toggle" onclick="toggle(10, 1)">Switch 10 times</button>
 		<button class="reset" onclick="load_track(-1)">Clear</button>
 	</div>
 
@@ -111,12 +113,12 @@
 
 		let count = 0;
 
-		function toggle_10() {
-			for (let i = 0; i <= 10; i++) {
-				(function (ind) {
+		function toggle(cycle = 10, speed = 1) {
+			for (let i = 0; i <= cycle; i++) {
+				(function (idx) {
 					setTimeout(function () {
 						load_track(count);
-					}, 1000 * ind);
+					}, (1000 * speed) * idx);
 				})(i);
 			}
 		}
