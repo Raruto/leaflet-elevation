@@ -411,6 +411,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					.on('almost:move', this._onMouseMoveLayer, this)
 					.on('almost:out', this._onMouseOut, this);
 				this.once('eledata_clear', () => {
+					map.almostOver.removeLayer(layer);
 					map
 					.off('almost:move', this._onMouseMoveLayer, this)
 					.off('almost:out', this._onMouseOut, this);

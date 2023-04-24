@@ -54,17 +54,17 @@ test('almostOver', async ({ page }) => {
     assert.is(step_1.enabled, true);
     assert.is(step_2.enabled, true);
     assert.is(step_3.enabled, true);
-    assert.is(step_1.ctrl.options.almostOver, true);
-    assert.is(step_2.ctrl.options.almostOver, true);
-    assert.is(step_3.ctrl.options.almostOver, true);
+    assert.is(step_1.option, true);
+    assert.is(step_2.option, true);
+    assert.is(step_3.option, true);
 
     // Count number of events
-    assert.is(step_1.map._events['almost:move'].length, 1);
-    assert.is(step_2.map._events['almost:move'].length, 1);
-    assert.is(step_3.map._events['almost:move'].length, 1);
-    assert.is(step_1.map._events['almost:out'].length, 1);
-    assert.is(step_2.map._events['almost:out'].length, 1);
-    assert.is(step_3.map._events['almost:out'].length, 1);
+    assert.is(step_1.almost_move_events, 1);
+    assert.is(step_2.almost_move_events, 1);
+    assert.is(step_3.almost_move_events, 1);
+    assert.is(step_1.almost_out_events, 1);
+    assert.is(step_2.almost_out_events, 1);
+    assert.is(step_3.almost_out_events, 1);
 
     // Count number of layers
     assert.equal(step_1.over_layers, 9);
@@ -84,8 +84,10 @@ async function load_trace(page, trace_url) {
           .then((e) => resolve({
             ctrl,
             gpx,
-            map,
+            almost_move_events: map._events['almost:move'].length,
+            almost_out_events: map._events['almost:out'].length,
             enabled: map.almostOver.enabled(),
+            option: ctrl.options.almostOver,
             over_layers: map.almostOver._layers.length,
             map_layers: Object.keys(map._layers).length,
           }));
