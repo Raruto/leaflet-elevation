@@ -13,9 +13,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	options: Options,
 	__mileFactor:     0.621371, // 1 km = (0.621371 mi)
 	__footFactor:     3.28084,  // 1 m  = (3.28084 ft)
-	__D3:            'https://unpkg.com/d3@6.5.0/dist/d3.min.js',
-	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@4.6.0/dist/togeojson.umd.js',
-	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
+	__D3:            'https://unpkg.com/d3@7.8.4/dist/d3.min.js',
+	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@5.6.0/dist/togeojson.umd.js',
+	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.10.1/src/leaflet.geometryutil.js',
 	__LALMOSTOVER:   'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
 	__LHOTLINE:      '../libs/leaflet-hotline.min.js',
 	__LDISTANCEM:    '../libs/leaflet-distance-marker.min.js',
