@@ -62,6 +62,7 @@
 		};
 
 		let map = L.map('map', opts.map);
+		let controlElevation, controlLayer;
 
 		map.on('plugins_loaded', function() {
 
@@ -78,8 +79,8 @@
 			// 	});
 			// });
 
-			let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
-			let controlLayer = L.control.layers(null, null, opts.layersControl.options);
+			controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+			controlLayer = L.control.layers(null, null, opts.layersControl.options);
 
 			controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 

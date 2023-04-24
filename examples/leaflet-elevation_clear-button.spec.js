@@ -58,7 +58,7 @@ test('eledata_clear', async ({ page }) => {
     assert.not.snapshot(JSON.stringify(step_end.events), JSON.stringify(step_2.events));
     assert.not.snapshot(JSON.stringify(step_end.events), JSON.stringify(step_4.events));
 
-}, 10000);
+});
 
 test.run();
 

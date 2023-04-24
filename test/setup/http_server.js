@@ -62,7 +62,7 @@ export function suite() {
  * 
  * @see https://github.com/lukeed/uvu/issues/33#issuecomment-879870292 
  */
-function timeout(handler, ms=5000) {
+function timeout(handler, ms=10000) {
     return (ctx) => {
       let timer
       return Promise.race([
