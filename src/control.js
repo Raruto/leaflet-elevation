@@ -408,8 +408,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
 				map.almostOver.addLayer(layer);
 				map
-					.on('almost:move', (e) => this._onMouseMoveLayer(e))
-					.on('almost:out',  (e) => this._onMouseOut(e));
+					.on('almost:move', this._onMouseMoveLayer, this)
+					.on('almost:out', this._onMouseOut, this);
+				this.once('eledata_clear', () => {
+					map
+					.off('almost:move', this._onMouseMoveLayer, this)
+					.off('almost:out', this._onMouseOut, this);
+				})
 			}
 		}) : Promise.resolve();
 	},
@@ -478,8 +483,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this._initDistanceMarkers(),
 				this._initEdgeScale(map),
 			]).then(() => {
-				if	(this.options.polyline) {
-					layer.addTo(map);
+				if (this.options.polyline) {
+					this._layers.addLayer(layer.addTo(map)); // hotfix for: https://github.com/Raruto/leaflet-elevation/issues/233
 					this._circleMarkers.addTo(map);
 				}
 				if (this.options.autofitBounds) {

@@ -13,23 +13,65 @@ test('almostOver', async ({ page }) => {
     const step_1 = await load_trace(page, './via-emilia.gpx');
     assert.is(step_1.gpx.name, 'via-emilia.gpx');
     assert.not.type(step_1.gpx.layer, 'undefined');
-    assert.type(step_1.gpx.track_info.distance, 'number');
-
-    assert.is(step_1.ctrl.options.almostOver, true);
-    assert.is(step_1.enabled, true);
-    assert.is(step_1.layers.length, 9);
+    assert.snapshot(
+      JSON.stringify(step_1.gpx.track_info),
+      JSON.stringify({
+        name: 'via-emilia.gpx',
+        distance: 264.69343,
+        time: 264693430,
+        elevation_max: 84.9,
+        elevation_min: 6.6,
+        elevation_avg: 49.10552825552806
+      })
+    );
 
     // [2]: Load "via-aurelia.gpx"
     const step_2 = await load_trace(page, './via-aurelia.gpx');
     assert.is(step_2.gpx.name, 'via-aurelia.gpx');
     assert.not.type(step_2.gpx.layer, 'undefined');
-    assert.type(step_2.gpx.track_info.distance, 'number');
+    assert.snapshot(
+      JSON.stringify(step_2.gpx.track_info),
+      JSON.stringify({
+        name: 'via-aurelia.gpx',
+        distance: 695.46454,
+        time: 695464540,
+        elevation_max: 638.8,
+        elevation_min: -3,
+        elevation_avg: 61.51005418195878
+      })
+    );
 
-    assert.is(step_2.ctrl.options.almostOver, true);
+    // [3]: Load "via-emilia.gpx"
+    const step_3 = await load_trace(page, './via-emilia.gpx');
+    assert.is(step_3.gpx.name, 'via-emilia.gpx');
+    assert.not.type(step_3.gpx.layer, 'undefined');
+    assert.snapshot(
+      JSON.stringify(step_3.gpx.track_info),
+      JSON.stringify(step_1.gpx.track_info)
+    );
+
+    // Check for almostOver handler
+    assert.is(step_1.enabled, true);
     assert.is(step_2.enabled, true);
-    assert.is(step_2.layers.length, 1);
+    assert.is(step_3.enabled, true);
+    assert.is(step_1.ctrl.options.almostOver, true);
+    assert.is(step_2.ctrl.options.almostOver, true);
+    assert.is(step_3.ctrl.options.almostOver, true);
 
-});
+    // Count number of events
+    assert.is(step_1.map._events['almost:move'].length, 1);
+    assert.is(step_2.map._events['almost:move'].length, 1);
+    assert.is(step_3.map._events['almost:move'].length, 1);
+    assert.is(step_1.map._events['almost:out'].length, 1);
+    assert.is(step_2.map._events['almost:out'].length, 1);
+    assert.is(step_3.map._events['almost:out'].length, 1);
+
+    // Count number of layers
+    assert.equal(step_1.over_layers, 9);
+    assert.equal(step_2.over_layers, 1);
+    assert.equal(step_3.over_layers, 9);
+
+}, 15000);
 
 test.run();
 
@@ -42,8 +84,10 @@ async function load_trace(page, trace_url) {
           .then((e) => resolve({
             ctrl,
             gpx,
+            map,
             enabled: map.almostOver.enabled(),
-            layers: map.almostOver._layers
+            over_layers: map.almostOver._layers.length,
+            map_layers: Object.keys(map._layers).length,
           }));
       });
       ctrl.load(trace_url);
