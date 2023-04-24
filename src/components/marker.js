@@ -4,7 +4,7 @@ const _ = L.Control.Elevation.Utils;
 
 export var Marker = L.Class.extend({
 
-	initialize: function(options, control) {
+	initialize(options, control) {
 		this.options = options;
 		this.control = control
 
@@ -23,7 +23,7 @@ export var Marker = L.Class.extend({
 		return this;
 	},
 
-	addTo: function(map) {
+	addTo(map) {
 		this._map = map;
 		switch(this.options.marker) {
 			case 'elevation-line':  this._container = d3.select(map.getPane('elevationPane')).select("svg > g").call(D3.PositionMarker({})); break;
@@ -35,7 +35,7 @@ export var Marker = L.Class.extend({
 	/**
 	 * Update position marker ("leaflet-marker").
 	 */
-	update: function(props) {
+	update(props) {
 		if (props) this._props = props;
 		else props = this._props;
 
@@ -77,7 +77,7 @@ export var Marker = L.Class.extend({
 	/*
 	 * Hides the position/height indicator marker drawn onto the map
 	 */
-	remove: function() {
+	remove() {
 		this._props = null;
 		switch(this.options.marker) {
 			case 'elevation-line':  this._container && this._container.classed("leaflet-hidden", true); break;
@@ -85,11 +85,11 @@ export var Marker = L.Class.extend({
 		}
 	},
 
-	getLatLng: function() {
+	getLatLng() {
 		return this._latlng;
 	},
 
-	_registerTooltip: function(props) {
+	_registerTooltip(props) {
 		this._labels[props.name] = props;
 	}
 

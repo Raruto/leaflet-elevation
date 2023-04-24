@@ -6,7 +6,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
-	initialize: function(opts, control) {
+	initialize(opts, control) {
 		this.options       = opts;
 		this.control       = control;
 
@@ -73,7 +73,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 	},
 
-	update: function(props) {
+	update(props) {
 		if (props) {
 			if (props.data) this._data = props.data;
 			if (props.options) this.options = props.options;
@@ -92,11 +92,11 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		return this;
 	},
 
-	render: function() {
+	render() {
 		return container => container.append(() => this._container.node());
 	},
 
-	clear: function() {
+	clear() {
 		this._resetDrag();
 		this._hideDiagramIndicator()
 		this._area.selectAll('path').attr("d", "M0 0");
@@ -110,7 +110,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		// }
 	},
 
-	_drawPath: function(name) {
+	_drawPath(name) {
 		let path   = this._paths[name];
 		let area   = this._props.areas[name];
 
@@ -132,7 +132,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		}
 	},
 
-	_hasActiveLayers: function() {
+	_hasActiveLayers() {
 		const paths = this._paths;
 		for (var i in paths) {
 			if (!paths[i].classed('leaflet-hidden')) {
@@ -145,7 +145,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Initialize "d3-brush".
 	 */
-	_initBrush: function(e) {
+	_initBrush(e) {
 		const brush   = ({selection}) => {
 			if (selection && this._data.length) {
 				let start = this._findIndexForXCoord(selection[0]);
@@ -180,7 +180,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Initialize "d3-zoom"
 	 */
-	_initClipper: function() {
+	_initClipper() {
 		let svg       = this._container;
 		let margin    = this.options.margins;
 
@@ -245,7 +245,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 	},
 
-	_initInteractions: function() {
+	_initInteractions() {
 		this._initBrush();
 		this._initRuler();
 		this._initClipper();
@@ -255,7 +255,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Toggle chart data on legend click
 	 */
-	_initLegend: function() {
+	_initLegend() {
 		this._container.on('legend_clicked', ({detail}) => {
 			let { path, legend, name, enabled } = detail;
 			if (path) {
@@ -273,7 +273,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Initialize "ruler".
 	 */
-	_initRuler: function() {
+	_initRuler() {
 		if (!this.options.ruler) return;
 
 		// const yMax      = this._height();
@@ -315,7 +315,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Initialize x and y scales
 	 */
-	_initScale: function() {
+	_initScale() {
 		let opts = this.options;
 
 		this._registerAxisScale({
@@ -340,7 +340,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		this._y = this._scales.altitude;
 	},
 
-	_registerAreaPath: function(props) {
+	_registerAreaPath(props) {
 		if (props.scale == 'y') props.scale = this._y;
 		else if (props.scale == 'x') props.scale = this._x;
 
@@ -366,14 +366,14 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 	},
 
-	_registerAxisGrid: function(props) {
+	_registerAxisGrid(props) {
 		if (props.scale == 'y') props.scale = this._y;
 		else if(props.scale == 'x') props.scale = this._x;
 
 		this._props.grids[props.name || props.axis] = props;
 	},
 
-	_registerAxisScale: function(props) {
+	_registerAxisScale(props) {
 		if (props.scale == 'y') props.scale = this._y;
 		else if(props.scale == 'x') props.scale = this._x;
 
@@ -416,7 +416,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Add a point of interest over the chart
 	 */
-	_registerCheckPoint: function(point) {
+	_registerCheckPoint(point) {
 		if (!this._data.length) return;
 
 		const {xAttr, yAttr} = this.options;
@@ -441,18 +441,18 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		}));
 	},
 
-	_registerTooltip: function(props) {
+	_registerTooltip(props) {
 		props.order = props.order ?? 1000;
 		this._props.tooltipItems[props.name] = props;
 	},
 
-	_updateArea: function() {
+	_updateArea() {
 		// Reset and update chart profiles
 		this._context.clearRect(0, 0, this._width(), this._height());
 		_.each(this._paths, (path, i) => !path.classed('leaflet-hidden') && this._drawPath(i));
 	},
 
-	_updateAxis: function() {
+	_updateAxis() {
 
 		let opts = this.options;
 
@@ -503,7 +503,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 	},
 
-	_updateClipper: function() {
+	_updateClipper() {
 		const { xAttr, margins } = this.options;
 		const data = this._data;
 
@@ -591,7 +591,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 	},
 
-	_updateMargins: function() {
+	_updateMargins() {
 		// Get chart margins
 		let xAxesB  = this._axis.selectAll('.x.axis.bottom').nodes().length;
 		let xAxesL  = this._axis.selectAll('.y.axis.left').nodes().length;
@@ -625,7 +625,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		}
 	},
 
-	_updateScale: function() {
+	_updateScale() {
 		if (this.zooming) return { x: this._x, y: this._y };
 
 		for (let i in this._scales) {
@@ -640,7 +640,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Calculates chart width.
 	 */
-	_width: function() {
+	_width() {
 		if (this._chart) this._chart._width;
 		const { width, margins } = this.options;
 		return width - margins.left - margins.right;
@@ -649,7 +649,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Calculates chart height.
 	 */
-	_height: function() {
+	_height() {
 		if (this._chart) return this._chart._height;
 		const { height, margins } = this.options;
 		return height - margins.top - margins.bottom;
@@ -658,7 +658,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/*
 	 * Finds data entries above a given y-elevation value and returns geo-coordinates
 	 */
-	_findCoordsForY: function(y) {
+	_findCoordsForY(y) {
 		let data = this._data;
 		let z    = this._y.invert(y);
 
@@ -691,7 +691,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/*
 	 * Finds a data entry for a given x-coordinate of the diagram
 	 */
-	_findIndexForXCoord: function(x) {
+	_findIndexForXCoord(x) {
 		return d3
 			.bisector(d => d[this.options.xAttr])
 			.left(this._data || [0, 1], this._x.invert(x));
@@ -700,7 +700,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/*
 	 * Finds a data entry for a given latlng of the map
 	 */
-	_findIndexForLatLng: function(latlng) {
+	_findIndexForLatLng(latlng) {
 		let result = null;
 		let d      = Infinity;
 		this._data.forEach((item, index) => {
@@ -716,7 +716,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/*
 	 * Removes the drag rectangle and zoms back to the total extent of the data.
 	 */
-	_resetDrag: function() {
+	_resetDrag() {
 		if (this._chart.panes.brush.select(".selection").attr('width')) {
 			this._chart.panes.brush.call(this._brush.clear);
 			this._hideDiagramIndicator();
@@ -724,7 +724,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		}
 	},
 
-	_resetZoom: function() {
+	_resetZoom() {
 		if (this._zoom) {
 			this._zoom.transform(this._chart.svg, d3.zoomIdentity);
 		}
@@ -733,7 +733,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Display distance and altitude level ("focus-rect").
 	 */
-	_showDiagramIndicator: function(item, xCoordinate) {
+	_showDiagramIndicator(item, xCoordinate) {
 		this._tooltip
 			.attr("display", null)
 			.call(D3.Tooltip({
@@ -761,14 +761,14 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		}
 	},
 
-	_hideDiagramIndicator: function() {
+	_hideDiagramIndicator() {
 		this._tooltip.attr("display", 'none');
 	},
 
 	/**
 	 * Calculate chart xTicks
 	 */
-	_xTicks: function() {
+	_xTicks() {
 	if (this.__xTicks) this.__xTicks = this.options.xTicks;
 	return this.__xTicks || Math.round(this._width() / 75);
 },
@@ -776,7 +776,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	/**
 	 * Calculate chart yTicks
 	 */
-	_yTicks: function() {
+	_yTicks() {
 		if (this.__yTicks) this.__yTicks = this.options.yTicks;
 		return this.__yTicks || Math.round(this._height() / 30);
 	}

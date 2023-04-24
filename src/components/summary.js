@@ -1,7 +1,7 @@
 const _ = L.Control.Elevation.Utils;
 
 export var Summary = L.Class.extend({
-	initialize: function(opts, control) {
+	initialize(opts, control) {
 		this.options = opts;
 		this.control = control;
 		this.labels = {};
@@ -10,20 +10,20 @@ export var Summary = L.Class.extend({
 		_.style(summary, 'max-width', opts.width ? opts.width + 'px' : '');
 	},
 
-	render: function() {
+	render() {
 		return container => container.append(() => this._container);
 	},
 
-	reset: function() {
+	reset() {
 		this._container.innerHTML = '';
 	},
 
-	append: function(className, label, value) {
+	append(className, label, value) {
 		this._container.innerHTML += `<span class="${className}"><span class="summarylabel">${label}</span><span class="summaryvalue">${value}</span></span>`;
 		return this;
 	},
 
-	update: function() {
+	update() {
 		Object
 		.keys(this.labels)
 		.sort((a, b) => this.labels[a].order - this.labels[b].order) // TODO: any performance issues?
@@ -33,7 +33,7 @@ export var Summary = L.Class.extend({
 		});
 	},
 
-	_registerSummary: function(data) {
+	_registerSummary(data) {
 		for (let i in data) {
 			data[i].order = data[i].order ?? 1000;
 			this.labels[i] = data[i];
