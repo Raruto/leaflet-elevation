@@ -42,7 +42,7 @@ https://github.com/iosphere/Leaflet.hotline/
             1.0: 'red'
         };
 
-        this._canvas = canvas = typeof canvas === 'string'
+        this._canvas = canvas = ('string' === typeof canvas) 
             ? document.getElementById(canvas)
             : canvas;
 

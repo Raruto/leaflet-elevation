@@ -66,6 +66,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this._layers)        this._clearLayers(this._layers);
 		if (this._markers)       this._clearLayers(this._markers);
 		if (this._circleMarkers) this._circleMarkers.remove();
+		if (this._hotline)       this._hotline.eachLayer(l => l.options.renderer.remove()); // hotfix for: https://github.com/Raruto/leaflet-elevation/issues/233
 		if (this._hotline)       this._clearLayers(this._hotline);
 
 		this._data      = [];
