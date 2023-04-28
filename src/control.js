@@ -810,7 +810,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		this.import(this.__D3).then(() => {
 			this._initMapIntegrations(layer);
-			this._fireEvt("eledata_loaded", { data: geojson, layer: layer, name: this.track_info.name, track_info: this.track_info });
+			const event_data = { data: geojson, layer: layer, name: this.track_info.name, track_info: this.track_info };
+			if (this._modulesLoaded) {
+				this._fireEvt("eledata_loaded", event_data);
+			} else {
+				this.once('modules_loaded', () => this._fireEvt("eledata_loaded", event_data));
+			}
 		});
 
 		return layer;

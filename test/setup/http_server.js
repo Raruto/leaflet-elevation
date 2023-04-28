@@ -47,6 +47,7 @@ export function suite() {
     test.before(setup);
     test.after(reset);
     test.before.each(async ({ localhost, page }) => {
+        page.on('console', msg => console.log(msg.text()))
         await page.goto((new URL(arguments[0], localhost)).toString());
     });
     // augment uvu `test` function with a third parameter `timeout`
