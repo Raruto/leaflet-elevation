@@ -3,7 +3,7 @@
  * 
  * @example
  * ```js
- * L.control.Elevation({ handlers: [ 'Runner' ], runnerOptions: { control: {..}, polyline: {..}, marker {..} } })
+ * L.control.Elevation({ handlers: [ 'Runner' ], runnerOptions: { polyline: {..}, motion: {..}, marker {..} } })
  * ```
  */
 export async function Runner() {
