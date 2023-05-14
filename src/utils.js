@@ -161,3 +161,49 @@ export const clamp     = (val, range)           => range ? (val < range[0] ? ran
  * Limit a delta difference between two values
  */
 export const wrapDelta = (curr, prev, deltaMax) => Math.abs(curr - prev) > deltaMax ? prev + deltaMax * Math.sign(curr - prev) : curr;
+
+/**
+ * A deep copy implementation that takes care of correct prototype chain and cycles, references
+ * 
+ * @see https://web.dev/structured-clone/#features-and-limitations
+ */
+export function cloneDeep(o, skipProps) {
+	const origins = [], clones = [];                            // cycle and reference detection
+	skipProps = skipProps || [];
+	function deepCopy(o) {
+		switch(!o || typeof o) {
+			case 'object':
+				const origin = origins.indexOf(o);
+				if (-1 !== origin) return clones[origin];             // retrieve copied object from cache
+				const copy = Object.create(Object.getPrototypeOf(o));
+				origins.push(o);                                      // save copy in cache before looping
+				clones.push(copy);                                    // props, in case there is a cycle
+				Object
+					.getOwnPropertyNames(o)
+					.forEach(function (prop) {
+						const propdesc = Object.getOwnPropertyDescriptor(o, prop);
+						Object.defineProperty(
+							copy,
+							prop,
+							propdesc.get || propdesc.set
+								? propdesc                                    // just copy accessor properties
+								: {                                           // deep copy data properties
+									writable:     propdesc.writable,
+									configurable: propdesc.configurable,
+									enumerable:   propdesc.enumerable,
+									value:        skipProps.includes(prop) ? propdesc.value : deepCopy(propdesc.value),
+								}
+						);
+					});
+				return copy;
+			case 'function':
+			case 'symbol':
+				console.warn('cloneDeep: ' + typeof o + 's not fully supported:', o);
+			case true:
+				// null, undefined or falsy primitive
+			default:
+				return o;
+		}
+	}
+	return deepCopy(o);
+}
