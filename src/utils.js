@@ -167,43 +167,37 @@ export const wrapDelta = (curr, prev, deltaMax) => Math.abs(curr - prev) > delta
  * 
  * @see https://web.dev/structured-clone/#features-and-limitations
  */
-export function cloneDeep(o, skipProps) {
-	const origins = [], clones = [];                            // cycle and reference detection
-	skipProps = skipProps || [];
-	function deepCopy(o) {
-		switch(!o || typeof o) {
-			case 'object':
-				const origin = origins.indexOf(o);
-				if (-1 !== origin) return clones[origin];             // retrieve copied object from cache
-				const copy = Object.create(Object.getPrototypeOf(o));
-				origins.push(o);                                      // save copy in cache before looping
-				clones.push(copy);                                    // props, in case there is a cycle
-				Object
-					.getOwnPropertyNames(o)
-					.forEach(function (prop) {
-						const propdesc = Object.getOwnPropertyDescriptor(o, prop);
-						Object.defineProperty(
-							copy,
-							prop,
-							propdesc.get || propdesc.set
-								? propdesc                                    // just copy accessor properties
-								: {                                           // deep copy data properties
-									writable:     propdesc.writable,
-									configurable: propdesc.configurable,
-									enumerable:   propdesc.enumerable,
-									value:        skipProps.includes(prop) ? propdesc.value : deepCopy(propdesc.value),
-								}
-						);
-					});
-				return copy;
-			case 'function':
-			case 'symbol':
-				console.warn('cloneDeep: ' + typeof o + 's not fully supported:', o);
-			case true:
-				// null, undefined or falsy primitive
-			default:
-				return o;
-		}
+export function cloneDeep(o, skipProps = [], cache = []) {
+	switch(!o || typeof o) {
+		case 'object':
+			const hit = cache.filter(c => o === c.original)[0];
+			if (hit) return hit.copy;                             // handle circular structures
+			const copy = Array.isArray(o) ? [] : Object.create(Object.getPrototypeOf(o));
+			cache.push({ original: o, copy });
+			Object
+				.getOwnPropertyNames(o)
+				.forEach(function (prop) {
+					const propdesc = Object.getOwnPropertyDescriptor(o, prop);
+					Object.defineProperty(
+						copy,
+						prop,
+						propdesc.get || propdesc.set
+							? propdesc                                    // just copy accessor properties
+							: {                                           // deep copy data properties
+								writable:     propdesc.writable,
+								configurable: propdesc.configurable,
+								enumerable:   propdesc.enumerable,
+								value:        skipProps.includes(prop) ? propdesc.value : cloneDeep(propdesc.value, skipProps, cache),
+							}
+					);
+				});
+			return copy;
+		case 'function':
+		case 'symbol':
+			console.warn('cloneDeep: ' + typeof o + 's not fully supported:', o);
+		case true:
+			// null, undefined or falsy primitive
+		default:
+			return o;
 	}
-	return deepCopy(o);
 }
