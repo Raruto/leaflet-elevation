@@ -175,7 +175,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		// opts = L.setOptions(this, opts);
 
 		// Fixes: https://github.com/Raruto/leaflet-elevation/pull/240
-		opts = L.setOptions(this, L.extend({}, structuredClone(Options), opts)); // "deep copy" nested objects (multiple charts)
+		opts = L.setOptions(this, L.extend({}, _.cloneDeep(Options), opts)); // "deep copy" nested objects (multiple charts)
 
 		this._data           = [];
 		this._layers         = L.featureGroup();

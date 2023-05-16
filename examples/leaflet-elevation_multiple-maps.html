@@ -91,6 +91,7 @@
 
 		for (const id of ['map-1', 'map-2', 'map-3']) {
 			opts.elevationControl.options.detached = ['map-3'].includes(id);
+			opts.elevationControl.options.marker   = ['map-3'].includes(id) ? 'position-marker' : 'elevation-line';
 
 			let map = L.map(id, opts.map);
 
