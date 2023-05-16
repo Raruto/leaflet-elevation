@@ -44,62 +44,6 @@
 
 	<div id="map" class="leaflet-map"></div>
 
-	<!-- Custom markers -->
-	<script>
-		L.Control.Elevation.include({
-			addCheckpoint: function(checkpoint) {
-				return this._registerCheckPoint({ // <-- NB these are private functions use them at your own risk!
-						latlng: this._findItemForX(this._x(checkpoint.dist)).latlng,
-						label: checkpoint.label || ''
-					});
-			},
-			addRunner: function(runner) {
-				let x = this._x(runner.dist);
-				let y = this._y(this._findItemForX(x).z)
-				let g = d3.select(this._container)
-					.select('svg > g')
-					.append("svg:circle")
-					.attr("class", "runner " + this.options.theme + " height-focus circle-lower")
-					.attr("r", 6)
-					.attr("cx", x)
-					.attr("cy", y);
-				return g;
-			},
-			setPositionFromLatLng: function(latlng) {
-				this._onMouseMoveLayer({latlng: latlng}); // Update map and chart "markers" from latlng
-			},
-			tick: function (runner, dist = 0, inc = 0.1) {
-				dist = (dist <= this.track_info.distance - inc) ? dist + inc : 0;
-				this.updateRunnerPos(runner, dist);
-				setTimeout(() => this.tick(runner, dist), 150);
-			},
-			updateRunnerPos: function(runner, pos) {
-				let x    = this._x(pos);
-				let curr = this._findItemForX(x);
-				runner
-					.attr("cx", x)
-					.attr("cy", this._y(curr.z));
-				this.setPositionFromLatLng(curr.latlng);
-			}
-		});
-	</script>
-
-	<!-- Custom tooltips -->
-	<script>
-		L.Control.Elevation.addInitHook(function(){
-			this._registerTooltip({
-				name: 'here',
-				marker: (item) => L._("You are here: "),
-				order: 1,
-			});
-			this._registerTooltip({
-				name: 'distance',
-				marker: (item) => Math.round(item.dist) + " " + this.options.xLabel,
-				order: 2,
-			});
-		});
-	</script>
-
 	<!-- Override default translations -->
 	<script>
 		L.registerLocale('en', {
@@ -129,6 +73,23 @@
 					detached: true,
 					summary: "multiline",
 					waypoints: false, // disable built-in checkpoint handling
+					hotline: false,
+					ruler: false,
+					distanceMarkers: false,
+					handlers: [
+						...L.Control.Elevation.prototype.options.handlers,  // built-in handlers
+						'Runner',                                           // same as: import('../src/handlers/runner.js')
+					],
+					runnerOptions: {
+						polyline: {
+							color: 'red',
+							attribution: '| Powered by: © <a href="https://github.com/Igor-Vladyka/leaflet.motion">Leaflet.Motion</a>',
+						},
+						motion: {
+							auto: false,
+							speed: 1500,
+						}
+					}
 				},
 			},
 			layersControl: {
@@ -142,13 +103,12 @@
 
 		let controlElevation = L.control.elevation(opts.elevationControl.options);
 
-		controlElevation.on('eledata_loaded', () => {
+		controlElevation.on('eledata_loaded', ({ layer }) => {
 			// Dynamically generate chart markers
 			[50, 100, 150, 200, 250].forEach(d => controlElevation.addCheckpoint({ dist: d, label: d + ' km' }));
 
-			// Start custom "walking" runner
-			let runner = controlElevation.addRunner({ dist: 0 });
-			controlElevation.tick(runner)
+			// Start "walking" animation
+			controlElevation.animate(layer, 1500);
 		});
 
 		controlElevation.load(opts.elevationControl.url);
