@@ -25,6 +25,7 @@ _For a working example see one of the following demos:_
 - [loading multiple .gpx tracks (click to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
 - [loading multiple maps](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_multiple-maps.html)
 - [translating plugin labels](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
+- [rotating chart labels](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_chart_labels.html)
 - [using custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)
 - [using .gpx extensions (cadence, heart, pace)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html)
 - [using .gpx waypoint icons](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html)
