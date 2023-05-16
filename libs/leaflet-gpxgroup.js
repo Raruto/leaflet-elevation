@@ -159,15 +159,21 @@ L.GpxGroup = L.Class.extend({
   },
 
   addTrack: function(track) {
-    fetch(track)
-      .then(response => response.ok && response.text())
-      .then(text => this._elevation._parseFromString(text))
-      .then(geojson => {
-        if(geojson) {
-          geojson.name = geojson.name || (geojson[0] && geojson[0].properties.name) || track.split('/').pop().split('#')[0].split('?')[0];
-          this._loadRoute(geojson);
-        }
-      });
+    if (track instanceof Object) {
+      this._loadGeoJSON(track);
+    } else {
+      fetch(track)
+        .then(response => response.ok && response.text())
+        .then(text => this._elevation._parseFromString(text))
+        .then(geojson => this._loadGeoJSON(geojson, track.split('/').pop().split('#')[0].split('?')[0]));
+    }
+  },
+
+  _loadGeoJSON: function(geojson, fallbackName) {
+    if (geojson) {
+      geojson.name = geojson.name || (geojson[0] && geojson[0].properties.name) || fallbackName;
+      this._loadRoute(geojson);
+    }
   },
 
   _loadRoute: function(data) {
