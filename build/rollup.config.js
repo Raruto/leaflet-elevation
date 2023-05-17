@@ -17,6 +17,7 @@ let output = {
 	format: "umd",
 	sourcemap: true,
 	name: plugin_name,
+	freeze: false,
 };
 
 let plugins = [

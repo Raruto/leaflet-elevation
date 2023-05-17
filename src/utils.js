@@ -70,8 +70,8 @@ export function formatTime(t) {
 	ctx.moveTo(0, 0);
 	let p = new Path2D(path.attr('d'));
 
-	ctx.strokeStyle = path.attr('stroke');
-	ctx.fillStyle   = path.attr('fill');
+	ctx.strokeStyle = path.__strokeStyle || path.attr('stroke');
+	ctx.fillStyle   = path.__fillStyle   || path.attr('fill');
 	ctx.lineWidth   = 1.25;
 	ctx.globalCompositeOperation = 'source-over';
 
