@@ -61,6 +61,7 @@ export function suite() {
     test.before(setup);
     test.after(reset);
     test.before.each(async ({ localhost, page }) => {
+        page.on('console', msg => console.log(msg.text()));
         page.on('requestfailed', request => { console.log(request.failure().errorText, request.url()); });
         page.on('pageerror', exception => { console.log(exception); });
         await page.goto((new URL(arguments[0], localhost)).toString());
