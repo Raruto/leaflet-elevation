@@ -2,16 +2,31 @@ import { suite as uvu_suite } from 'uvu';
 import { exec } from 'child_process';
 import { chromium } from 'playwright';
 
+process.on('exit', async () => {
+    await globalThis.server.kill('SIGTERM');
+})
+
 /**
  * Start HTTP server 
  */
 export async function setup(ctx) {
-    ctx.server = new AbortController();
-    exec('http-server', { signal: ctx.server.signal });
+    if (!globalThis.server) {
+        await new Promise((resolve) => {
+            globalThis.server = exec('http-server');
+            globalThis.server.stdout.on('data', (msg) => {
+                // console.log(msg);
+                // if (msg.toString().match(/Starting up/)) {
+                if (msg.toString().indexOf('Hit CTRL-C to stop the server')) {
+                    resolve();
+                    // setTimeout(resolve, 1500);
+                }
+            });
+        });
+    }
     ctx.localhost = 'http://localhost:8080';
     ctx.browser = await chromium.launch();
     ctx.context = await ctx.browser.newContext();
-    ctx.context.route(/.html$/, mock_cdn_urls);
+    ctx.context.route(/.html$/, await mock_cdn_urls);
     ctx.page = await ctx.context.newPage();
 }
 
@@ -21,7 +36,6 @@ export async function setup(ctx) {
 export async function reset(ctx) {
     await ctx.context.close();
     await ctx.browser.close();
-    try { ctx.server.abort(); } catch(e) { }
 }
 
 /**
@@ -47,8 +61,10 @@ export function suite() {
     test.before(setup);
     test.after(reset);
     test.before.each(async ({ localhost, page }) => {
-        page.on('console', msg => console.log(msg.text()))
+        page.on('requestfailed', request => { console.log(request.failure().errorText, request.url()); });
+        page.on('pageerror', exception => { console.log(exception); });
         await page.goto((new URL(arguments[0], localhost)).toString());
+        await page.waitForLoadState('domcontentloaded');
     });
     // augment uvu `test` function with a third parameter `timeout`
     return new Proxy(test, {
@@ -63,13 +79,13 @@ export function suite() {
  * 
  * @see https://github.com/lukeed/uvu/issues/33#issuecomment-879870292 
  */
-function timeout(handler, ms=10000) {
+function timeout(handler, ms = 10000) {
     return (ctx) => {
-      let timer
-      return Promise.race([
-        handler(ctx),
-        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('[TIMEOUT] Maximum execution time exceeded: ' + ms + 'ms')), ms) })
-      ]).finally(() => { clearTimeout(timer) })
+        let timer
+        return Promise.race([
+            handler(ctx),
+            new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('[TIMEOUT] Maximum execution time exceeded: ' + ms + 'ms')), ms) })
+        ]).finally(() => { clearTimeout(timer) })
     }
 }
 
