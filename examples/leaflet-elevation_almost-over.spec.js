@@ -29,7 +29,6 @@ test('almostOver', async ({ page }) => {
     const step_2 = await load_trace(page, './via-aurelia.gpx');
     assert.is(step_2.gpx.name, 'via-aurelia.gpx');
     assert.not.type(step_2.gpx.layer, 'undefined');
-
     assert.snapshot(
       JSON.stringify(step_2.gpx.track_info),
       JSON.stringify({
