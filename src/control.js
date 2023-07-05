@@ -214,6 +214,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Javascript scripts downloader (lazy loader)
 	 */
 	import(src, condition) {
+		if (Array.isArray(src)) {
+			return Promise.all(src.map(m => this.import(m)));
+		}
 		switch(src) {
 			case this.__D3:          condition = typeof d3 !== 'object'; break;
 			case this.__TOGEOJSON:   condition = typeof toGeoJSON !== 'object'; break;
@@ -401,38 +404,36 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Initialize "L.AlmostOver" integration
 	 */
 	_initAlmostOverHandler(map, layer) {
-		return (map && this.options.almostOver && !L.Browser.mobile) ? Promise.all([
-			this.import(this.__LGEOMUTIL),
-			this.import(this.__LALMOSTOVER)
-		]).then(() => {
-			map.addHandler('almostOver', L.Handler.AlmostOver)
-			if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
-				map.almostOver.addLayer(layer);
-				map
-					.on('almost:move', this._onMouseMoveLayer, this)
-					.on('almost:out', this._onMouseOut, this);
-				this.once('eledata_clear', () => {
-					map.almostOver.removeLayer(layer);
+		return (map && this.options.almostOver && !L.Browser.mobile) ? this.import([this.__LGEOMUTIL, this.__LALMOSTOVER])
+			.then(() => {
+				map.addHandler('almostOver', L.Handler.AlmostOver)
+				if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
+					map.almostOver.addLayer(layer);
 					map
-					.off('almost:move', this._onMouseMoveLayer, this)
-					.off('almost:out', this._onMouseOut, this);
-				})
-			}
-		}) : Promise.resolve();
+						.on('almost:move', this._onMouseMoveLayer, this)
+						.on('almost:out', this._onMouseOut, this);
+					this.once('eledata_clear', () => {
+						map.almostOver.removeLayer(layer);
+						map
+						.off('almost:move', this._onMouseMoveLayer, this)
+						.off('almost:out', this._onMouseOut, this);
+					})
+				}
+			}) : Promise.resolve();
 	},
 
 	/**
 	 * Initialize "L.DistanceMarkers" integration
 	 */
 	_initDistanceMarkers() {
-		return this.options.distanceMarkers ? Promise.all([this.import(this.__LGEOMUTIL), this.import(this.__LDISTANCEM)]) : Promise.resolve();
+		return this.options.distanceMarkers ? this.import([this.__LGEOMUTIL, this.__LDISTANCEM]) : Promise.resolve();
 	},
 
 	/**
 	 * Initialize "L.Control.EdgeScale" integration
 	 */
 	_initEdgeScale(map) {
-		return this.options.edgeScale ? Promise.all([this.import(this.__LEDGESCALE)])
+		return this.options.edgeScale ? this.import(this.__LEDGESCALE)
 			.then(() => {
 				map.edgeScaleControl = map.edgeScaleControl || L.control.edgeScale('boolean' !== typeof this.options.edgeScale ? this.options.edgeScale : {}).addTo(map);
 			}) : Promise.resolve();
@@ -443,7 +444,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		return this.options.hotline ? this.import(this.__LHOTLINE)
 			.then(() => {
 				layer.eachLayer((trkseg) => {
-					if(trkseg.feature.geometry.type != "Point") {
+					if (trkseg.feature.geometry.type != "Point") {
 						let geo = L.geoJson(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1))});
 						let line = L.hotline(geo.toGeoJSON().features[0].geometry.coordinates, {
 							renderer: L.Hotline.renderer(),
@@ -618,10 +619,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if (opts._maxWidth > clientWidth) opts.width = clientWidth - 30;
 		}
 
-		Promise.all([
-			this.import(this.__D3),
-			this.import(this.__LCHART)
-		]).then((m) => {
+		this
+			.import([this.__D3, this.__LCHART])
+			.then((m) => {
 
 			let chart = this._chart = new (m[1] || Elevation).Chart(opts, this);
 	
@@ -689,13 +689,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this._renderer) this._renderer.remove()
 		this._renderer               = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
 
-		Promise.all([
-			this.import(this.__D3),
-			this.import(this.__LMARKER)
-		]).then((m) => {
-			this._marker             = new (m[1] || Elevation).Marker(this.options, this);
-			this.fire("elechart_marker");
-		});
+		this.import([this.__D3, this.__LMARKER])
+			.then((m) => {
+				this._marker             = new (m[1] || Elevation).Marker(this.options, this);
+				this.fire("elechart_marker");
+			});
 	},
 
 	/**
@@ -829,7 +827,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	_onKeyDown({key}) {
-		if(!this.options.detached && key === "Escape"){
+		if (!this.options.detached && key === "Escape"){
 			this._collapse()
 		};
 	},

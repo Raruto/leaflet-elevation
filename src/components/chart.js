@@ -368,14 +368,14 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 
 	_registerAxisGrid(props) {
 		if (props.scale == 'y') props.scale = this._y;
-		else if(props.scale == 'x') props.scale = this._x;
+		else if (props.scale == 'x') props.scale = this._x;
 
 		this._props.grids[props.name || props.axis] = props;
 	},
 
 	_registerAxisScale(props) {
 		if (props.scale == 'y') props.scale = this._y;
-		else if(props.scale == 'x') props.scale = this._x;
+		else if (props.scale == 'x') props.scale = this._x;
 
 		let opts  = this.options;
 		let scale = props.scale;
@@ -521,7 +521,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		// Apply svg mask on multi-track segments
 		this._mask.selectAll(".gap").remove()
 		this._maskGaps.forEach((d, i) => {
-			if(i >= this._maskGaps.length - 2) return;
+			if (i >= this._maskGaps.length - 2) return;
 			let x1 = this._x(data[this._findIndexForLatLng(data[this._maskGaps[i]].latlng)][xAttr]);
 			let x2 = this._x(data[this._findIndexForLatLng(data[this._maskGaps[i + 1]].latlng)][xAttr]);
 			this._mask
@@ -609,13 +609,13 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		}
 
 		// Adjust left margin
-		if(xAxesL && this.options.margins.left < marginL) {
+		if (xAxesL && this.options.margins.left < marginL) {
 			this.options.margins.left = marginL;
 			marginsUpdated = true;
 		}
 
 		// Adjust bottom margin
-		if(xAxesB && this.options.margins.bottom < marginB) {
+		if (xAxesB && this.options.margins.bottom < marginB) {
 			this.options.margins.bottom = marginB;
 			marginsUpdated = true;
 		}

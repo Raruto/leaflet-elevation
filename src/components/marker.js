@@ -39,7 +39,7 @@ export var Marker = L.Class.extend({
 		if (props) this._props = props;
 		else props = this._props;
 
-		if(!props) return;
+		if (!props) return;
 
 		if (props.options) this.options = props.options;
 		if (!this._map) this.addTo(props.map);
@@ -54,7 +54,7 @@ export var Marker = L.Class.extend({
 
 					let yMax = (this.control._height() / props.yCoordMax * point[this.options.yAttr]);
 
-					if(!isFinite(yMax) || isNaN(yMax)) yMax = 0;
+					if (!isFinite(yMax) || isNaN(yMax)) yMax = 0;
 
 					this._container.classed("leaflet-hidden", false);
 					this._container.call(D3.PositionMarker({

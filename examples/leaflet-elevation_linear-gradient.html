@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+
+	<style>@import '../libs/fullpage.css';</style>
+
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.4.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.4.0/dist/leaflet-elevation.min.js"></script>
+
+</head>
+
+<body>
+
+	<div id="map" class="leaflet-map"></div>
+	<div id="elevation-div" class="elevation-div"></div>
+
+	<script>
+		let opts = {
+			map: {
+				center: [41.4583, 12.7059],
+				zoom: 5,
+				fullscreenControl: false,
+				resizerControl: true,
+				preferCanvas: false,
+				rotate: true,
+				// bearing: 45,
+				rotateControl: {
+				closeOnZeroBearing: true
+				},
+			},
+			elevationControl: {
+				data: "https://raruto.github.io/leaflet-elevation/examples/demo.geojson",
+				options: {
+					detached: true,
+					closeBtn: false,
+					elevationDiv: "#elevation-div",
+					summary: false,
+					downloadLink: false,
+					almostOver: true,
+					distanceMarkers: { distance: false, direction: true },
+					hotline: true,
+					altitude: true,
+					distance: true,
+					slope: "summary",
+					handlers: [
+						'Altitude',      // same as: import('../src/handlers/altitude.js')
+						'Distance',      // same as: import('../src/handlers/distance.js')
+						'Slope',         // same as: import('../src/handlers/slope.js')
+						'LinearGradient' // same as: import('../src/handlers/lineargradient.js')
+					],
+					linearGradient: {
+						attr: 'z',
+						path: 'altitude',
+						range: { 0.0: '#008800', 0.5: '#ffff00', 1.0: '#ff0000' },
+						min: 'elevation_min',
+						max: 'elevation_max',
+					},
+				},
+			},
+			layersControl: {
+				options: {
+					collapsed: false,
+				},
+			},
+		};
+
+		let map = L.map('map', opts.map);
+
+		let controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
+		let controlLayer = L.control.layers(null, null, opts.layersControl.options);
+
+		controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
+
+		controlElevation.load(opts.elevationControl.data);
+	</script>
+
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed; top: 10px; left: calc(50% - 60px); z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
+
+</body>
+
+</html>
