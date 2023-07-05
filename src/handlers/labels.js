@@ -1,6 +1,6 @@
 /**
  * @see https://github.com/Raruto/leaflet-elevation/issues/211
- * 
+ *
  * @example
  * ```js
  * L.control.Elevation({ handlers: [ 'Labels' ], labelsRotation: 25, labelsAlign: 'start' })
@@ -8,7 +8,7 @@
  */
 export function Labels() {
 
-  this.on('elechart_init elechart_axis', function(e) {
+  this.on('elechart_updated', function(e) {
 
     const pointG = this._chart._chart.pane('point');
 
@@ -29,7 +29,7 @@ export function Labels() {
         .attr("stroke", '#000')
         .attr("stroke-width", '1.1');
 
-    } else if (!isNaN(textRotation)) { 
+    } else if (!isNaN(textRotation)) {
 
       pointG.selectAll('text')
         .attr("dx", "4px")
