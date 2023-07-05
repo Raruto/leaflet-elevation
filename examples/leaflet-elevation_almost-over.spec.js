@@ -71,6 +71,17 @@ test('almostOver', async ({ page }) => {
     assert.equal(step_2.over_layers, 1);
     assert.equal(step_3.over_layers, 9);
 
+    /**
+     * List of points where altitude == 0
+     * 
+     * <ele>0</ele> values shouldn't be interpreted as an empty ("false" or "undefined") value.
+     * 
+     * @see https://github.com/Raruto/leaflet-elevation/issues/259
+     */
+    [1029, 1030, 2048, 3747, 3843, 3845, 3891, 3965, 3966, 4057, 4058, 4072, 4262, 4263, 4264, 4269, 11284].forEach(idx => {
+      assert.is(step_2.data[idx].z, 0);
+    });
+
 }, 15000);
 
 test.run();
@@ -90,6 +101,7 @@ async function load_trace(page, trace_url) {
             option: ctrl.options.almostOver,
             over_layers: map.almostOver._layers.length,
             map_layers: Object.keys(map._layers).length,
+            data: ctrl._data,
           }));
       });
       ctrl.load(trace_url);
