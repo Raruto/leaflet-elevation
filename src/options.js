@@ -18,7 +18,7 @@ export var Options = {
 	followMarker: true,
 	imperial: false,
 	legend: true,
-	handlers: ["Distance", "Time", "Altitude", "Slope", "Speed", "Acceleration", 'Temperature'],
+	handlers: ["Distance", "Time", "Altitude", "Slope", "Speed", "Acceleration"],
 	hotline: 'elevation',
 	marker: 'elevation-line',
 	markerIcon: L.divIcon({

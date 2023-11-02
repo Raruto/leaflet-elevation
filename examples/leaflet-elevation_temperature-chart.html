@@ -42,6 +42,16 @@
 					summary: "inline",
 					temperature: true,
 					hotline: 'temperature',
+					handlers: [
+						'Altitude',   // same as: import('../src/handlers/altitude.js')
+						'Distance',   // same as: import('../src/handlers/distance.js')
+						'Temperature' // same as: import('../src/handlers/temperature.js')
+					],
+					// imperial: true,
+					// temperatureFactor1: 1.8,
+					// temperatureFactor2: 32,
+					// temperatureRange: [-70, 70]
+					// temperatureDeltaMax: 10,
 				},
 			},
 			layersControl: {
