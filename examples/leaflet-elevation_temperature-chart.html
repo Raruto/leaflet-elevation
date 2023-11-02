@@ -28,10 +28,16 @@
 	<script>
 		let opts = {
 			map: {
-				center: [41.4583, 12.7059],
-				zoom: 5,
+				mapTypeId: 'satellite',
+				center: [53.0892, 45.1836],
+				zoom: 6,
 				fullscreenControl: false,
 				resizerControl: true,
+				rotate: true,
+				bearing: 170,
+				rotateControl: {
+				closeOnZeroBearing: true
+				},
 			},
 			elevationControl: {
 				url: "nordic-ski-atemp.gpx",
