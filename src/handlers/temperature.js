@@ -18,7 +18,7 @@ export function Temperature() {
 		deltaMax: this.options.temperatureDeltaMax,
 		clampRange: this.options.temperatureRange,
 		decimals: 2,
-		pointToAttr: (point, i) => (point.meta.atemps ?? point.prev('temperature')) * opts.temperatureFactor1 + opts.temperatureFactor2,
+		pointToAttr: (point, i) => (point.meta.atemps ?? point.meta.atemps ?? point.prev('temperature')) * opts.temperatureFactor1 + opts.temperatureFactor2,
 		stats: { max: _.iMax, min: _.iMin, avg: _.iAvg },
 		scale: {
 			axis       : "y",
@@ -40,8 +40,8 @@ export function Temperature() {
 		},
 		tooltip: {
 			name: 'temperature',
-			chart: (item) => L._("Temp: ") + Math.round(item.temperature) + " " +  temperature.label,
-			marker: (item) => Math.round(item.temperature) + " "  + temperature.label,
+			chart: (item) => L._("Temp: ") + Math.round(item.temperature).toLocaleString() + " " +  temperature.label,
+			marker: (item) => Math.round(item.temperature).toLocaleString() + " "  + temperature.label,
 			order: 1
 		},
 		summary: {
