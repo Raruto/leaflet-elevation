@@ -45,6 +45,7 @@ _For a working example see one of the following demos:_
 - [linear gradient](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_linear-gradient.html)
 - [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
 - [speed chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_speed-chart.html)
+- [temperature chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_temperature-chart.html)
 - [walking marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
 
 ---
