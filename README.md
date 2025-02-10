@@ -24,6 +24,7 @@ _For a working example see one of the following demos:_
 - [loading multiple .gpx tracks (hover to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html)
 - [loading multiple .gpx tracks (click to toggle)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_toggable-charts.html)
 - [loading multiple maps](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_multiple-maps.html)
+- [stacking multiple charts (elevation, slope, speed)](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_multiple-charts.html)
 - [translating plugin labels](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html)
 - [rotating chart labels](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_chart_labels.html)
 - [using custom colors](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_custom-theme.html)

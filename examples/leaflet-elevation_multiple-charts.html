@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+	
+	<style>@import '../libs/fullpage.css';</style>
+
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.js"></script>
+
+	<style>
+		#map {
+			min-height: 50%;
+		}
+		#charts {
+			display: grid;
+			grid-template-columns: auto auto;
+		}
+		.summary {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			font-family: Monospace;
+			padding: 10px;
+			text-align: center;
+		}
+		.summary > b {
+			font-size: 1.1em;
+			margin-bottom: 1em;
+		}
+		.background {
+			--ele-bg: transparent;
+		}
+	</style>
+
+</head>
+
+<body>
+
+	<div id="map" class="leaflet-map"></div>
+	<div id="charts">
+		<div class="summary">
+			<b>Elevation</b>
+			<span class="max"><span class="summarylabel">Max: </span><span class="summaryvalue">0</span></span>
+			<span class="min"><span class="summarylabel">Min: </span><span class="summaryvalue">0</span></span>
+			<span class="avg"><span class="summarylabel">Avg: </span><span class="summaryvalue">0</span></span>
+		</div>
+		<div id="elevation-chart"></div>
+		<div class="summary">
+			<b>Slope</b>
+			<span class="max"><span class="summarylabel">Max: </span><span class="summaryvalue">0</span></span>
+			<span class="min"><span class="summarylabel">Min: </span><span class="summaryvalue">0</span></span>
+			<span class="avg"><span class="summarylabel">Avg: </span><span class="summaryvalue">0</span></span>
+		</div>
+		<div id="slope-chart"></div>
+		<div class="summary">
+			<b>Speed</b>
+			<span class="max"><span class="summarylabel">Max: </span><span class="summaryvalue">0</span></span>
+			<span class="min"><span class="summarylabel">Min: </span><span class="summaryvalue">0</span></span>
+			<span class="avg"><span class="summarylabel">Avg: </span><span class="summaryvalue">0</span></span>
+		</div>
+		<div id="speed-chart"></div>
+	</div>
+
+	<!-- Custom chart handler (based on: import('https://unpkg.com/@raruto/leaflet-elevation/src/handlers/altitude.js') -->
+	<script>
+		L.Control.Elevation.Altitude = function() {
+	
+			const _  = L.Control.Elevation.Utils;
+
+			let opts       = this.options;
+			let altitude   = {};
+
+			let theme           = opts.theme.split(' ')[0].replace('-theme', '');
+			let color           = _.Colors[theme] || {};
+
+			opts.altitudeFactor = opts.imperial ? this.__footFactor : (opts.altitudeFactor || 1); // 1 m = (1 m)
+			altitude.label      = opts.imperial ? "ft" : opts.yLabel;
+
+			return {
+				name: 'altitude',
+				required: this.options.slope,
+				meta: 'z',
+				unit: altitude.label,
+				statsName: 'elevation',
+				deltaMax: this.options.altitudeDeltaMax,
+				clampRange: this.options.altitudeRange,
+				pointToAttr: (point, i) => {
+					if ("alt" in point) point.meta.ele = point.alt; // "alt" property is generated inside "leaflet"
+					return this._data[i].z *= opts.altitudeFactor;
+				},
+				stats: { max: _.iMax, min: _.iMin, avg: _.iAvg },
+				grid: {
+					axis      : "y",
+					position  : "right",
+					scale     : "y"
+				},
+				scale: {
+					axis    : "y",
+					position: "right",
+					scale   : "y",
+					tickPadding: 16,
+					labelX     : 25,
+					labelY     : -8,
+				},
+				path: {
+					label        : 'Altitude',
+					scaleX       : 'distance',
+					scaleY       : 'altitude',
+					className    : 'area',
+					color        : color.area || theme,
+					strokeColor  : opts.detached ? color.stroke : '#000',
+					strokeOpacity: "1",
+					fillOpacity  : opts.detached ? (color.alpha || '0.8') : 1,
+					preferCanvas : opts.preferCanvas,
+				},
+				tooltip: {
+					name: 'y',
+					chart: (item) => L._("y: ") + _.round(item[opts.yAttr], opts.decimalsY) + " " + altitude.label,
+					marker: (item) => _.round(item[opts.yAttr], opts.decimalsY) + " " + altitude.label,
+					order: 10,
+				},
+				summary: {
+					"minele"  : {
+						label: "Min Elevation: ",
+						value: (track, unit) => (track.elevation_min || 0).toFixed(2) + '&nbsp;' + unit,
+						order: 30,
+					},
+					"maxele"  : {
+						label: "Max Elevation: ",
+						value: (track, unit) => (track.elevation_max || 0).toFixed(2) + '&nbsp;' + unit,
+						order: 31,
+					},
+					"avgele"  : {
+						label: "Avg Elevation: ",
+						value: (track, unit) => (track.elevation_avg || 0).toFixed(2) + '&nbsp;' + unit,
+						order: 32,
+					},
+				}
+			};
+		};
+	</script>
+
+	<script>
+		
+		let opts = {
+			map: {
+				center: [41.4583, 12.7059],
+				zoom: 5,
+				preferCanvas: true,
+				rotate: true,
+				// bearing: 45,
+				rotateControl: {
+					closeOnZeroBearing: true
+				},
+				fullscreenControl: false,
+				minimapControl: false,
+				searchControl: false,
+				locateControl: false,
+				pegmanControl: false,
+				zoomControl: false,
+				resizerControl: false,
+				layersControl: false,
+			},
+			elevationControl: {
+				url: "https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx",
+				options: {
+					theme: "lightblue-theme",
+					collapsed: false,
+					autohide: false,
+					autofitBounds: true,
+					position: "bottomleft",
+					detached: true,
+					marker: 'position-marker',
+					summary: false,
+					imperial: false,
+					// altitude: "disabled",
+					slope: false,
+					speed: false,
+					acceleration: false,
+					time: false,
+					legend: false,
+					ruler: false,
+					followMarker: true,
+					closeBtn: false,
+					downloadLink: false,
+					almostOver: true,
+					distanceMarkers: false,
+					hotline: false,
+					edgeScale: {
+						bar: true,
+						icon: false,
+						coords: false,
+					}
+				},
+			},
+		};
+
+		const map = L.map('map', opts.map);
+
+		const charts = {
+			slope: L.control.elevation(Object.assign({}, opts.elevationControl.options, {
+				altitude: "summary",
+				slope: true,
+				speed: false,
+				elevationDiv: "#slope-chart",
+			})).addTo(map),
+			speed: L.control.elevation(Object.assign({}, opts.elevationControl.options, {
+				altitude: "summary",
+				slope: false,
+				speed: true,
+				elevationDiv: "#speed-chart",
+			})).addTo(map),
+			elevation: L.control.elevation(Object.assign({}, opts.elevationControl.options, {
+				altitude: true,
+				slope: false,
+				speed: false,
+				elevationDiv: "#elevation-chart",
+			})).addTo(map),
+		};
+
+		Object.entries(charts).forEach(([id, chart]) => {
+			chart.on('eledata_loaded', ({layer, name, track_info}) => {
+				let q = document.querySelector.bind(document);
+				q(`.summary:has(+ #${id}-chart) .max .summaryvalue`).innerHTML = track_info[id +'_max'].toFixed(2);
+				q(`.summary:has(+ #${id}-chart) .min .summaryvalue`).innerHTML = track_info[id +'_min'].toFixed(2);
+				q(`.summary:has(+ #${id}-chart) .avg .summaryvalue`).innerHTML   = track_info[id +'_avg'].toFixed(2);
+				Object.values(charts).forEach(c => c.redraw());
+			});
+			chart.load(opts.elevationControl.url);
+			chart.on('elechart_leave', () => {
+				chart._hideMarker();
+				chart._chart._hideDiagramIndicator();
+				chart._map.getContainer().classList.toggle('elechart-hover', false);
+			})
+		});
+	</script>
+
+	<!-- i18n -->
+	<script>
+
+		// Register a custom locale
+		L.registerLocale('en:18', {
+			"Acceleration"      : "Acceleration",
+			"Altitude"          : "Elevation",
+			"Slope"             : "Slope",
+			"Speed"             : "Velocity",
+			"Total Length: "    : "L: ",
+			"Max Elevation: "   : "E Max: ",
+			"Min Elevation: "   : "E Min: ",
+			"Avg Elevation: "   : "E Avg: ",
+			"Total Time: "      : "T: ",
+			"Total Ascent: "    : "Asc: ",
+			"Total Descent: "   : "Desc: ",
+			"Min Slope: "       : "S Min: ",
+			"Max Slope: "       : "S Max: ",
+			"Avg Slope: "       : "S Avg: ",
+			"Min Speed: "       : "V Min: ",
+			"Max Speed: "       : "V Max: ",
+			"Avg Speed: "       : "V Avg: ",
+			"Min Acceleration: ": "A Min: ",
+			"Max Acceleration: ": "A Max: ",
+			"Avg Acceleration: ": "A Avg: ",
+		});
+
+		// Enable a custom locale
+		// L.setLocale('en:18');
+
+		// You can also override a previously defined object
+		L.locales['en'] = L.extend({
+			"y: "               : "",
+			"x: "               : "",
+			"t: "               : "",
+			"T: "               : "",
+			"m: "               : "",
+			"v: "               : "",
+			"a: "               : "",
+		}, L.locales['en']);
+
+		// Switch the language
+		L.setLocale('en');
+
+	</script>
+
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;top: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
+
+</body>
+
+</html>
