@@ -40,7 +40,7 @@ export function Time() {
 			if (!point.meta || !point.meta.time) {
 				point.meta = point.meta || {};
 				if (i > 0) {
-					let dx = (this._data[i].dist - this._data[i - 1].dist);
+					let dx = this._data[i].latlng.distanceTo(this._data[i-1].latlng) / 1000; // distance in km
 					let t0 = this._data[i - 1].time.getTime();
 					point.meta.time = new Date(t0 + ( dx / this._timeAVGSpeed) * this.options.timeFactor * 1000);
 				} else {

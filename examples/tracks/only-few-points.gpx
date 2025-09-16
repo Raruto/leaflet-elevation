@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1"
+    xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3"
+    xmlns:gpx_style="http://www.topografix.com/GPX/gpx_style/0/2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.topografix.com/GPX/1/1 https://www.topografix.com/GPX/1/1/gpx.xsd http://www.topografix.com/GPX/gpx_style/0/2 https://www.topografix.com/GPX/gpx_style/0/2/gpx_style.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 https://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd">
+  <trk>
+    <name>Path</name>
+    <extensions>
+      <gpx_style:line>
+        <gpx_style:color>E51B23</gpx_style:color>
+      </gpx_style:line>
+    </extensions>
+    <trkseg>
+      <trkpt lat="47.357431944587034" lon="7.536621093750001"></trkpt>
+      <trkpt lat="47.31275872224939" lon="8.069458007812502"></trkpt>
+      <trkpt lat="47.08882558740757" lon="7.503662109375001"></trkpt>
+      <trkpt lat="47.0214613091173" lon="8.080444335937502"></trkpt>
+      <trkpt lat="46.830133640447414" lon="7.509155273437501"></trkpt>
+      <trkpt lat="46.68713141244413" lon="8.135375976562502"></trkpt>
+      <trkpt lat="46.5172957536981" lon="7.640991210937501"></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
