@@ -158,7 +158,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 			if (this._data.length && (e.type != 'brush' /*|| e.sourceEvent*/)) {
 				let rect    = this._chart.panes.brush.select('.overlay').node();
 				let coords  = d3.pointers(e, rect)[0];
-				let xCoord  = _.clamp(coords[0], [0, this._width()]); // Clamps the cursor position to the chart's bounds.
+				let xCoord  = _.clamp(coords[0], [0, this._width()]); // Clamps cursor position to chart's bounds (see issues: #270, #301)
 				let item    = this._data[this._findIndexForXCoord(xCoord)];
 
 				this.fire("mouse_move", { item: item, xCoord: xCoord });
