@@ -34,8 +34,8 @@
  *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-import * as _ from './utils';
-import { Elevation } from './control';
+import * as _ from "./utils";
+import { Elevation } from "./control";
 
 Elevation.Utils = _;
 

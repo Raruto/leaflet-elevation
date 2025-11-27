@@ -31,13 +31,13 @@
 
 .elevation-control .axis line,
 .elevation-control .axis path {
-  stroke: var(--ele-axis, #2D1130);
+  stroke: var(--ele-axis, #2d1130);
   stroke-width: 1;
   fill: none;
 }
 
 .elevation-control .grid .tick line {
-  stroke: var(--ele-grid, #EEE);
+  stroke: var(--ele-grid, #eee);
   stroke-width: 1px;
   shape-rendering: crispEdges;
 }
@@ -53,7 +53,7 @@
   font-weight: 700;
   paint-order: stroke fill;
   stroke: #fff;
-  stroke-width: 2px
+  stroke-width: 2px;
 }
 
 .elevation-control .y.axis text {
@@ -61,7 +61,7 @@
 }
 
 .elevation-control .area {
-  fill: var(--ele-area, #4682B4);
+  fill: var(--ele-area, #4682b4);
   stroke: var(--ele-stroke, #000);
   stroke-width: 1.2;
   paint-order: stroke fill;
@@ -82,7 +82,7 @@
   fill: #000;
   font-weight: 700;
   paint-order: stroke;
-  stroke: #FFF;
+  stroke: #fff;
   stroke-width: 2px;
 }
 
@@ -104,7 +104,7 @@
 }
 
 .elevation-control .mouse-focus-label-text {
-  fill: #FFF;
+  fill: #fff;
   font-size: 10px;
 }
 
@@ -119,17 +119,29 @@
 }
 
 .elevation-summary {
-  font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
+  font-family:
+    "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica,
+    sans-serif;
   font-size: 12px;
   margin: var(--ele-sum-margin, 0 auto);
-  text-shadow: var(--ele-sum-shadow, 1px 0 0 #FFF, -1px 0 0 #FFF, 0 1px 0 #FFF, 0 -1px 0 #FFF, 1px 1px #FFF, -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF);
+  text-shadow: var(
+    --ele-sum-shadow,
+    1px 0 0 #fff,
+    -1px 0 0 #fff,
+    0 1px 0 #fff,
+    0 -1px 0 #fff,
+    1px 1px #fff,
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px 1px 0 #fff
+  );
 }
 
-.elevation-summary>span:not(:last-child):after {
-  content: var(--ele-sum-sep, '');
+.elevation-summary > span:not(:last-child):after {
+  content: var(--ele-sum-sep, "");
 }
 
-.multiline-summary>span {
+.multiline-summary > span {
   display: block;
 }
 
@@ -159,7 +171,7 @@
 }
 
 .elevation-toggle-icon:before {
-  content: '\2716';
+  content: "\2716";
   display: var(--ele-close-btn, none);
   color: #000;
   width: 100%;
@@ -172,7 +184,7 @@
 .leaflet-elevation-pane .height-focus,
 .leaflet-overlay-pane .height-focus {
   stroke: #000;
-  fill: var(--ele-circle, var(--ele-area, #FFF));
+  fill: var(--ele-circle, var(--ele-area, #fff));
 }
 
 .leaflet-elevation-pane .height-focus.line,
@@ -186,7 +198,7 @@
   font-weight: 600;
   fill: #000;
   paint-order: stroke;
-  stroke: #FFF;
+  stroke: #fff;
   stroke-width: 2px;
 }
 
@@ -201,13 +213,18 @@
 
 .elevation-polyline {
   stroke: var(--ele-poly, var(--ele-area, #000));
-  filter: drop-shadow(1px 1px 0 #FFF) drop-shadow(-1px -1px 0 #FFF) drop-shadow(1px -1px 0 #FFF) drop-shadow(-1px 1px 0 #FFF);
+  filter: drop-shadow(1px 1px 0 #fff) drop-shadow(-1px -1px 0 #fff)
+    drop-shadow(1px -1px 0 #fff) drop-shadow(-1px 1px 0 #fff);
 }
 
 /* CHART STATES /////////////////////////////////////////////////// */
 
 .elevation-detached {
-  font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+  font:
+    12px/1.5 "Helvetica Neue",
+    Arial,
+    Helvetica,
+    sans-serif;
   height: auto;
   width: 100%;
   position: relative;
@@ -265,57 +282,57 @@
 /* LIME THEME ///////////////////////////////////////////////////// */
 .lime-theme {
   --ele-bg: rgba(156, 194, 34, 0.2);
-  --ele-axis: #566B13;
-  --ele-area: #9CC222;
-  --ele-grid: #CCC;
+  --ele-axis: #566b13;
+  --ele-area: #9cc222;
+  --ele-grid: #ccc;
   --ele-brush: rgba(99, 126, 11, 0.4);
-  --ele-poly: #566B13;
+  --ele-poly: #566b13;
   --ele-line: #70ab00;
 }
 
 /* STEELBLUE THEME //////////////////////////////////////////////// */
 .steelblue-theme {
-  --ele-axis: #0D1821;
-  --ele-area: #4682B4;
+  --ele-axis: #0d1821;
+  --ele-area: #4682b4;
   --ele-brush: rgba(23, 74, 117, 0.4);
-  --ele-line: #174A75;
+  --ele-line: #174a75;
 }
 
 /* PURPLE THEME /////////////////////////////////////////////////// */
 .purple-theme {
   --ele-bg: rgba(115, 44, 123, 0.2);
-  --ele-area: #732C7B;
+  --ele-area: #732c7b;
   --ele-brush: rgba(74, 14, 80, 0.4);
   --ele-line: #732c7b;
 }
 
 /* YELLOW THEME /////////////////////////////////////////////////// */
 .yellow-theme {
-  --ele-area: #FF0;
+  --ele-area: #ff0;
 }
 
 /* RED THEME ////////////////////////////////////////////////////// */
 .red-theme {
-  --ele-area: #F00;
+  --ele-area: #f00;
 }
 
 /* MAGENTA THEME ////////////////////////////////////////////////// */
 .magenta-theme {
   --ele-bg: rgba(255, 255, 255, 0.47);
-  --ele-area: #FF005E;
+  --ele-area: #ff005e;
 }
 
 /* LIGHTBLUE THEME //////////////////////////////////////////////// */
 .lightblue-theme {
-  --ele-area: #3366CC;
+  --ele-area: #3366cc;
   --ele-alpha: 0.45;
-  --ele-stroke: #4682B4;
+  --ele-stroke: #4682b4;
   --ele-circle: #fff;
   --ele-line: #000;
 }
 
 .elevation-detached.lightblue-theme .area {
-  stroke: #3366CC;
+  stroke: #3366cc;
 }
 
 /* leaflet-distance-markers */
