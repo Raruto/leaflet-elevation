@@ -1,6 +1,6 @@
-export function Heart() {
-  const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
+export function Heart() {
   return {
     name: "heart", // <-- Your custom option name (eg. "heart: true")
     unit: "bpm",

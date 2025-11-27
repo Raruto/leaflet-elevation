@@ -1,6 +1,6 @@
-export function Distance() {
-  const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
+export function Distance() {
   let opts = this.options;
   let distance = {};
 

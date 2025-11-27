@@ -1,6 +1,6 @@
-export function Pace() {
-  const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
+export function Pace() {
   let opts = this.options;
   let pace = {};
 

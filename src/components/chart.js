@@ -1,8 +1,7 @@
 import * as D3 from "./d3.js";
+import * as _ from "../utils.js";
 
-const _ = L.Control.Elevation.Utils;
-
-export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
+export var Chart = L.Class.extend({
   includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
   initialize(opts, control) {
@@ -822,4 +821,4 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
     if (this.__yTicks) this.__yTicks = this.options.yTicks;
     return this.__yTicks || Math.round(this._height() / 30);
   },
-}));
+});

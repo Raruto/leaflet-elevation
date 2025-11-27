@@ -17,12 +17,12 @@
  * })
  * ```
  */
+import * as _ from "../utils.js";
+
 export function LinearGradient() {
   if (!this.options.linearGradient) {
     return {};
   }
-
-  const _ = L.Control.Elevation.Utils;
 
   /**
    * Initialize gradient color palette.
@@ -54,7 +54,7 @@ export function LinearGradient() {
       getRGBColor(value) {
         const idx =
           Math.floor(
-            Math.min(Math.max((value - min) / (max - min), 0), 0.999) * depth,
+            Math.min(Math.max((value - min) / (max - min), 0), 0.999) * depth
           ) * 4;
         return (
           "rgb(" + [data[idx], data[idx + 1], data[idx + 2]].join(",") + ")"
@@ -78,7 +78,7 @@ export function LinearGradient() {
       min: "elevation_min",
       max: "elevation_max",
     },
-    true === this.options.linearGradient ? {} : this.options.linearGradient,
+    true === this.options.linearGradient ? {} : this.options.linearGradient
   );
 
   const gradient_id = path_name + "-gradient-" + _.randomId();
@@ -106,7 +106,7 @@ export function LinearGradient() {
         0,
         0,
         chart._width(),
-        0,
+        0
       );
     } else {
       defs.select("#" + gradient_id).remove();
@@ -124,7 +124,7 @@ export function LinearGradient() {
     for (let i = 0, data = this._data; i < data.length; i++) {
       gradient.addColorStop(
         i / data.length,
-        palette.getRGBColor(data[i][attr]),
+        palette.getRGBColor(data[i][attr])
       );
     }
   });
@@ -143,7 +143,7 @@ export function LinearGradient() {
         legendGradient
           .append("svg:stop")
           .attr("offset", i)
-          .attr("stop-color", range[i]),
+          .attr("stop-color", range[i])
       );
 
     chart._container

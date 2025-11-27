@@ -1,6 +1,6 @@
-export function Temperature() {
-  const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
+export function Temperature() {
   let temperature = {};
   let opts = this.options;
   temperature.label = opts.label || L._(opts.imperial ? "°F" : "°C");

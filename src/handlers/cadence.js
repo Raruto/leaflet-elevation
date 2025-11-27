@@ -1,6 +1,6 @@
-export function Cadence() {
-  const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
+export function Cadence() {
   return {
     name: "cadence", // <-- Your custom option name (eg. "cadence: true")
     unit: "rpm",

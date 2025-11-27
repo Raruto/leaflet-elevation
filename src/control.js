@@ -19,12 +19,14 @@ import { LinearGradient } from "./handlers/lineargradient.js";
 import * as d3 from "d3";
 import * as toGeoJSON from "@tmcw/togeojson";
 
-// Note: Optional Leaflet plugins should be imported/loaded separately:
-// - leaflet-geometryutil
-// - leaflet-almostover
-// - leaflet-hotline
-// - leaflet-distance-marker
-// - leaflet-edgescale
+// Import leaflet plugins from libs folder
+import "../libs/leaflet-hotline.min.js";
+// import "../libs/leaflet-distance-marker.min.js"; // Requires L.GeometryUtil which is not available
+import "../libs/leaflet-edgescale.min.js";
+
+// Make d3 and toGeoJSON available globally for compatibility
+window.d3 = d3;
+window.toGeoJSON = toGeoJSON;
 
 // "leaflet-i18n" fallback
 if (!L._ || !L.i18n) {
@@ -447,23 +449,14 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
    * Initialize "L.AlmostOver" integration
    */
   _initAlmostOverHandler(map, layer) {
-    if (map && this.options.almostOver && !L.Browser.mobile) {
-      // Ensure L.Handler.AlmostOver and L.GeometryUtil are available
-      if (typeof L.Handler.AlmostOver !== "function") {
-        console.warn(
-          "L.Handler.AlmostOver is not available. Please include leaflet-almostover plugin."
-        );
-        return;
-      }
-      if (typeof L.GeometryUtil !== "object") {
-        console.warn(
-          "L.GeometryUtil is not available. Please include leaflet-geometryutil plugin."
-        );
-        return;
-      }
-
+    if (
+      map &&
+      this.options.almostOver &&
+      !L.Browser.mobile &&
+      L.Handler.AlmostOver
+    ) {
       map.addHandler("almostOver", L.Handler.AlmostOver);
-      if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
+      if (map.almostOver && map.almostOver.enabled()) {
         map.almostOver.addLayer(layer);
         map
           .on("almost:move", this._onMouseMoveLayer, this)
@@ -482,18 +475,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
    * Initialize "L.DistanceMarkers" integration
    */
   _initDistanceMarkers() {
-    if (this.options.distanceMarkers) {
-      if (typeof L.DistanceMarkers !== "function") {
-        console.warn(
-          "L.DistanceMarkers is not available. Please include leaflet-distance-marker plugin."
-        );
-      }
-      if (typeof L.GeometryUtil !== "object") {
-        console.warn(
-          "L.GeometryUtil is not available. Please include leaflet-geometryutil plugin."
-        );
-      }
-    }
+    // Distance markers functionality is automatically available when leaflet-distance-marker is imported
   },
 
   /**
@@ -501,12 +483,6 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
    */
   _initEdgeScale(map) {
     if (this.options.edgeScale) {
-      if (typeof L.Control.EdgeScale !== "function") {
-        console.warn(
-          "L.Control.EdgeScale is not available. Please include leaflet-edgescale plugin."
-        );
-        return;
-      }
       map.edgeScaleControl =
         map.edgeScaleControl ||
         L.control
@@ -525,13 +501,6 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
         ? this.options.hotline
         : "elevation";
     if (this.options.hotline) {
-      if (typeof L.Hotline !== "function") {
-        console.warn(
-          "L.Hotline is not available. Please include leaflet-hotline plugin."
-        );
-        return;
-      }
-
       layer.eachLayer((trkseg) => {
         if (trkseg.feature.geometry.type != "Point") {
           let geo = L.geoJson(trkseg.toGeoJSON(), {
@@ -1588,3 +1557,8 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     return height - margins.top - margins.bottom;
   },
 }));
+
+// Assign components to global namespace after classes are defined
+L.Control.Elevation.Chart = Chart;
+L.Control.Elevation.Marker = Marker;
+L.Control.Elevation.Summary = Summary;

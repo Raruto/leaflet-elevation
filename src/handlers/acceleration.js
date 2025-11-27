@@ -1,6 +1,6 @@
-export function Acceleration() {
-  const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
+export function Acceleration() {
   let opts = this.options;
   let acceleration = {};
 

@@ -1,6 +1,6 @@
-export function Speed() {
-  const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
+export function Speed() {
   let opts = this.options;
   let speed = {};
 

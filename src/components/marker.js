@@ -1,6 +1,5 @@
 import * as D3 from "./d3.js";
-
-const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
 export var Marker = L.Class.extend({
   initialize(options, control) {

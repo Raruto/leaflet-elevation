@@ -1,6 +1,6 @@
-export function Altitude() {
-  const _ = L.Control.Elevation.Utils;
+import * as _ from "../utils.js";
 
+export function Altitude() {
   let opts = this.options;
   let altitude = {};
 
