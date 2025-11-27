@@ -234,6 +234,15 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
    * Load elevation data (GPX, GeoJSON, KML or TCX).
    */
   load(data) {
+    // If data is already a GeoJSON object, use it directly
+    if (
+      typeof data === "object" &&
+      data !== null &&
+      (data.type === "FeatureCollection" || data.type === "Feature")
+    ) {
+      return this._loadLayer(data);
+    }
+
     this._parseFromString(data).then((geojson) =>
       geojson ? this._loadLayer(geojson) : this._loadFile(data)
     );
@@ -1095,13 +1104,17 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
         geojson = this._parseFromGeoJSONString(data.toString());
       }
       if (geojson) {
-        geojson.name =
-          geojson.name ||
-          (this._downloadURL || "")
-            .split("/")
-            .pop()
-            .split("#")[0]
-            .split("?")[0];
+        if (!geojson.name) {
+          if (this._downloadURL && typeof this._downloadURL === "string") {
+            geojson.name = this._downloadURL
+              .split("/")
+              .pop()
+              .split("#")[0]
+              .split("?")[0];
+          } else {
+            geojson.name = "elevation-data";
+          }
+        }
       }
       resolve(geojson);
     });
