@@ -1,10 +1,5 @@
 import * as D3 from "./d3.js";
 
-// Check if d3 is available globally
-if (typeof d3 === "undefined") {
-  console.error("d3 is not available globally. Please include d3 library.");
-}
-
 const _ = L.Control.Elevation.Utils;
 
 export var Marker = L.Class.extend({
@@ -70,7 +65,7 @@ export var Marker = L.Class.extend({
             props.item,
             this._map._rotate
               ? this._map.rotatedPointToMapPanePoint(point)
-              : point,
+              : point
           );
 
           let yMax =
@@ -88,7 +83,7 @@ export var Marker = L.Class.extend({
               length: point.y - yMax, // normalized Y
               labels: this._labels,
               item: point,
-            }),
+            })
           );
         }
         break;

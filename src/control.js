@@ -16,11 +16,10 @@ import { Temperature } from "./handlers/temperature.js";
 import { Runner } from "./handlers/runner.js";
 import { Labels } from "./handlers/labels.js";
 import { LinearGradient } from "./handlers/lineargradient.js";
+import * as d3 from "d3";
+import * as toGeoJSON from "@tmcw/togeojson";
 
-// Global dependencies - these should be available globally or imported separately
-// import * as d3 from 'd3';
-// import * as toGeoJSON from '@tmcw/togeojson';
-// Note: Leaflet plugins should be imported/loaded separately:
+// Note: Optional Leaflet plugins should be imported/loaded separately:
 // - leaflet-geometryutil
 // - leaflet-almostover
 // - leaflet-hotline
@@ -98,7 +97,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
   _clearChart() {
     if (this._events && this._events.elechart_updated) {
       this._events.elechart_updated.forEach(({ fn, ctx }) =>
-        this.off("elechart_updated", fn, ctx),
+        this.off("elechart_updated", fn, ctx)
       );
     }
     if (this._chart && this._chart._container) {
@@ -234,7 +233,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
    */
   load(data) {
     this._parseFromString(data).then((geojson) =>
-      geojson ? this._loadLayer(geojson) : this._loadFile(data),
+      geojson ? this._loadLayer(geojson) : this._loadFile(data)
     );
   },
 
@@ -251,7 +250,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
         this.options.theme +
         " " +
         (this.options.detached ? "elevation-detached" : "leaflet-control"),
-      this.options.detached ? { id: "elevation-" + _.randomId() } : {},
+      this.options.detached ? { id: "elevation-" + _.randomId() } : {}
     ));
 
     if (!this.eleDiv) this.eleDiv = container;
@@ -290,7 +289,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     this.off("eledata_added eledata_loaded", this._updateChart, this).off(
       "eledata_added eledata_loaded",
       this._updateSummary,
-      this,
+      this
     );
 
     this.fire("remove");
@@ -336,12 +335,12 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
             return this._addGeoJSONData(geom.coordinates, d.properties);
           case "MultiLineString":
             return _.each(geom.coordinates, (coords, i) =>
-              this._addGeoJSONData(coords, d.properties, i),
+              this._addGeoJSONData(coords, d.properties, i)
             );
           case "Point":
           default:
             return console.warn(
-              "Unsopperted GeoJSON feature geometry type:" + geom.type,
+              "Unsopperted GeoJSON feature geometry type:" + geom.type
             );
         }
       }
@@ -351,7 +350,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     if (d._latlngs) {
       return this._addGeoJSONData(
         d._latlngs,
-        d.feature && d.feature.properties,
+        d.feature && d.feature.properties
       );
     }
   },
@@ -382,7 +381,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       this._addPoint(
         point.lat ?? point[1],
         point.lng ?? point[0],
-        point.alt ?? point.meta.ele ?? point[2],
+        point.alt ?? point.meta.ele ?? point[2]
       );
 
       this.fire("elepoint_added", {
@@ -433,7 +432,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
         ({ target, type }) =>
           L.DistanceMarkers &&
           target instanceof L.Polyline &&
-          target[type + "DistanceMarkers"](),
+          target[type + "DistanceMarkers"]()
       );
     }
     return layer;
@@ -452,13 +451,13 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       // Ensure L.Handler.AlmostOver and L.GeometryUtil are available
       if (typeof L.Handler.AlmostOver !== "function") {
         console.warn(
-          "L.Handler.AlmostOver is not available. Please include leaflet-almostover plugin.",
+          "L.Handler.AlmostOver is not available. Please include leaflet-almostover plugin."
         );
         return;
       }
       if (typeof L.GeometryUtil !== "object") {
         console.warn(
-          "L.GeometryUtil is not available. Please include leaflet-geometryutil plugin.",
+          "L.GeometryUtil is not available. Please include leaflet-geometryutil plugin."
         );
         return;
       }
@@ -486,12 +485,12 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     if (this.options.distanceMarkers) {
       if (typeof L.DistanceMarkers !== "function") {
         console.warn(
-          "L.DistanceMarkers is not available. Please include leaflet-distance-marker plugin.",
+          "L.DistanceMarkers is not available. Please include leaflet-distance-marker plugin."
         );
       }
       if (typeof L.GeometryUtil !== "object") {
         console.warn(
-          "L.GeometryUtil is not available. Please include leaflet-geometryutil plugin.",
+          "L.GeometryUtil is not available. Please include leaflet-geometryutil plugin."
         );
       }
     }
@@ -504,7 +503,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     if (this.options.edgeScale) {
       if (typeof L.Control.EdgeScale !== "function") {
         console.warn(
-          "L.Control.EdgeScale is not available. Please include leaflet-edgescale plugin.",
+          "L.Control.EdgeScale is not available. Please include leaflet-edgescale plugin."
         );
         return;
       }
@@ -514,7 +513,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
           .edgeScale(
             "boolean" !== typeof this.options.edgeScale
               ? this.options.edgeScale
-              : {},
+              : {}
           )
           .addTo(map);
     }
@@ -528,7 +527,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     if (this.options.hotline) {
       if (typeof L.Hotline !== "function") {
         console.warn(
-          "L.Hotline is not available. Please include leaflet-hotline plugin.",
+          "L.Hotline is not available. Please include leaflet-hotline plugin."
         );
         return;
       }
@@ -540,7 +539,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
               L.latLng(
                 coords[0],
                 coords[1],
-                coords[2] * (this.options.altitudeFactor || 1),
+                coords[2] * (this.options.altitudeFactor || 1)
               ),
           });
           let line = L.hotline(
@@ -561,7 +560,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
               weight: 5,
               outlineColor: "#000000",
               outlineWidth: 1,
-            },
+            }
           ).addTo(this._hotline);
           let alpha =
             (trkseg.options.style && trkseg.options.style.opacity) || 1;
@@ -571,7 +570,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
             if (line._renderer)
               line._renderer._container.parentElement.insertBefore(
                 line._renderer._container,
-                line._renderer._container.parentElement.firstChild,
+                line._renderer._container.parentElement.firstChild
               );
           });
         }
@@ -616,7 +615,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     _.replaceClass(
       this._container,
       "elevation-expanded",
-      "elevation-collapsed",
+      "elevation-collapsed"
     );
     if (this._map) this._map.invalidateSize();
   },
@@ -628,7 +627,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     _.replaceClass(
       this._container,
       "elevation-collapsed",
-      "elevation-expanded",
+      "elevation-expanded"
     );
     if (this._map) this._map.invalidateSize();
   },
@@ -681,7 +680,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
           this._chart._showDiagramIndicator(data, xCoord);
         }
         this._updateMarker(data);
-      }),
+      })
     );
   },
 
@@ -735,12 +734,6 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       if (opts._maxWidth > clientWidth) opts.width = clientWidth - 30;
     }
 
-    // Check if d3 is available
-    if (typeof d3 !== "object") {
-      console.error("d3 is not available. Please include d3 library.");
-      return;
-    }
-
     let chart = (this._chart = new Chart(opts, this));
 
     this._x = this._chart._x;
@@ -775,7 +768,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     this.on("eledata_added eledata_loaded", this._updateChart, this).on(
       "eledata_added eledata_loaded",
       this._updateSummary,
-      this,
+      this
     );
 
     this._updateChart();
@@ -788,19 +781,19 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       _.toggleClass(
         node,
         this.options.polyline.className + " " + this.options.theme,
-        type == "layeradd",
+        type == "layeradd"
       );
       _.toggleEvent(
         layer,
         "mousemove",
         this._onMouseMoveLayer.bind(this),
-        type == "layeradd",
+        type == "layeradd"
       );
       _.toggleEvent(
         layer,
         "mouseout",
         this._onMouseOut.bind(this),
-        type == "layeradd",
+        type == "layeradd"
       );
     });
   },
@@ -810,7 +803,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     if (!pane) {
       pane = this._pane = map.createPane(
         "elevationPane",
-        map.getPane("norotatePane") || map.getPane("mapPane"),
+        map.getPane("norotatePane") || map.getPane("mapPane")
       );
       pane.style.zIndex = 625; // This pane is above markers but below popups.
       pane.style.pointerEvents = "none";
@@ -818,12 +811,6 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
 
     if (this._renderer) this._renderer.remove();
     this._renderer = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
-
-    // Check if d3 is available
-    if (typeof d3 !== "object") {
-      console.error("d3 is not available. Please include d3 library.");
-      return;
-    }
 
     this._marker = new Marker(this.options, this);
     this.fire("elechart_marker");
@@ -834,7 +821,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
    */
   _initButton(container) {
     L.DomEvent.disableClickPropagation(container).disableScrollPropagation(
-      container,
+      container
     );
 
     this.options.collapsed ? this._collapse() : this._expand();
@@ -850,13 +837,13 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
         "a",
         "elevation-toggle-icon",
         { href: "#", title: L._("Elevation") },
-        container,
+        container
       ));
       _.on(link, "click", L.DomEvent.stop);
       _.on(link, "click", this._toggle, this);
       _.on(link, "focus", this._toggle, this);
       fetch(_.resolveURL(this.__btnIcon, this.options.srcFolder)).then(
-        (r) => r.ok && r.text().then((img) => (link.innerHTML = img)),
+        (r) => r.ok && r.text().then((img) => (link.innerHTML = img))
       );
     }
   },
@@ -865,10 +852,6 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     this._summary = new Summary({ summary: this.options.summary }, this);
 
     this.on("elechart_init", () => {
-      if (typeof d3 !== "object") {
-        console.error("d3 is not available. Please include d3 library.");
-        return;
-      }
       d3.select(container).call(this._summary.render());
     });
   },
@@ -882,7 +865,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       .then((data) => {
         this._downloadURL = url; // TODO: handle multiple urls?
         this._parseFromString(data).then(
-          (geojson) => geojson && this._loadLayer(geojson),
+          (geojson) => geojson && this._loadLayer(geojson)
         );
       })
       .catch((err) => console.warn(err));
@@ -935,7 +918,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     _.each(
       handlers,
       (h) =>
-        ["function", "object"].includes(typeof h) && this._registerHandler(h),
+        ["function", "object"].includes(typeof h) && this._registerHandler(h)
     );
   },
 
@@ -983,10 +966,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
                 [true, "markers"].includes(wptLabels) &&
                 (name || desc) &&
                 decodeURI(
-                  "<b>" +
-                    name +
-                    "</b>" +
-                    (desc.length > 0 ? "<br>" + desc : ""),
+                  "<b>" + name + "</b>" + (desc.length > 0 ? "<br>" + desc : "")
                 ),
             });
           }
@@ -997,12 +977,6 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
         feature.geometry.type != "Point" &&
         this.addData(feature, layer),
     });
-
-    // Check if d3 is available
-    if (typeof d3 !== "object") {
-      console.error("d3 is not available. Please include d3 library.");
-      return layer;
-    }
 
     this._initMapIntegrations(layer);
     const event_data = {
@@ -1015,7 +989,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       this._fireEvt("eledata_loaded", event_data);
     } else {
       this.once("modules_loaded", () =>
-        this._fireEvt("eledata_loaded", event_data),
+        this._fireEvt("eledata_loaded", event_data)
       );
     }
 
@@ -1116,8 +1090,8 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       _.toggleClass(
         layer.getElement && layer.getElement(),
         this.options.polyline.className + " " + this.options.theme,
-        this._chartEnabled,
-      ),
+        this._chartEnabled
+      )
     );
 
     // toggle option value (eg. altitude = { 'disabled' || 'enabled' })
@@ -1145,26 +1119,6 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
    */
   _parseFromString(data) {
     return new Promise((resolve) => {
-      // Check if toGeoJSON is available for XML parsing
-      if (typeof toGeoJSON !== "object") {
-        console.warn(
-          "toGeoJSON is not available. Please include @tmcw/togeojson library for XML parsing support.",
-        );
-        // Try to parse as GeoJSON only
-        let geojson = this._parseFromGeoJSONString(data.toString());
-        if (geojson) {
-          geojson.name =
-            geojson.name ||
-            (this._downloadURL || "")
-              .split("/")
-              .pop()
-              .split("#")[0]
-              .split("?")[0];
-        }
-        resolve(geojson);
-        return;
-      }
-
       let geojson;
       try {
         geojson = this._parseFromXMLString(data.trim());
@@ -1206,7 +1160,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       name.length > 0
         ? (
             Array.from(name).find(
-              (tag) => tag.parentElement.tagName == "trk",
+              (tag) => tag.parentElement.tagName == "trk"
             ) ?? name[0]
           ).textContent
         : "";
@@ -1240,7 +1194,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
   _registerCheckPoint(props) {
     const cb = () => this._chart._registerCheckPoint(props);
     this.on("elechart_updated", cb).once("eledata_clear", () =>
-      this.off("elechart_updated", cb),
+      this.off("elechart_updated", cb)
     );
   },
 
@@ -1318,7 +1272,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
             this,
             curr[attr],
             this.track_info[sname + key],
-            this._data.length,
+            this._data.length
           );
         }
       }
@@ -1372,7 +1326,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
         coordPropsToMeta: _.coordPropsToMeta(
           coordinateProperties,
           meta || name,
-          coordPropsToMeta,
+          coordPropsToMeta
         ),
         pointToAttr,
         onPointAdded,
@@ -1393,7 +1347,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       if (tooltip || props.tooltips) {
         _.each(
           [tooltip, ...(props.tooltips || [])],
-          (t) => t && this._registerTooltip(L.extend({ name }, t)),
+          (t) => t && this._registerTooltip(L.extend({ name }, t))
         );
       }
 
@@ -1411,7 +1365,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
       wptIcons[sym] = L.divIcon(
         L.extend({}, wptIcons[""].options, {
           html: '<i class="elevation-waypoint-icon ' + sym + '"></i>',
-        }),
+        })
       );
     }
     let marker = L.marker(latlng, { icon: wptIcons[sym] });
@@ -1438,14 +1392,14 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
     props.chart &&
       this.on("elechart_init", () =>
         this._chart._registerTooltip(
-          L.extend({}, props, { value: props.chart }),
-        ),
+          L.extend({}, props, { value: props.chart })
+        )
       );
     props.marker &&
       this.on("elechart_marker", () =>
         this._marker._registerTooltip(
-          L.extend({}, props, { value: props.marker }),
-        ),
+          L.extend({}, props, { value: props.marker })
+        )
       );
   },
 
@@ -1602,7 +1556,7 @@ export const Elevation = (L.Control.Elevation = L.Control.extend({
             typeof CustomEvent === "function"
           ) {
             document.dispatchEvent(
-              new CustomEvent("eletrack_download", { detail: event }),
+              new CustomEvent("eletrack_download", { detail: event })
             );
           } else if (
             this.options.downloadLink == "link" ||

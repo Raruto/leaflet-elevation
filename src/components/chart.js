@@ -1,10 +1,5 @@
 import * as D3 from "./d3.js";
 
-// Check if d3 is available globally
-if (typeof d3 === "undefined") {
-  console.error("d3 is not available globally. Please include d3 library.");
-}
-
 const _ = L.Control.Elevation.Utils;
 
 export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
@@ -125,8 +120,8 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
           height: this._height(),
           scaleX: this._scales[area.scaleX],
           scaleY: this._scales[area.scaleY],
-        }),
-      ),
+        })
+      )
     );
 
     if (!path.classed("leaflet-hidden")) {
@@ -174,7 +169,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
 
     this._brush
       .filter(
-        ({ shiftKey, button }) => !shiftKey && !button && this._brushEnabled,
+        ({ shiftKey, button }) => !shiftKey && !button && this._brushEnabled
       )
       .on("end.update", brush)
       .on("brush.update", focus);
@@ -182,7 +177,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
     this._chart.panes.brush
       .on(
         "mouseenter.focus touchstart.focus",
-        this.fire.bind(this, "mouse_enter"),
+        this.fire.bind(this, "mouse_enter")
       )
       .on("mouseout.focus touchend.focus", this.fire.bind(this, "mouse_out"))
       .on("mousemove.focus touchmove.focus", focus);
@@ -249,7 +244,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
       ])
       .filter(
         ({ shiftKey, buttons }) =>
-          (shiftKey || buttons == 4) && this._zoomEnabled,
+          (shiftKey || buttons == 4) && this._zoomEnabled
       )
       .on("start", onStart)
       .on("end", onEnd)
@@ -318,7 +313,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
         .text(
           formatNum(this._y.invert(y)) +
             " " +
-            (this.options.imperial ? "ft" : "m"),
+            (this.options.imperial ? "ft" : "m")
         );
 
       this.fire("ruler_filter", {
@@ -407,7 +402,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
           data: this._data,
           forceBounds: opts.forceAxisBounds,
         },
-        scale,
+        scale
       );
 
       scale.attr = scale.attr || props.name;
@@ -461,7 +456,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
         height: this._height(),
         x: x,
         y: y,
-      }),
+      })
     );
   },
 
@@ -475,7 +470,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
     this._context.clearRect(0, 0, this._width(), this._height());
     _.each(
       this._paths,
-      (path, i) => !path.classed("leaflet-hidden") && this._drawPath(i),
+      (path, i) => !path.classed("leaflet-hidden") && this._drawPath(i)
     );
   },
 
@@ -519,7 +514,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
 
       axis.attr(
         "transform",
-        "translate(" + (+translate[0] + i * 40) + "," + translate[1] + ")",
+        "translate(" + (+translate[0] + i * 40) + "," + translate[1] + ")"
       );
 
       if (i > 0) {
@@ -549,12 +544,12 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
     this._maskGaps.forEach((d, i) => {
       if (i >= this._maskGaps.length - 2) return;
       let x1 = this._x(
-        data[this._findIndexForLatLng(data[this._maskGaps[i]].latlng)][xAttr],
+        data[this._findIndexForLatLng(data[this._maskGaps[i]].latlng)][xAttr]
       );
       let x2 = this._x(
         data[this._findIndexForLatLng(data[this._maskGaps[i + 1]].latlng)][
           xAttr
-        ],
+        ]
       );
       this._mask
         .append("rect")
@@ -603,9 +598,9 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
               height: this._height(),
               margins: this.options.margins,
             },
-            legend,
-          ),
-        ),
+            legend
+          )
+        )
       );
     });
 
@@ -618,11 +613,11 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
           items: items,
           onClick: (selected) => {
             _.each(items, (name) =>
-              this._togglePath(name, selected == name, true),
+              this._togglePath(name, selected == name, true)
             );
             this._updateArea();
           },
-        }),
+        })
       );
     }
 
@@ -635,7 +630,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
       this._togglePath(
         name,
         !(name in this.options && this.options[name] == "disabled"),
-        true,
+        true
       );
     });
   },
@@ -787,7 +782,7 @@ export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
         width: this._width(),
         labels: this._props.tooltipItems,
         item: item,
-      }),
+      })
     );
   },
 
