@@ -1,5 +1,10 @@
 import * as D3 from "./d3.js";
 
+// Check if d3 is available globally
+if (typeof d3 === "undefined") {
+  console.error("d3 is not available globally. Please include d3 library.");
+}
+
 const _ = L.Control.Elevation.Utils;
 
 export var Chart = (L.Control.Elevation.Chart = L.Class.extend({
