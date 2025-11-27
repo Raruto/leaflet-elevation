@@ -46,7 +46,7 @@ export function Time() {
           let dx = this._data[i].dist - this._data[i - 1].dist;
           let t0 = this._data[i - 1].time.getTime();
           point.meta.time = new Date(
-            t0 + (dx / this._timeAVGSpeed) * this.options.timeFactor * 1000
+            t0 + (dx / this._timeAVGSpeed) * this.options.timeFactor * 1000,
           );
         } else {
           point.meta.time = new Date(Date.now());

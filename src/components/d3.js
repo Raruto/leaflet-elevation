@@ -12,7 +12,7 @@ export const Area = ({
   return d3
     .area()
     .curve(
-      typeof interpolation === "string" ? d3[interpolation] : interpolation
+      typeof interpolation === "string" ? d3[interpolation] : interpolation,
     )
     .x((d) => (d.xDiagCoord = scaleX(d[xAttr])))
     .y0(height)
@@ -160,7 +160,7 @@ export const PositionMarker = ({
             .attr(
               "class",
               "height-focus-" +
-                labels[i].name /*+ " " + "order-" + labels[i].order*/
+                labels[i].name /*+ " " + "order-" + labels[i].order*/,
             )
             .attr("dy", "1.5em");
         }
@@ -168,7 +168,7 @@ export const PositionMarker = ({
         label.text(
           typeof labels[i].value !== "function"
             ? labels[i].value
-            : labels[i].value(item)
+            : labels[i].value(item),
         );
       });
 
@@ -194,7 +194,7 @@ export const LegendItem = ({
   return (g) => {
     g.attr("class", "legend-item legend-" + name.toLowerCase()).attr(
       "data-name",
-      name
+      name,
     );
 
     g.on("click.legend", () =>
@@ -205,7 +205,7 @@ export const LegendItem = ({
           legend: g.node(),
           enabled: !path.classed("leaflet-hidden"),
         },
-      })
+      }),
     );
 
     g.append("svg:rect")
@@ -252,7 +252,7 @@ export const LegendSmall = ({ width, height, items, onClick }) => {
       .attr("x", -25)
       .attr("y", 5)
       .on("mousedown", (e, d) =>
-        setIdx(L.Util.wrapNum(idx + 1, [0, items.length]))
+        setIdx(L.Util.wrapNum(idx + 1, [0, items.length])),
       );
 
     let symbol = g.selectAll(".legend-switcher-symbol").data([
@@ -275,16 +275,16 @@ export const LegendSmall = ({ width, height, items, onClick }) => {
         d3
           .symbol()
           .type((d) => d.type)
-          .size((d) => d.size)
+          .size((d) => d.size),
       )
       .attr(
         "transform",
-        (d) => "translate(" + d.x + "," + d.y + ") rotate(" + d.angle + ")"
+        (d) => "translate(" + d.x + "," + d.y + ") rotate(" + d.angle + ")",
       )
       .on("mousedown", (e, d) =>
         setIdx(
-          L.Util.wrapNum(d.id === "up" ? idx + 1 : idx - 1, [0, items.length])
-        )
+          L.Util.wrapNum(d.id === "up" ? idx + 1 : idx - 1, [0, items.length]),
+        ),
       );
 
     const setIdx = (id) => {
@@ -301,7 +301,7 @@ export const LegendSmall = ({ width, height, items, onClick }) => {
       label.text(
         items.length
           ? L._(items[idx][0].toUpperCase() + items[idx].slice(1))
-          : ""
+          : "",
       );
       onClick(items[idx]);
     };
@@ -382,7 +382,7 @@ export const Tooltip = ({
             .attr(
               "class",
               "mouse-focus-label-" +
-                labels[i].name /*+ " " + "order-" + labels[i].order*/
+                labels[i].name /*+ " " + "order-" + labels[i].order*/,
             )
             .attr("dy", "1.5em");
         }
@@ -390,7 +390,7 @@ export const Tooltip = ({
         label.text(
           typeof labels[i].value !== "function"
             ? labels[i].value
-            : labels[i].value(item)
+            : labels[i].value(item),
         );
       });
 
@@ -467,11 +467,11 @@ export const Ruler = ({ height, width }) => {
         d3
           .symbol()
           .type((d) => d.type)
-          .size((d) => d.size)
+          .size((d) => d.size),
       )
       .attr(
         "transform",
-        (d) => "translate(" + d.x + "," + d.y + ") rotate(" + d.angle + ")"
+        (d) => "translate(" + d.x + "," + d.y + ") rotate(" + d.angle + ")",
       );
 
     return g;
@@ -493,7 +493,7 @@ export const CheckPoint = ({ point, height, width, x, y }) => {
         .attr("x1", 0)
         .attr(
           "style",
-          "stroke: rgb(51, 51, 51); stroke-width: 0.5; stroke-dasharray: 2, 2;"
+          "stroke: rgb(51, 51, 51); stroke-width: 0.5; stroke-dasharray: 2, 2;",
         );
 
       point.item
@@ -605,14 +605,14 @@ export const Chart = ({ width, height, margins = {}, ruler }) => {
 
   // Add tooltip
   panes.tooltip.call(
-    Tooltip({ xCoord: 0, yCoord: 0, height: h, width: w, labels: {} })
+    Tooltip({ xCoord: 0, yCoord: 0, height: h, width: w, labels: {} }),
   );
 
   // Add the brushing
   let brush = d3
     .brushX()
     .on("start.cursor end.cursor brush.cursor", () =>
-      panes.brush.select(".overlay").attr("cursor", null)
+      panes.brush.select(".overlay").attr("cursor", null),
     );
 
   // Scales
@@ -654,7 +654,7 @@ export const Chart = ({ width, height, margins = {}, ruler }) => {
     ) {
       canvas.style(
         "transform",
-        "translate(" + margins.left + "px," + margins.top + "px)"
+        "translate(" + margins.left + "px," + margins.top + "px)",
       );
     }
 
@@ -670,7 +670,7 @@ export const Chart = ({ width, height, margins = {}, ruler }) => {
       brush.extent([
         [0, 0],
         [w, h],
-      ])
+      ]),
     );
     panes.brush.select(".overlay").attr("cursor", null);
 

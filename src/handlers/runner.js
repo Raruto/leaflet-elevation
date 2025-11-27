@@ -14,7 +14,7 @@ export async function Runner() {
 
   runnerOptions = L.extend(
     { polyline: {}, motion: {}, marker: undefined },
-    "object" === typeof runnerOptions ? runnerOptions : {}
+    "object" === typeof runnerOptions ? runnerOptions : {},
   );
 
   // Custom tooltips
@@ -47,7 +47,7 @@ export async function Runner() {
       .append("svg:circle")
       .attr(
         "class",
-        "runner " + this.options.theme + " height-focus circle-lower"
+        "runner " + this.options.theme + " height-focus circle-lower",
       )
       .attr("r", 6)
       .attr("cx", x)
@@ -92,7 +92,7 @@ export async function Runner() {
         L.latLng(
           coords[0],
           coords[1],
-          coords[2] * (this.options.altitudeFactor || 1)
+          coords[2] * (this.options.altitudeFactor || 1),
         ),
     });
     this._runner = L.motion.polyline(
@@ -100,10 +100,10 @@ export async function Runner() {
       L.extend(
         {},
         { color: "red", pane: "elevationPane", attribution: "" },
-        runnerOptions.polyline
+        runnerOptions.polyline,
       ),
       L.extend({}, { auto: true, speed: speed }, runnerOptions.motion),
-      runnerOptions.marker || undefined
+      runnerOptions.marker || undefined,
     );
 
     // Override default function behavior: `L.Motion.Polyline::_drawMarker()`

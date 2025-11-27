@@ -8,7 +8,7 @@ export var Summary = L.Class.extend({
 
     let summary = (this._container = _.create(
       "div",
-      "elevation-summary " + (opts.summary ? opts.summary + "-summary" : "")
+      "elevation-summary " + (opts.summary ? opts.summary + "-summary" : ""),
     ));
     _.style(summary, "max-width", opts.width ? opts.width + "px" : "");
   },
@@ -35,13 +35,13 @@ export var Summary = L.Class.extend({
             ? this.labels[i].value
             : this.labels[i].value(
                 this.control.track_info,
-                this.labels[i].unit || ""
+                this.labels[i].unit || "",
               );
         this.append(
           i /*+ " order-" + this.labels[i].order*/,
           L._(this.labels[i].label),
           value,
-          this.labels[i].order
+          this.labels[i].order,
         );
       });
   },

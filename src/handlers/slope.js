@@ -25,9 +25,8 @@ export function Slope() {
       let dz =
         this._data[i][this.options.yAttr] -
         this._data[i > 0 ? i - 1 : i][this.options.yAttr];
-      if (dz > 0)
-        this.track_info.ascent =
-          (this.track_info.ascent || 0) + dz; // Total Ascent
+      if (dz > 0) this.track_info.ascent = (this.track_info.ascent || 0) + dz;
+      // Total Ascent
       else if (dz < 0)
         this.track_info.descent = (this.track_info.descent || 0) - dz; // Total Descent
     },

@@ -64,7 +64,7 @@ export var Marker = L.Class.extend({
             props.item,
             this._map._rotate
               ? this._map.rotatedPointToMapPanePoint(point)
-              : point
+              : point,
           );
 
           let yMax =
@@ -82,7 +82,7 @@ export var Marker = L.Class.extend({
               length: point.y - yMax, // normalized Y
               labels: this._labels,
               item: point,
-            })
+            }),
           );
         }
         break;
