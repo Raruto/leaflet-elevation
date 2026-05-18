@@ -11,19 +11,10 @@ process.on('exit', async () => {
  */
 export async function setup(ctx) {
     if (!globalThis.server) {
-        await new Promise((resolve) => {
-            globalThis.server = exec('http-server');
-            globalThis.server.stdout.on('data', (msg) => {
-                // console.log(msg);
-                // if (msg.toString().match(/Starting up/)) {
-                if (msg.toString().indexOf('Hit CTRL-C to stop the server')) {
-                    resolve();
-                    // setTimeout(resolve, 1500);
-                }
-            });
-        });
+        globalThis.server = exec('http-server -a 127.0.0.1 -p 8080');
+        await wait_for_http_ready('http://127.0.0.1:8080');
     }
-    ctx.localhost = 'http://localhost:8080';
+    ctx.localhost = 'http://127.0.0.1:8080';
     ctx.browser = await chromium.launch();
     ctx.context = await ctx.browser.newContext();
     ctx.context.route(/.html$/, await mock_cdn_urls);
@@ -101,4 +92,18 @@ async function mock_cdn_urls(route) {
     body = body.replace(new RegExp('https://unpkg.com/@raruto/leaflet-elevation@(.*?)/', 'g'), '../');
     body = body.replace(new RegExp('@raruto/leaflet-elevation@(.*?)/', 'g'), '../');
     route.fulfill({ response, body, headers: response.headers() });
+}
+
+/**
+ * Waits for the HTTP server to respond with a successful status within a timeout.
+ */
+async function wait_for_http_ready(url, timeout = 15000) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+        try {
+            if ((await fetch(url, { signal: AbortSignal.timeout(200) })).ok) return;
+        } catch (_) {}
+        await new Promise(r => setTimeout(r, 250));
+    }
+    throw new Error(`Timeout ${url}`);
 }
