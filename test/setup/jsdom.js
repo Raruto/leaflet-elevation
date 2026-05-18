@@ -4,7 +4,10 @@ const { window } = new JSDOM('<main></main>');
 
 global.window = window;
 global.document = window.document;
-global.navigator = window.navigator;
+Object.defineProperty(globalThis, 'navigator', {
+    value: window.navigator,
+    configurable: true
+});
 global.getComputedStyle = window.getComputedStyle;
 global.requestAnimationFrame = null;
 
