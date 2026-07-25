@@ -7,7 +7,7 @@ import postcssImport from 'postcss-import';
 // import postcssCopy from 'postcss-copy';
 // import rollupGitVersion from 'rollup-plugin-git-version';
 
-import plugin from '../package.json' assert { type: "json" };
+import plugin from '../package.json' with { type: "json" };
 
 let plugin_name = plugin.name.replace("@raruto/", "");
 
