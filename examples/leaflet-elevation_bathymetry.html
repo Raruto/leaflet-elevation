@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>leaflet-elevation.js — Bathymetry</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>@import '../libs/fullpage.css';</style>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+    <link rel="stylesheet" href="../dist/leaflet-elevation.css">
+    <script src="../dist/leaflet-elevation.js"></script>
+</head>
+<body>
+    <label for="track">Track:
+        <select id="track">
+            <option value="bathymetry.geojson">Bathymetry (below sea level)</option>
+            <option value="demo.geojson">Elevation (above sea level)</option>
+        </select>
+    </label>
+    <div id="map" class="leaflet-map"></div>
+    <script>
+        let map = L.map('map', {
+            center: [-44.7, 169.1],
+            zoom: 10,
+            fullscreenControl: false,
+            resizerControl: false,
+            minimapControl: false,
+            gestureHandling: false
+        });
+        let controlElevation = L.control.elevation({
+            position: 'bottomleft',
+            detached: false,
+            height: 200,
+            width: 400,
+            collapsed: false,
+            imperial: new URLSearchParams(location.search).has('imperial'),
+            summary: 'inline',
+            followMarker: false,
+            almostOver: false,
+            distanceMarkers: false,
+            edgeScale: false,
+            hotline: false
+        }).addTo(map);
+        const track = document.getElementById('track');
+        track.addEventListener('change', () => {
+            controlElevation.clear();
+            controlElevation.load(track.value);
+        });
+        controlElevation.load(track.value);
+    </script>
+</body>
+</html>
