@@ -1,52 +1,61 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>leaflet-elevation.js — Bathymetry</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>@import '../libs/fullpage.css';</style>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
-    <link rel="stylesheet" href="../dist/leaflet-elevation.css">
-    <script src="../dist/leaflet-elevation.js"></script>
+	<title>leaflet-elevation.js</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+
+	<style>@import '../libs/fullpage.css';</style>
+
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.5.1/dist/leaflet-elevation.min.js"></script>
 </head>
+
 <body>
-    <label for="track">Track:
-        <select id="track">
-            <option value="bathymetry.geojson">Bathymetry (below sea level)</option>
-            <option value="demo.geojson">Elevation (above sea level)</option>
-        </select>
-    </label>
-    <div id="map" class="leaflet-map"></div>
-    <script>
-        let map = L.map('map', {
-            center: [-44.7, 169.1],
-            zoom: 10,
-            fullscreenControl: false,
-            resizerControl: false,
-            minimapControl: false,
-            gestureHandling: false
-        });
-        let controlElevation = L.control.elevation({
-            position: 'bottomleft',
-            detached: false,
-            height: 200,
-            width: 400,
-            collapsed: false,
-            imperial: new URLSearchParams(location.search).has('imperial'),
-            summary: 'inline',
-            followMarker: false,
-            almostOver: false,
-            distanceMarkers: false,
-            edgeScale: false,
-            hotline: false
-        }).addTo(map);
-        const track = document.getElementById('track');
-        track.addEventListener('change', () => {
-            controlElevation.clear();
-            controlElevation.load(track.value);
-        });
-        controlElevation.load(track.value);
-    </script>
+
+	<div id="map" class="leaflet-map"></div>
+
+	<script>
+		let map = L.map('map', {
+			center: [41.6, 13.2],
+			zoom: 6,
+			fullscreenControl: false,
+			resizerControl: false,
+			minimapControl: false,
+			gestureHandling: false
+		});
+
+		let controlElevation = L.control.elevation({
+			position: 'bottomleft',
+			detached: false,
+			height: 200,
+			width: 400,
+			collapsed: false,
+			summary: 'inline',
+			followMarker: false,
+			almostOver: false,
+			distanceMarkers: false,
+			edgeScale: false,
+			hotline: false
+		}).addTo(map);
+		window.map = map;
+		window.controlElevation = controlElevation;
+
+		controlElevation.load('bathymetry.geojson');
+	</script>
+
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed; top: 10px; left: calc(50% - 60px); z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
+
 </body>
+
 </html>
