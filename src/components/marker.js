@@ -52,7 +52,9 @@ export var Marker = L.Class.extend({
 					let point = this._map.latLngToLayerPoint(this._latlng);
 					point     = L.extend({}, props.item, this._map._rotate ? this._map.rotatedPointToMapPanePoint(point) : point);
 
-					let yMax = (this.control._height() / props.yCoordMax * point[this.options.yAttr]);
+					// Keep the zero baseline unless the track extends below sea level.
+					let yMin = props.yCoordMin || 0;
+					let yMax = (this.control._height() / (props.yCoordMax - yMin) * (point[this.options.yAttr] - yMin));
 
 					if (!isFinite(yMax) || isNaN(yMax)) yMax = 0;
 
