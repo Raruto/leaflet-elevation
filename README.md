@@ -47,6 +47,7 @@ _For a working example see one of the following demos:_
 - [slope chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_slope-chart.html)
 - [speed chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_speed-chart.html)
 - [temperature chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_temperature-chart.html)
+- [bathymetry data](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_bathymetry.html)
 - [walking marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html)
 
 ---
