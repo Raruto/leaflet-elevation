@@ -29,6 +29,9 @@ it('bathymetry example keeps every underwater marker finite, bounded and ordered
         await route.fulfill({ response, body });
     });
     await page.goto(`http://127.0.0.1:${server.address().port}/examples/leaflet-elevation_bathymetry.html`);
+    await page.waitForFunction(() =>
+        typeof controlElevation !== 'undefined' && controlElevation._data.length > 0
+    );
     const markers = await page.evaluate(() => {
         const data = controlElevation._data.map(item => {
             controlElevation._updateMarker(item);
