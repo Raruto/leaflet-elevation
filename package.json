@@ -7,11 +7,9 @@
   "browser": "dist/leaflet-elevation.min.js",
   "module": "src/index.js",
   "scripts": {
-    "test": "uvu . \"(examples|src)[\\\\/].*\\.spec\\.js$\"",
-    "build": "rollup -c build/rollup.config.js",
-    "watch": "rollup -c build/rollup.config.js --watch",
-    "dev": "npm-run-all --print-label --parallel serve watch",
-    "serve": "http-server",
+    "test": "node --test --test-concurrency=1 \"examples/*.spec.js\" \"src/*.spec.js\"",
+    "build": "node build/build.js",
+    "dev": "node build/dev.js",
     "version": "npm run build && git add -A"
   },
   "repository": {
@@ -50,20 +48,10 @@
   },
   "homepage": "https://github.com/Raruto/leaflet-elevation#readme",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^24.1.0",
-    "@rollup/plugin-node-resolve": "^15.0.2",
-    "@rollup/plugin-terser": "^0.4.1",
-    "http-server": "^14.1.1",
+    "esbuild": "^0.28.2",
     "jsdom": "^21.1.1",
     "leaflet": "^1.7.1",
-    "npm-run-all": "^4.1.5",
-    "playwright": "^1.32.3",
-    "postcss": "^8.4.23",
-    "postcss-copy": "^7.1.0",
-    "postcss-import": "^15.1.0",
-    "rollup": "^3.21.0",
-    "rollup-plugin-postcss": "^4.0.2",
-    "uvu": "^0.5.6"
+    "playwright": "^1.32.3"
   },
   "peerDependencies": {
     "@tmcw/togeojson": "5.6.2",

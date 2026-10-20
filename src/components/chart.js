@@ -155,6 +155,12 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		}
 
 		const focus   = (e) => {
+			const sourceEvent = e.sourceEvent || e;
+			// fixes: https://github.com/Raruto/leaflet-elevation/issues/311
+			if (!this.options.detached && sourceEvent.stopPropagation) {
+				sourceEvent.stopPropagation();
+			}
+
 			if (this._data.length && (e.type != 'brush' /*|| e.sourceEvent*/)) {
 				let rect    = this._chart.panes.brush.select('.overlay').node();
 				let coords  = d3.pointers(e, rect)[0];

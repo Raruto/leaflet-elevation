@@ -2,7 +2,7 @@
  * examples/leaflet-elevation_multiple-maps.html
  */
 
-import * as assert from 'uvu/assert';
+import assert from 'node:assert/strict';
 import { suite } from '../test/setup/http_server.js';
 
 const test = suite('examples/leaflet-elevation_multiple-maps.html');
@@ -15,11 +15,9 @@ test('multiple-maps', async ({ page }) => {
     const { charts, default_margins } = await page.evaluate(() => new Promise(resolve => {
         resolve({ charts, default_margins: L.Control.Elevation.prototype.options.margins });
     }));
-    charts.forEach(chart => { assert.is(chart.options.legend, true); });
-    assert.snapshot(
+    charts.forEach(chart => { assert.strictEqual(chart.options.legend, true); });
+    assert.strictEqual(
         JSON.stringify(default_margins),
         JSON.stringify({ top: 30, right: 30, bottom: 30, left: 40 })
     );
 });
-
-test.run();
