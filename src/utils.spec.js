@@ -4,8 +4,10 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import '../test/setup/jsdom.js'
-import { iAvg, iMin, iMax, iSum } from "../src/utils.js";
+
+// Importing utils requires Leaflet namespaces, but these arithmetic tests do not use them.
+globalThis.L = { DomEvent: {}, Util: {}, DomUtil: {} };
+const { iAvg, iMin, iMax, iSum } = await import('./utils.js');
 
 const toFixed = (n) => +n.toFixed(2);
 
