@@ -24,9 +24,9 @@ test('iMin()', () => {
     let min;
     min = iMin(100, undefined); assert.strictEqual(toFixed(min), 100);  // min for [100] is 100
     min = iMin(NaN, min);       assert.strictEqual(toFixed(min), 100);  // min for [100, NaN] is 100
-    min = iMin(0, min);         assert.strictEqual(toFixed(min), 0);    // min for [100, NaN, 0] is 100
+    min = iMin(0, min);         assert.strictEqual(toFixed(min), 0);    // min for [100, NaN, 0] is 0
     min = iMin(-200, min);      assert.strictEqual(toFixed(min), -200); // min for [100, NaN, 0, -200] is -200
-    min = iMin(200, min);       assert.strictEqual(toFixed(min), -200); // min for [100, NaN, -100, -200, 200] is -200
+    min = iMin(200, min);       assert.strictEqual(toFixed(min), -200); // min for [100, NaN, 0, -200, 200] is -200
 });
 
 test('iMax()', () => {
@@ -35,7 +35,7 @@ test('iMax()', () => {
     max = iMax(NaN, max);       assert.strictEqual(toFixed(max), 100); // max for [100, NaN] is 100
     max = iMax(0, max);         assert.strictEqual(toFixed(max), 100); // max for [100, NaN, 0] is 100
     max = iMax(-200, max);      assert.strictEqual(toFixed(max), 100); // max for [100, NaN, 0, -200] is 100
-    max = iMax(200, max);       assert.strictEqual(toFixed(max), 200); // max for [100, NaN, -100, -200, 200] is 200
+    max = iMax(200, max);       assert.strictEqual(toFixed(max), 200); // max for [100, NaN, 0, -200, 200] is 200
 });
 
 test('iSum()', () => {

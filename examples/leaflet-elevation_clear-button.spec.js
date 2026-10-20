@@ -3,11 +3,33 @@
  */
 
 import assert from 'node:assert/strict';
-import { suite } from '../test/browser.js';
+import { it } from 'node:test';
+import { chromium } from 'playwright';
+import { startServer } from '../build/server.js';
 
-const test = suite('examples/leaflet-elevation_clear-button.html');
-
-test('eledata_clear', async ({ page }) => {
+it('eledata_clear', { timeout: 10000 }, async t => {
+    const server = await startServer(0);
+    let browser;
+    t.after(async () => {
+        try {
+            await browser?.close();
+        } finally {
+            await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+        }
+    });
+    browser = await chromium.launch();
+    const page = await browser.newPage();
+    page.on('console', msg => console.log(msg.text()));
+    page.on('requestfailed', request => console.log(request.failure().errorText, request.url()));
+    page.on('pageerror', error => console.log(error));
+    // Exercise the local build instead of the version published on the CDN.
+    await page.route(/\.html$/, async route => {
+        const response = await route.fetch();
+        const body = (await response.text()).replace(/https:\/\/unpkg.com\/@raruto\/leaflet-elevation@[^/]+\//g, '../');
+        await route.fulfill({ response, body });
+    });
+    await page.goto(`http://127.0.0.1:${server.address().port}/examples/leaflet-elevation_clear-button.html`);
+    // Exclude the example's initial load from the event sequence under test.
     await page.waitForFunction(() =>
         typeof controlElevation !== 'undefined' &&
         controlElevation._data.length > 0 &&
@@ -54,6 +76,7 @@ test('eledata_clear', async ({ page }) => {
     assert.strictEqual(typeof step_end.ctrl.track_info.distance, 'undefined');
     assert.strictEqual(step_end.points, 0);
 
+    // Each replacement must clear once before loading; clearing alone must not load data.
     assert.deepStrictEqual(step_1.events, ['clear', 'loaded:demo.geojson']);
     assert.deepStrictEqual(step_2.events, ['clear', 'loaded:waypoints.geojson']);
     assert.deepStrictEqual(step_3.events, ['clear', 'loaded:demo.geojson']);
@@ -65,6 +88,7 @@ test('eledata_clear', async ({ page }) => {
 async function load_trace(page, trace_id) {
   return await page.evaluate((trace_id) => new Promise(resolve => {
     window.elevationEvents.length = 0;
+    // A negative index clears without loading, so it completes on a different event.
     controlElevation.once(trace_id >=0 ? 'eledata_loaded' : 'eledata_clear', (gpx) => resolve({
       gpx,
       ctrl: controlElevation,

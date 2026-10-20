@@ -3,11 +3,33 @@
  */
 
 import assert from 'node:assert/strict';
-import { suite } from '../test/browser.js';
+import { it } from 'node:test';
+import { chromium } from 'playwright';
+import { startServer } from '../build/server.js';
 
-const test = suite('examples/leaflet-elevation_almost-over.html');
-
-test('almostOver', async ({ page }) => {
+it('almostOver', { timeout: 60000 }, async t => {
+    const server = await startServer(0);
+    let browser;
+    t.after(async () => {
+        try {
+            await browser?.close();
+        } finally {
+            await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+        }
+    });
+    browser = await chromium.launch();
+    const page = await browser.newPage();
+    page.on('console', msg => console.log(msg.text()));
+    page.on('requestfailed', request => console.log(request.failure().errorText, request.url()));
+    page.on('pageerror', error => console.log(error));
+    // Exercise the local build instead of the version published on the CDN.
+    await page.route(/\.html$/, async route => {
+        const response = await route.fetch();
+        const body = (await response.text()).replace(/https:\/\/unpkg.com\/@raruto\/leaflet-elevation@[^/]+\//g, '../');
+        await route.fulfill({ response, body });
+    });
+    await page.goto(`http://127.0.0.1:${server.address().port}/examples/leaflet-elevation_almost-over.html`);
+    // Finish the example's initial load before starting the clear/reload sequence.
     await page.waitForFunction(() =>
       typeof controlElevation !== 'undefined' &&
       controlElevation._data.length > 0 &&
@@ -88,7 +110,7 @@ test('almostOver', async ({ page }) => {
       assert.strictEqual(step_2.data[idx].z, 0);
     });
 
-}, 60000);
+});
 
 async function load_trace(page, trace_url) {
   return await page.evaluate((trace_url) => new Promise(resolve => {

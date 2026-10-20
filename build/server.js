@@ -20,7 +20,7 @@ const contentTypes = {
     '.xml': 'text/xml',
 };
 
-export function startServer() {
+export function startServer(port = 8080) {
     const server = createServer(async (request, response) => {
         let filename;
         try {
@@ -66,7 +66,7 @@ export function startServer() {
 
     return new Promise((resolve, reject) => {
         server.once('error', reject);
-        server.listen(8080, '127.0.0.1', () => {
+        server.listen(port, '127.0.0.1', () => {
             server.off('error', reject);
             resolve(server);
         });
