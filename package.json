@@ -50,7 +50,7 @@
   "devDependencies": {
     "esbuild": "^0.28.2",
     "leaflet": "^1.7.1",
-    "playwright": "^1.32.3"
+    "playwright": "^1.64.1"
   },
   "peerDependencies": {
     "@tmcw/togeojson": "5.6.2",
