@@ -84,5 +84,5 @@ export var Options = {
 	yAxisMin: undefined,
 
 	// Prevent CORS issues for relative locations (dynamic import)
-	srcFolder: ((document.currentScript && document.currentScript.src) || (import.meta && import.meta.url)).split("/").slice(0,-1).join("/") + '/',
+	srcFolder: ((document.currentScript && document.currentScript.src) || (import.meta && import.meta.url) || document.baseURI).split("/").slice(0,-1).join("/") + '/',
 };
