@@ -8,6 +8,16 @@ import { suite } from '../test/setup/http_server.js';
 const test = suite('examples/leaflet-elevation_clear-button.html');
 
 test('eledata_clear', async ({ page }) => {
+    await page.waitForFunction(() =>
+        typeof controlElevation !== 'undefined' &&
+        controlElevation._data.length > 0 &&
+        controlElevation._layers.getLayers().length > 0
+    );
+    await page.evaluate(() => {
+        window.elevationEvents = [];
+        controlElevation.on('eledata_clear', () => window.elevationEvents.push('clear'));
+        controlElevation.on('eledata_loaded', ({ name }) => window.elevationEvents.push(`loaded:${name}`));
+    });
 
     // [1]: Load "demo.geojson"
     const step_1 = await load_trace(page, 0);
@@ -44,28 +54,21 @@ test('eledata_clear', async ({ page }) => {
     assert.strictEqual(typeof step_end.ctrl.track_info.distance, 'undefined');
     assert.strictEqual(step_end.points, 0);
 
-    // Count number of events after each step 
-    assert.strictEqual(    JSON.stringify(step_1.events), JSON.stringify(step_3.events));
-    assert.strictEqual(    JSON.stringify(step_2.events), JSON.stringify(step_4.events));
-    assert.notStrictEqual(JSON.stringify(step_1.events), JSON.stringify(step_2.events));
-    assert.notStrictEqual(JSON.stringify(step_1.events), JSON.stringify(step_4.events));
-    assert.notStrictEqual(JSON.stringify(step_2.events), JSON.stringify(step_3.events));
-    assert.notStrictEqual(JSON.stringify(step_3.events), JSON.stringify(step_4.events));
-
-    // Count number of events after clear()
-    assert.strictEqual(    JSON.stringify(step_end.events), JSON.stringify(step_1.events)); // NB this is just a coincidence, it could break in the future
-    assert.strictEqual(    JSON.stringify(step_end.events), JSON.stringify(step_1.events)); // NB this is just a coincidence, it could break in the future
-    assert.notStrictEqual(JSON.stringify(step_end.events), JSON.stringify(step_2.events));
-    assert.notStrictEqual(JSON.stringify(step_end.events), JSON.stringify(step_4.events));
+    assert.deepStrictEqual(step_1.events, ['clear', 'loaded:demo.geojson']);
+    assert.deepStrictEqual(step_2.events, ['clear', 'loaded:waypoints.geojson']);
+    assert.deepStrictEqual(step_3.events, ['clear', 'loaded:demo.geojson']);
+    assert.deepStrictEqual(step_4.events, ['clear', 'loaded:waypoints.geojson']);
+    assert.deepStrictEqual(step_end.events, ['clear']);
 
 });
 
 async function load_trace(page, trace_id) {
   return await page.evaluate((trace_id) => new Promise(resolve => {
+    window.elevationEvents.length = 0;
     controlElevation.once(trace_id >=0 ? 'eledata_loaded' : 'eledata_clear', (gpx) => resolve({
       gpx,
       ctrl: controlElevation,
-      events: controlElevation._events,
+      events: window.elevationEvents.slice(),
       layers: controlElevation._layers.getLayers(),
       points: d3.selectAll('.point > .point').nodes().length
     }));

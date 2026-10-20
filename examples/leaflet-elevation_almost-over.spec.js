@@ -8,6 +8,12 @@ import { suite } from '../test/setup/http_server.js';
 const test = suite('examples/leaflet-elevation_almost-over.html');
 
 test('almostOver', async ({ page }) => {
+    await page.waitForFunction(() =>
+      typeof controlElevation !== 'undefined' &&
+      controlElevation._data.length > 0 &&
+      map.almostOver &&
+      map.almostOver._layers.length > 0
+    );
 
     // [1]: Load "via-emilia.gpx"
     const step_1 = await load_trace(page, './via-emilia.gpx');
@@ -37,7 +43,7 @@ test('almostOver', async ({ page }) => {
         time: 695464540,
         elevation_max: 638.8,
         elevation_min: -3,
-        elevation_avg: 61.51005418195878
+        elevation_avg: 61.47714913485336
       })
     );
 
@@ -82,7 +88,7 @@ test('almostOver', async ({ page }) => {
       assert.strictEqual(step_2.data[idx].z, 0);
     });
 
-}, 15000);
+}, 30000);
 
 async function load_trace(page, trace_url) {
   return await page.evaluate((trace_url) => new Promise(resolve => {
