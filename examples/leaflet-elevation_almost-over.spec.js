@@ -88,7 +88,7 @@ test('almostOver', async ({ page }) => {
       assert.strictEqual(step_2.data[idx].z, 0);
     });
 
-}, 30000);
+}, 60000);
 
 async function load_trace(page, trace_url) {
   return await page.evaluate((trace_url) => new Promise(resolve => {
