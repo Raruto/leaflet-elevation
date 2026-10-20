@@ -3,7 +3,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { suite } from '../test/setup/http_server.js';
+import { suite } from '../test/browser.js';
 
 const test = suite('examples/leaflet-elevation_multiple-maps.html');
 

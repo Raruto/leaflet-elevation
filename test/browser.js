@@ -1,6 +1,6 @@
 import { it } from 'node:test';
 import { chromium } from 'playwright';
-import { startServer } from '../../build/server.js';
+import { startServer } from '../build/server.js';
 
 /**
  * Browser-backed test suite using Node's built-in test runner.
