@@ -25,14 +25,14 @@ const builds = [
         entryPoints: ['src/index.css'],
         outfile: 'dist/leaflet-elevation.css',
         bundle: true,
-        loader: { '.svg': 'dataurl' },
+        external: ['../images/*.svg'],
     },
     {
         entryPoints: ['src/index.css'],
         outfile: 'dist/leaflet-elevation.min.css',
         bundle: true,
         minify: true,
-        loader: { '.svg': 'dataurl' },
+        external: ['../images/*.svg'],
     },
 ];
 
