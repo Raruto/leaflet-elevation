@@ -3,7 +3,6 @@ Feature: Track durations and the time axis
   Background:
     Given a Chromium browser using the local plugin
 
-  # https://github.com/Raruto/leaflet-elevation/issues/300
   @issue-300
   Scenario: Imperial distance units do not change estimated travel time
     Given imperial units and a short GPX without timestamps
@@ -11,7 +10,6 @@ Feature: Track durations and the time axis
     Then the estimated duration uses geographic kilometres within 2 milliseconds
     And the displayed track distance is less than one mile
 
-  # https://github.com/Raruto/leaflet-elevation/issues/170
   @issue-170
   Scenario: Time ticks follow a variable-speed four-day track including a stationary pause
     Given a four-day GPX with variable speed and a 24-hour stationary pause

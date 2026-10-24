@@ -44,6 +44,17 @@ Then('the custom summary displays the loaded distance in kilometres', async func
         `${this.loaded.track_info.distance.toFixed(2)} km`);
 });
 
+Then('the custom summary displays elevation limits, ascent and descent from track statistics', async function () {
+    const info = this.loaded.track_info;
+    for (const [selector, expected] of [
+        ['.maxele', `${info.elevation_max.toFixed(2)} m`],
+        ['.minele', `${info.elevation_min.toFixed(2)} m`],
+        ['.gain', `+${info.ascent.toFixed(0)} m`],
+        ['.loss', `-${info.descent.toFixed(0)} m`]
+    ]) {
+        assert.strictEqual(await this.page.locator(`${selector} .summaryvalue`).textContent(), expected);
+    }
+});
 Given('the clear-button example has loaded its initial track', async function () {
     await openExample(this, 'clear-button');
     await this.page.waitForFunction(() =>

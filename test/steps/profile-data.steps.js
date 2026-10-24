@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { localFixture, openExample } from '../support/browser.js';
 
+Given('the gradient example uses its original track-statistic limits', async function () {
+    await localFixture(this.page, 'demo.geojson');
+});
+
 Given('the gradient example uses numeric limits {int} and {int}', async function (min, max) {
     this.htmlTransform = body => {
         assert.match(body, /min: 'elevation_min'/);
@@ -21,12 +25,31 @@ When('I load the gradient track', async function () {
         const xAttr = controlElevation._chart._props.areas.altitude.xAttr;
         return {
             values: controlElevation._data.map(point => point[xAttr]),
+            elevations: controlElevation._data.map(point => point.z),
             stops: [...document.querySelectorAll('linearGradient[id^="altitude-gradient-"] stop')].map(stop => ({
                 offset: Number(stop.getAttribute('offset')),
                 color: stop.getAttribute('stop-color')
             }))
         };
     });
+});
+
+Then('the lowest and highest elevations use opposite ends of the gradient palette', function () {
+    const { elevations, stops } = this.gradient;
+    const low = stops[elevations.indexOf(Math.min(...elevations))].color.match(/\d+/g).map(Number);
+    const high = stops[elevations.indexOf(Math.max(...elevations))].color.match(/\d+/g).map(Number);
+    assert.ok(low[0] <= 2 && low[1] >= 135 && low[2] === 0);
+    assert.ok(high[0] >= 253 && high[1] <= 2 && high[2] === 0);
+    assert.ok(new Set(stops.map(stop => stop.color)).size > 2);
+});
+
+Then('the altitude path uses the generated SVG gradient', async function () {
+    assert.strictEqual(await this.page.evaluate(() => {
+        const chart = controlElevation._chart;
+        const gradient = chart._container.select('linearGradient[id^="altitude-gradient-"]').attr('id');
+        const path = chart._paths.altitude;
+        return path.attr('fill') === `url(#${gradient})` && path.node().isConnected;
+    }), true);
 });
 
 Then('every gradient stop is positioned at its normalized chart x coordinate', function () {

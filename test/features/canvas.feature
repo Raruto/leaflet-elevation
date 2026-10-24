@@ -1,8 +1,5 @@
-# https://github.com/Raruto/leaflet-elevation/issues/123
-# https://github.com/Raruto/leaflet-elevation/issues/232
 Feature: Canvas profile rendering across browsers
 
-  # Issue 232: https://github.com/Raruto/leaflet-elevation/issues/232
   @issue-232
   Scenario Outline: Low-level canvas alignment, tooltip overlay, resize, and clear
     Given I open the low-level canvas page in "<browser>"
@@ -21,8 +18,7 @@ Feature: Canvas profile rendering across browsers
       | iOS Safari     |
       | iOS Chrome     |
 
-  # Issue 123: https://github.com/Raruto/leaflet-elevation/issues/123
-  # Issue 232: https://github.com/Raruto/leaflet-elevation/issues/232
+  @issue-232 @issue-123
   Scenario Outline: Chart integration preserves profile pixels through resize and visibility changes
     Given I open a transformed chart host in "<browser>" at DPR <dpr>
     When I render a profile with "<rendering mode>" rendering

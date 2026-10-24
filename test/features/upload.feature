@@ -1,5 +1,4 @@
-# https://github.com/Raruto/leaflet-elevation/issues/275
-@issue-275
+@issue-275 @example-upload-gpx
 Feature: Uploading GPX tracks with waypoints
   Uploading a replacement track removes old markers, labels and chart checkpoints.
 

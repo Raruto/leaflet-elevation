@@ -3,15 +3,22 @@ Feature: Rendering elevation data and restoring chart controls
   Background:
     Given a Chromium browser using the local plugin
 
-  # https://github.com/Raruto/leaflet-elevation/issues/306
-  @issue-306
+  @example-linear-gradient
+  Scenario: The unmodified gradient example maps track altitude limits to green and red
+    Given the gradient example uses its original track-statistic limits
+    When I load the gradient track
+    Then every gradient stop is positioned at its normalized chart x coordinate
+    And the lowest and highest elevations use opposite ends of the gradient palette
+    And the altitude path uses the generated SVG gradient
+    And no browser errors have occurred
+
+  @issue-306 @example-linear-gradient
   Scenario: Gradient stops follow horizontal data coordinates and numeric color limits
     Given the gradient example uses numeric limits 100000 and 200000
     When I load the gradient track
     Then every gradient stop is positioned at its normalized chart x coordinate
     And all gradient stops use the lower-limit color "rgb(1,136,0)"
 
-  # https://github.com/Raruto/leaflet-elevation/issues/265
   @issue-265
   Scenario: Missing and constant elevations do not produce invalid hotline colors
     Given a hotline track with missing, zero and valid elevations
@@ -20,7 +27,6 @@ Feature: Rendering elevation data and restoring chart controls
     And constant elevation colors contain only finite components
     And no browser errors have occurred
 
-  # https://github.com/Raruto/leaflet-elevation/issues/290
   @issue-290
   Scenario: Re-adding a detached elevation control restores its ruler
     Given a detached elevation control with a visible ruler
