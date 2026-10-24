@@ -534,7 +534,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 					let options    = layer.options;
 
-					options.color  = color.line || color.area || theme;
+					options.color  = control._chartEnabled ? (color.line || color.area || theme) : '#000';
 					options.stroke = !!options.color;
 
 					oldProto.call(this, ctx, layer);
@@ -913,7 +913,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._chartEnabled = this._chart._hasActiveLayers();
 
 		// toggle layer visibility on empty chart
-		this._layers.eachLayer(layer => _.toggleClass(layer.getElement && layer.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled));
+		this._layers.eachLayer(layer => {
+			_.toggleClass(layer.getElement && layer.getElement(), this.options.polyline.className + ' ' + this.options.theme, this._chartEnabled);
+			if (layer._renderer instanceof L.Canvas) layer.redraw();
+		});
 
 		// toggle option value (eg. altitude = { 'disabled' || 'enabled' })
 		this.options[name] = !enabled && this.options[name] == 'disabled' ? 'enabled' : 'disabled';
