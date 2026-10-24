@@ -106,12 +106,19 @@
 					time: "summary",
 					acceleration: "summary",
 					edgeScale: false,
+					hotline: false,
+					distanceMarkers: false,
+					polyline: {
+						color: '#3366cc',
+						opacity: 0.85,
+						weight: 4,
+						clickable: false,
+					},
 				},
 			},
 		};
 
 		let map = L.map('map', opts.map);
-		let layer;
 
 		let controlElevation = L.control.elevation(opts.elevationControl.options);
 
@@ -125,23 +132,8 @@
 			formats: ['.gpx'],
 			position: "topleft",
 			fitBounds: true,
+			addToMap: false,
 			fileSizeLimit: 1024 *10,
-			layerOptions: {
-				style: function (geoJsonFeature) {
-					return {
-						color: '#3366cc',
-						opacity: 0.85,
-						weight: 4,
-						clickable: false
-					};
-				},
-				onEachFeature: function(d, layer) {
-					controlElevation.addData(d, layer);
-				},
-				// pointToLayer: function(data, latlng) {
-				// 	return L.circleMarker(latlng, {});
-				// }
-			},
 		});
 
 		fileLayer.addTo(map);
@@ -158,11 +150,12 @@
 
 		fileLayer.loader.on('data:loaded', function(e) {
 			console.info(e);
-			// layersControl.addOverlay(e.layer, e.filename);
-			if (layer) layer.remove()
-			layer = e.layer;
 			if (!controlElevation._map) controlElevation.addTo(map);
 			else controlElevation.redraw();
+			let data = e.layer.toGeoJSON();
+			data.name = e.filename;
+			// Load tracks and waypoints through the same elevation pipeline.
+			controlElevation.load(JSON.stringify(data));
 		});
 	</script>
 

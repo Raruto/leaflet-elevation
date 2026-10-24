@@ -101,6 +101,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		this._hideDiagramIndicator()
 		this._area.selectAll('path').attr("d", "M0 0");
 		this._context.clearRect(0, 0, this._width(), this._height());
+		this._chart._renderCanvas();
 		this._mask.selectAll(".gap").remove();
 		this._maskGaps = [];
 
@@ -380,6 +381,8 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 	},
 
 	_registerAxisScale(props) {
+		// Preserve scale aliases so they resolve again after zoom replaces the scale.
+		props = L.extend({}, props);
 		if (props.scale == 'y') props.scale = this._y;
 		else if (props.scale == 'x') props.scale = this._x;
 
@@ -456,6 +459,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		// Reset and update chart profiles
 		this._context.clearRect(0, 0, this._width(), this._height());
 		_.each(this._paths, (path, i) => !path.classed('leaflet-hidden') && this._drawPath(i));
+		this._chart._renderCanvas();
 	},
 
 	_updateAxis() {
