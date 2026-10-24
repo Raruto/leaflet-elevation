@@ -8,3 +8,4 @@ dist/
 e2e/results/
 e2e/reports/
 /playwright/.cache/
+/bdd-report.html

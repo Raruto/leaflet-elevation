@@ -138,7 +138,6 @@ _For a working example see one of the following demos:_
         altitude: true,
 
         // Display time info: true || "summary" || false
-        // Axis labels interpolate recorded durations at each distance.
         time: true,
 
         // Display distance info: true || "summary" || false
@@ -188,7 +187,6 @@ _For a working example see one of the following demos:_
         wptLabels: true,
 
         // Render chart profiles as Canvas or SVG Paths
-        // Safari displays the canvas bitmap through SVG to preserve alignment and tooltip stacking.
         preferCanvas: true,
 
       };
@@ -216,10 +214,8 @@ cd ./leaflet-elevation
 npm i         # install dependencies
 npm run dev   # start dev server at: http://localhost:8080
 npm run build # generate "dist" files (once)
-npm run test  # test all "*.spec.js" files (once)
+npm test      # run all cucumber tests 
 ```
-
-Before running tests for the first time, install the required browsers with `npx playwright install chromium webkit`.
 
 After that you can start developing inside the `src` and `test` folders (eg. open "http://localhost:8080/test" in your browser to preview changes). Check also [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for some information about it.
 

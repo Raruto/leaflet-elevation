@@ -23,6 +23,10 @@ For those wishing to try, clone this repository into your localhost folder and i
 
 After that you can start developing inside the `src` and `test` folders (open "http://localhost/leaflet-elevation/test" in your browser to see your changes).
 
+### Automated tests
+
+All tests use Cucumber; `npm run test` runs every scenario. Please include an issue URL comment and `@issue-NNN` tag above new regression scenarios.
+
 ## Submitting a pull request
 
 0. [Fork][fork] and clone the repository
