@@ -30,17 +30,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
 	 */
 	addData(d, layer) {
-		this.import(this.__D3)
-			.then(() => {
-				if (this._modulesLoaded) {
-					layer = layer ?? (d.on && d);
-					this._addData(d);
-					this._addLayer(layer);
-					this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
-				} else {
-					this.once('modules_loaded', () => this.addData(d,layer));
-				}
-			});
+		return this.import(this.__D3).then(() => {
+			if (!this._modulesLoaded) {
+				return new Promise(resolve => this.once('modules_loaded', () => resolve(this.addData(d, layer))));
+			}
+			layer = layer ?? (d.on && d);
+			this._addData(d);
+			this._addLayer(layer);
+			this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
+		});
 	},
 
 	/**
@@ -248,7 +246,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 		let container = this._container = _.create("div", "elevation-control " + this.options.theme + " " + (this.options.detached ? 'elevation-detached' : 'leaflet-control'), this.options.detached ? { id: 'elevation-' + _.randomId() } : {});
 
-		if (!this.eleDiv) this.eleDiv = container;
+		this.eleDiv = container;
 
 		this._loadModules(this.options.handlers).then(() => { // Inject here required modules (data handlers)
 			this._initChart(container);
@@ -773,6 +771,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_loadLayer(geojson) {
 		let { polyline, theme, waypoints, wptIcons, wptLabels, distanceMarkers } = this.options;
 		let style = L.extend({}, polyline);
+		let dataAdded = [];
 
 		if (theme) {
 			style.className += ' ' + theme;
@@ -807,10 +806,10 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					}
 				}
 			},
-			onEachFeature: (feature, layer) => feature.geometry && feature.geometry.type != 'Point' && this.addData(feature, layer),
+			onEachFeature: (feature, layer) => feature.geometry && feature.geometry.type != 'Point' && dataAdded.push(this.addData(feature, layer)),
 		});
 
-		this.import(this.__D3).then(() => {
+		this.import(this.__D3).then(() => Promise.all(dataAdded)).then(() => {
 			this._initMapIntegrations(layer);
 			const event_data = { data: geojson, layer: layer, name: this.track_info.name, track_info: this.track_info };
 			if (this._modulesLoaded) {

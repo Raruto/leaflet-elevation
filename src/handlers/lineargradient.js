@@ -16,6 +16,7 @@
  *   },
  * })
  * ```
+ * `min` and `max` can also be numeric bounds.
  */
 export function LinearGradient() {
 
@@ -80,8 +81,8 @@ export function LinearGradient() {
     const { defs } = chart._chart.utils;
 
     const palette = get_palette({
-      min: isFinite(this.track_info[min]) ? this.track_info[min] : 0,
-      max: isFinite(this.track_info[max]) ? this.track_info[max] : 1,
+      min: isFinite(min) ? Number(min) : (isFinite(this.track_info[min]) ? this.track_info[min] : 0),
+      max: isFinite(max) ? Number(max) : (isFinite(this.track_info[max]) ? this.track_info[max] : 1),
       range,
     });
 
@@ -98,8 +99,14 @@ export function LinearGradient() {
     }
 
     // Generate gradient for each segment picking colors from palette
-    for (let i = 0, data = this._data; i < data.length; i++) {
-      gradient.addColorStop((i) / data.length, palette.getRGBColor(data[i][attr]));
+    const data = this._data;
+    const xAttr = chart._props.areas[path_name].xAttr;
+    const minX = data[0][xAttr];
+    const xRange = data[data.length - 1][xAttr] - minX;
+
+    for (let i = 0; i < data.length; i++) {
+      const offset = xRange ? (data[i][xAttr] - minX) / xRange : 0;
+      gradient.addColorStop(offset, palette.getRGBColor(data[i][attr]));
     }
 
   });

@@ -1,5 +1,6 @@
 /**
  * examples/leaflet-elevation_custom-summary.html
+ * @see https://github.com/Raruto/leaflet-elevation/issues/283
  */
 
 import assert from 'node:assert/strict';
@@ -40,11 +41,22 @@ it('custom-summary: eledata_loaded', { timeout: 10000 }, async t => {
     await page.goto(`http://127.0.0.1:${server.address().port}/examples/leaflet-elevation_custom-summary.html`);
     await page.evaluate(() => {
         window.loadedData = new Promise(resolve => controlElevation.once('eledata_loaded', resolve));
+        window.dataEventOrder = [];
+        controlElevation.on('eledata_added', () => window.dataEventOrder.push('added'));
+        controlElevation.on('eledata_loaded', () => window.dataEventOrder.push('loaded'));
     });
     releaseData();
     const json = await page.evaluate(() => window.loadedData);
     assert.strictEqual(json.name, 'demo.geojson');
     assert.notStrictEqual(typeof json.layer, 'undefined');
     assert.strictEqual(typeof json.track_info.distance, 'number');
+    assert.deepStrictEqual(await page.evaluate(() => window.dataEventOrder), ['added', 'loaded']);
+    assert.deepStrictEqual(
+        await page.evaluate(() => [
+            controlElevation._start.getLatLng().equals(controlElevation._data[0].latlng),
+            controlElevation._end.getLatLng().equals(controlElevation._data.at(-1).latlng)
+        ]),
+        [true, true]
+    );
     assert.strictEqual(await page.locator('.totlen .summaryvalue').textContent(), `${json.track_info.distance.toFixed(2)} km`);
 });

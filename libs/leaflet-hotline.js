@@ -195,7 +195,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * @returns {Array.<number>} The RGB values as an array [r, g, b]
          */
         getRGBForValue: function (value) {
-            var valueRelative = Math.min(Math.max((value - this._min) / (this._max - this._min), 0), 0.999);
+            var valueRelative = this._max === this._min ? 0 : Math.min(Math.max((value - this._min) / (this._max - this._min), 0), 0.999);
             var paletteIndex = Math.floor(valueRelative * 256) * 4;
 
             return [
@@ -247,6 +247,11 @@ https://github.com/iosphere/Leaflet.hotline/
                 for (j = 1, pathLength = path.length; j < pathLength; j++) {
                     pointStart = path[j - 1];
                     pointEnd = path[j];
+
+                    // Keep only the outline where elevation is unknown, rather than treating it as zero.
+                    if (!Number.isFinite(pointStart.z) || !Number.isFinite(pointEnd.z)) {
+                        continue;
+                    }
 
                     // Create a gradient for each segment, pick start end end colors from palette gradient
                     gradient = ctx.createLinearGradient(pointStart.x, pointStart.y, pointEnd.x, pointEnd.y);
