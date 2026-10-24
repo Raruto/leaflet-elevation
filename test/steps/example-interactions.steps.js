@@ -78,7 +78,13 @@ Given('the interactive {string} example is ready', async function (name) {
             await route.fallback();
         });
     }
-    await this.page.mouse.move(-100, -100);
+    if (name === 'hoverable-tracks') {
+        const transform = this.htmlTransform;
+        this.htmlTransform = body => (transform ? transform(body) : body).replace('<body>',
+            '<body><div id="test-loading-shield" style="position:fixed;inset:0;z-index:2147483647"></div>');
+    } else {
+        await this.page.mouse.move(-100, -100);
+    }
     await openExample(this, name);
     if (['hoverable-tracks', 'toggable-charts'].includes(name)) {
         await this.page.waitForFunction(() =>
@@ -121,6 +127,10 @@ Given('the interactive {string} example is ready', async function (name) {
     if (name === 'hoverable-tracks') {
         assert.strictEqual(await this.page.evaluate(() => routes.getSelection() == null), true);
         assert.strictEqual(await this.page.locator('.chart-placeholder').isVisible(), true);
+        const button = await this.page.locator('.leaflet-control-zoom-in').boundingBox();
+        assert.ok(button);
+        await this.page.mouse.move(button.x + button.width / 2, button.y + button.height / 2);
+        await this.page.locator('#test-loading-shield').evaluate(shield => shield.remove());
     }
 });
 
