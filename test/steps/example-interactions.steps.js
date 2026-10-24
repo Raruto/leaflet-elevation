@@ -255,10 +255,12 @@ When('I hover over an unselected group track', async function () {
 });
 
 Then('its profile replaces the placeholder and its legend is selected', async function () {
-    await this.page.waitForFunction(() =>
-        routes.getSelection() === interactionRoute && routes._elevation._data.length > 0 &&
-        document.querySelector('.chart-placeholder').style.display === 'none'
-    );
+    await this.page.waitForFunction(() => {
+        const legend = document.getElementById(`legend_${L.stamp(interactionRoute)}`);
+        return routes.getSelection() === interactionRoute && routes._elevation._data.length > 0 &&
+            document.querySelector('.chart-placeholder').style.display === 'none' &&
+            legend && legend.parentNode.previousSibling.checked;
+    });
     const state = await this.page.evaluate(() => ({
         checked: document.getElementById(`legend_${L.stamp(interactionRoute)}`).parentNode.previousSibling.checked,
         color: interactionLine.options.color,

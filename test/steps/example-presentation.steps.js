@@ -47,6 +47,8 @@ Then('the chart shows the eight Via Emilia city labels rotated around their anch
 });
 
 Then('the custom chart and map line use the example theme', async function () {
+    await this.page.locator('.custom-theme .area path.altitude').waitFor({ state: 'attached' });
+    await this.page.locator('path.custom-theme.elevation-polyline').waitFor({ state: 'attached' });
     const styles = await this.page.evaluate(() => {
         const area = document.querySelector('.custom-theme .area path.altitude');
         const line = document.querySelector('path.custom-theme.elevation-polyline');
