@@ -55,6 +55,7 @@ Feature: Interacting with the example charts and tracks
   @example-hoverable-tracks
   Scenario Outline: Example interaction: hoverable-tracks selects the hovered route and its legend
     Given the example map uses zoom snapping <zoomSnap>
+    And the pointer starts in the middle of the viewport
     And the interactive "hoverable-tracks" example is ready
     When I hover over an unselected group track
     Then its profile replaces the placeholder and its legend is selected

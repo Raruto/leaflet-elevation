@@ -7,9 +7,9 @@
   "browser": "dist/leaflet-elevation.min.js",
   "module": "src/index.js",
   "scripts": {
-    "test": "cucumber-js",
-    "build": "node build/build.js",
     "dev": "node build/dev.js",
+    "build": "node build/build.js",
+    "test": "npm run build && cucumber-js",
     "version": "npm run build && git add -A"
   },
   "repository": {

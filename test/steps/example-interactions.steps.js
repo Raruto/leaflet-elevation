@@ -56,6 +56,11 @@ Given('the example map uses zoom snapping {int}', function (zoomSnap) {
         `L.map('map', { ...opts.map, zoomSnap: ${zoomSnap} })`);
 });
 
+Given('the pointer starts in the middle of the viewport', async function () {
+    const { width, height } = this.page.viewportSize();
+    await this.page.mouse.move(width / 2, height / 2);
+});
+
 Given('the interactive {string} example is ready', async function (name) {
     this.interactionExample = name;
     for (const filename of ['demo.geojson', 'via-emilia.gpx', 'via-aurelia.gpx']) {
@@ -73,6 +78,7 @@ Given('the interactive {string} example is ready', async function (name) {
             await route.fallback();
         });
     }
+    await this.page.mouse.move(-100, -100);
     await openExample(this, name);
     if (['hoverable-tracks', 'toggable-charts'].includes(name)) {
         await this.page.waitForFunction(() =>
@@ -96,6 +102,11 @@ Given('the interactive {string} example is ready', async function (name) {
         if (name !== 'follow-marker') {
             await this.page.waitForFunction(() => controlElevation._data.length > 0);
         }
+        if (name === 'close-button') {
+            await this.page.waitForFunction(() =>
+                controlElevation._layers.getLayers().some(layer => layer instanceof L.FeatureGroup && map.hasLayer(layer))
+            );
+        }
         await this.page.waitForFunction(() =>
             [...document.querySelectorAll('.elevation-control .area path')].some(path => path.getAttribute('d')?.length > 10)
         );
@@ -107,13 +118,9 @@ Given('the interactive {string} example is ready', async function (name) {
             await this.page.waitForFunction(() => controlElevation._layers.getLayers().some(layer => map.hasLayer(layer)));
         }
     }
-    await this.page.mouse.move(0, 0);
     if (name === 'hoverable-tracks') {
-        await this.page.evaluate(() => routes.setSelection(null));
-        await this.page.waitForFunction(() =>
-            routes.getSelection() === null &&
-            document.querySelector('.chart-placeholder').style.display !== 'none'
-        );
+        assert.strictEqual(await this.page.evaluate(() => routes.getSelection() == null), true);
+        assert.strictEqual(await this.page.locator('.chart-placeholder').isVisible(), true);
     }
 });
 
