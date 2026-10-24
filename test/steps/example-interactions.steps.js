@@ -81,6 +81,13 @@ Given('the interactive {string} example is ready', async function (name) {
         }
     }
     await this.page.mouse.move(0, 0);
+    if (name === 'hoverable-tracks') {
+        await this.page.evaluate(() => routes.setSelection(null));
+        await this.page.waitForFunction(() =>
+            routes.getSelection() === null &&
+            document.querySelector('.chart-placeholder').style.display !== 'none'
+        );
+    }
 });
 
 When('I open, close and reopen the attached elevation chart', async function () {
