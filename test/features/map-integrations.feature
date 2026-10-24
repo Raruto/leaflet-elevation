@@ -14,9 +14,9 @@ Feature: Integrating elevation charts with Leaflet maps
     Given the almost-over example has loaded its initial track
     When I reload the almost-over tracks in this order
       | filename        | layers | distance  | time      | maximum | minimum | average           |
-      | via-emilia.gpx  | 9      | 264.69343 | 264693430 | 84.9    | 6.6     | 49.10552825552806 |
-      | via-aurelia.gpx | 1      | 695.46454 | 695464540 | 638.8   | -3      | 61.47714913485336 |
-      | via-emilia.gpx  | 9      | 264.69343 | 264693430 | 84.9    | 6.6     | 49.10552825552806 |
+      | via-emilia.gpx  | 9      | 264.69343 | 264690738 | 84.9    | 6.6     | 49.10552825552806 |
+      | via-aurelia.gpx | 1      | 695.46454 | 695456531 | 638.8   | -3      | 61.47714913485336 |
+      | via-emilia.gpx  | 9      | 264.69343 | 264690738 | 84.9    | 6.6     | 49.10552825552806 |
     Then each track has the expected statistics and almost-over layers
     And almost-over stays enabled with exactly one move and one out listener
     And all known sea-level samples in via-aurelia retain zero elevation

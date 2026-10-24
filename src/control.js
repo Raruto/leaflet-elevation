@@ -665,6 +665,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 			this._updateChart();
 			this._updateSummary();
+			map.invalidateSize();
 		});
 
 

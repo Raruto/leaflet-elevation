@@ -35,6 +35,9 @@ Then('the marker finishes loading and can still be hidden', async function () {
 });
 
 Given('the almost-over example has loaded its initial track', async function () {
+    await this.page.clock.setFixedTime(new Date('2024-01-01T00:00:00Z'));
+    await localFixture(this.page, 'via-emilia.gpx');
+    await localFixture(this.page, 'via-aurelia.gpx');
     await openExample(this, 'almost-over');
     await this.page.waitForFunction(() =>
         typeof controlElevation !== 'undefined' && controlElevation._data.length > 0 &&

@@ -17,6 +17,15 @@ Given('a Chromium browser using the local plugin', async function () {
     this.browser = await chromium.launch();
     this.page = await this.browser.newPage();
     this.page.on('pageerror', error => this.errors.push(error.stack || error.message));
+    await this.page.route(/^https:\/\/unpkg\.com\/@raruto\/leaflet-elevation@[^/]+\//, async route => {
+        const pathname = new URL(route.request().url()).pathname.replace(/^\/@raruto\/leaflet-elevation@[^/]+\//, '/');
+        const response = await route.fetch({ url: this.base + pathname });
+        assert.ok(response.ok(), `Failed to load local plugin resource: ${pathname} (${response.status()})`);
+        await route.fulfill({
+            response,
+            headers: { ...response.headers(), 'access-control-allow-origin': '*' }
+        });
+    });
     await this.page.route(/\.html$/, async route => {
         const response = await route.fetch();
         let body = (await response.text()).replace(/https:\/\/unpkg.com\/@raruto\/leaflet-elevation@[^/]+\//g, '../');

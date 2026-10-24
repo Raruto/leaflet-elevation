@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { localFixture, openExample } from '../support/browser.js';
 
@@ -28,6 +29,27 @@ async function groupTrackPoint(page, selected = false) {
         throw new Error('No unobscured interactive point on the route');
     }, selected);
 }
+
+Given('the chart module loads only after the map track is visible', async function () {
+    this.page.on('response', response => {
+        if (/^https:\/\/unpkg\.com\/@raruto\/leaflet-elevation@[^/]+\/dist\/leaflet-elevation\.min\.js$/.test(response.url())) {
+            this.pluginResponse = response;
+        }
+    });
+    await this.page.route('**/src/components/chart.js', async route => {
+        await this.page.waitForFunction(() => document.querySelector('path.elevation-polyline'));
+        await route.continue();
+    });
+});
+
+Then('the dynamically loaded plugin matches the local build', async function () {
+    assert.ok(this.pluginResponse, 'leaflet-ui did not request the plugin bundle');
+    assert.strictEqual(await this.pluginResponse.text(),
+        await readFile(new URL('../../dist/leaflet-elevation.min.js', import.meta.url), 'utf8'));
+    assert.strictEqual(await this.page.evaluate(() =>
+        map.getSize().y === map.getContainer().clientHeight
+    ), true);
+});
 
 Given('the interactive {string} example is ready', async function (name) {
     this.interactionExample = name;
