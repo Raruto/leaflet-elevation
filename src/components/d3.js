@@ -541,6 +541,7 @@ export const Chart = ({
 	height,
 	margins = {},
 	ruler,
+	preferCanvas,
 }) => {
 
 	const w = width - margins.left - margins.right;
@@ -572,6 +573,14 @@ export const Chart = ({
 	const foreignObject = panes.area   .append('svg:foreignObject').attr('mask', 'url(#' + mask.attr('id') + ')');
 	const canvas        = foreignObject.append('xhtml:canvas')     .attr('class', 'canvas-plot');
 	const context       = canvas.node().getContext('2d');
+	const webkitCanvas = preferCanvas &&
+		/Mac|iPod|iPhone|iPad/.test(navigator.platform) &&
+		/AppleWebkit/i.test(navigator.userAgent) &&
+		!/Chrome/.test(navigator.userAgent);
+	const canvasImage = webkitCanvas
+		? panes.area.append('svg:image').attr('mask', 'url(#' + mask.attr('id') + ')').attr('pointer-events', 'none')
+		: null;
+	if (canvasImage) foreignObject.remove();
 
 	// Add tooltip
 	panes.tooltip.call(Tooltip({ xCoord: 0, yCoord: 0, height: h, width : w, labels: {} }));
@@ -598,6 +607,11 @@ export const Chart = ({
 		scale,
 	};
 
+	// ponytail: Safari encodes one PNG per redraw; use a separate HTML canvas layer if encoding becomes a bottleneck.
+	chart._renderCanvas = () => {
+		if (canvasImage) canvasImage.attr('href', canvas.node().toDataURL());
+	};
+
 	// Resize
 	chart._resize  = ({
 		width,
@@ -612,19 +626,10 @@ export const Chart = ({
 		svg          .attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`);
 		g            .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
 
-		// Fix: https://github.com/Raruto/leaflet-elevation/issues/123
-		// Fix: https://github.com/Raruto/leaflet-elevation/issues/232
-		if (
-			/Mac|iPod|iPhone|iPad/.test(navigator.platform) &&
-			/AppleWebkit/i.test(navigator.userAgent) &&
-			!/Chrome/.test(navigator.userAgent)
-		) {
-			canvas   .style("transform", "translate(" + margins.left + "px," + margins.top + "px)");
-		}
-
 		maskRect     .attr("width", w).attr("height", h).attr("x", 0).attr("y", 0);
 		foreignObject.attr('width', w).attr('height', h);
 		canvas       .attr('width', w).attr('height', h);
+		if (canvasImage) canvasImage.attr('width', w).attr('height', h).attr('href', null);
 
 		if (ruler) {
 			panes.ruler.call(Ruler({ height: h, width: w }));
@@ -643,7 +648,7 @@ export const Chart = ({
 	chart.pane = (name) => (panes[name] || (panes[name] = g.append('g').attr("class", name)));
 	chart.get  = (name) => utils[name];
 
-	chart._resize({ width, height, margins});
+	chart._resize({ width, height, margins, ruler});
 
 	return chart;
 };

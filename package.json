@@ -7,9 +7,9 @@
   "browser": "dist/leaflet-elevation.min.js",
   "module": "src/index.js",
   "scripts": {
-    "test": "node --test --test-concurrency=1 \"examples/*.spec.js\" \"src/*.spec.js\"",
-    "build": "node build/build.js",
     "dev": "node build/dev.js",
+    "build": "node build/build.js",
+    "test": "npm run build && cucumber-js",
     "version": "npm run build && git add -A"
   },
   "repository": {
@@ -48,6 +48,7 @@
   },
   "homepage": "https://github.com/Raruto/leaflet-elevation#readme",
   "devDependencies": {
+    "@cucumber/cucumber": "^13.3.0",
     "esbuild": "^0.28.2",
     "leaflet": "^1.7.1",
     "playwright": "^1.64.1"

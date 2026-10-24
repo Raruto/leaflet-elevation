@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>leaflet-elevation.js - Live tracking</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
+	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+
+	<style>@import '../libs/fullpage.css';</style>
+
+	<!-- leaflet-ui -->
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+
+	<!-- leaflet-elevation -->
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.7.1/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.7.1/dist/leaflet-elevation.min.js"></script>
+</head>
+
+<body>
+
+	<div id="map" class="leaflet-map"></div>
+
+	<script>
+		let map = L.map('map', {
+			center: [44.4949, 11.3426],
+			zoom: 14,
+			fullscreenControl: false,
+			resizerControl: true,
+		});
+
+		let controlElevation = L.control.elevation({
+			theme: "lightblue-theme",
+			collapsed: false,
+			detached: true,
+			summary: "inline",
+			distanceMarkers: false,
+			hotline: false,
+			waypoints: false,
+		}).addTo(map);
+
+		// Keep one map layer and append each new GPS location to it.
+		let trackLayer = L.polyline([], { color: '#3388ff', weight: 4 }).addTo(map);
+		let locations = [
+			[44.4949, 11.3426, 54],
+			[44.4960, 11.3460, 56],
+			[44.4976, 11.3490, 59],
+			[44.4998, 11.3510, 63],
+			[44.5020, 11.3538, 67],
+			[44.5044, 11.3562, 71],
+			[44.5061, 11.3595, 75],
+			[44.5084, 11.3620, 79],
+			[44.5102, 11.3654, 82],
+			[44.5125, 11.3680, 86],
+			[44.5144, 11.3712, 90],
+			[44.5167, 11.3740, 94],
+		];
+		let index = 0;
+
+		let timer = setInterval(() => {
+			let [lat, lng, elevation] = locations[index++];
+			let point = [lng, lat, elevation];
+
+			trackLayer.addLatLng([lat, lng, elevation]);
+			controlElevation.addData({
+				type: "Feature",
+				properties: { name: "Live track" },
+				geometry: { type: "LineString", coordinates: [point] },
+			}, trackLayer);
+
+			if (index === locations.length) clearInterval(timer);
+		}, 1000);
+	</script>
+
+	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
+
+</body>
+
+</html>
