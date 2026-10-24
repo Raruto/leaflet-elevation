@@ -57,6 +57,10 @@ Then('the track distance and summary agree with its geographic length', async fu
 });
 
 Then('its map track appears in the layer switcher', async function () {
+    await this.page.waitForFunction(() => {
+        const lines = controlElevation._layers.getLayers().filter(layer => layer instanceof L.Polyline);
+        return lines.length > 0 && lines.every(layer => map.hasLayer(layer));
+    });
     await this.page.waitForFunction(() => document.querySelector('.leaflet-control-layers-overlays input'));
     const visible = await this.page.evaluate(() => {
         const lines = [];

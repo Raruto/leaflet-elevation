@@ -598,7 +598,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Hides the position/height indicator marker drawn onto the map
 	 */
 	_hideMarker() {
-		if (this.options.autohideMarker) {
+		if (this.options.autohideMarker && this._marker) {
 			this._marker.remove();
 		}
 	},

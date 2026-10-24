@@ -16,7 +16,7 @@ export async function openExample(world, name) {
 Given('a Chromium browser using the local plugin', async function () {
     this.browser = await chromium.launch();
     this.page = await this.browser.newPage();
-    this.page.on('pageerror', error => this.errors.push(error.message));
+    this.page.on('pageerror', error => this.errors.push(error.stack || error.message));
     await this.page.route(/\.html$/, async route => {
         const response = await route.fetch();
         let body = (await response.text()).replace(/https:\/\/unpkg.com\/@raruto\/leaflet-elevation@[^/]+\//g, '../');

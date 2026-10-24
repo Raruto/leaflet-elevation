@@ -2,6 +2,38 @@ import assert from 'node:assert/strict';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { localFixture, openExample } from '../support/browser.js';
 
+Given('the chart is ready but its marker module is still loading', async function () {
+    const gate = new Promise(resolve => { this.releaseData = resolve; });
+    await this.page.route('**/src/components/marker.js', async route => {
+        await gate;
+        await route.continue();
+    });
+    await localFixture(this.page, 'via-emilia.gpx');
+    await openExample(this, '');
+    await this.page.waitForFunction(() =>
+        typeof controlElevation !== 'undefined' && controlElevation._chart
+    );
+    assert.strictEqual(await this.page.evaluate(() => typeof controlElevation._marker), 'undefined');
+});
+
+When('the map emits zoom and view reset events', async function () {
+    await this.page.evaluate(() => {
+        for (const type of ['zoom', 'viewreset', 'zoomanim']) {
+            map.fire(type, { center: map.getCenter(), zoom: map.getZoom() });
+        }
+    });
+});
+
+Then('the marker finishes loading and can still be hidden', async function () {
+    this.releaseData();
+    await this.page.waitForFunction(() => controlElevation._marker && controlElevation._data.length > 0);
+    assert.strictEqual(await this.page.evaluate(() => {
+        controlElevation._updateMarker(controlElevation._data[0]);
+        controlElevation._hideMarker();
+        return document.querySelector('.height-focus-group').classList.contains('leaflet-hidden');
+    }), true);
+});
+
 Given('the almost-over example has loaded its initial track', async function () {
     await openExample(this, 'almost-over');
     await this.page.waitForFunction(() =>
