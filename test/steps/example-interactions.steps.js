@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { Given, When, Then } from '@cucumber/cucumber';
-import { localFixture, openExample } from '../support/browser.js';
+import { localFixture, openExample, waitForMapBounds } from '../support/browser.js';
 
 async function hoverProfile(page, fraction) {
     const box = await page.locator('.elevation-control .brush .overlay').boundingBox();
@@ -51,6 +51,11 @@ Then('the dynamically loaded plugin matches the local build', async function () 
     ), true);
 });
 
+Given('the example map uses zoom snapping {int}', function (zoomSnap) {
+    this.htmlTransform = body => body.replace("L.map('map', opts.map)",
+        `L.map('map', { ...opts.map, zoomSnap: ${zoomSnap} })`);
+});
+
 Given('the interactive {string} example is ready', async function (name) {
     this.interactionExample = name;
     for (const filename of ['demo.geojson', 'via-emilia.gpx', 'via-aurelia.gpx']) {
@@ -73,7 +78,7 @@ Given('the interactive {string} example is ready', async function (name) {
         await this.page.waitForFunction(() =>
             typeof routes !== 'undefined' && routes && routes._loadedCount === tracks.length && !map._animatingZoom
         );
-        await this.page.waitForFunction(() => !map._panAnim?._inProgress && map.getBounds().contains(routes.getBounds()));
+        await waitForMapBounds(this.page, await this.page.evaluate(() => routes.getBounds()));
         await this.page.evaluate(() => new Promise(resolve => {
             let previous = '';
             let stable = 0;
@@ -364,17 +369,15 @@ When('I select the second track radio button', async function () {
 
 Then('only the second track is mapped and its profile replaces the first', async function () {
     await this.page.waitForFunction(() =>
-        map.hasLayer(traces[1].gpx) && !map.hasLayer(traces[0].gpx) &&
-        map.getBounds().contains(traces[1].gpx.getBounds())
+        map.hasLayer(traces[1].gpx) && !map.hasLayer(traces[0].gpx)
     );
+    await waitForMapBounds(this.page, await this.page.evaluate(() => traces[1].gpx.getBounds()));
     const state = await this.page.evaluate(() => ({
         distance: controlElevation.track_info.distance,
-        count: controlElevation._data.length,
-        bounds: map.getBounds().contains(traces[1].gpx.getBounds())
+        count: controlElevation._data.length
     }));
     assert.ok(state.count > 0);
     assert.ok(state.distance > this.firstTrackProfile.distance * 2);
-    assert.strictEqual(state.bounds, true);
 });
 
 When('I select the first track radio button', async function () {

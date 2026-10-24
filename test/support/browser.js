@@ -13,6 +13,15 @@ export async function openExample(world, name) {
     await world.page.goto(`${world.base}/examples/leaflet-elevation${name ? `_${name}` : ''}.html`);
 }
 
+export async function waitForMapBounds(page, bounds) {
+    await page.waitForFunction(({ _southWest, _northEast }) => {
+        const track = L.bounds(map.latLngToContainerPoint(_southWest), map.latLngToContainerPoint(_northEast));
+        // Leaflet rounds projected coordinates to pixels when fitting the viewport.
+        return !map._animatingZoom && !map._panAnim?._inProgress &&
+            L.bounds([-1, -1], map.getSize().add([1, 1])).contains(track);
+    }, bounds);
+}
+
 Given('a Chromium browser using the local plugin', async function () {
     this.browser = await chromium.launch();
     this.page = await this.browser.newPage();

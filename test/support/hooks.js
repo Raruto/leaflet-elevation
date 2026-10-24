@@ -15,8 +15,32 @@ Before(async function ({ pickle }) {
     this.errors = [];
 });
 
-After(async function () {
+After(async function ({ result }) {
     this.releaseData?.();
+    if (result.status === 'FAILED' && this.page) {
+        console.error('Browser errors:', this.errors);
+        console.error('Map state:', await this.page.evaluate(() => {
+            if (typeof L === 'undefined' || typeof map === 'undefined' || !(map instanceof L.Map)) return null;
+            return {
+                size: map.getSize(),
+                viewport: map.getContainer().getBoundingClientRect().toJSON(),
+                bounds: map.getBounds(),
+                zoom: map.getZoom(),
+                zoomSnap: map.options.zoomSnap,
+                animatingZoom: map._animatingZoom,
+                panning: !!map._panAnim?._inProgress,
+                group: typeof routes === 'undefined' ? null : {
+                    loaded: routes._loadedCount,
+                    bounds: routes.getBounds(),
+                    selected: routes.getSelection()?._leaflet_id
+                },
+                tracks: typeof traces === 'undefined' ? null : traces.map(trace => ({
+                    mapped: map.hasLayer(trace.gpx),
+                    bounds: trace.gpx.getBounds()
+                }))
+            };
+        }));
+    }
     await this.browser?.close();
 });
 

@@ -91,6 +91,10 @@ Given('I open the {string} waypoint example using {string}', async function (exa
 });
 
 Then('four waypoints appear on the map and as labelled chart checkpoints', async function () {
+    await this.page.waitForFunction(() => {
+        const markers = controlElevation._markers.getLayers();
+        return markers.length === 4 && markers.every(marker => map.hasLayer(marker));
+    });
     const state = await this.page.evaluate(() => ({
         markers: controlElevation._markers.getLayers().map(marker => ({
             visible: map.hasLayer(marker), label: marker.getTooltip().getContent()

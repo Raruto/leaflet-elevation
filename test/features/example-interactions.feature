@@ -53,13 +53,19 @@ Feature: Interacting with the example charts and tracks
     And no browser errors have occurred
 
   @example-hoverable-tracks
-  Scenario: Example interaction: hoverable-tracks selects the hovered route and its legend
-    Given the interactive "hoverable-tracks" example is ready
+  Scenario Outline: Example interaction: hoverable-tracks selects the hovered route and its legend
+    Given the example map uses zoom snapping <zoomSnap>
+    And the interactive "hoverable-tracks" example is ready
     When I hover over an unselected group track
     Then its profile replaces the placeholder and its legend is selected
     When I select a different route in the group legend
     Then the profile and highlight switch to that route
     And no browser errors have occurred
+
+    Examples:
+      | zoomSnap |
+      | 1        |
+      | 0        |
 
   @example-toggable-charts
   Scenario: Example interaction: toggable-charts selects and deselects a track by clicking
@@ -71,10 +77,16 @@ Feature: Interacting with the example charts and tracks
     And no browser errors have occurred
 
   @example-toggable-tracks
-  Scenario: Example interaction: toggable-tracks switches map tracks and elevation profiles
-    Given the interactive "toggable-tracks" example is ready
+  Scenario Outline: Example interaction: toggable-tracks switches map tracks and elevation profiles
+    Given the example map uses zoom snapping <zoomSnap>
+    And the interactive "toggable-tracks" example is ready
     When I select the second track radio button
     Then only the second track is mapped and its profile replaces the first
     When I select the first track radio button
     Then the original track and elevation profile are restored
     And no browser errors have occurred
+
+    Examples:
+      | zoomSnap |
+      | 1        |
+      | 0        |
