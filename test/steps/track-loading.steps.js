@@ -1,6 +1,87 @@
 import assert from 'node:assert/strict';
+import { build } from 'esbuild';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { fixturePath, openExample } from '../support/browser.js';
+
+Given('all elevation dependencies are bundled and the lazy loader is disabled', async function () {
+    const { outputFiles } = await build({
+        stdin: {
+            contents: `
+                import 'leaflet';
+                import * as d3 from 'd3';
+                import * as toGeoJSON from '@tmcw/togeojson';
+                import './dist/leaflet-elevation.js';
+                import { Chart } from './src/components/chart.js';
+                import { Marker } from './src/components/marker.js';
+                import { Summary } from './src/components/summary.js';
+                import { Distance } from './src/handlers/distance.js';
+                import { Time } from './src/handlers/time.js';
+                import { Altitude } from './src/handlers/altitude.js';
+
+                Object.assign(globalThis, { d3, toGeoJSON });
+                Object.assign(L.Control.Elevation, { Chart, Marker, Summary });
+                L.Control.Elevation.include({
+                    import(src) {
+                        return Array.isArray(src) ? Promise.all(src.map(item => this.import(item))) : Promise.resolve();
+                    }
+                });
+                window.map = L.map('map').setView([45, 10], 5);
+                window.controlElevation = L.control.elevation({
+                    handlers: [Distance, Time, Altitude],
+                    detached: false,
+                    closeBtn: false,
+                    almostOver: false,
+                    distanceMarkers: false,
+                    edgeScale: false,
+                    hotline: false,
+                    followMarker: false
+                }).addTo(map);
+            `,
+            resolveDir: process.cwd()
+        },
+        bundle: true,
+        format: 'iife',
+        platform: 'browser',
+        write: false
+    });
+    await this.page.goto(this.base);
+    await this.page.setContent('<div id="map" style="height:400px"></div>');
+    await this.page.addStyleTag({ url: `${this.base}/node_modules/leaflet/dist/leaflet.css` });
+    await this.page.addStyleTag({ url: `${this.base}/dist/leaflet-elevation.css` });
+    this.unexpectedScripts = [];
+    this.page.on('request', request => {
+        if (request.resourceType() === 'script') this.unexpectedScripts.push(request.url());
+    });
+    await this.page.addScriptTag({ content: outputFiles[0].text });
+    await this.page.waitForFunction(() => controlElevation._chart && controlElevation._marker && controlElevation._summary);
+});
+
+When('I load a GPX without requesting any more JavaScript', async function () {
+    await this.page.evaluate(() => new Promise(resolve => {
+        controlElevation.once('eledata_loaded', resolve);
+        controlElevation.load('/examples/via-emilia.gpx');
+    }));
+    await this.page.waitForFunction(() => controlElevation._layers.getLayers().some(layer => map.hasLayer(layer)));
+});
+
+Then('the statically loaded chart shows its profile, summary and map marker', async function () {
+    const state = await this.page.evaluate(() => {
+        controlElevation._updateMarker(controlElevation._data[0]);
+        return {
+            samples: controlElevation._data.length,
+            distance: controlElevation.track_info.distance,
+            path: controlElevation._chart._paths.altitude.attr('d'),
+            summary: document.querySelector('.totlen .summaryvalue').textContent,
+            marker: controlElevation._marker.getLatLng().equals(controlElevation._data[0].latlng)
+        };
+    });
+    assert.strictEqual(state.samples, 5698);
+    assert.strictEqual(state.distance, 264.69343);
+    assert.match(state.path, /L/);
+    assert.strictEqual(state.summary, `${state.distance.toFixed(2)}\u00a0km`);
+    assert.strictEqual(state.marker, true);
+    assert.deepStrictEqual(this.unexpectedScripts, []);
+});
 
 Given('the {string} example is waiting to load {string}', async function (example, filename) {
     const gate = new Promise(resolve => { this.releaseData = resolve; });

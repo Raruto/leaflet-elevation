@@ -290,6 +290,9 @@ const controlElevation = L.control.elevation({
 controlElevation.load("https://raruto.github.io/leaflet-elevation/examples/via-emilia.gpx");
 ```
 
+For more info about disabling the built-in lazy see also [#280](https://github.com/Raruto/leaflet-elevation/issues/280) and [track-loading.steps.js](.\test\steps\track-loading.steps.js)
+
+
 </details>
 
 <details>

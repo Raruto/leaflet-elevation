@@ -4,6 +4,13 @@ Feature: Loading and replacing tracks
   Background:
     Given a Chromium browser using the local plugin
 
+  @issue-280 @issue-299
+  Scenario: Preloaded dependencies work with the built-in lazy loader disabled
+    Given all elevation dependencies are bundled and the lazy loader is disabled
+    When I load a GPX without requesting any more JavaScript
+    Then the statically loaded chart shows its profile, summary and map marker
+    And no browser errors have occurred
+
   @example-default
   Scenario: A loaded GPX exposes its name, layer and distance
     Given the "default" example is waiting to load "via-emilia.gpx"
