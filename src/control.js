@@ -13,7 +13,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	options: Options,
 	__mileFactor:     0.621371, // 1 km = (0.621371 mi)
 	__footFactor:     3.28084,  // 1 m  = (3.28084 ft)
-	__D3:            'https://unpkg.com/d3@7.8.4/dist/d3.min.js',
 	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@5.6.2/dist/togeojson.umd.js',
 	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.10.1/src/leaflet.geometryutil.js',
 	__LALMOSTOVER:   'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
@@ -30,7 +29,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
 	 */
 	addData(d, layer) {
-		return this.import(this.__D3).then(() => {
+		return Promise.resolve().then(() => {
 			if (!this._modulesLoaded) {
 				return new Promise(resolve => this.once('modules_loaded', () => resolve(this.addData(d, layer))));
 			}
@@ -82,7 +81,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._events.elechart_updated.forEach(({fn, ctx}) => this.off('elechart_updated', fn, ctx));
 		}
 		if (this._chart && this._chart._container) {
-			this._chart._container.selectAll('g.point .point').remove();
+			this._chart._container.querySelectorAll('g.point .point').forEach(node => node.remove());
 			this._chart.clear();
 		}
 	},
@@ -219,7 +218,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			return Promise.all(src.map(m => this.import(m)));
 		}
 		switch(src) {
-			case this.__D3:          condition = typeof d3 !== 'object'; break;
 			case this.__TOGEOJSON:   condition = typeof toGeoJSON !== 'object'; break;
 			case this.__LGEOMUTIL:   condition = typeof L.GeometryUtil !== 'object'; break;
 			case this.__LALMOSTOVER: condition = typeof L.Handler.AlmostOver  !== 'function'; break;
@@ -622,17 +620,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		this
-			.import([this.__D3, this.__LCHART])
+			.import(this.__LCHART)
 			.then((m) => {
 
-			let chart = this._chart = new (m[1] || Elevation).Chart(opts, this);
+			let chart = this._chart = new (m || Elevation).Chart(opts, this);
 	
 			this._x     = this._chart._x;
 			this._y     = this._chart._y;
 	
-			d3
-				.select(container)
-				.call(chart.render())
+			chart.render()(container);
 	
 			chart
 				.on('reset_drag',      this._hideMarker,     this)
@@ -692,9 +688,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		if (this._renderer) this._renderer.remove()
 		this._renderer               = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
 
-		this.import([this.__D3, this.__LMARKER])
+		this.import(this.__LMARKER)
 			.then((m) => {
-				this._marker             = new (m[1] || Elevation).Marker(this.options, this);
+				this._marker             = new (m || Elevation).Marker(this.options, this);
 				this.fire("elechart_marker");
 			});
 	},
@@ -727,10 +723,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	_initSummary(container) {
 		this.import(this.__LSUMMARY).then((m)=>{
 			this._summary = new (m || Elevation).Summary({ summary: this.options.summary }, this);
-
-			this.on('elechart_init', () => {
-				d3.select(container).call(this._summary.render());
-			});
+			const render = () => {
+				this._summary.render()(container);
+				this._updateSummary();
+			};
+			if (this._chart && container.contains(this._chart._container)) render();
+			else this.once('elechart_init', render);
 		});
 	},
 
@@ -810,7 +808,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			onEachFeature: (feature, layer) => feature.geometry && feature.geometry.type != 'Point' && dataAdded.push(this.addData(feature, layer)),
 		});
 
-		this.import(this.__D3).then(() => Promise.all(dataAdded)).then(() => {
+		Promise.all(dataAdded).then(() => {
 			this._initMapIntegrations(layer);
 			const event_data = { data: geojson, layer: layer, name: this.track_info.name, track_info: this.track_info };
 			if (this._modulesLoaded) {

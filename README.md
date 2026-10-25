@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/@raruto/leaflet-elevation.svg?color=red)](https://www.npmjs.com/package/@raruto/leaflet-elevation)
 [![License](https://img.shields.io/badge/license-GPL%203-blue.svg?style=flat)](LICENSE)
 
-A Leaflet plugin that allows to add elevation profiles using d3js
+A Leaflet plugin for interactive elevation profiles using native SVG and Canvas elements.
 
 <p align="center">
     <a href="https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html"><img src="https://raruto.github.io/img/leaflet-elevation.png" alt="Leaflet elevation viewer" /></a>
@@ -319,7 +319,6 @@ All notable changes to this project are documented in the [releases](https://git
 
 **Compatibile with:**
 [![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.7.0-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
-[![d3.js v7 compatibile!](https://img.shields.io/badge/d3.js-7.8-1EB300.svg?style=flat)](https://www.npmjs.com/package/d3)
 [![@tmcw/togeojson v5 compatibile!](https://img.shields.io/badge/@tmcw/togeojson-5.6-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
 
 

@@ -22,7 +22,7 @@ When('I open the presentation example {string}', async function (name) {
             typeof controlElevation !== 'undefined' ? [controlElevation] : [];
         return controls.length && controls.every(control =>
             control._data.length > 0 && control._chart &&
-            Object.values(control._chart._paths).some(path => path.attr('d')?.includes('L'))
+            Object.values(control._chart._paths).some(path => path.getAttribute('d')?.includes('L'))
         );
     });
 });
@@ -93,7 +93,7 @@ Then('the fitness chart reports heart rate cadence and pace from the timed track
                 min: Math.min(...data.map(point => point[name])),
                 max: Math.max(...data.map(point => point[name])),
                 avg: data.reduce((sum, point) => sum + point[name], 0) / data.length,
-                path: controlElevation._chart._paths[name].attr('d')
+                path: controlElevation._chart._paths[name].getAttribute('d')
             })),
             painted: context.getImageData(0, 0, context.canvas.width, context.canvas.height)
                 .data.some((value, i) => i % 4 === 3 && value > 0)
@@ -115,14 +115,14 @@ Then('the fitness chart reports heart rate cadence and pace from the timed track
 When('I toggle the fitness heart legend off and on', async function () {
     const legend = this.page.locator('.legend-heart');
     await legend.click();
-    assert.equal(await this.page.evaluate(() => controlElevation._chart._paths.heart.classed('leaflet-hidden')), true);
+    assert.equal(await this.page.evaluate(() => controlElevation._chart._paths.heart.classList.contains('leaflet-hidden')), true);
     assert.equal(await legend.locator('text').evaluate(node => getComputedStyle(node).textDecorationLine), 'line-through');
     await legend.click();
 });
 
 Then('the heart profile is restored without hiding cadence or pace', async function () {
     assert.deepStrictEqual(await this.page.evaluate(() =>
-        ['heart', 'cadence', 'pace'].map(name => controlElevation._chart._paths[name].classed('leaflet-hidden'))
+        ['heart', 'cadence', 'pace'].map(name => controlElevation._chart._paths[name].classList.contains('leaflet-hidden'))
     ), [false, false, false]);
     assert.equal(await this.page.locator('.legend-heart text').evaluate(node => getComputedStyle(node).textDecorationLine), 'none');
 });
@@ -158,7 +158,7 @@ Then('all three profiles render their own series and external summaries', async 
         return {
             id,
             paths: [...control._container.querySelectorAll('.area path')].map(path => path.getAttribute('class')),
-            path: control._chart._paths[series].attr('d'),
+            path: control._chart._paths[series].getAttribute('d'),
             actual: ['max', 'min', 'avg'].map(key =>
                 document.querySelector(`.summary:has(+ #${id}-chart) .${key} .summaryvalue`).textContent),
             expected: ['max', 'min', 'avg'].map(key => control.track_info[`${stat}_${key}`].toFixed(2)),
@@ -252,8 +252,8 @@ Then('the {string} profile summary uses {string} units', async function (name, u
         return {
             min: Math.min(...values), max: Math.max(...values),
             avg: values.reduce((sum, value) => sum + value, 0) / values.length,
-            path: controlElevation._chart._paths[name].attr('d'),
-            hidden: controlElevation._chart._paths[name].classed('leaflet-hidden')
+            path: controlElevation._chart._paths[name].getAttribute('d'),
+            hidden: controlElevation._chart._paths[name].classList.contains('leaflet-hidden')
         };
     }, name);
     assert.match(result.path, /^M.*L/);

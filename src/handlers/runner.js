@@ -1,3 +1,5 @@
+import { create } from '../utils.js';
+
 /**
  * @see https://github.com/Igor-Vladyka/leaflet.motion
  * 
@@ -40,13 +42,10 @@ export async function Runner() {
   this.addRunner = function (runner) {
     let x = this._x(runner.dist);
     let y = this._y(this._findItemForX(x).z)
-    let g = d3.select(this._container)
-      .select('svg > g')
-      .append("svg:circle")
-      .attr("class", "runner " + this.options.theme + " height-focus circle-lower")
-      .attr("r", 6)
-      .attr("cx", x)
-      .attr("cy", y);
+    let g = create('svg:circle', '', {
+      class: "runner " + this.options.theme + " height-focus circle-lower",
+      r: 6, cx: x, cy: y,
+    }, this._container.querySelector('svg > g'));
     return g;
   }
 
@@ -71,9 +70,8 @@ export async function Runner() {
       curr = this._findItemForX(x);
     }
 
-    runner
-      .attr("cx", x)
-      .attr("cy", this._y(curr.z));
+    runner.setAttribute("cx", x);
+    runner.setAttribute("cy", this._y(curr.z));
     this.setPositionFromLatLng(curr.latlng);
   };
 

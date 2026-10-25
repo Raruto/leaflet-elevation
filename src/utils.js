@@ -64,23 +64,23 @@ export function formatTime(t) {
  * Convert SVG Path into Path2D and then update canvas
  */
  export function drawCanvas(ctx, path) {
-	path.classed('canvas-path', true);
+	path.classList.add('canvas-path');
 
 	ctx.beginPath();
 	ctx.moveTo(0, 0);
-	let p = new Path2D(path.attr('d'));
+	let p = new Path2D(path.getAttribute('d'));
 
-	ctx.strokeStyle = path.__strokeStyle || path.attr('stroke');
-	ctx.fillStyle   = path.__fillStyle   || path.attr('fill');
+	ctx.strokeStyle = path.__strokeStyle || path.getAttribute('stroke');
+	ctx.fillStyle   = path.__fillStyle   || path.getAttribute('fill');
 	ctx.lineWidth   = 1.25;
 	ctx.globalCompositeOperation = 'source-over';
 
 	// stroke opacity
-	ctx.globalAlpha = path.attr('stroke-opacity') || 0.3;
+	ctx.globalAlpha = path.getAttribute('stroke-opacity') || 0.3;
 	ctx.stroke(p);
 
 	// fill opacity
-	ctx.globalAlpha = path.attr('fill-opacity')   || 0.45;
+	ctx.globalAlpha = path.getAttribute('fill-opacity')   || 0.45;
 	ctx.fill(p);
 
 	ctx.globalAlpha = 1;
@@ -123,14 +123,33 @@ export const toggleClass   = (n, str, cond)       => (cond ? addClass : removeCl
 export const replaceClass  = (n, rem, add)        => (rem && removeClass(n, rem)) || (add && addClass(n, add));
 export const style         = (n, k, v)            => (typeof v === "undefined" && L.DomUtil.getStyle(n, k)) || n.style.setProperty(k, v);
 export const toggleStyle   = (n, k, v, cond)      => style(n, k, cond ? v : '');
-export const setAttributes = (n, attrs)           => { for (let k in attrs) { n.setAttribute(k, attrs[k]); } };
+export const setAttributes = (n, attrs)           => { for (let k in attrs) { if (attrs[k] != null) n.setAttribute(k, attrs[k]); else n.removeAttribute(k); } };
 export const toggleEvent   = (el, e, fn, cond)    => el[cond ? 'on' : 'off'](e, fn);
-export const create        = (tag, str, attrs, n) => { let elem = L.DomUtil.create(tag, str || ""); if (attrs) setAttributes(elem, attrs); if (n) append(n, elem); return elem; };
+export function create(tag, str, attrs, n) {
+	const svg = tag.startsWith('svg:');
+	const elem = svg ? document.createElementNS('http://www.w3.org/2000/svg', tag.slice(4)) : L.DomUtil.create(tag, str || "");
+	if (svg && str) elem.setAttribute('class', str);
+	if (attrs) setAttributes(elem, attrs);
+	if (n) append(n, elem);
+	return elem;
+}
 export const append        = (n, c)               => n.appendChild(c);
 export const insert        = (n, c, pos)          => n.insertAdjacentElement(pos, c);
 export const select        = (str, n)             => (n || document).querySelector(str);
 export const each          = (obj, fn)            => { for (let i in obj) fn(obj[i], i); };
 export const randomId      = ()                   => Math.random().toString(36).substr(2, 9);
+
+/**
+ * Convert pointer client coordinates to local SVG coordinates, accounting for transforms.
+ */
+export function pointer(event, element) {
+	const svg = element.ownerSVGElement || element;
+	const point = svg.createSVGPoint();
+	point.x = event.clientX;
+	point.y = event.clientY;
+	const local = point.matrixTransform(element.getScreenCTM().inverse());
+	return [local.x, local.y];
+}
 
 /**
  * TODO: use generators instead? (ie. "yield")
@@ -156,6 +175,19 @@ export const round        = L.Util.formatNum;
  * Limit a number between min / max values
  */
 export const clamp     = (val, range)           => range ? (val < range[0] ? range[0] : val > range[1] ? range[1] : val) : val;
+
+/**
+ * Find the insertion index in data sorted by attr, before equal values (or after if right).
+ */
+export function bisect(data, value, attr, right = false) {
+	let low = 0, high = data.length;
+	while (low < high) {
+		const middle = Math.floor((low + high) / 2);
+		if (data[middle][attr] < value || (right && data[middle][attr] === value)) low = middle + 1;
+		else high = middle;
+	}
+	return low;
+}
 
 /**
  * Limit a delta difference between two values
