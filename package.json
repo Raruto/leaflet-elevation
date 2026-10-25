@@ -1,7 +1,7 @@
 {
   "name": "@raruto/leaflet-elevation",
   "version": "2.7.2",
-  "description": "A Leaflet plugin for interactive elevation profiles using native SVG and Canvas",
+  "description": "A Leaflet plugin that allows to add elevation profiles using native SVG and Canvas elements",
   "type": "module",
   "main": "dist/leaflet-elevation.min.js",
   "browser": "dist/leaflet-elevation.min.js",
