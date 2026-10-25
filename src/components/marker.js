@@ -1,5 +1,3 @@
-import * as D3 from './d3.js';
-
 const _ = L.Control.Elevation.Utils;
 
 export var Marker = L.Class.extend({
@@ -9,9 +7,6 @@ export var Marker = L.Class.extend({
 		this.control = control
 
 		switch(this.options.marker) {
-			case 'elevation-line':
-				// this._container = d3.create("g").attr("class", "height-focus-group");
-			break;
 			case 'position-marker':
 				// this._marker   = L.circleMarker([0, 0], { pane: 'overlayPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
 				this._marker      = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
@@ -26,7 +21,11 @@ export var Marker = L.Class.extend({
 	addTo(map) {
 		this._map = map;
 		switch(this.options.marker) {
-			case 'elevation-line':  this._container = d3.select(map.getPane('elevationPane')).select("svg > g").call(D3.PositionMarker({})); break;
+			case 'elevation-line':
+				this._container = map.getPane('elevationPane').querySelector("svg > g");
+				this._container.replaceChildren();
+				this._container.setAttribute('class', 'height-focus-group');
+			break;
 			case 'position-marker': this._marker.addTo(map, { pane: 'overlayPane' }); break;
 		}
 		return this;
@@ -58,15 +57,22 @@ export var Marker = L.Class.extend({
 
 					if (!isFinite(yMax) || isNaN(yMax)) yMax = 0;
 
-					this._container.classed("leaflet-hidden", false);
-					this._container.call(D3.PositionMarker({
-						theme : this.options.theme,
-						xCoord: point.x,
-						yCoord: point.y,
-						length: point.y - yMax, // normalized Y
-						labels: this._labels,
-						item: point,
-					}));
+					const { x: xCoord, y: yCoord } = point;
+					if (!Number.isFinite(xCoord) || !Number.isFinite(yCoord)) return;
+					const group = this._container;
+					const { theme } = this.options;
+					const length = point.y - yMax;
+					group.replaceChildren();
+					group.setAttribute('class', 'height-focus-group');
+					_.create('svg:circle', '', { class: `${theme} height-focus circle-lower`, transform: `translate(${xCoord},${yCoord})`, r: 6, cx: 0, cy: 0 }, group);
+					_.create('svg:line', '', { class: `${theme} height-focus line`, x1: xCoord, x2: xCoord, y1: yCoord, y2: length }, group);
+					const text = _.create('svg:text', '', { class: `${theme} height-focus-label`, x: xCoord + 5, y: length, 'pointer-events': 'none' }, group);
+					Object.values(this._labels).sort((a, b) => a.order - b.order).forEach(label => {
+						_.create('svg:tspan', '', { class: 'height-focus-' + label.name, dy: '1.5em' }, text).textContent =
+							typeof label.value === 'function' ? label.value(point) : label.value;
+					});
+					if (text.firstChild) text.firstChild.setAttribute('dy', text.children.length > 1 ? '-1.5em' : '0em');
+					for (const span of text.children) span.setAttribute('x', xCoord + 5);
 				}
 			break;
 			case 'position-marker':
@@ -82,7 +88,7 @@ export var Marker = L.Class.extend({
 	remove() {
 		this._props = null;
 		switch(this.options.marker) {
-			case 'elevation-line':  this._container && this._container.classed("leaflet-hidden", true); break;
+			case 'elevation-line':  this._container && this._container.classList.add("leaflet-hidden"); break;
 			case 'position-marker': _.addClass(this._marker.getElement(), 'leaflet-hidden');            break;
 		}
 	},

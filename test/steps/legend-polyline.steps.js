@@ -66,7 +66,7 @@ Then('the map track is drawn in the theme color', async function () {
 
 When('I disable every chart series using the legend', async function () {
     const names = await this.page.evaluate(() => Object.keys(controlElevation._chart._paths)
-        .filter(name => !controlElevation._chart._paths[name].classed('leaflet-hidden')));
+        .filter(name => !controlElevation._chart._paths[name].classList.contains('leaflet-hidden')));
     assert.ok(names.length > 0);
     for (const name of names) {
         await this.page.evaluate(() => { window.trackStrokes.length = 0; });

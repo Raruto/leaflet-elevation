@@ -36,69 +36,6 @@
 
 <body>
 
-	<script>
-		L.Control.Elevation.include({
-			_updateSelectionBox: function() {
-				this.options.margins.bottom = L.Control.Elevation.Utils.clamp(this.options.margins.bottom, [60, +Infinity]);
-
-				let  g        = this._chart._chart.pane('legend');
-				const width   = this._width();
-				const height  = this._height() + 40;
-
-				let idx = 0;
-				let attrs = Object.keys(this._chart._paths || {});
-
-				g.data([{
-					x: width,
-					y: height
-				}]).attr("transform", d => "translate(" + d.x + "," + d.y + ")");
-
-				let label  = g.selectAll(".select-info")  .data([{ idx: 0 }]);
-				let symbol = g.selectAll(".select-symbol").data([
-					{ type: d3.symbolTriangle, x: 0,   y: 3, angle: 0,   size: 50, id: "down" },
-					{ type: d3.symbolTriangle, x: -13, y: 0, angle: 180, size: 50, id: "up" }
-				]);
-
-				symbol.exit().remove();
-				label.exit().remove();
-			
-				symbol.enter()
-					.append("path")
-					.attr("class", "select-symbol")
-					.attr("cursor", 'pointer')
-					.attr("fill", "#000")
-					.merge(symbol)
-					.attr("d", 
-						d3.symbol()
-						.type(d => d.type)
-						.size(d => d.size)
-					)
-					.attr("transform", d => "translate(" + d.x + "," + d.y + ") rotate(" + d.angle + ")")
-					.attr("id", d => d.id)
-					.on("mousedown", (e, d) => setIdx(L.Util.wrapNum((d.id === "up" ? idx + 1 : idx - 1), [0, attrs.length])));
-
-				const setIdx = (id) => {
-					idx = id;
-					console.log(id);
-					label.enter()
-						.append('text')
-						.attr("class", "select-info")
-						.attr("id", "selectionText")
-						.attr("text-anchor", "end")
-						.attr("x", -25)
-						.attr("y", 5)
-						.merge(label.data([{ idx: id }]))
-						.on("mousedown", (e, d) => setIdx(L.Util.wrapNum((d.idx + 1), [0, attrs.length])))
-						.text(d => attrs.length ? (attrs[d.idx][0].toUpperCase() + attrs[d.idx].slice(1)) : '');
-					L.Control.Elevation.Utils.each(attrs, name => this._chart._togglePath(name, attrs[idx] == name, true));
-					this._chart._updateArea();
-				};
-
-				setIdx(0);
-			},
-		})
-	</script>
-
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
@@ -224,10 +161,6 @@
 			// 	});
 			// });
 
-			controlElevation.on('elechart_init elechart_axis', function(e) {
-				// this._updateSelectionBox();
-			});
-
 			controlElevation.load(opts.elevationControl.url);
 			controlElevation.addTo(map);
 
@@ -242,9 +175,8 @@
 			// });
 
 			/**
-			* Wait for D3.js and then load some custom checkpoints 
+			* Load some custom checkpoints
 			*/
-			// controlElevation.import(controlElevation.__D3).then(() => { 
 				let points = [
 					{ lat: 44.928208, lng: 9.913177, label: "Fiorenzuola d'Arda" },
 					{ lat: 44.867153, lng: 10.06313, label: "Fidenza" },
@@ -254,8 +186,6 @@
 					controlElevation._registerCheckPoint({latlng: L.latLng(p.lat, p.lng), label: p.label});
 					L.marker(L.latLng(p.lat, p.lng)).addTo(map);
 				});
-			// });
-
 			/**
 			* Create a custom checkbox control ("position-marker" toggler)
 			*/

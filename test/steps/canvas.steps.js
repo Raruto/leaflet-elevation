@@ -89,9 +89,10 @@ async function openPage(world, configuration, { profile = false, dpr = 1 } = {})
 async function drawLowLevelCanvas(page, { left, clear = false, resize = false }) {
     await page.evaluate(({ left, clear, resize }) => {
         if (resize) chart._resize({ width: 320, height: 240, margins: { left, top: 30, right: 20, bottom: 20 } });
-        chart.utils.mask.selectAll('.test-gap').remove();
-        chart.utils.mask.append('rect').attr('class', 'test-gap')
-            .attr('x', 80).attr('y', 0).attr('width', 20).attr('height', 100).attr('fill', 'black');
+        chart.utils.mask.querySelectorAll('.test-gap').forEach(node => node.remove());
+        const gap = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        for (const [name, value] of Object.entries({ class: 'test-gap', x: 80, y: 0, width: 20, height: 100, fill: 'black' })) gap.setAttribute(name, value);
+        chart.utils.mask.appendChild(gap);
         const context = chart.utils.context;
         context.fillStyle = '#ff0000';
         context.fillRect(0, 0, chart._width, chart._height);
@@ -105,16 +106,22 @@ Given('I open the low-level canvas page in {string}', async function (browserNam
     assert.ok(configuration, `Unknown low-level browser: ${browserName}`);
     await openPage(this, configuration);
     await this.page.setContent('<style>body { margin: 0 } svg { display: block }</style>');
-    await this.page.addScriptTag({ url: `${this.base}/node_modules/d3/dist/d3.min.js` });
+    await this.page.addScriptTag({ url: `${this.base}/node_modules/leaflet/dist/leaflet.js` });
 });
 
 Given('I create a canvas chart with a mask and tooltip overlay', async function () {
     await this.page.evaluate(async base => {
-        const { Chart } = await import(`${base}/src/components/d3.js`);
-        window.chart = Chart({ width: 320, height: 240, preferCanvas: true, margins: { left: 40, top: 30, right: 20, bottom: 20 } });
-        document.body.append(chart.svg.node());
-        chart.panes.tooltip.attr('display', null).append('rect')
-            .attr('x', 20).attr('y', 20).attr('width', 40).attr('height', 40).attr('fill', '#0000ff');
+        L.Control.Elevation = { Utils: await import(`${base}/src/utils.js`) };
+        const { Chart } = await import(`${base}/src/components/chart.js`);
+        const { create } = L.Control.Elevation.Utils;
+        window.chart = new Chart({
+            width: 320, height: 240, preferCanvas: true,
+            margins: { left: 40, top: 30, right: 20, bottom: 20 },
+            xAttr: 'dist', yAttr: 'z',
+        }, new L.Evented())._chart;
+        document.body.append(chart.svg);
+        chart.panes.tooltip.removeAttribute('display');
+        create('svg:rect', '', { x: 20, y: 20, width: 40, height: 40, fill: '#0000ff' }, chart.panes.tooltip);
     }, this.base);
 });
 
@@ -158,7 +165,6 @@ Given('I open a transformed chart host in {string} at DPR {int}', async function
     </style><div id="host"></div>`);
     await this.page.addStyleTag({ url: `${this.base}/src/index.css` });
     await this.page.addScriptTag({ url: `${this.base}/node_modules/leaflet/dist/leaflet.js` });
-    await this.page.addScriptTag({ url: `${this.base}/node_modules/d3/dist/d3.min.js` });
     await this.page.evaluate(async base => {
         L.Control.Elevation = { Utils: await import(`${base}/src/utils.js`) };
         window.ProfileChart = (await import(`${base}/src/components/chart.js`)).Chart;
@@ -180,7 +186,7 @@ When('I render a profile with {string} rendering', async function (renderingMode
             name: 'altitude', color: '#ff0000', strokeColor: '#ff0000',
             fillOpacity: 1, strokeOpacity: 1, scaleX: 'distance', scaleY: 'altitude'
         });
-        d3.select('#host').call(profile.render());
+        profile.render()(document.querySelector('#host'));
         profile.update();
     }, this.preferCanvas);
 });

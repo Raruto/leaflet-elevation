@@ -66,7 +66,7 @@ export function Time() {
 			tickFormat : (distance) => {
 				const data = this._data;
 				if (!data.length) return '';
-				const i = d3.bisector(point => point[opts.xAttr]).right(data, distance);
+				const i = _.bisect(data, distance, opts.xAttr, true);
 				const start = data[Math.max(0, i - 1)];
 				const end = data[Math.min(i, data.length - 1)];
 				const span = end[opts.xAttr] - start[opts.xAttr];
@@ -76,16 +76,15 @@ export function Time() {
 				return duration == 0 ? '' : opts.xTimeFormat(duration);
 			},
 			onAxisMount: axis => {
-				axis.select(".domain")
-					.remove();
-				axis.selectAll("text")
-					.attr('opacity', 0.65)
-					.style('font-family', 'Monospace')
-					.style('font-size', '110%');
-				axis.selectAll(".tick line")
-					.attr('y2', this._height())
-					.attr('stroke-dasharray', 2)
-					.attr('opacity', 0.75);
+				axis.querySelector(".domain").remove();
+				axis.querySelectorAll("text").forEach(text => {
+					text.setAttribute('opacity', 0.65);
+					text.style.fontFamily = 'Monospace';
+					text.style.fontSize = '110%';
+				});
+				axis.querySelectorAll(".tick line").forEach(line => _.setAttributes(line, {
+					y2: this._height(), 'stroke-dasharray': 2, opacity: 0.75,
+				}));
 				}
 		},
 		tooltips: [

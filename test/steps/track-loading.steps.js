@@ -8,7 +8,6 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
         stdin: {
             contents: `
                 import 'leaflet';
-                import * as d3 from 'd3';
                 import * as toGeoJSON from '@tmcw/togeojson';
                 import './dist/leaflet-elevation.js';
                 import { Chart } from './src/components/chart.js';
@@ -18,7 +17,7 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
                 import { Time } from './src/handlers/time.js';
                 import { Altitude } from './src/handlers/altitude.js';
 
-                Object.assign(globalThis, { d3, toGeoJSON });
+                Object.assign(globalThis, { toGeoJSON });
                 Object.assign(L.Control.Elevation, { Chart, Marker, Summary });
                 L.Control.Elevation.include({
                     import(src) {
@@ -70,7 +69,7 @@ Then('the statically loaded chart shows its profile, summary and map marker', as
         return {
             samples: controlElevation._data.length,
             distance: controlElevation.track_info.distance,
-            path: controlElevation._chart._paths.altitude.attr('d'),
+            path: controlElevation._chart._paths.altitude.getAttribute('d'),
             summary: document.querySelector('.totlen .summaryvalue').textContent,
             marker: controlElevation._marker.getLatLng().equals(controlElevation._data[0].latlng)
         };
@@ -157,7 +156,7 @@ async function replaceTrack(page, index) {
             ctrl: controlElevation,
             events: window.elevationEvents.slice(),
             layers: controlElevation._layers.getLayers(),
-            points: d3.selectAll('.point > .point').nodes().length
+            points: document.querySelectorAll('.point > .point').length
         }));
         load_track(index);
     }), index);

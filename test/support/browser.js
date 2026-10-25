@@ -26,6 +26,11 @@ Given('a Chromium browser using the local plugin', async function () {
     this.browser = await chromium.launch();
     this.page = await this.browser.newPage();
     this.page.on('pageerror', error => this.errors.push(error.stack || error.message));
+    this.d3Requests = [];
+    await this.page.route(/(?:\/d3(?:@|\/)|\/d3[^/]*\.js)/i, route => {
+        this.d3Requests.push(route.request().url());
+        return route.abort();
+    });
     await this.page.route(/^https:\/\/unpkg\.com\/@raruto\/leaflet-elevation@[^/]+\//, async route => {
         const pathname = new URL(route.request().url()).pathname.replace(/^\/@raruto\/leaflet-elevation@[^/]+\//, '/');
         const response = await route.fetch({ url: this.base + pathname });
@@ -45,4 +50,5 @@ Given('a Chromium browser using the local plugin', async function () {
 
 Then('no browser errors have occurred', function () {
     assert.deepStrictEqual(this.errors, []);
+    assert.deepStrictEqual(this.d3Requests, [], 'The plugin must not request D3');
 });

@@ -46,9 +46,9 @@ Then('the lowest and highest elevations use opposite ends of the gradient palett
 Then('the altitude path uses the generated SVG gradient', async function () {
     assert.strictEqual(await this.page.evaluate(() => {
         const chart = controlElevation._chart;
-        const gradient = chart._container.select('linearGradient[id^="altitude-gradient-"]').attr('id');
+        const gradient = chart._container.querySelector('linearGradient[id^="altitude-gradient-"]').id;
         const path = chart._paths.altitude;
-        return path.attr('fill') === `url(#${gradient})` && path.node().isConnected;
+        return path.getAttribute('fill') === `url(#${gradient})` && path.isConnected;
     }), true);
 });
 

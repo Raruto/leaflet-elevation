@@ -55,7 +55,7 @@ When('I load the track with the time axis and a numeric duration formatter', asy
 When('I set the time-axis zoom to {int}', async function (zoom) {
     await this.page.evaluate(zoom => {
         const chart = controlElevation._chart;
-        chart._container.call(chart._zoom.transform, d3.zoomIdentity.translate(-50 * (zoom - 1), 0).scale(zoom));
+        chart._setZoom(zoom, -50 * (zoom - 1));
     }, zoom);
 });
 
@@ -63,7 +63,7 @@ Then('the time ticks interpolate recorded durations at their horizontal position
     const ticks = await this.page.evaluate(() => {
         const chart = controlElevation._chart;
         const data = controlElevation._data;
-        return chart._axis.selectAll('.x.axis.time .tick').nodes().map(node => {
+        return [...chart._axis.querySelectorAll('.x.axis.time .tick')].map(node => {
             const x = Number(node.getAttribute('transform').match(/translate\(([^,]+)/)[1]) - 0.5;
             const distance = chart._x.invert(x);
             let i = 0;

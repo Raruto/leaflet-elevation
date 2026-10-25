@@ -11,7 +11,7 @@ export var Summary = L.Class.extend({
 	},
 
 	render() {
-		return container => container.append(() => this._container);
+		return container => container.appendChild(this._container);
 	},
 
 	reset() {

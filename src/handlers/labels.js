@@ -17,25 +17,24 @@ export function Labels() {
 
     if (90 == Math.abs(textRotation)) {
 
-      pointG.selectAll('text')
-        .attr('dy', '4px')
-        .attr("dx", (d, i, el) => Math.sign(textRotation) * (this._height() - d3.select(el[i].parentElement).datum().y - 8) + 'px')
-        .attr('text-anchor', textRotation > 0 ? 'end' : 'start')
-        .attr('transform', 'rotate(' + textRotation + ')')
+      pointG.querySelectorAll('text').forEach(text => L.Control.Elevation.Utils.setAttributes(text, {
+        dy: '4px',
+        dx: Math.sign(textRotation) * (this._height() - Number(text.parentElement.dataset.y) - 8) + 'px',
+        'text-anchor': textRotation > 0 ? 'end' : 'start',
+        transform: 'rotate(' + textRotation + ')',
+      }));
 
-      pointG.selectAll('circle')
-        .attr('r', '2.5')
-        .attr('fill', '#fff')
-        .attr("stroke", '#000')
-        .attr("stroke-width", '1.1');
+      pointG.querySelectorAll('circle').forEach(circle => L.Control.Elevation.Utils.setAttributes(circle, {
+        r: 2.5, fill: '#fff', stroke: '#000', 'stroke-width': 1.1,
+      }));
 
     } else if (!isNaN(textRotation)) {
 
-      pointG.selectAll('text')
-        .attr("dx", "4px")
-        .attr("dy", "-9px")
-        .attr('text-anchor', textAnchor ?? (0 == textRotation ? 'start' : 'middle'))
-        .attr('transform', 'rotate('+ -textRotation +')')
+      pointG.querySelectorAll('text').forEach(text => L.Control.Elevation.Utils.setAttributes(text, {
+        dx: '4px', dy: '-9px',
+        'text-anchor': textAnchor ?? (0 == textRotation ? 'start' : 'middle'),
+        transform: 'rotate(' + -textRotation + ')',
+      }));
 
     }
 

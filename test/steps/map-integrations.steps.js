@@ -229,7 +229,7 @@ When('I hide the altitude profile in the first map', async function () {
 
 Then('the other maps keep their altitude profiles and track statistics unchanged', async function () {
     const state = await this.page.evaluate(() => charts.map(chart => ({
-        hidden: chart._chart._paths.altitude.classed('leaflet-hidden'),
+        hidden: chart._chart._paths.altitude.classList.contains('leaflet-hidden'),
         distance: chart.track_info.distance
     })));
     assert.deepStrictEqual(state.map(chart => chart.hidden), [true, false, false]);
