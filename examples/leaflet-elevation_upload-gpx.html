@@ -20,17 +20,16 @@
 	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.css" />
 	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.js"></script>
 
-	<!-- leaflet-filelayer -->
-	<script src="https://unpkg.com/@tmcw/togeojson@5.6.2/dist/togeojson.umd.js"></script>
-	<script>
-		// backcomps for leaflet v1
-		L.Util.bind = L.Util.bind || ((fn, context, ...args) => fn.bind(context, ...args));
-		L.geoJson = L.geoJson || ((...args) => new L.GeoJSON(...args));
-	</script>
-	<script src="https://unpkg.com/leaflet-filelayer@1.2.0/src/leaflet.filelayer.js"></script>
-
 	<style>
-		.leaflet-container .leaflet-control-filelayer a {
+		.leaflet-container .leaflet-control-filelayer button {
+			display: block;
+			width: 30px;
+			height: 30px;
+			padding: 0;
+			border: 0;
+			border-radius: 2px;
+			background: white;
+			cursor: pointer;
 			font-size: 12px;
 			font-weight: 400;
 		}
@@ -127,41 +126,63 @@
 
 		let controlElevation = L.control.elevation(opts.elevationControl.options);
 
-		// FileLayer
-		L.Control.FileLayerLoad.TITLE = 'Load local GPX file';
-		L.Control.FileLayerLoad.LABEL =
+		const uploadControl = new L.Control({ position: 'topleft' });
+		uploadControl.onAdd = function() {
+			const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control-filelayer');
+			const button = L.DomUtil.create('button', '', container);
+			button.type = 'button';
+			button.title = 'Load local GPX file';
+			button.setAttribute('aria-label', button.title);
+			button.innerHTML =
 			'<svg title="upload a gpx file" style="width: 20px;height: 100%;" version="1.1" id="folder" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30px" height="30px" viewBox="0 0 450.583 450.584" style="enable-background:new 0 0 450.583 450.584;" xml:space="preserve"><g fill="#000000"><path d="M448.21,188.658c-1.897-2.242-4.688-3.535-7.629-3.535H9.999c-2.938,0-5.729,1.293-7.629,3.535c-1.898,2.242-2.717,5.207-2.234,8.106l29.547,177.704c1.838,11.158,11.379,19.256,22.688,19.256h345.842c11.31,0,20.851-8.098,22.687-19.24l29.549-177.72C450.929,193.864,450.111,190.899,448.21,188.658z"/><path d="M413.984,104.678c0-7.661-6.211-13.874-13.875-13.874H194.212V70.735c0-7.664-6.211-13.875-13.873-13.875H50.472c-7.662,0-13.873,6.211-13.873,13.875v82.418h377.386L413.984,104.678L413.984,104.678z"/></g></svg>'
 			+ '<p class="help">Click on the icon to browse and load local files on the map.</p>';
 
-		let fileLayer = L.Control.fileLayerLoad({
-			formats: ['.gpx'],
-			position: "topleft",
-			fitBounds: true,
-			addToMap: false,
-			fileSizeLimit: 1024 *10,
-		});
-
-		fileLayer.addTo(map);
-
-		fileLayer.loader.on('data:error', function(e) {
-			console.error(e);
-		});
-
-		fileLayer.loader.on('data:loading', function(e) {
-			document.querySelector('.help').style.display = 'none';
-			console.info(e);
-			controlElevation.clear();
-		});
-
-		fileLayer.loader.on('data:loaded', function(e) {
-			console.info(e);
-			if (!controlElevation._map) controlElevation.addTo(map);
-			else controlElevation.redraw();
-			let data = e.layer.toGeoJSON();
-			data.name = e.filename;
-			// Load tracks and waypoints through the same elevation pipeline.
-			controlElevation.load(JSON.stringify(data));
-		});
+			const input = L.DomUtil.create('input', '', container);
+			input.type = 'file';
+			input.accept = '.gpx';
+			input.hidden = true;
+			const errorMessage = L.DomUtil.create('p', 'help', container);
+			errorMessage.setAttribute('role', 'alert');
+			errorMessage.hidden = true;
+			L.DomEvent.disableClickPropagation(container);
+			L.DomEvent.disableScrollPropagation(container);
+			button.addEventListener('click', () => input.click());
+			input.addEventListener('change', async () => {
+				const file = input.files[0];
+				if (!file) return;
+				button.disabled = true;
+				errorMessage.hidden = true;
+				try {
+					if (!/\.gpx$/i.test(file.name)) throw new Error('Please select a GPX file.');
+					if (file.size > 10 * 1024 * 1024) throw new Error('The GPX file must not exceed 10 MiB.');
+					const text = await file.text();
+					const xml = new DOMParser().parseFromString(text, 'text/xml');
+					if (xml.querySelector('parsererror') || xml.documentElement.localName !== 'gpx') {
+						throw new Error('The selected file is not valid GPX.');
+					}
+					await controlElevation.import(controlElevation.__TOGEOJSON);
+					const data = controlElevation._parseFromXMLString(text);
+					if (!data.features.some(feature => ['LineString', 'MultiLineString'].includes(feature.geometry?.type))) {
+						throw new Error('The GPX file contains no tracks or routes.');
+					}
+					data.name = file.name;
+					document.querySelector('.help').style.display = 'none';
+					controlElevation.clear();
+					if (!controlElevation._map) controlElevation.addTo(map);
+					else controlElevation.redraw();
+					controlElevation.load(JSON.stringify(data));
+				} catch (error) {
+					console.error(error);
+					errorMessage.textContent = error.message;
+					errorMessage.hidden = false;
+				} finally {
+					input.value = '';
+					button.disabled = false;
+				}
+			});
+			return container;
+		};
+		uploadControl.addTo(map);
 	</script>
 
 	<!-- i18n -->

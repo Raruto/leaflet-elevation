@@ -19,6 +19,7 @@ Feature: Integrating elevation charts with Leaflet maps
       | via-emilia.gpx  | 9      | 264.69343 | 264690738 | 84.9    | 6.6     | 49.10552825552806 |
     Then each track has the expected statistics and almost-over layers
     And almost-over stays enabled with exactly one move and one out listener
+    And almost-over finds the closest point on a track
     And all known sea-level samples in via-aurelia retain zero elevation
 
   @example-bathymetry

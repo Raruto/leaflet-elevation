@@ -31,12 +31,9 @@
 				resizerControl: true,
 				rotateControl: false,
 				plugins: [
-					// 'leaflet-geometryutil@0.11.0/src/leaflet.geometryutil.js',
-					// 'leaflet-almostover@1.0.1/src/leaflet.almostover.js',
 					'@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.css',
 					'@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.js'
 				],
-				// see: L.AlmostOver for more info
 				almostOver: true,
 				almostDistance: 50,
 				almostSamplingPeriod: 125,
@@ -65,20 +62,6 @@
 		let controlElevation, controlLayer;
 
 		map.on('plugins_loaded', function() {
-
-			// Almost the same as using native integration: (almostOver: true)
-			// L.Control.Elevation.addInitHook(function() {
-			// 	this.on('eledata_loaded', function(e) {
-			// 		let map = this._map;
-			// 		if (map && !L.Browser.mobile && map.almostOver && map.almostOver.enabled()) {
-			// 			map.almostOver.addLayer(e.layer);
-			// 			map
-			// 				.on('almost:move', (e) => this._onMouseMoveLayer(e))
-			// 				.on('almost:out', (e) => this._onMouseOut(e));
-			// 		}
-			// 	});
-			// });
-
 			controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
 			controlLayer = new L.Control.Layers(null, null, opts.layersControl.options);
 

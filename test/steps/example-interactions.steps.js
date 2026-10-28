@@ -206,6 +206,43 @@ Then('the five distance checkpoints are displayed', async function () {
     for (const distance of [50, 100, 150, 200, 250]) assert.ok(text.includes(`${distance} km`));
 });
 
+Then('the inline runner supports manual start, completion and cleanup', async function () {
+    const result = await this.page.evaluate(async () => {
+        const ctrl = controlElevation;
+        const layer = ctrl._layers.getLayers().find(item => item instanceof L.GeoJSON);
+        const previous = ctrl._runner;
+        ctrl.options.runnerOptions.motion.auto = false;
+        ctrl.options.runnerOptions.motion.duration = 100;
+        ctrl.animate(layer);
+        const runner = ctrl._runner;
+        const idle = runner.getLatLngs().length === 0;
+        runner.motionStart();
+        runner.motionPause();
+        await new Promise(resolve => setTimeout(resolve, 30));
+        const paused = runner.getLatLngs().length === 0;
+        await new Promise(resolve => {
+            runner.once('motion-ended', resolve);
+            runner.motionResume();
+        });
+        const end = runner.getLatLngs().at(-1);
+        const expectedEnd = ctrl._data.at(-1).latlng;
+        const completed = end.distanceTo(expectedEnd) < 0.01;
+        const circle = document.querySelector('circle.runner');
+        ctrl.clear();
+        return {
+            idle,
+            paused,
+            completed,
+            replaced: !map.hasLayer(previous),
+            removed: !map.hasLayer(runner) && !circle.isConnected,
+            motion: typeof L.Motion
+        };
+    });
+    assert.deepStrictEqual(result, {
+        idle: true, paused: true, completed: true, replaced: true, removed: true, motion: 'undefined'
+    });
+});
+
 When('I hover over two distant positions on the elevation profile', async function () {
     this.followPositions = [];
     for (const fraction of [0.2, 0.8]) {

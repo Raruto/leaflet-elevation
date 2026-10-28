@@ -192,13 +192,10 @@ L.GpxGroup = L.Evented.extend({
       filter: feature => feature.geometry.type != "Point",
     });
 
-    
-    this._elevation.import(this._elevation.__LGEOMUTIL).then(() => {
-      route.addTo(this._layers);
+    route.addTo(this._layers);
 
-      route.eachLayer((layer) => this._onEachRouteLayer(route, layer));
-      this._onEachRouteLoaded(route);
-    });
+    route.eachLayer((layer) => this._onEachRouteLayer(route, layer));
+    this._onEachRouteLoaded(route);
 
   },
 

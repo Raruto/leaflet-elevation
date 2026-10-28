@@ -96,6 +96,37 @@ Then('almost-over stays enabled with exactly one move and one out listener', fun
     }
 });
 
+Then('almost-over finds the closest point on a track', async function () {
+    const result = await this.page.evaluate(() => {
+        const layer = map.almostOver._layers.find(item => item.getLatLngs);
+        const point = layer.getLatLngs()[0];
+        return {
+            closest: map.almostOver.getClosest(point),
+            geometryUtil: typeof L.GeometryUtil,
+            almostOverHandler: typeof L.Handler.AlmostOver,
+        };
+    });
+    const events = await this.page.evaluate(() => {
+        const layer = map.almostOver._layers.find(item => item.getLatLngs);
+        const point = layer.getLatLngs()[0];
+        let moveLayer;
+        let outLayer;
+        map.once('almost:move', event => { moveLayer = event.layer; });
+        map.almostOver._lastSample = -Infinity;
+        map.fire('mousemove', { latlng: point });
+        map.once('almost:out', event => { outLayer = event.layer; });
+        map.almostOver._lastSample = -Infinity;
+        map.fire('mousemove', { latlng: new L.LatLng(0, 0) });
+        return { moveLayer, outLayer, layer };
+    });
+    assert.ok(result.closest);
+    assert.strictEqual(result.closest.distance, 0);
+    assert.strictEqual(result.geometryUtil, 'undefined');
+    assert.strictEqual(result.almostOverHandler, 'undefined');
+    assert.strictEqual(events.moveLayer, events.layer);
+    assert.strictEqual(events.outLayer, events.layer);
+});
+
 Then('all known sea-level samples in via-aurelia retain zero elevation', function () {
     const track = this.tracks.find(({ expected }) => expected.filename === 'via-aurelia.gpx').actual;
     for (const index of [1029, 1030, 2048, 3747, 3843, 3845, 3891, 3965, 3966, 4057, 4058, 4072, 4262, 4263, 4264, 4269, 11284]) {

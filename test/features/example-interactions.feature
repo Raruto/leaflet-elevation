@@ -16,6 +16,7 @@ Feature: Interacting with the example charts and tracks
     Then the animated runner advances on both the chart and map
     When I resize the runner chart
     Then the five distance checkpoints are displayed
+    And the inline runner supports manual start, completion and cleanup
     And no browser errors have occurred
 
   @example-follow-marker

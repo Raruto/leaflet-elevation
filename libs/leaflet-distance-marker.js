@@ -148,7 +148,11 @@ L.DistanceMarkers = L.LayerGroup.extend({
 
 		coords.forEach(latlngs => {
 			// Get accumulated line lengths as well as overall length
-			let accumulated = L.GeometryUtil.accumulatedLengths(latlngs);
+			let totalLength = 0;
+			let accumulated = latlngs.map((latlng, index) => {
+				if (index) totalLength += latlngs[index - 1].distanceTo(latlng);
+				return totalLength;
+			});
 			let length = accumulated.length > 0 ? accumulated[accumulated.length - 1] : 0;
 
 			// count = Number of distance markers to be added
@@ -163,11 +167,15 @@ L.DistanceMarkers = L.LayerGroup.extend({
 				// Grab two nearest points either side marker position
 				let p1 = latlngs[j - 1];
 				let p2 = latlngs[j];
-				let m_line = new L.Polyline([p1, p2]);
-
-				// and create a simple line to interpolate on
 				let ratio = (distance - accumulated[j - 1]) / (accumulated[j] - accumulated[j - 1]);
-				let position = L.GeometryUtil.interpolateOnLine(map, m_line, ratio);
+				let from = map.project(p1);
+				let to = map.project(p2);
+				let position = {
+					latLng: map.unproject(new L.Point(
+						from.x + (to.x - from.x) * ratio,
+						from.y + (to.y - from.y) * ratio
+					)),
+				};
 				let delta = map.project(p2).subtract(map.project(p1));
 				let angle = Math.atan2(delta.y, delta.x);
 

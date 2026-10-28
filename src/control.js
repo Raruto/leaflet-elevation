@@ -10,10 +10,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	options: Options,
 	__mileFactor:     0.621371, // 1 km = (0.621371 mi)
-	__footFactor:     3.28084,  // 1 m  = (3.28084 ft)
+	__footFactor:     3.28084, // 1 m  = (3.28084 ft)
 	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@5.6.2/dist/togeojson.umd.js',
-	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.10.1/src/leaflet.geometryutil.js',
-	__LALMOSTOVER:   'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
 	__LHOTLINE:      '../libs/leaflet-hotline.min.js',
 	__LDISTANCEM:    '../libs/leaflet-distance-marker.min.js',
 	__LEDGESCALE:    '../libs/leaflet-edgescale.min.js',
@@ -216,17 +214,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 		switch(src) {
 			case this.__TOGEOJSON:   condition = typeof toGeoJSON !== 'object'; break;
-			case this.__LGEOMUTIL:
-				condition = typeof L.GeometryUtil !== 'object';
-				// backcomps for leaflet v1
-				L.extend = L.extend || Object.assign;
-				L.point = L.point || ((x, y) => new L.Point(x, y));
-				break;
-			case this.__LALMOSTOVER:
-				condition = typeof L.Handler.AlmostOver !== 'function';
-				// backcomp for leaflet v1
-				L.stamp = L.stamp || L.Util.stamp;
-				break;
 			case this.__LDISTANCEM:  condition = typeof L.DistanceMarkers  !== 'function'; break;
 			case this.__LEDGESCALE:  condition = typeof L.Control.EdgeScale !== 'function'; break;
 			case this.__LHOTLINE:    condition = typeof L.Hotline  !== 'function'; break;
@@ -410,31 +397,155 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	/**
 	 * Initialize "L.AlmostOver" integration
+	 * 
+	 * Inspired by: https://github.com/makinacorpus/Leaflet.AlmostOver
 	 */
 	_initAlmostOverHandler(map, layer) {
-		return (map && this.options.almostOver && !L.Browser.mobile) ? this.import([this.__LGEOMUTIL, this.__LALMOSTOVER])
-			.then(() => {
-				map.addHandler('almostOver', L.Handler.AlmostOver)
-				if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
-					map.almostOver.addLayer(layer);
-					map
-						.on('almost:move', this._onMouseMoveLayer, this)
-						.on('almost:out', this._onMouseOut, this);
-					this.once('eledata_clear', () => {
-						map.almostOver.removeLayer(layer);
-						map
-						.off('almost:move', this._onMouseMoveLayer, this)
-						.off('almost:out', this._onMouseOut, this);
-					})
+		if (!map || !this.options.almostOver || L.Browser.mobile) return Promise.resolve();
+		map.almostOver = map.almostOver || {
+			_map: map,
+			_projectedLayers: new WeakMap(),
+			_layers: [],
+			_previous: null,
+			_lastSample: 0,
+			enabled() {
+				return !!this._enabled;
+			},
+			enable() {
+				if (this.enabled()) return;
+				this._enabled = true;
+				if (this._map.options.almostOnMouseMove !== false) this._map.on('mousemove', this._sampleMouseMove, this);
+				this._map.on('click dblclick', this._onMouseClick, this);
+			},
+			disable() {
+				if (!this.enabled()) return;
+				this._map.off('mousemove', this._sampleMouseMove, this);
+				this._map.off('click dblclick', this._onMouseClick, this);
+				if (this._previous) this._map.fire('almost:out', { layer: this._previous.layer });
+				this._previous = null;
+				this._enabled = false;
+			},
+			addLayer(layer) {
+				if (layer.eachLayer) layer.eachLayer(child => this.addLayer(child));
+				else if (!this._layers.includes(layer)) {
+					this._layers.push(layer);
+					this._projectedLayers.delete(layer);
 				}
-			}) : Promise.resolve();
+			},
+			removeLayer(layer) {
+				if (layer.eachLayer) layer.eachLayer(child => this.removeLayer(child));
+				else {
+					this._layers = this._layers.filter(item => item !== layer);
+					this._projectedLayers.delete(layer);
+				}
+				this._previous = null;
+			},
+			getClosest(latlng) {
+				let closest;
+				const maxDistance = this._map.options.almostDistance ?? 25;
+
+				const closestPointOnLayer = (map, layer, latlng, maxDistance, cache) => {
+					let closest;
+					const zoom = map.getZoom();
+					const target = map.project(latlng, zoom);
+
+					function checkPath(points) {
+						let closestSquared = closest ? closest.distance * closest.distance : maxDistance * maxDistance;
+
+						for (let i = 1; i < points.length; i++) {
+							const start = points[i - 1];
+							const end = points[i];
+							const point = L.LineUtil.closestPointOnSegment(target, start, end);
+							const distanceSquared = (target.x - point.x) ** 2 + (target.y - point.y) ** 2;
+
+							if (distanceSquared <= maxDistance * maxDistance && distanceSquared < closestSquared) {
+								closestSquared = distanceSquared;
+								closest = {
+									layer,
+									latlng: map.unproject(point, zoom),
+									distance: Math.sqrt(distanceSquared),
+								};
+							}
+						}
+					}
+					if (layer.eachLayer) {
+						layer.eachLayer(child => {
+							const match = closestPointOnLayer(map, child, latlng, closest?.distance ?? maxDistance, cache);
+							if (match && (!closest || match.distance < closest.distance)) closest = match;
+						});
+					} else if (layer.getLatLngs) {
+						const cached = cache.get(layer);
+						if (cached?.zoom === zoom) {
+							cached.paths.forEach(checkPath);
+						} else {
+							const paths = [];
+							const collectPaths = (coords) => {
+								if (!Array.isArray(coords)) return;
+								if (coords.length && Number.isFinite(coords[0]?.lat)) paths.push(coords.map(point => map.project(point, zoom)));
+								else coords.forEach(collectPaths);
+							}
+							collectPaths(layer.getLatLngs());
+							cache.set(layer, { zoom, paths });
+							paths.forEach(checkPath);
+						}
+					}
+					return closest;
+				}
+
+				// ponytail: scans all route segments per sampled move; add a spatial index if large collections become slow.
+				for (const layer of this._layers) {
+					const match = closestPointOnLayer(this._map, layer, latlng, closest?.distance ?? maxDistance, this._projectedLayers);
+					if (match && (!closest || match.distance < closest.distance)) closest = match;
+				}
+
+				return closest;
+			},
+			_sampleMouseMove(event) {
+				const now = Date.now();
+				if (this._map._animatingZoom || this._map._panAnim?._inProgress ||
+					now - this._lastSample < (this._map.options.almostSamplingPeriod ?? 50) || !this._layers.length) return;
+				this._lastSample = now;
+				this._onMouseMove(event);
+			},
+			_onMouseMove(event) {
+				const closest = this.getClosest(event.latlng);
+				if (closest) {
+					if (!this._previous || this._previous.layer !== closest.layer) {
+						if (this._previous) this._map.fire('almost:out', { layer: this._previous.layer });
+						this._map.fire('almost:over', closest);
+					}
+					this._map.fire('almost:move', closest);
+				} else if (this._previous) {
+					this._map.fire('almost:out', { layer: this._previous.layer });
+				}
+				this._previous = closest;
+			},
+			_onMouseClick(event) {
+				const closest = this.getClosest(event.latlng);
+				if (closest) this._map.fire(`almost:${event.type}`, closest);
+			},
+		};
+		if (!map.almostOver.enabled() && map.options.almostOver !== false) map.almostOver.enable();
+		if (map.almostOver.enabled()) {
+			map.almostOver.addLayer(layer);
+			map
+				.on('almost:move', this._onMouseMoveLayer, this)
+				.on('almost:out', this._onMouseOut, this);
+			this.once('eledata_clear', () => {
+				map.almostOver.removeLayer(layer);
+				map
+					.off('almost:move', this._onMouseMoveLayer, this)
+					.off('almost:out', this._onMouseOut, this);
+			});
+		}
+		return Promise.resolve();
 	},
 
 	/**
 	 * Initialize "L.DistanceMarkers" integration
 	 */
 	_initDistanceMarkers() {
-		return this.options.distanceMarkers ? this.import([this.__LGEOMUTIL, this.__LDISTANCEM]) : Promise.resolve();
+		return this.options.distanceMarkers ? this.import(this.__LDISTANCEM) : Promise.resolve();
 	},
 
 	/**

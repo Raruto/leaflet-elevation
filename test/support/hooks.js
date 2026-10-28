@@ -13,12 +13,14 @@ Before(async function ({ pickle }) {
     }
     this.base = base;
     this.errors = [];
+    this.warnings = [];
 });
 
 After(async function ({ result }) {
     this.releaseData?.();
     if (result.status === 'FAILED' && this.page) {
         console.error('Browser errors:', this.errors);
+        console.error('Browser warnings:', this.warnings);
         console.error('Map state:', await this.page.evaluate(() => {
             if (typeof L === 'undefined' || typeof map === 'undefined' || !(map instanceof L.Map)) return null;
             return {
