@@ -46,11 +46,11 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
     await this.page.setContent('<div id="map" style="height:400px"></div>');
     await this.page.addStyleTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' });
     await this.page.addStyleTag({ url: `${this.base}/dist/leaflet-elevation.css` });
+    await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
     this.unexpectedScripts = [];
     this.page.on('request', request => {
         if (request.resourceType() === 'script') this.unexpectedScripts.push(request.url());
     });
-    await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
     await this.page.addScriptTag({ content: outputFiles[0].text });
     await this.page.waitForFunction(() => controlElevation._chart && controlElevation._marker && controlElevation._summary);
 });
