@@ -7,9 +7,6 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
-	<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script">
-	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js" as="script">
-
 	<style>@import '../libs/fullpage.css';</style>
 
 	<style>
@@ -29,9 +26,11 @@
 		document.write(lv === '2'
 			? '<link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css">'
 			+ '<script src="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet-global.js"><\/script>'
-			: '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.js"><\/script>'
-			+ '<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui-src.js"><\/script>');
+			: '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'
+			+ '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.js"><\/script>');
 	</script>
+
+	<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui-src.js"></script>
 
 	<!-- leaflet-elevation -->
 	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
@@ -150,9 +149,9 @@
 
 		var map              = new L.Map('map', opts.map);
 
-			var controlElevation = L.control.elevation(opts.elevationControl.options);
+			var controlElevation = new L.Control.Elevation(opts.elevationControl.options);
 			var controlLayer     = new L.Control.Layers(null, null, opts.layersControl.options);
-			let ruler            = L.control.ruler({position: 'topleft'}).addTo(map);
+			let ruler            = new L.Control.Ruler({position: 'topleft'}).addTo(map);
 
 			controlElevation.clear();
 			controlElevation.redraw();
