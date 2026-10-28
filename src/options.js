@@ -21,7 +21,7 @@ export var Options = {
 	handlers: ["Distance", "Time", "Altitude", "Slope", "Speed", "Acceleration"],
 	hotline: 'elevation',
 	marker: 'elevation-line',
-	markerIcon: L.divIcon({
+	markerIcon: new L.DivIcon({
 		className: 'elevation-position-marker',
 		html: '<i class="elevation-position-icon"></i>',
 		iconSize: [32, 32],
@@ -54,7 +54,7 @@ export var Options = {
 	trkEnd: { className: 'end-marker', radius: 6, weight: 2, color: '#fff', fillColor: '#ff0606', fillOpacity: 1, interactive: false },
 	waypoints: true,
 	wptIcons: {
-		'': L.divIcon({
+		'': new L.DivIcon({
 			className: 'elevation-waypoint-marker',
 			html: '<i class="elevation-waypoint-icon default"></i>',
 			iconSize: [30, 30],
@@ -67,7 +67,7 @@ export var Options = {
 	yAttr: "z",
 	yLabel: "m",
 	zFollow: false,
-	zooming: !L.Browser.Mobile,
+	zooming: !L.Browser.mobile,
 
 	// Quite uncommon and undocumented options
 	margins: { top: 30, right: 30, bottom: 30, left: 40 },

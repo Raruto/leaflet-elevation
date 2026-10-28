@@ -39,4 +39,5 @@ import { Elevation } from './control';
 
 Elevation.Utils = _;
 
+L.control = L.control || {};
 L.control.elevation = (options) => new Elevation(options);

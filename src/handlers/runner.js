@@ -1,5 +1,3 @@
-import { create } from '../utils.js';
-
 /**
  * @see https://github.com/Igor-Vladyka/leaflet.motion
  * 
@@ -10,11 +8,23 @@ import { create } from '../utils.js';
  */
 export async function Runner() {
 
+  Object.assign(L, {
+    latLngBounds: L.latLngBounds || ((...args) => new L.LatLngBounds(...args)),
+    latLng: L.latLng || ((...args) => new L.LatLng(...args)),
+    point: L.point || ((...args) => new L.Point(...args)),
+    marker: L.marker || ((...args) => new L.Marker(...args)),
+  });
+  L.Util.extend = L.Util.extend || Object.assign;
+  L.Util.isArray = L.Util.isArray || Array.isArray;
+  L.Util.requestAnimFrame = L.Util.requestAnimFrame || ((fn, context) => window.requestAnimationFrame(fn.bind(context)));
+  L.Util.cancelAnimFrame = L.Util.cancelAnimFrame || (id => window.cancelAnimationFrame(id));
   await this.import(this.__LMOTION || 'https://unpkg.com/leaflet.motion@0.3.2/dist/leaflet.motion.min.js', typeof L.Motion !== 'object')
+
+  const _ = L.Control.Elevation.Utils;
 
   let { runnerOptions } = this.options;
 
-  runnerOptions = L.extend(
+  runnerOptions = Object.assign(
     { polyline: {}, motion: {}, marker: undefined },
     'object' === typeof runnerOptions ? runnerOptions : {}
   );
@@ -42,7 +52,7 @@ export async function Runner() {
   this.addRunner = function (runner) {
     let x = this._x(runner.dist);
     let y = this._y(this._findItemForX(x).z)
-    let g = create('svg:circle', '', {
+    let g = _.create('svg:circle', '', {
       class: "runner " + this.options.theme + " height-focus circle-lower",
       r: 6, cx: x, cy: y,
     }, this._container.querySelector('svg > g'));
@@ -83,11 +93,11 @@ export async function Runner() {
 
     layer.setStyle({ opacity: 0.5 });
 
-    const geo = L.geoJson(layer.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1)) });
+    const geo = new L.GeoJSON(layer.toGeoJSON(), { coordsToLatLng: (coords) => new L.LatLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1)) });
     this._runner = L.motion.polyline(
       geo.toGeoJSON().features[0].geometry.coordinates, 
-      L.extend({}, { color: 'red', pane: 'elevationPane', attribution: '' }, runnerOptions.polyline), 
-      L.extend({}, { auto: true, speed: speed, }, runnerOptions.motion),
+      Object.assign({}, { color: 'red', pane: 'elevationPane', attribution: '' }, runnerOptions.polyline),
+      Object.assign({}, { auto: true, speed: speed, }, runnerOptions.motion),
       runnerOptions.marker || undefined
     );
 

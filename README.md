@@ -70,8 +70,8 @@ _For a working example see one of the following demos:_
     <style> html, body, #map, #elevation-div { height: 100%; width: 100%; padding: 0; margin: 0; } #map { height: 75%; } #elevation-div {	height: 25%; font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif; } </style>
 
     <!-- leaflet-ui -->
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js"></script>
 
     <!-- leaflet-elevation -->
     <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css" />
@@ -176,7 +176,7 @@ _For a working example see one of the following demos:_
 
         // Toggle custom waypoint icons: true || { associative array of <sym> tags } || false
         wptIcons: {
-          '': L.divIcon({
+          '': new L.DivIcon({
             className: 'elevation-waypoint-marker',
             html: '<i class="elevation-waypoint-icon"></i>',
             iconSize: [30, 30],
@@ -193,7 +193,7 @@ _For a working example see one of the following demos:_
       };
 
       // Instantiate map (leaflet-ui).
-      var map = L.map('map', { mapTypeId: 'terrain', center: [41.4583, 12.7059], zoom: 5 });
+      var map = new L.Map('map', { mapTypeId: 'terrain', center: [41.4583, 12.7059], zoom: 5 });
 
       // Instantiate elevation control.
       var controlElevation = L.control.elevation(elevation_options).addTo(map);
@@ -244,7 +244,7 @@ There are multiple options to achieve this:
 
 These customizations are actually part of the [leaflet-ui](https://github.com/Raruto/leaflet-ui) and can be toggled on/off using e.g. the following options:
 ```js
-var map = L.map('map', {
+var map = new L.Map('map', {
     center: [41.4583, 12.7059],  // needs value to initialize
     zoom: 5,                     // needs value to initialize
     mapTypeId: 'topo',
@@ -276,7 +276,7 @@ import L from 'leaflet';
 import '@raruto/leaflet-elevation/src/index.js';
 import '@raruto/leaflet-elevation/src/index.css';
 
-const map = L.map('map', {
+const map = new L.Map('map', {
     center: [41.4583, 12.7059]
     zoom: 5,
 });
@@ -318,7 +318,8 @@ All notable changes to this project are documented in the [releases](https://git
 ---
 
 **Compatibile with:**
-[![Leaflet 1.x compatible!](https://img.shields.io/badge/Leaflet-1.7.0-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
+Leaflet 1.9.4 and Leaflet 2.0.0-alpha.1 (global build).
+[![Leaflet 1.x and 2.0 alpha compatible!](https://img.shields.io/badge/Leaflet-1.x%20%2F%202.0%20alpha-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
 [![@tmcw/togeojson v5 compatibile!](https://img.shields.io/badge/@tmcw/togeojson-5.6-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
 
 

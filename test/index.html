@@ -7,8 +7,8 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
-	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
-	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js" as="script">
 
 	<style>@import '../libs/fullpage.css';</style>
 
@@ -23,8 +23,15 @@
 	</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@latest/dist/leaflet-src.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@latest/dist/leaflet-ui-src.js"></script>
+	<script>
+		// ?leaflet=1 (default) or ?leaflet=2 (alpha, global build)
+		var lv = new URLSearchParams(location.search).get('leaflet') === '2' ? '2' : '1';
+		document.write(lv === '2'
+			? '<link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css">'
+			+ '<script src="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet-global.js"><\/script>'
+			: '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.js"><\/script>'
+			+ '<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui-src.js"><\/script>');
+	</script>
 
 	<!-- leaflet-elevation -->
 	<link rel="stylesheet" href="../dist/leaflet-elevation.css" />
@@ -38,10 +45,16 @@
 
 	<div id="map" class="leaflet-map"></div>
 
+	<select style="position:fixed;top:10px;left:50px;z-index:10000" onchange="location.search = '?leaflet=' + this.value">
+		<option value="1">Leaflet 1</option>
+		<option value="2">Leaflet 2</option>
+	</select>
+	<script>document.querySelector('select').value = lv;</script>
+
 	<script>
-		L.Icon.Default.prototype.options.iconUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png';
-		L.Icon.Default.prototype.options.iconRetinaUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png';
-		L.Icon.Default.prototype.options.shadowUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png';
+		L.Icon.Default.prototype.options.iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
+		L.Icon.Default.prototype.options.iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
+		L.Icon.Default.prototype.options.shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
 		
 		var opts = {
 			map: {
@@ -137,10 +150,8 @@
 
 		var map              = new L.Map('map', opts.map);
 
-		// map.on('plugins_loaded', function() {
-
 			var controlElevation = L.control.elevation(opts.elevationControl.options);
-			var controlLayer     = L.control.layers(null, null, opts.layersControl.options);
+			var controlLayer     = new L.Control.Layers(null, null, opts.layersControl.options);
 			let ruler            = L.control.ruler({position: 'topleft'}).addTo(map);
 
 			controlElevation.clear();
@@ -183,13 +194,13 @@
 					{ lat: 44.824982, lng: 10.212771, label: "Ponte Taro" },
 				];
 				points.forEach(p => {
-					controlElevation._registerCheckPoint({latlng: L.latLng(p.lat, p.lng), label: p.label});
-					L.marker(L.latLng(p.lat, p.lng)).addTo(map);
+					controlElevation._registerCheckPoint({latlng: new L.LatLng(p.lat, p.lng), label: p.label});
+					new L.Marker(new L.LatLng(p.lat, p.lng)).addTo(map);
 				});
 			/**
 			* Create a custom checkbox control ("position-marker" toggler)
 			*/
-			let markerToggler = L.control({position: 'topleft'});
+			let markerToggler = new L.Control({position: 'topleft'});
 			markerToggler.onAdd = (map) => {
 				const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
 				div.style.background = '#fff';

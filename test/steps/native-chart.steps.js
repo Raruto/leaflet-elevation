@@ -17,7 +17,7 @@ Given('a native chart in a scaled container', async function () {
             xAttr: 'dist', yAttr: 'z', yAxisMin: -50, yAxisMax: 50,
             dragging: true, zooming: true, legend: true, ruler: true, altitude: true,
         }, Object.assign(new L.Evented(), {
-            _data: Array.from({ length: 11 }, (_, i) => ({ dist: i, z: i * 10 - 50, latlng: L.latLng(0, i) })),
+            _data: Array.from({ length: 11 }, (_, i) => ({ dist: i, z: i * 10 - 50, latlng: new L.LatLng(0, i) })),
         }));
         profile._registerAreaPath({ name: 'altitude', scaleX: 'distance', scaleY: 'altitude' });
         profile._registerAxisScale({ name: 'time', axis: 'x', position: 'top', scale: 'x' });

@@ -37,7 +37,7 @@
 // TODO: the "L.DistanceMarker" (canvas marker) class could be alternatively provided by "leaflet-rotate"? 
 
 L.DistanceMarker = L.CircleMarker.extend({
-	_updatePath: function () {
+	_updatePath () {
 		let ctx = this._renderer._ctx;
 		let p = this._point;
 
@@ -53,7 +53,7 @@ L.DistanceMarker = L.CircleMarker.extend({
 		if (this.options.icon && this.options.icon.url) {
 			if (!this.options.icon.element) {
 				const icon = document.createElement('img');
-				this.options.icon = L.extend({ rotate: 0, size: [40, 40], offset: { x: 0, y: 0 } }, this.options.icon);
+				this.options.icon = Object.assign({ rotate: 0, size: [40, 40], offset: { x: 0, y: 0 } }, this.options.icon);
 				this.options.icon.rotate += this.options.rotation;
 				this.options.icon.element = icon;
 				icon.src = this.options.icon.url;
@@ -125,12 +125,12 @@ L.DistanceMarkers = L.LayerGroup.extend({
 		distance: true,
 		direction: true,
 	},
-	initialize: function (line, map, options) {
+	initialize (line, map, options) {
 
 		this._layers = {};
 		this._zoomLayers = {};
 
-		options = L.setOptions(this, options);
+		options = L.Util.setOptions(this, options);
 
 		let preferCanvas = map.options.preferCanvas;
 		let showAll = Math.min(map.getMaxZoom(), options.showAll);
@@ -163,7 +163,7 @@ L.DistanceMarkers = L.LayerGroup.extend({
 				// Grab two nearest points either side marker position
 				let p1 = latlngs[j - 1];
 				let p2 = latlngs[j];
-				let m_line = L.polyline([p1, p2]);
+				let m_line = new L.Polyline([p1, p2]);
 
 				// and create a simple line to interpolate on
 				let ratio = (distance - accumulated[j - 1]) / (accumulated[j] - accumulated[j - 1]);
@@ -176,7 +176,7 @@ L.DistanceMarkers = L.LayerGroup.extend({
 
 				// Grouping layer of visible layers at zoom level (arrow + distance)
 				let zoom = this._minimumZoomLevelForItem(i, showAll);
-				let markers = this._zoomLayers[zoom] = this._zoomLayers[zoom] || L.layerGroup()
+				let markers = this._zoomLayers[zoom] = this._zoomLayers[zoom] || new L.LayerGroup()
 
 				// create arrow markers
 				if (options.direction && ((options.distance && i % 2 == 1) || !options.distance)) {
@@ -200,8 +200,8 @@ L.DistanceMarkers = L.LayerGroup.extend({
 						);
 					} else {
 						markers.addLayer(
-							L.marker(position.latLng, {
-								icon: L.icon({
+							new L.Marker(position.latLng, {
+								icon: new L.Icon({
 									iconUrl: options.arrowUrl,
 									iconSize: options.arrowSize,
 								}),
@@ -230,9 +230,9 @@ L.DistanceMarkers = L.LayerGroup.extend({
 						);
 					} else {
 						markers.addLayer(
-							L.marker(position.latLng, {
+							new L.Marker(position.latLng, {
 								title: text,
-								icon: L.divIcon({
+								icon: new L.DivIcon({
 									className: options.cssClass,
 									html: text,
 									iconSize: options.iconSize
@@ -267,7 +267,7 @@ L.DistanceMarkers = L.LayerGroup.extend({
 		updateMarkerVisibility();
 	},
 
-	_minimumZoomLevelForItem: function (i, zoom) {
+	_minimumZoomLevelForItem (i, zoom) {
 		while (i > 0 && i % 2 === 0) {
 			--zoom;
 			i = Math.floor(i / 2);
@@ -282,19 +282,19 @@ L.Polyline.include({
 	_originalOnAdd: L.Polyline.prototype.onAdd,
 	_originalOnRemove: L.Polyline.prototype.onRemove,
 
-	addDistanceMarkers: function () {
+	addDistanceMarkers () {
 		if (this._map && this._distanceMarkers) {
 			this._map.addLayer(this._distanceMarkers);
 		}
 	},
 
-	removeDistanceMarkers: function () {
+	removeDistanceMarkers () {
 		if (this._map && this._distanceMarkers) {
 			this._map.removeLayer(this._distanceMarkers);
 		}
 	},
 
-	onAdd: function (map) {
+	onAdd (map) {
 		this._originalOnAdd(map);
 
 		let opts = this.options.distanceMarkers || {};
@@ -306,7 +306,7 @@ L.Polyline.include({
 		}
 	},
 
-	onRemove: function (map) {
+	onRemove (map) {
 		this.removeDistanceMarkers();
 		this._originalOnRemove(map);
 	}

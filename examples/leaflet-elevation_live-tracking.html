@@ -7,14 +7,14 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
-	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
-	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js" as="script">
 
 	<style>@import '../libs/fullpage.css';</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
 	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.css" />
@@ -26,7 +26,7 @@
 	<div id="map" class="leaflet-map"></div>
 
 	<script>
-		let map = L.map('map', {
+		let map = new L.Map('map', {
 			center: [44.4949, 11.3426],
 			zoom: 14,
 			fullscreenControl: false,
@@ -44,7 +44,7 @@
 		}).addTo(map);
 
 		// Keep one map layer and append each new GPS location to it.
-		let trackLayer = L.polyline([], { color: '#3388ff', weight: 4 }).addTo(map);
+		let trackLayer = new L.Polyline([], { color: '#3388ff', weight: 4 }).addTo(map);
 		let locations = [
 			[44.4949, 11.3426, 54],
 			[44.4960, 11.3460, 56],

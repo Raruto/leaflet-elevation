@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "node build/dev.js",
     "build": "node build/build.js",
-    "test": "npm run build && cucumber-js",
+    "test": "node build/test.js",
     "version": "npm run build && git add -A"
   },
   "repository": {
@@ -49,12 +49,12 @@
   "devDependencies": {
     "@cucumber/cucumber": "^13.3.0",
     "esbuild": "^0.28.2",
-    "leaflet": "^1.7.1",
+    "leaflet": "^1.9.4",
     "playwright": "^1.64.1"
   },
   "peerDependencies": {
     "@tmcw/togeojson": "5.6.2",
-    "leaflet": "^1.7.0",
+    "leaflet": "^1.9.4 || ^2.0.0-alpha.1",
     "leaflet-i18n": "^0.3.1"
   }
 }

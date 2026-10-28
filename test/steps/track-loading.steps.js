@@ -24,7 +24,7 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
                         return Array.isArray(src) ? Promise.all(src.map(item => this.import(item))) : Promise.resolve();
                     }
                 });
-                window.map = L.map('map').setView([45, 10], 5);
+                window.map = new L.Map('map').setView([45, 10], 5);
                 window.controlElevation = L.control.elevation({
                     handlers: [Distance, Time, Altitude],
                     detached: false,

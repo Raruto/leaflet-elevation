@@ -32,7 +32,7 @@ async function groupTrackPoint(page, selected = false) {
 
 Given('the chart module loads only after the map track is visible', async function () {
     this.page.on('response', response => {
-        if (/^https:\/\/unpkg\.com\/@raruto\/leaflet-elevation@[^/]+\/dist\/leaflet-elevation\.min\.js$/.test(response.url())) {
+        if (/\/dist\/leaflet-elevation\.min\.js$/.test(new URL(response.url()).pathname)) {
             this.pluginResponse = response;
         }
     });
@@ -43,7 +43,7 @@ Given('the chart module loads only after the map track is visible', async functi
 });
 
 Then('the dynamically loaded plugin matches the local build', async function () {
-    assert.ok(this.pluginResponse, 'leaflet-ui did not request the plugin bundle');
+    assert.ok(this.pluginResponse, 'The elevation plugin bundle was not loaded');
     assert.strictEqual(await this.pluginResponse.text(),
         await readFile(new URL('../../dist/leaflet-elevation.min.js', import.meta.url), 'utf8'));
     assert.strictEqual(await this.page.evaluate(() =>
@@ -52,8 +52,8 @@ Then('the dynamically loaded plugin matches the local build', async function () 
 });
 
 Given('the example map uses zoom snapping {int}', function (zoomSnap) {
-    this.htmlTransform = body => body.replace("L.map('map', opts.map)",
-        `L.map('map', { ...opts.map, zoomSnap: ${zoomSnap} })`);
+    this.htmlTransform = body => body.replace("new L.Map('map', opts.map)",
+        `new L.Map('map', { ...opts.map, zoomSnap: ${zoomSnap} })`);
 });
 
 Given('the pointer starts in the middle of the viewport', async function () {
@@ -307,13 +307,13 @@ When('I hover over an unselected group track', async function () {
 
 Then('its profile replaces the placeholder and its legend is selected', async function () {
     await this.page.waitForFunction(() => {
-        const legend = document.getElementById(`legend_${L.stamp(interactionRoute)}`);
+        const legend = document.getElementById(`legend_${L.Util.stamp(interactionRoute)}`);
         return routes.getSelection() === interactionRoute && routes._elevation._data.length > 0 &&
             document.querySelector('.chart-placeholder').style.display === 'none' &&
             legend && legend.parentNode.previousSibling.checked;
     });
     const state = await this.page.evaluate(() => ({
-        checked: document.getElementById(`legend_${L.stamp(interactionRoute)}`).parentNode.previousSibling.checked,
+        checked: document.getElementById(`legend_${L.Util.stamp(interactionRoute)}`).parentNode.previousSibling.checked,
         color: interactionLine.options.color,
         tooltip: interactionLine.getTooltip().getContent(),
         name: interactionRoute.options.name
@@ -328,7 +328,7 @@ When('I select a different route in the group legend', async function () {
     this.firstGroupProfile = await this.page.evaluate(() => routes._elevation.track_info.distance);
     const id = await this.page.evaluate(() => {
         window.nextInteractionRoute = routes._layers.getLayers().find(route => route !== interactionRoute);
-        return `legend_${L.stamp(nextInteractionRoute)}`;
+        return `legend_${L.Util.stamp(nextInteractionRoute)}`;
     });
     await this.page.locator(`label:has(#${id}) input`).check();
 });

@@ -18,7 +18,7 @@ When('I load the track with estimated time', async function () {
     );
     this.time = await this.page.evaluate(() => ({
         duration: controlElevation.track_info.time,
-        expectedDuration: L.latLng(0, 0).distanceTo(L.latLng(0, 0.01)) / 1000 / 3.6 * 3600 * 1000,
+        expectedDuration: new L.LatLng(0, 0).distanceTo(new L.LatLng(0, 0.01)) / 1000 / 3.6 * 3600 * 1000,
         distance: controlElevation.track_info.distance
     }));
 });

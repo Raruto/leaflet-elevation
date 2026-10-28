@@ -8,8 +8,7 @@ export var Marker = L.Class.extend({
 
 		switch(this.options.marker) {
 			case 'position-marker':
-				// this._marker   = L.circleMarker([0, 0], { pane: 'overlayPane', radius: 6, fillColor: '#fff', fillOpacity:1, color: '#000', weight:1, interactive: false });
-				this._marker      = L.marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
+				this._marker      = new L.Marker([0, 0], { icon: this.options.markerIcon, zIndexOffset: 1000000, interactive: false });
 			break;
 		}
 
@@ -49,7 +48,7 @@ export var Marker = L.Class.extend({
 			case 'elevation-line':
 				if (this._container) {
 					let point = this._map.latLngToLayerPoint(this._latlng);
-					point     = L.extend({}, props.item, this._map._rotate ? this._map.rotatedPointToMapPanePoint(point) : point);
+					point     = Object.assign({}, props.item, this._map._rotate ? this._map.rotatedPointToMapPanePoint(point) : point);
 
 					// Keep the zero baseline unless the track extends below sea level.
 					let yMin = props.yCoordMin || 0;

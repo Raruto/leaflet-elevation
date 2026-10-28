@@ -117,15 +117,15 @@ export const parseDate = (property, id) => new Date(Date.parse((typeof property 
 /**
  * A little bit shorter than L.DomUtil
  */
-export const addClass      = (n, str)             => n && str.split(" ").every(s => s && L.DomUtil.addClass(n, s));
-export const removeClass   = (n, str)             => n && str.split(" ").every(s => s && L.DomUtil.removeClass(n, s));
+export const addClass      = (n, str)             => n && str.split(" ").every(s => s && n.classList.add(s));
+export const removeClass   = (n, str)             => n && str.split(" ").every(s => s && n.classList.remove(s));
 export const toggleClass   = (n, str, cond)       => (cond ? addClass : removeClass)(n, str);
 export const replaceClass  = (n, rem, add)        => (rem && removeClass(n, rem)) || (add && addClass(n, add));
-export const style         = (n, k, v)            => (typeof v === "undefined" && L.DomUtil.getStyle(n, k)) || n.style.setProperty(k, v);
+export const style         = (n, k, v)            => (typeof v === "undefined" && getComputedStyle(n)[k]) || n.style.setProperty(k, v);
 export const toggleStyle   = (n, k, v, cond)      => style(n, k, cond ? v : '');
 export const setAttributes = (n, attrs)           => { for (let k in attrs) { if (attrs[k] != null) n.setAttribute(k, attrs[k]); else n.removeAttribute(k); } };
 export const toggleEvent   = (el, e, fn, cond)    => el[cond ? 'on' : 'off'](e, fn);
-export function create(tag, str, attrs, n) {
+export const create        = (tag, str, attrs, n) => {
 	const svg = tag.startsWith('svg:');
 	const elem = svg ? document.createElementNS('http://www.w3.org/2000/svg', tag.slice(4)) : L.DomUtil.create(tag, str || "");
 	if (svg && str) elem.setAttribute('class', str);
@@ -164,7 +164,7 @@ export const iSum = (iVal, sum = 0) => iVal + sum;
  */
 export const { on, off }           = L.DomEvent;
 export const { throttle, wrapNum } = L.Util;
-export const { hasClass }          = L.DomUtil;
+export const hasClass = (n, str) => n && str.split(" ").every(s => s && n.classList.contains(s));
 
 /**
  * Limit floating point precision

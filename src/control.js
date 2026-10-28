@@ -1,14 +1,20 @@
 import * as _      from './utils';
 import { Options } from './options';
 
-// "leaflet-i18n" fallback
+L.locales = L.locales || {};
+L.registerLocale = L.registerLocale || ((name, messages) => {
+	L.locales[name] = Object.assign({}, L.locales[name], messages);
+});
+L.setLocale = L.setLocale || (locale => { L.locale = locale; });
+
 if (!L._ || !L.i18n) {
-	L._ = L.i18n = (string, data) => string;
+	L._ = L.i18n = (string, data) => {
+		const translated = L.locale && L.locales[L.locale] && L.locales[L.locale][string];
+		return L.Util.template(translated || string, data);
+	};
 }
 
 export const Elevation = L.Control.Elevation = L.Control.extend({
-
-	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
 	options: Options,
 	__mileFactor:     0.621371, // 1 km = (0.621371 mi)
@@ -38,6 +44,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._addLayer(layer);
 			this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
 		});
+
 	},
 
 	/**
@@ -99,7 +106,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * 
 	 * @link https://leafletjs.com/examples/extending/extending-3-controls.html#handlers
 	 */
-	// addHandler: function (name, HandlerClass) {
+	// addHandler(name, HandlerClass) {
 	// 	if (HandlerClass) {
 	// 		let handler = this[name] = new HandlerClass(this);
 	// 		this.handlers.push(handler);
@@ -149,7 +156,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	getBounds(data) {
-		return L.latLngBounds((data || this._data).map((d) => d.latlng));
+		return new L.LatLngBounds((data || this._data).map((d) => d.latlng));
 	},
 
 	/**
@@ -171,19 +178,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	initialize(opts) {
 
-		// opts = L.setOptions(this, opts);
-
 		// Fixes: https://github.com/Raruto/leaflet-elevation/pull/240
-		opts = L.setOptions(this, L.extend({}, _.cloneDeep(Options), opts)); // "deep copy" nested objects (multiple charts)
+		opts = L.Util.setOptions(this, Object.assign({}, _.cloneDeep(Options), opts)); // "deep copy" nested objects (multiple charts)
 
 		this._data           = [];
-		this._layers         = L.featureGroup();
-		this._markers        = L.featureGroup();
-		this._hotline        = L.featureGroup();
-		this._circleMarkers  = L.featureGroup();
-		this._markedSegments = L.polyline([]);
-		this._start          = L.circleMarker([0,0], (opts.trkStart || Options.trkStart));
-		this._end            = L.circleMarker([0,0], (opts.trkEnd || Options.trkEnd));
+		this._layers         = new L.FeatureGroup();
+		this._markers        = new L.FeatureGroup();
+		this._hotline        = new L.FeatureGroup();
+		this._circleMarkers  = new L.FeatureGroup();
+		this._markedSegments = new L.Polyline([]);
+		this._start          = new L.CircleMarker([0,0], (opts.trkStart || Options.trkStart));
+		this._end            = new L.CircleMarker([0,0], (opts.trkEnd || Options.trkEnd));
 		this._chartEnabled   = true;
 		this._yCoordMin      = 0;
 		this._yCoordMax      = -Infinity;
@@ -202,7 +207,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._markedSegments.setStyle(opts.polylineSegments);
 
 		// Leaflet canvas renderer colors
-		L.extend(_.Colors, opts.colors || {});
+		Object.assign(_.Colors, opts.colors || {});
 
 		// Various stuff
 		this._fixCanvasPaths();
@@ -219,8 +224,15 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 		switch(src) {
 			case this.__TOGEOJSON:   condition = typeof toGeoJSON !== 'object'; break;
-			case this.__LGEOMUTIL:   condition = typeof L.GeometryUtil !== 'object'; break;
-			case this.__LALMOSTOVER: condition = typeof L.Handler.AlmostOver  !== 'function'; break;
+			case this.__LGEOMUTIL:
+				condition = typeof L.GeometryUtil !== 'object';
+				L.extend = L.extend || Object.assign;
+				L.point = L.point || ((x, y) => new L.Point(x, y));
+				break;
+			case this.__LALMOSTOVER:
+				condition = typeof L.Handler.AlmostOver !== 'function';
+				L.stamp = L.stamp || L.Util.stamp;
+				break;
 			case this.__LDISTANCEM:  condition = typeof L.DistanceMarkers  !== 'function'; break;
 			case this.__LEDGESCALE:  condition = typeof L.Control.EdgeScale !== 'function'; break;
 			case this.__LHOTLINE:    condition = typeof L.Hotline  !== 'function'; break;
@@ -255,6 +267,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._modulesLoaded = true;
 			this.fire('modules_loaded');
 		});
+
+
 
 		this.fire('add');
 
@@ -380,7 +394,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			x: x,
 			y: y,
 			z: z,
-			latlng: L.latLng(x, y, z)
+			latlng: new L.LatLng(x, y, z)
 		});
 
 		this.fire("eledata_updated", { index: this._data.length - 1 });
@@ -445,7 +459,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.then(() => {
 				layer.eachLayer((trkseg) => {
 					if (trkseg.feature.geometry.type != "Point") {
-						let geo = L.geoJson(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1))});
+						let geo = new L.GeoJSON(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => new L.LatLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1))});
 						let line = L.hotline(geo.toGeoJSON().features[0].geometry.coordinates, {
 							renderer: L.Hotline.renderer(),
 							min: isFinite(this.track_info[prop + '_min']) ? this.track_info[prop + '_min'] : 0,
@@ -686,7 +700,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		if (this._renderer) this._renderer.remove()
-		this._renderer               = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
+		this._renderer               = new L.SVG({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
 
 		this.import(this.__LMARKER)
 			.then((m) => {
@@ -769,7 +783,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_loadLayer(geojson) {
 		let { polyline, theme, waypoints, wptIcons, wptLabels, distanceMarkers } = this.options;
-		let style = L.extend({}, polyline);
+		let style = Object.assign({}, polyline);
 		let dataAdded = [];
 
 		if (theme) {
@@ -780,7 +794,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this.track_info.name = geojson.name;
 		}
 
-		let layer = L.geoJson(geojson, {
+		let layer = new L.GeoJSON(geojson, {
 			distanceMarkers: distanceMarkers,
 			style: style,
 			pointToLayer: (feature, latlng) => {
@@ -823,7 +837,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	_onDragEnd({ dragstart, dragend}) {
 		this._hideMarker();
-		this.fitBounds(L.latLngBounds([dragstart.latlng, dragend.latlng]));
+		this.fitBounds(new L.LatLngBounds([dragstart.latlng, dragend.latlng]));
 
 		this.fire("elechart_dragged");
 	},
@@ -1135,20 +1149,20 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			});
 
 			if (grid) {
-				this._registerAxisGrid(L.extend({ name }, grid));
+				this._registerAxisGrid(Object.assign({ name }, grid));
 			}
 
 			if (this.options[name] !== "summary") {
-				if (scale) this._registerAxisScale(L.extend({ name, label: unit }, scale));
-				if (path)  this._registerAreaPath(L.extend({ name }, path));
+				if (scale) this._registerAxisScale(Object.assign({ name, label: unit }, scale));
+				if (path)  this._registerAreaPath(Object.assign({ name }, path));
 			}
 
 			if (tooltip || props.tooltips) {
-				_.each([tooltip, ...(props.tooltips || [])], t => t && this._registerTooltip(L.extend({ name }, t)));
+				_.each([tooltip, ...(props.tooltips || [])], t => t && this._registerTooltip(Object.assign({ name }, t)));
 			}
 
 			if (summary) {
-				_.each(summary, (s, k) => summary[k] = L.extend({ unit }, s));
+				_.each(summary, (s, k) => summary[k] = Object.assign({ unit }, s));
 				this._registerSummary(summary);
 			}
 		}
@@ -1158,9 +1172,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		let { wptIcons } = this.options;
 		// generate and cache appropriate icon symbol
 		if (!wptIcons.hasOwnProperty(sym)) {
-			wptIcons[sym] = L.divIcon(L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } ));
+			wptIcons[sym] = new L.DivIcon(Object.assign({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } ));
 		}
-		let marker = L.marker(latlng, { icon: wptIcons[sym] });
+		let marker = new L.Marker(latlng, { icon: wptIcons[sym] });
 		if (content) {
 			marker.bindPopup(content, { className: 'elevation-popup', keepInView: true }).openPopup();
 			marker.bindTooltip(content, { className: 'elevation-tooltip', direction: 'auto', sticky: true, opacity: 1 }).openTooltip();
@@ -1172,8 +1186,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Add chart or marker tooltip info
 	 */
 	_registerTooltip(props) {
-		props.chart  && this.on("elechart_init",   () => this._chart._registerTooltip(L.extend({}, props, { value: props.chart })));
-		props.marker && this.on("elechart_marker", () => this._marker._registerTooltip(L.extend({}, props, { value: props.marker })));
+		props.chart  && this.on("elechart_init",   () => this._chart._registerTooltip(Object.assign({}, props, { value: props.chart })));
+		props.marker && this.on("elechart_marker", () => this._marker._registerTooltip(Object.assign({}, props, { value: props.marker })));
 	},
 
 	/**
@@ -1339,3 +1353,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 });
+
+if (!('on' in Elevation.prototype)) {
+	for (const name of Object.getOwnPropertyNames(L.Evented.prototype)) {
+		if (name !== 'constructor') {
+			Object.defineProperty(Elevation.prototype, name, Object.getOwnPropertyDescriptor(L.Evented.prototype, name));
+		}
+	}
+}
