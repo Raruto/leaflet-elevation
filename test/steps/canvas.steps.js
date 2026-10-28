@@ -106,7 +106,7 @@ Given('I open the low-level canvas page in {string}', async function (browserNam
     assert.ok(configuration, `Unknown low-level browser: ${browserName}`);
     await openPage(this, configuration);
     await this.page.setContent('<style>body { margin: 0 } svg { display: block }</style>');
-    await this.page.addScriptTag({ url: `${this.base}/node_modules/leaflet/dist/leaflet.js` });
+    await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
 });
 
 Given('I create a canvas chart with a mask and tooltip overlay', async function () {
@@ -164,7 +164,7 @@ Given('I open a transformed chart host in {string} at DPR {int}', async function
         .mouse-focus-line { stroke: blue; stroke-width: 6 }
     </style><div id="host"></div>`);
     await this.page.addStyleTag({ url: `${this.base}/src/index.css` });
-    await this.page.addScriptTag({ url: `${this.base}/node_modules/leaflet/dist/leaflet.js` });
+    await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
     await this.page.evaluate(async base => {
         L.Control.Elevation = { Utils: await import(`${base}/src/utils.js`) };
         window.ProfileChart = (await import(`${base}/src/components/chart.js`)).Chart;
