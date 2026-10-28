@@ -32,7 +32,7 @@ async function groupTrackPoint(page, selected = false) {
 
 Given('the chart module loads only after the map track is visible', async function () {
     this.page.on('response', response => {
-        if (/^https:\/\/unpkg\.com\/@raruto\/leaflet-elevation@[^/]+\/dist\/leaflet-elevation\.min\.js$/.test(response.url())) {
+        if (/\/dist\/leaflet-elevation\.min\.js$/.test(new URL(response.url()).pathname)) {
             this.pluginResponse = response;
         }
     });
@@ -43,7 +43,7 @@ Given('the chart module loads only after the map track is visible', async functi
 });
 
 Then('the dynamically loaded plugin matches the local build', async function () {
-    assert.ok(this.pluginResponse, 'leaflet-ui did not request the plugin bundle');
+    assert.ok(this.pluginResponse, 'The elevation plugin bundle was not loaded');
     assert.strictEqual(await this.pluginResponse.text(),
         await readFile(new URL('../../dist/leaflet-elevation.min.js', import.meta.url), 'utf8'));
     assert.strictEqual(await this.page.evaluate(() =>
@@ -52,8 +52,8 @@ Then('the dynamically loaded plugin matches the local build', async function () 
 });
 
 Given('the example map uses zoom snapping {int}', function (zoomSnap) {
-    this.htmlTransform = body => body.replace("L.map('map', opts.map)",
-        `L.map('map', { ...opts.map, zoomSnap: ${zoomSnap} })`);
+    this.htmlTransform = body => body.replace("new L.Map('map', opts.map)",
+        `new L.Map('map', { ...opts.map, zoomSnap: ${zoomSnap} })`);
 });
 
 Given('the pointer starts in the middle of the viewport', async function () {
@@ -206,6 +206,43 @@ Then('the five distance checkpoints are displayed', async function () {
     for (const distance of [50, 100, 150, 200, 250]) assert.ok(text.includes(`${distance} km`));
 });
 
+Then('the inline runner supports manual start, completion and cleanup', async function () {
+    const result = await this.page.evaluate(async () => {
+        const ctrl = controlElevation;
+        const layer = ctrl._layers.getLayers().find(item => item instanceof L.GeoJSON);
+        const previous = ctrl._runner;
+        ctrl.options.runnerOptions.motion.auto = false;
+        ctrl.options.runnerOptions.motion.duration = 100;
+        ctrl.animate(layer);
+        const runner = ctrl._runner;
+        const idle = runner.getLatLngs().length === 0;
+        runner.motionStart();
+        runner.motionPause();
+        await new Promise(resolve => setTimeout(resolve, 30));
+        const paused = runner.getLatLngs().length === 0;
+        await new Promise(resolve => {
+            runner.once('motion-ended', resolve);
+            runner.motionResume();
+        });
+        const end = runner.getLatLngs().at(-1);
+        const expectedEnd = ctrl._data.at(-1).latlng;
+        const completed = end.distanceTo(expectedEnd) < 0.01;
+        const circle = document.querySelector('circle.runner');
+        ctrl.clear();
+        return {
+            idle,
+            paused,
+            completed,
+            replaced: !map.hasLayer(previous),
+            removed: !map.hasLayer(runner) && !circle.isConnected,
+            motion: typeof L.Motion
+        };
+    });
+    assert.deepStrictEqual(result, {
+        idle: true, paused: true, completed: true, replaced: true, removed: true, motion: 'undefined'
+    });
+});
+
 When('I hover over two distant positions on the elevation profile', async function () {
     this.followPositions = [];
     for (const fraction of [0.2, 0.8]) {
@@ -307,13 +344,13 @@ When('I hover over an unselected group track', async function () {
 
 Then('its profile replaces the placeholder and its legend is selected', async function () {
     await this.page.waitForFunction(() => {
-        const legend = document.getElementById(`legend_${L.stamp(interactionRoute)}`);
+        const legend = document.getElementById(`legend_${L.Util.stamp(interactionRoute)}`);
         return routes.getSelection() === interactionRoute && routes._elevation._data.length > 0 &&
             document.querySelector('.chart-placeholder').style.display === 'none' &&
             legend && legend.parentNode.previousSibling.checked;
     });
     const state = await this.page.evaluate(() => ({
-        checked: document.getElementById(`legend_${L.stamp(interactionRoute)}`).parentNode.previousSibling.checked,
+        checked: document.getElementById(`legend_${L.Util.stamp(interactionRoute)}`).parentNode.previousSibling.checked,
         color: interactionLine.options.color,
         tooltip: interactionLine.getTooltip().getContent(),
         name: interactionRoute.options.name
@@ -328,7 +365,7 @@ When('I select a different route in the group legend', async function () {
     this.firstGroupProfile = await this.page.evaluate(() => routes._elevation.track_info.distance);
     const id = await this.page.evaluate(() => {
         window.nextInteractionRoute = routes._layers.getLayers().find(route => route !== interactionRoute);
-        return `legend_${L.stamp(nextInteractionRoute)}`;
+        return `legend_${L.Util.stamp(nextInteractionRoute)}`;
     });
     await this.page.locator(`label:has(#${id}) input`).check();
 });

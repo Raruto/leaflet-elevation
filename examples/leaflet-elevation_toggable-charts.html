@@ -7,15 +7,14 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
-	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
-	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js" as="script">
 	
 	<style>@import '../libs/fullpage.css';</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
-
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js"></script>
 	<style>
 		.leaflet-tooltip {
 			font-weight: 700;
@@ -39,13 +38,11 @@
 				loadingControl: false,
 				plugins: [
 					"@tmcw/togeojson@5.6.2/dist/togeojson.umd.js",
-					"leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js",
-					"leaflet-almostover@1.0.1/src/leaflet.almostover.js",
-					"@raruto/leaflet-elevation@2.8.0/libs/leaflet-distance-marker.css",
-					"@raruto/leaflet-elevation@2.8.0/libs/leaflet-distance-marker.js",
-					"@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.css",
-					"@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.js",
-					"@raruto/leaflet-elevation@2.8.0/libs/leaflet-gpxgroup.js",
+					"@raruto/leaflet-elevation@2.9.0/libs/leaflet-distance-marker.css",
+					"@raruto/leaflet-elevation@2.9.0/libs/leaflet-distance-marker.js",
+					"@raruto/leaflet-elevation@2.9.0/dist/leaflet-elevation.min.css",
+					"@raruto/leaflet-elevation@2.9.0/dist/leaflet-elevation.min.js",
+					"@raruto/leaflet-elevation@2.9.0/libs/leaflet-gpxgroup.js",
 					// "../libs/leaflet-distance-marker.css",
 					// "../libs/leaflet-distance-marker.js",
 					// "../dist/leaflet-elevation.css",
@@ -118,11 +115,11 @@
 			{latlng:[47.5934486, 18.8812427], name:"Fülkés-kő"},
 		];
 
-		let map = L.map('map', opts.map);
+		let map = new L.Map('map', opts.map);
 
 		let routes;
 
-		map.on('plugins_loaded', function(e) {
+		map.on('plugins_loaded', function() {
 
 			routes = L.gpxGroup(tracks, {
 				points: points,
@@ -136,7 +133,6 @@
 			routes.addTo(map);
 
 			map.attributionControl.addAttribution('Map Data: &copy; <a href="https://github.com/adoroszlai">Attila Doroszlai</a> (<a href="https://github.com/adoroszlai/joebed/blob/gh-pages/LICENSE.md">MIT License</a>)');
-
 		});
 
 	</script>

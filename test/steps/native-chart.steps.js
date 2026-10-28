@@ -5,7 +5,7 @@ Given('a native chart in a scaled container', async function () {
     await this.page.goto(this.base);
     await this.page.setContent('<style>body{margin:0} #host{margin:40px;transform:scale(.8);transform-origin:0 0}</style><div id="host" class="elevation-control"></div>');
     await this.page.addStyleTag({ url: `${this.base}/src/index.css` });
-    await this.page.addScriptTag({ url: `${this.base}/node_modules/leaflet/dist/leaflet.js` });
+    await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
     await this.page.evaluate(async base => {
         const utils = await import(`${base}/src/utils.js`);
         L._ = text => text;
@@ -17,7 +17,7 @@ Given('a native chart in a scaled container', async function () {
             xAttr: 'dist', yAttr: 'z', yAxisMin: -50, yAxisMax: 50,
             dragging: true, zooming: true, legend: true, ruler: true, altitude: true,
         }, Object.assign(new L.Evented(), {
-            _data: Array.from({ length: 11 }, (_, i) => ({ dist: i, z: i * 10 - 50, latlng: L.latLng(0, i) })),
+            _data: Array.from({ length: 11 }, (_, i) => ({ dist: i, z: i * 10 - 50, latlng: new L.LatLng(0, i) })),
         }));
         profile._registerAreaPath({ name: 'altitude', scaleX: 'distance', scaleY: 'altitude' });
         profile._registerAxisScale({ name: 'time', axis: 'x', position: 'top', scale: 'x' });

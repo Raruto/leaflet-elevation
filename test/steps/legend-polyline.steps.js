@@ -21,7 +21,7 @@ Given('a track using the {string} map renderer and {string} chart renderer', asy
     );
     assert.strictEqual(await this.page.evaluate(() => {
         window.legendTrack = controlElevation._layers.getLayers().find(layer => layer instanceof L.Polyline);
-        window.unrelatedTrack = L.polyline([[44, 9], [44.01, 9.01]], { color: '#ff00ff' }).addTo(map);
+        window.unrelatedTrack = new L.Polyline([[44, 9], [44.01, 9.01]], { color: '#ff00ff' }).addTo(map);
         window.trackStrokes = [];
         if (legendTrack._renderer instanceof L.Canvas) {
             const renderer = legendTrack._renderer;

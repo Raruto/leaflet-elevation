@@ -1,8 +1,6 @@
 const _ = L.Control.Elevation.Utils;
 
-export var Chart = L.Control.Elevation.Chart = L.Class.extend({
-
-	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
+export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 
 	initialize(opts, control) {
 		this.options = opts;
@@ -586,7 +584,7 @@ export var Chart = L.Control.Elevation.Chart = L.Class.extend({
 		for (const span of text.children) span.setAttribute('x', 0);
 		const bounds = text.getBBox();
 		const x = xCoord ? xCoord + (xCoord < this._width() / 2 ? 10 : -bounds.width - 10) : 0;
-		const y = yCoord ? Math.max(yCoord - bounds.height, L.Browser.webkit ? 0 : -Infinity) : 0;
+		const y = yCoord ? Math.max(yCoord - bounds.height, (L.Browser.webkit || L.Browser.safari) ? 0 : -Infinity) : 0;
 		for (const span of text.children) span.setAttribute('x', x);
 		text.setAttribute('y', y);
 		_.setAttributes(rect, { x: x + bounds.x - 5, y: y + bounds.y - 5, width: bounds.width + 10, height: bounds.height + 10 });

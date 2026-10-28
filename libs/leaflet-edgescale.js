@@ -62,11 +62,11 @@ L.Control.EdgeScale = L.Control.extend({
     },
   },
 
-  initialize: function(options) {
-    L.setOptions(this, options);
+  initialize(options) {
+    L.Util.setOptions(this, options);
   },
 
-  onAdd: function (map) {
+  onAdd (map) {
 
     if (this.options.bar) {
       this._scaleBar = (new L.Control.EdgeScale.Layer(true === this.options.bar ? {} : this.options.bar)).addTo(map);
@@ -99,7 +99,7 @@ L.Control.EdgeScale = L.Control.extend({
     return this._container;
   },
 
-  onRemove: function (map) {
+  onRemove (map) {
     if (this.options.bar) {
       this._scaleBar.remove();
     }
@@ -113,20 +113,20 @@ L.Control.EdgeScale = L.Control.extend({
   },
 
   // update coordinates
-  _onMapMove: function (e) {
+  _onMapMove (e) {
     if (this.options.onMove || 'moveend' === e.type) {
       this._container.innerHTML = this._getMapCenterCoord();
     }
   },
 
-  _getMapCenterCoord: function () {
+  _getMapCenterCoord () {
     const center = this._map.getCenter();
     return this.options.projected
       ? this._getProjectedCoord(this._map.options.crs.project(center))
       : this._getLatLngCoord(center);
   },
 
-  _getProjectedCoord: function (center) {
+  _getProjectedCoord (center) {
     return L.Util.template(
       this.options.template,
       {
@@ -136,7 +136,7 @@ L.Control.EdgeScale = L.Control.extend({
     );
   },
 
-  _getLatLngCoord: function (latLng) {
+  _getLatLngCoord (latLng) {
 
     const { latLngFormatter, latlngFormat, latlngDesignators: designators } = this.options;
 
@@ -196,7 +196,7 @@ L.Control.EdgeScale = L.Control.extend({
    * @see https://code.google.com/p/javascript-number-formatter
    * @authors KPL, KHL 
    */
-  _format: function (m, v) {
+  _format (m, v) {
     if (!m || isNaN(+v)) {
       return v;                                                    // return as it is.
     }
@@ -265,8 +265,6 @@ L.Control.EdgeScale = L.Control.extend({
  */
 L.Control.EdgeScale.Layer = L.Layer.extend({
 
-  includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
-
   options: {
       opacity: 1,
       weight: 0.8,
@@ -299,9 +297,9 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
       pane: 'edgescalePane'
   },
 
-  initialize: function (options) {
+  initialize (options) {
 
-    L.setOptions(this, options);
+    L.Util.setOptions(this, options);
 
     // Constants of the WGS84 ellipsoid needed to calculate meridian length or latitute
     const a   = this._a   = 6378137.0;
@@ -330,7 +328,7 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     this._LIMIT_PHI = 1.484419982;
   },
 
-  onAdd: function (map) {
+  onAdd (map) {
     this._map = map;
 
     let pane                   = map.getPane(this.options.pane);
@@ -359,7 +357,7 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     this._reset();
   },
 
-  onRemove: function (map) {
+  onRemove (map) {
     this._pane.removeChild(this._canvas);
 
     map.off('viewreset', this._reset, this);
@@ -367,45 +365,45 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     map.off('moveend', this._reset, this);
   },
 
-  addTo: function (map) {
+  addTo (map) {
     map.addLayer(this);
     return this;
   },
 
-  setOpacity: function (opacity) {
+  setOpacity (opacity) {
     this.options.opacity = opacity;
-    L.DomUtil.setOpacity(this._canvas, this.options.opacity);
+    this._canvas.style.opacity = this.options.opacity;
     return this;
   },
 
-  bringToFront: function () {
+  bringToFront () {
     if (this._canvas) {
         this._pane.appendChild(this._canvas);
     }
     return this;
   },
 
-  bringToBack: function () {
+  bringToBack () {
     if (this._canvas) {
       this._pane.insertBefore(this._canvas, pane.firstChild);
     }
     return this;
   },
 
-  _initCanvas: function () {
+  _initCanvas () {
     this._canvas = L.DomUtil.create('canvas', '');
     this._ctx = this._canvas.getContext('2d');
 
     this.setOpacity();
 
-    L.extend(this._canvas, {
+    Object.assign(this._canvas, {
       onselectstart: L.Util.falseFn,
       onmousemove: L.Util.falseFn,
-      onload: L.bind(this._onCanvasLoad, this)
+      onload: this._onCanvasLoad.bind(this)
     });
   },
 
-  _reset: function () {
+  _reset () {
     var canvas = this._canvas,
         size = this._map.getSize();
 
@@ -453,11 +451,11 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     this._draw();
   },
 
-  _onCanvasLoad: function () {
+  _onCanvasLoad () {
     this.fire('load');
   },
 
-  _calcInterval: function() {
+  _calcInterval() {
     const { zoomInterval } = this.options;
     const zoom = this._map.getZoom();
 
@@ -487,7 +485,7 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
 
   },
 
-  _draw: function() {
+  _draw() {
     this._ctx.strokeStyle = this.options.color;    
     this._create_lat_ticks();
     this._create_lon_ticks();
@@ -507,13 +505,13 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     this._ctx.fillText(text, size.x / 2, 12);
   },
 
-  _create_lat_ticks: function() {
+  _create_lat_ticks() {
     const { weight } = this.options;
     const size       = this._map.getSize();
     const to_rad     = Math.PI/180.0;
-    const center     = this._merLength(this._map.containerPointToLatLng(L.point(0, size.y / 2)).lat * to_rad);
-    const top        = this._merLength(this._map.containerPointToLatLng(L.point(0,0)).lat * to_rad);
-    const bottom     = this._merLength(this._map.containerPointToLatLng(L.point(0, size.y)).lat * to_rad);
+    const center     = this._merLength(this._map.containerPointToLatLng(new L.Point(0, size.y / 2)).lat * to_rad);
+    const top        = this._merLength(this._map.containerPointToLatLng(new L.Point(0,0)).lat * to_rad);
+    const bottom     = this._merLength(this._map.containerPointToLatLng(new L.Point(0, size.y)).lat * to_rad);
         
     // draw major ticks    
     for (let i = center + this._interval / 2; i < top; i = i + this._interval) {
@@ -544,14 +542,14 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     }
   },
 
-  _create_lon_ticks: function() {
+  _create_lon_ticks() {
     const { weight } = this.options;
     const size       = this._map.getSize();
     const to_rad     = Math.PI/180.0;
     const to_deg     = 180.0/Math.PI;
-    const center     = this._map.containerPointToLatLng(L.point(size.x / 2, 0));
-    const left       = this._map.containerPointToLatLng(L.point(0, 0));
-    const right      = this._map.containerPointToLatLng(L.point(size.x, 0));
+    const center     = this._map.containerPointToLatLng(new L.Point(size.x / 2, 0));
+    const left       = this._map.containerPointToLatLng(new L.Point(0, 0));
+    const right      = this._map.containerPointToLatLng(new L.Point(size.x, 0));
     const sinPhi2    = Math.pow(Math.sin(center.lat * to_rad), 2);
     const N          = this._a / Math.sqrt(1.0 - this._e2 * sinPhi2);
     const dl         = this._interval / (N * Math.cos(center.lat * to_rad)) * to_deg;
@@ -565,31 +563,31 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     for (let i = center.lng - dl / 10; i > left.lng;  i = i - dl / 10) this._draw_lon_tick(i, 4, weight);
   },
 
-  _setCanvasPosition: function() {
+  _setCanvasPosition() {
     let lt = this._map.containerPointToLayerPoint([0, 0]);
     /**
      * @TODO add support for "leaflet-rotate"
      */
     if (this._map._bearing) {
       lt = this._map.rotatedPointToMapPanePoint(
-        this._map.containerPointToLayerPoint(L.point(this._map._container.getBoundingClientRect()))
+        this._map.containerPointToLayerPoint(new L.Point(this._map._container.getBoundingClientRect()))
       );
     }
     L.DomUtil.setPosition(this._canvas, lt);
   },
 
-  _latLngToCanvasPoint: function (latlng) {
-    return L.point(
+  _latLngToCanvasPoint (latlng) {
+    return new L.Point(
       this._map
-        .project(L.latLng(latlng))
+      .project(latlng)
         ._subtract(this._map.getPixelOrigin())
       ).add(this._map._getMapPanePos()); 
   },
 
-  _draw_lat_tick: function (phi, lenght, weight) {
+  _draw_lat_tick (phi, lenght, weight) {
     const to_deg = 180.0/Math.PI;
     const size   = this._map.getSize();
-    const y      = this._latLngToCanvasPoint(L.latLng(phi * to_deg, 0.0)).y;
+    const y      = this._latLngToCanvasPoint(new L.LatLng(phi * to_deg, 0.0)).y;
     this._ctx.lineWidth = weight;
     this._ctx.beginPath();
     this._ctx.moveTo(0, y);
@@ -597,8 +595,8 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     this._ctx.stroke();
   },
 
-  _draw_lon_tick: function(lam, lenght, weight) {
-    const x = this._latLngToCanvasPoint(L.latLng(0.0, lam)).x;
+  _draw_lon_tick(lam, lenght, weight) {
+    const x = this._latLngToCanvasPoint(new L.LatLng(0.0, lam)).x;
     this._ctx.lineWidth = weight;
     this._ctx.beginPath();
     this._ctx.moveTo(x, 0);
@@ -606,13 +604,13 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     this._ctx.stroke();
   },
 
-  _merLength: function(phi) {
+  _merLength(phi) {
     const cos2 = Math.cos(2.0 * phi);
     const sin2 = Math.sin(2.0 * phi); 
     return this._A * (phi + sin2 * (this._c1 + (this._c2 + (this._c3 + (this._c4 + this._c5 * cos2) * cos2) *cos2) * cos2));
   },
 
-  _invmerLength: function(s) {
+  _invmerLength(s) {
     const psi = s/this._A;
     const cos2 = Math.cos(2.0 * psi);
     const sin2 = Math.sin(2.0 * psi); 
@@ -620,6 +618,8 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
   },
 });
 
+// backcomps for leaflet v1
+L.control = L.control || {};
 L.control.edgeScale = function (options) {
   return new L.Control.EdgeScale(options);
 };

@@ -1,20 +1,20 @@
-import { create } from '../utils.js';
-
 /**
- * @see https://github.com/Igor-Vladyka/leaflet.motion
+ * Animate a track with requestAnimationFrame; motion speed is in km/h and duration in ms.
  * 
+ * Inspired by: https://github.com/Igor-Vladyka/leaflet.motion
+ *
  * @example
  * ```js
  * L.control.Elevation({ handlers: [ 'Runner' ], runnerOptions: { polyline: {..}, motion: {..}, marker {..} } })
  * ```
  */
-export async function Runner() {
+export function Runner() {
 
-  await this.import(this.__LMOTION || 'https://unpkg.com/leaflet.motion@0.3.2/dist/leaflet.motion.min.js', typeof L.Motion !== 'object')
+  const _ = L.Control.Elevation.Utils;
 
   let { runnerOptions } = this.options;
 
-  runnerOptions = L.extend(
+  runnerOptions = Object.assign(
     { polyline: {}, motion: {}, marker: undefined },
     'object' === typeof runnerOptions ? runnerOptions : {}
   );
@@ -42,7 +42,7 @@ export async function Runner() {
   this.addRunner = function (runner) {
     let x = this._x(runner.dist);
     let y = this._y(this._findItemForX(x).z)
-    let g = create('svg:circle', '', {
+    let g = _.create('svg:circle', '', {
       class: "runner " + this.options.theme + " height-focus circle-lower",
       r: 6, cx: x, cy: y,
     }, this._container.querySelector('svg > g'));
@@ -76,6 +76,30 @@ export async function Runner() {
   };
 
   this.animate = function (layer, speed = 1500) {
+    const latlngs = [];
+    const collect = segment => {
+      if (segment instanceof L.Polyline) {
+        const append = points => {
+          if (L.LineUtil.isFlat(points)) latlngs.push(...points);
+          else points.forEach(append);
+        };
+        append(segment.getLatLngs());
+      } else if (segment.eachLayer) segment.eachLayer(collect);
+    };
+    collect(layer);
+    if (!latlngs.length) throw new Error('The runner requires a track with coordinates.');
+
+    const distances = [0];
+    for (let i = 1; i < latlngs.length; i++) {
+      distances.push(distances[i - 1] + latlngs[i - 1].distanceTo(latlngs[i]));
+    }
+    const length = distances[distances.length - 1];
+    const motion = Object.assign({ auto: true, speed, easing: value => value }, runnerOptions.motion);
+    const duration = motion.duration || (motion.speed ? length / motion.speed * 3600 : 0);
+    if (!Number.isFinite(duration) || duration < 0 || !Number.isFinite(motion.speed) || motion.speed < 0) {
+      throw new Error('Runner speed and duration must be finite, non-negative numbers.');
+    }
+    if (typeof motion.easing !== 'function') throw new Error('Runner easing must be a function.');
 
     if (this._runner) {
       this._runner.remove();
@@ -83,24 +107,75 @@ export async function Runner() {
 
     layer.setStyle({ opacity: 0.5 });
 
-    const geo = L.geoJson(layer.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1)) });
-    this._runner = L.motion.polyline(
-      geo.toGeoJSON().features[0].geometry.coordinates, 
-      L.extend({}, { color: 'red', pane: 'elevationPane', attribution: '' }, runnerOptions.polyline), 
-      L.extend({}, { auto: true, speed: speed, }, runnerOptions.motion),
-      runnerOptions.marker || undefined
-    );
+    const runner = this._runner = new L.Polyline([], Object.assign(
+      { color: 'red', pane: 'elevationPane', attribution: '' }, runnerOptions.polyline
+    ));
+    const marker = runnerOptions.marker ? new L.Marker(latlngs[0], runnerOptions.marker) : null;
+    let circle;
+    let frame;
+    let started;
+    let elapsed = 0;
+    let running = false;
 
-    // Override default function behavior: `L.Motion.Polyline::_drawMarker()` 
-    this._runner._drawMarker = new Proxy(this._runner._drawMarker, {
-      apply: (target, thisArg, argArray) => {
-        thisArg._runner = thisArg._runner || this.addRunner({ dist: 0 });
-        this.updateRunnerPos(thisArg._runner, argArray[0]);
-        return target.apply(thisArg, argArray);
+    const draw = progress => {
+      const distance = length * progress;
+      let index = 1;
+      while (index < distances.length - 1 && distances[index] < distance) index++;
+      index = Math.min(index, latlngs.length - 1);
+      const previous = Math.max(0, index - 1);
+      const segmentLength = distances[index] - distances[previous];
+      const ratio = segmentLength ? (distance - distances[previous]) / segmentLength : 0;
+      const from = this._map.project(latlngs[previous]);
+      const to = this._map.project(latlngs[index]);
+      const position = this._map.unproject(from.add(to.subtract(from).multiplyBy(ratio)));
+      runner.setLatLngs([...latlngs.slice(0, index), position]);
+      circle = circle || this.addRunner({ dist: 0 });
+      this.updateRunnerPos(circle, position);
+      if (marker) marker.setLatLng(position).addTo(this._map);
+    };
+    const advance = timestamp => {
+      started = started ?? timestamp - elapsed;
+      elapsed = timestamp - started;
+      const progress = duration ? Math.min(1, elapsed / duration) : 1;
+      draw(progress === 1 ? 1 : Math.max(0, Math.min(1, motion.easing(progress, elapsed, 0, 1, duration))));
+      if (progress < 1) frame = requestAnimationFrame(advance);
+      else {
+        running = false;
+        if (runnerOptions.marker?.removeOnEnd) marker.remove();
+        runner.fire('motion-ended', { layer: runner });
       }
+    };
+    runner.motionPause = () => {
+      cancelAnimationFrame(frame);
+      running = false;
+      started = undefined;
+      return runner;
+    };
+    runner.motionResume = () => {
+      if (!running && runner._map) {
+        running = true;
+        frame = requestAnimationFrame(advance);
+      }
+      return runner;
+    };
+    runner.motionStart = () => {
+      runner.motionPause();
+      elapsed = 0;
+      return runner.motionResume();
+    };
+    runner.getMarker = () => marker;
+    runner.on('remove', () => {
+      runner.motionPause();
+      circle?.remove();
+      marker?.remove();
+      this.off('eledata_clear', remove);
+      this.off('remove', remove);
     });
-
-    this._runner.addTo(this._map);
+    const remove = () => runner.remove();
+    this.on('eledata_clear', remove);
+    this.on('remove', remove);
+    runner.addTo(this._map);
+    if (motion.auto) runner.motionStart();
   };
 
   return {};

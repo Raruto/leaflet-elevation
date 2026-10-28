@@ -8,14 +8,10 @@ if (!L._ || !L.i18n) {
 
 export const Elevation = L.Control.Elevation = L.Control.extend({
 
-	includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
-
 	options: Options,
 	__mileFactor:     0.621371, // 1 km = (0.621371 mi)
-	__footFactor:     3.28084,  // 1 m  = (3.28084 ft)
+	__footFactor:     3.28084, // 1 m  = (3.28084 ft)
 	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@5.6.2/dist/togeojson.umd.js',
-	__LGEOMUTIL:     'https://unpkg.com/leaflet-geometryutil@0.10.1/src/leaflet.geometryutil.js',
-	__LALMOSTOVER:   'https://unpkg.com/leaflet-almostover@1.0.1/src/leaflet.almostover.js',
 	__LHOTLINE:      '../libs/leaflet-hotline.min.js',
 	__LDISTANCEM:    '../libs/leaflet-distance-marker.min.js',
 	__LEDGESCALE:    '../libs/leaflet-edgescale.min.js',
@@ -38,6 +34,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._addLayer(layer);
 			this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
 		});
+
 	},
 
 	/**
@@ -99,7 +96,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * 
 	 * @link https://leafletjs.com/examples/extending/extending-3-controls.html#handlers
 	 */
-	// addHandler: function (name, HandlerClass) {
+	// addHandler(name, HandlerClass) {
 	// 	if (HandlerClass) {
 	// 		let handler = this[name] = new HandlerClass(this);
 	// 		this.handlers.push(handler);
@@ -149,7 +146,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 	getBounds(data) {
-		return L.latLngBounds((data || this._data).map((d) => d.latlng));
+		return new L.LatLngBounds((data || this._data).map((d) => d.latlng));
 	},
 
 	/**
@@ -171,19 +168,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	initialize(opts) {
 
-		// opts = L.setOptions(this, opts);
-
 		// Fixes: https://github.com/Raruto/leaflet-elevation/pull/240
-		opts = L.setOptions(this, L.extend({}, _.cloneDeep(Options), opts)); // "deep copy" nested objects (multiple charts)
+		opts = L.Util.setOptions(this, Object.assign({}, _.cloneDeep(Options), opts)); // "deep copy" nested objects (multiple charts)
 
 		this._data           = [];
-		this._layers         = L.featureGroup();
-		this._markers        = L.featureGroup();
-		this._hotline        = L.featureGroup();
-		this._circleMarkers  = L.featureGroup();
-		this._markedSegments = L.polyline([]);
-		this._start          = L.circleMarker([0,0], (opts.trkStart || Options.trkStart));
-		this._end            = L.circleMarker([0,0], (opts.trkEnd || Options.trkEnd));
+		this._layers         = new L.FeatureGroup();
+		this._markers        = new L.FeatureGroup();
+		this._hotline        = new L.FeatureGroup();
+		this._circleMarkers  = new L.FeatureGroup();
+		this._markedSegments = new L.Polyline([]);
+		this._start          = new L.CircleMarker([0,0], (opts.trkStart || Options.trkStart));
+		this._end            = new L.CircleMarker([0,0], (opts.trkEnd || Options.trkEnd));
 		this._chartEnabled   = true;
 		this._yCoordMin      = 0;
 		this._yCoordMax      = -Infinity;
@@ -202,7 +197,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._markedSegments.setStyle(opts.polylineSegments);
 
 		// Leaflet canvas renderer colors
-		L.extend(_.Colors, opts.colors || {});
+		Object.assign(_.Colors, opts.colors || {});
 
 		// Various stuff
 		this._fixCanvasPaths();
@@ -219,8 +214,6 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 		switch(src) {
 			case this.__TOGEOJSON:   condition = typeof toGeoJSON !== 'object'; break;
-			case this.__LGEOMUTIL:   condition = typeof L.GeometryUtil !== 'object'; break;
-			case this.__LALMOSTOVER: condition = typeof L.Handler.AlmostOver  !== 'function'; break;
 			case this.__LDISTANCEM:  condition = typeof L.DistanceMarkers  !== 'function'; break;
 			case this.__LEDGESCALE:  condition = typeof L.Control.EdgeScale !== 'function'; break;
 			case this.__LHOTLINE:    condition = typeof L.Hotline  !== 'function'; break;
@@ -255,6 +248,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._modulesLoaded = true;
 			this.fire('modules_loaded');
 		});
+
+
 
 		this.fire('add');
 
@@ -380,7 +375,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			x: x,
 			y: y,
 			z: z,
-			latlng: L.latLng(x, y, z)
+			latlng: new L.LatLng(x, y, z)
 		});
 
 		this.fire("eledata_updated", { index: this._data.length - 1 });
@@ -402,31 +397,155 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	/**
 	 * Initialize "L.AlmostOver" integration
+	 * 
+	 * Inspired by: https://github.com/makinacorpus/Leaflet.AlmostOver
 	 */
 	_initAlmostOverHandler(map, layer) {
-		return (map && this.options.almostOver && !L.Browser.mobile) ? this.import([this.__LGEOMUTIL, this.__LALMOSTOVER])
-			.then(() => {
-				map.addHandler('almostOver', L.Handler.AlmostOver)
-				if (L.GeometryUtil && map.almostOver && map.almostOver.enabled()) {
-					map.almostOver.addLayer(layer);
-					map
-						.on('almost:move', this._onMouseMoveLayer, this)
-						.on('almost:out', this._onMouseOut, this);
-					this.once('eledata_clear', () => {
-						map.almostOver.removeLayer(layer);
-						map
-						.off('almost:move', this._onMouseMoveLayer, this)
-						.off('almost:out', this._onMouseOut, this);
-					})
+		if (!map || !this.options.almostOver || L.Browser.mobile) return Promise.resolve();
+		map.almostOver = map.almostOver || {
+			_map: map,
+			_projectedLayers: new WeakMap(),
+			_layers: [],
+			_previous: null,
+			_lastSample: 0,
+			enabled() {
+				return !!this._enabled;
+			},
+			enable() {
+				if (this.enabled()) return;
+				this._enabled = true;
+				if (this._map.options.almostOnMouseMove !== false) this._map.on('mousemove', this._sampleMouseMove, this);
+				this._map.on('click dblclick', this._onMouseClick, this);
+			},
+			disable() {
+				if (!this.enabled()) return;
+				this._map.off('mousemove', this._sampleMouseMove, this);
+				this._map.off('click dblclick', this._onMouseClick, this);
+				if (this._previous) this._map.fire('almost:out', { layer: this._previous.layer });
+				this._previous = null;
+				this._enabled = false;
+			},
+			addLayer(layer) {
+				if (layer.eachLayer) layer.eachLayer(child => this.addLayer(child));
+				else if (!this._layers.includes(layer)) {
+					this._layers.push(layer);
+					this._projectedLayers.delete(layer);
 				}
-			}) : Promise.resolve();
+			},
+			removeLayer(layer) {
+				if (layer.eachLayer) layer.eachLayer(child => this.removeLayer(child));
+				else {
+					this._layers = this._layers.filter(item => item !== layer);
+					this._projectedLayers.delete(layer);
+				}
+				this._previous = null;
+			},
+			getClosest(latlng) {
+				let closest;
+				const maxDistance = this._map.options.almostDistance ?? 25;
+
+				const closestPointOnLayer = (map, layer, latlng, maxDistance, cache) => {
+					let closest;
+					const zoom = map.getZoom();
+					const target = map.project(latlng, zoom);
+
+					function checkPath(points) {
+						let closestSquared = closest ? closest.distance * closest.distance : maxDistance * maxDistance;
+
+						for (let i = 1; i < points.length; i++) {
+							const start = points[i - 1];
+							const end = points[i];
+							const point = L.LineUtil.closestPointOnSegment(target, start, end);
+							const distanceSquared = (target.x - point.x) ** 2 + (target.y - point.y) ** 2;
+
+							if (distanceSquared <= maxDistance * maxDistance && distanceSquared < closestSquared) {
+								closestSquared = distanceSquared;
+								closest = {
+									layer,
+									latlng: map.unproject(point, zoom),
+									distance: Math.sqrt(distanceSquared),
+								};
+							}
+						}
+					}
+					if (layer.eachLayer) {
+						layer.eachLayer(child => {
+							const match = closestPointOnLayer(map, child, latlng, closest?.distance ?? maxDistance, cache);
+							if (match && (!closest || match.distance < closest.distance)) closest = match;
+						});
+					} else if (layer.getLatLngs) {
+						const cached = cache.get(layer);
+						if (cached?.zoom === zoom) {
+							cached.paths.forEach(checkPath);
+						} else {
+							const paths = [];
+							const collectPaths = (coords) => {
+								if (!Array.isArray(coords)) return;
+								if (coords.length && Number.isFinite(coords[0]?.lat)) paths.push(coords.map(point => map.project(point, zoom)));
+								else coords.forEach(collectPaths);
+							}
+							collectPaths(layer.getLatLngs());
+							cache.set(layer, { zoom, paths });
+							paths.forEach(checkPath);
+						}
+					}
+					return closest;
+				}
+
+				// ponytail: scans all route segments per sampled move; add a spatial index if large collections become slow.
+				for (const layer of this._layers) {
+					const match = closestPointOnLayer(this._map, layer, latlng, closest?.distance ?? maxDistance, this._projectedLayers);
+					if (match && (!closest || match.distance < closest.distance)) closest = match;
+				}
+
+				return closest;
+			},
+			_sampleMouseMove(event) {
+				const now = Date.now();
+				if (this._map._animatingZoom || this._map._panAnim?._inProgress ||
+					now - this._lastSample < (this._map.options.almostSamplingPeriod ?? 50) || !this._layers.length) return;
+				this._lastSample = now;
+				this._onMouseMove(event);
+			},
+			_onMouseMove(event) {
+				const closest = this.getClosest(event.latlng);
+				if (closest) {
+					if (!this._previous || this._previous.layer !== closest.layer) {
+						if (this._previous) this._map.fire('almost:out', { layer: this._previous.layer });
+						this._map.fire('almost:over', closest);
+					}
+					this._map.fire('almost:move', closest);
+				} else if (this._previous) {
+					this._map.fire('almost:out', { layer: this._previous.layer });
+				}
+				this._previous = closest;
+			},
+			_onMouseClick(event) {
+				const closest = this.getClosest(event.latlng);
+				if (closest) this._map.fire(`almost:${event.type}`, closest);
+			},
+		};
+		if (!map.almostOver.enabled() && map.options.almostOver !== false) map.almostOver.enable();
+		if (map.almostOver.enabled()) {
+			map.almostOver.addLayer(layer);
+			map
+				.on('almost:move', this._onMouseMoveLayer, this)
+				.on('almost:out', this._onMouseOut, this);
+			this.once('eledata_clear', () => {
+				map.almostOver.removeLayer(layer);
+				map
+					.off('almost:move', this._onMouseMoveLayer, this)
+					.off('almost:out', this._onMouseOut, this);
+			});
+		}
+		return Promise.resolve();
 	},
 
 	/**
 	 * Initialize "L.DistanceMarkers" integration
 	 */
 	_initDistanceMarkers() {
-		return this.options.distanceMarkers ? this.import([this.__LGEOMUTIL, this.__LDISTANCEM]) : Promise.resolve();
+		return this.options.distanceMarkers ? this.import(this.__LDISTANCEM) : Promise.resolve();
 	},
 
 	/**
@@ -445,7 +564,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.then(() => {
 				layer.eachLayer((trkseg) => {
 					if (trkseg.feature.geometry.type != "Point") {
-						let geo = L.geoJson(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => L.latLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1))});
+						let geo = new L.GeoJSON(trkseg.toGeoJSON(), { coordsToLatLng: (coords) => new L.LatLng(coords[0], coords[1], coords[2] * (this.options.altitudeFactor || 1))});
 						let line = L.hotline(geo.toGeoJSON().features[0].geometry.coordinates, {
 							renderer: L.Hotline.renderer(),
 							min: isFinite(this.track_info[prop + '_min']) ? this.track_info[prop + '_min'] : 0,
@@ -686,7 +805,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		if (this._renderer) this._renderer.remove()
-		this._renderer               = L.svg({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
+		this._renderer               = new L.SVG({ pane: "elevationPane" }).addTo(this._map); // default leaflet svg renderer
 
 		this.import(this.__LMARKER)
 			.then((m) => {
@@ -769,7 +888,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 */
 	_loadLayer(geojson) {
 		let { polyline, theme, waypoints, wptIcons, wptLabels, distanceMarkers } = this.options;
-		let style = L.extend({}, polyline);
+		let style = Object.assign({}, polyline);
 		let dataAdded = [];
 
 		if (theme) {
@@ -780,7 +899,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this.track_info.name = geojson.name;
 		}
 
-		let layer = L.geoJson(geojson, {
+		let layer = new L.GeoJSON(geojson, {
 			distanceMarkers: distanceMarkers,
 			style: style,
 			pointToLayer: (feature, latlng) => {
@@ -823,7 +942,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 	_onDragEnd({ dragstart, dragend}) {
 		this._hideMarker();
-		this.fitBounds(L.latLngBounds([dragstart.latlng, dragend.latlng]));
+		this.fitBounds(new L.LatLngBounds([dragstart.latlng, dragend.latlng]));
 
 		this.fire("elechart_dragged");
 	},
@@ -1135,20 +1254,20 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			});
 
 			if (grid) {
-				this._registerAxisGrid(L.extend({ name }, grid));
+				this._registerAxisGrid(Object.assign({ name }, grid));
 			}
 
 			if (this.options[name] !== "summary") {
-				if (scale) this._registerAxisScale(L.extend({ name, label: unit }, scale));
-				if (path)  this._registerAreaPath(L.extend({ name }, path));
+				if (scale) this._registerAxisScale(Object.assign({ name, label: unit }, scale));
+				if (path)  this._registerAreaPath(Object.assign({ name }, path));
 			}
 
 			if (tooltip || props.tooltips) {
-				_.each([tooltip, ...(props.tooltips || [])], t => t && this._registerTooltip(L.extend({ name }, t)));
+				_.each([tooltip, ...(props.tooltips || [])], t => t && this._registerTooltip(Object.assign({ name }, t)));
 			}
 
 			if (summary) {
-				_.each(summary, (s, k) => summary[k] = L.extend({ unit }, s));
+				_.each(summary, (s, k) => summary[k] = Object.assign({ unit }, s));
 				this._registerSummary(summary);
 			}
 		}
@@ -1158,9 +1277,9 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		let { wptIcons } = this.options;
 		// generate and cache appropriate icon symbol
 		if (!wptIcons.hasOwnProperty(sym)) {
-			wptIcons[sym] = L.divIcon(L.extend({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } ));
+			wptIcons[sym] = new L.DivIcon(Object.assign({}, wptIcons[""].options, { html: '<i class="elevation-waypoint-icon ' + sym + '"></i>' } ));
 		}
-		let marker = L.marker(latlng, { icon: wptIcons[sym] });
+		let marker = new L.Marker(latlng, { icon: wptIcons[sym] });
 		if (content) {
 			marker.bindPopup(content, { className: 'elevation-popup', keepInView: true }).openPopup();
 			marker.bindTooltip(content, { className: 'elevation-tooltip', direction: 'auto', sticky: true, opacity: 1 }).openTooltip();
@@ -1172,8 +1291,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	 * Add chart or marker tooltip info
 	 */
 	_registerTooltip(props) {
-		props.chart  && this.on("elechart_init",   () => this._chart._registerTooltip(L.extend({}, props, { value: props.chart })));
-		props.marker && this.on("elechart_marker", () => this._marker._registerTooltip(L.extend({}, props, { value: props.marker })));
+		props.chart  && this.on("elechart_init",   () => this._chart._registerTooltip(Object.assign({}, props, { value: props.chart })));
+		props.marker && this.on("elechart_marker", () => this._marker._registerTooltip(Object.assign({}, props, { value: props.marker })));
 	},
 
 	/**
@@ -1339,3 +1458,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 	},
 
 });
+
+// backcomp for leaflet v1
+if (!('on' in Elevation.prototype)) {
+	for (const name of Object.getOwnPropertyNames(L.Evented.prototype)) {
+		if (name !== 'constructor') {
+			Object.defineProperty(Elevation.prototype, name, Object.getOwnPropertyDescriptor(L.Evented.prototype, name));
+		}
+	}
+}

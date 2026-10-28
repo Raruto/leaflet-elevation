@@ -15,10 +15,10 @@ export async function openExample(world, name) {
 
 export async function waitForMapBounds(page, bounds) {
     await page.waitForFunction(({ _southWest, _northEast }) => {
-        const track = L.bounds(map.latLngToContainerPoint(_southWest), map.latLngToContainerPoint(_northEast));
+        const track = new L.Bounds(map.latLngToContainerPoint(_southWest), map.latLngToContainerPoint(_northEast));
         // Leaflet rounds projected coordinates to pixels when fitting the viewport.
         return !map._animatingZoom && !map._panAnim?._inProgress &&
-            L.bounds([-1, -1], map.getSize().add([1, 1])).contains(track);
+            new L.Bounds([-1, -1], map.getSize().add([1, 1])).contains(track);
     }, bounds);
 }
 
@@ -44,6 +44,11 @@ Given('a Chromium browser using the local plugin', async function () {
         const response = await route.fetch();
         let body = (await response.text()).replace(/https:\/\/unpkg.com\/@raruto\/leaflet-elevation@[^/]+\//g, '../');
         if (this.htmlTransform) body = this.htmlTransform(body);
+        if (process.env.LEAFLET_VERSION === '2') {
+            body = body
+                .replace(/leaflet@[^/]+\/dist\/leaflet\.js/g, 'leaflet@2.0.0-alpha.1/dist/leaflet-global.js')
+                .replace('<head>', '<head><link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css">');
+        }
         await route.fulfill({ response, body });
     });
 });

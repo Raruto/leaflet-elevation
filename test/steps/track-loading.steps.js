@@ -7,7 +7,6 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
     const { outputFiles } = await build({
         stdin: {
             contents: `
-                import 'leaflet';
                 import * as toGeoJSON from '@tmcw/togeojson';
                 import './dist/leaflet-elevation.js';
                 import { Chart } from './src/components/chart.js';
@@ -24,7 +23,7 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
                         return Array.isArray(src) ? Promise.all(src.map(item => this.import(item))) : Promise.resolve();
                     }
                 });
-                window.map = L.map('map').setView([45, 10], 5);
+                window.map = new L.Map('map').setView([45, 10], 5);
                 window.controlElevation = L.control.elevation({
                     handlers: [Distance, Time, Altitude],
                     detached: false,
@@ -45,8 +44,9 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
     });
     await this.page.goto(this.base);
     await this.page.setContent('<div id="map" style="height:400px"></div>');
-    await this.page.addStyleTag({ url: `${this.base}/node_modules/leaflet/dist/leaflet.css` });
+    await this.page.addStyleTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' });
     await this.page.addStyleTag({ url: `${this.base}/dist/leaflet-elevation.css` });
+    await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
     this.unexpectedScripts = [];
     this.page.on('request', request => {
         if (request.resourceType() === 'script') this.unexpectedScripts.push(request.url());

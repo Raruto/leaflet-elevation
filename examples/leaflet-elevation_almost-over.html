@@ -7,14 +7,14 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<link rel="dns-prefetch" href="https://tile.openstreetmap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
-	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
-	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js" as="script">
 
 	<style>@import '../libs/fullpage.css';</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js"></script>
 </head>
 
 <body>
@@ -31,12 +31,9 @@
 				resizerControl: true,
 				rotateControl: false,
 				plugins: [
-					// 'leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js',
-					// 'leaflet-almostover@1.0.1/src/leaflet.almostover.js',
-					'@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.css',
-					'@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.js'
+					'@raruto/leaflet-elevation@2.9.0/dist/leaflet-elevation.min.css',
+					'@raruto/leaflet-elevation@2.9.0/dist/leaflet-elevation.min.js'
 				],
-				// see: L.AlmostOver for more info
 				almostOver: true,
 				almostDistance: 50,
 				almostSamplingPeriod: 125,
@@ -61,26 +58,12 @@
 			},
 		};
 
-		let map = L.map('map', opts.map);
+		let map = new L.Map('map', opts.map);
 		let controlElevation, controlLayer;
 
 		map.on('plugins_loaded', function() {
-
-			// Almost the same as using native integration: (almostOver: true)
-			// L.Control.Elevation.addInitHook(function() {
-			// 	this.on('eledata_loaded', function(e) {
-			// 		let map = this._map;
-			// 		if (map && !L.Browser.mobile && map.almostOver && map.almostOver.enabled()) {
-			// 			map.almostOver.addLayer(e.layer);
-			// 			map
-			// 				.on('almost:move', (e) => this._onMouseMoveLayer(e))
-			// 				.on('almost:out', (e) => this._onMouseOut(e));
-			// 		}
-			// 	});
-			// });
-
 			controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
-			controlLayer = L.control.layers(null, null, opts.layersControl.options);
+			controlLayer = new L.Control.Layers(null, null, opts.layersControl.options);
 
 			controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 

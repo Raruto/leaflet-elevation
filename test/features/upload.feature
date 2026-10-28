@@ -16,4 +16,9 @@ Feature: Uploading GPX tracks with waypoints
     When I upload "time.gpx"
     Then the track has 0 visible labelled waypoint markers and chart checkpoints
     And the uploaded track has a positive distance
-    And no browser errors or warnings have occurred during uploads
+    And no browser errors or unexpected warnings have occurred during uploads
+
+  Scenario: Invalid uploads leave the current track intact
+    Given the GPX upload example is ready
+    When I upload "waypoints.gpx"
+    Then invalid, unsupported and oversized uploads are reported without clearing the track

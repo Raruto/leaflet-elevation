@@ -23,10 +23,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-L.Mixin.Selectable = {
-  includes: L.Mixin.Events,
-
-  setSelected: function(s) {
+const selectable = {
+  setSelected(s) {
     var selected = !!s;
     if (this._selected !== selected) {
       this._selected = selected;
@@ -34,19 +32,17 @@ L.Mixin.Selectable = {
     }
   },
 
-  isSelected: function() {
+  isSelected() {
     return !!this._selected;
   },
 };
 
-L.Mixin.Selection = {
-  includes: L.Mixin.Events,
-
-  getSelection: function() {
+const selection = {
+  getSelection() {
     return this._selected;
   },
 
-  setSelection: function(item) {
+  setSelection(item) {
     if (this._selected === item) {
       if (item !== null) {
         item.setSelected(!item.isSelected());
@@ -68,12 +64,12 @@ L.Mixin.Selection = {
 };
 
 L.Control.LayersLegend = L.Control.Layers.extend({
-  _onInputClick: function() {
+  _onInputClick() {
     this._handlingClick = true;
 
     this._layerControlInputs.reduceRight((_,input) => {
       if (input.checked) {
-        this._map.fireEvent("legend_selected", {
+        this._map.fire("legend_selected", {
           layer: this._getLayer(input.layerId).layer,
           input: input,
         }, true);
@@ -87,11 +83,14 @@ L.Control.LayersLegend = L.Control.Layers.extend({
   }
 });
 
+// backcomps for leaflet v1
+L.control = L.control || {};
 L.control.layersLegend = (baseLayers, overlays, options) => new L.Control.LayersLegend(baseLayers, overlays, options);
 
-L.GeoJSON.include(L.Mixin.Selectable);
+L.GeoJSON.include(selectable);
 
-L.GpxGroup = L.Class.extend({
+L.GpxGroup = L.Evented.extend({
+  ...selection,
   options: {
     highlight: {
       color: '#ff0',
@@ -122,31 +121,30 @@ L.GpxGroup = L.Class.extend({
     },
   },
 
-  initialize: function(tracks, options) {
+  initialize(tracks, options) {
 
     L.Util.setOptions(this, options);
 
     this._count       = 0;
     this._loadedCount = 0;
     this._tracks      = tracks;
-    this._layers      = L.featureGroup();
-    this._markers     = L.featureGroup();
+    this._layers      = new L.FeatureGroup();
+    this._markers     = new L.FeatureGroup();
     this._elevation   = L.control.elevation(this.options.elevation_options);
     this._legend      = L.control.layersLegend(null, null, this.options.legend_options);
 
     this.options.points.forEach((poi) => 
-      L
-        .marker(poi.latlng, { icon: L.icon(this.options.points_options.icon) })
+      new L.Marker(poi.latlng, { icon: new L.Icon(this.options.points_options.icon) })
         .bindTooltip(poi.name, { direction: 'auto' }).addTo(this._markers)
     );
 
   },
 
-  getBounds: function() {
+  getBounds() {
     return this._layers.getBounds();
   },
 
-  addTo: function(map) {
+  addTo(map) {
     this._layers.addTo(map);
     this._markers.addTo(map);
 
@@ -158,7 +156,7 @@ L.GpxGroup = L.Class.extend({
 
   },
 
-  addTrack: function(track) {
+  addTrack(track) {
     if (track instanceof Object) {
       this._loadGeoJSON(track);
     } else {
@@ -169,14 +167,14 @@ L.GpxGroup = L.Class.extend({
     }
   },
 
-  _loadGeoJSON: function(geojson, fallbackName) {
+  _loadGeoJSON(geojson, fallbackName) {
     if (geojson) {
       geojson.name = geojson.name || (geojson[0] && geojson[0].properties.name) || fallbackName;
       this._loadRoute(geojson);
     }
   },
 
-  _loadRoute: function(data) {
+  _loadRoute(data) {
     if (!data) return;
 
     var line_style = {
@@ -186,7 +184,7 @@ L.GpxGroup = L.Class.extend({
       distanceMarkers: this.options.distanceMarkers_options,
     };
 
-    var route = L.geoJson(data, {
+    var route = new L.GeoJSON(data, {
       name: data.name || '',
       style: (feature) => line_style,
       distanceMarkers: line_style.distanceMarkers,
@@ -194,29 +192,27 @@ L.GpxGroup = L.Class.extend({
       filter: feature => feature.geometry.type != "Point",
     });
 
-    
-    this._elevation.import(this._elevation.__LGEOMUTIL).then(() => {
-      route.addTo(this._layers);
+    route.addTo(this._layers);
 
-      route.eachLayer((layer) => this._onEachRouteLayer(route, layer));
-      this._onEachRouteLoaded(route);
-    });
+    route.eachLayer((layer) => this._onEachRouteLayer(route, layer));
+    this._onEachRouteLoaded(route);
 
   },
 
-  _onEachRouteLayer: function(route, layer) {
+  _onEachRouteLayer(route, layer) {
     var polyline = layer;
+    var hoverEvents = L.version.startsWith('2.') ? ['pointerover', 'pointerout'] : ['mouseover', 'mouseout'];
 
-    route.on('selected', L.bind(this._onRouteSelected, this, route, polyline));
+    route.on('selected', this._onRouteSelected.bind(this, route, polyline));
 
-    polyline.on('mouseover', L.bind(this._onRouteMouseOver, this, route, polyline));
-    polyline.on('mouseout', L.bind(this._onRouteMouseOut, this, route, polyline));
-    polyline.on('click', L.bind(this._onRouteClick, this, route, polyline));
+    polyline.on(hoverEvents[0], this._onRouteMouseOver.bind(this, route, polyline));
+    polyline.on(hoverEvents[1], this._onRouteMouseOut.bind(this, route, polyline));
+    polyline.on('click', this._onRouteClick.bind(this, route, polyline));
 
     polyline.bindTooltip(route.options.name, { direction: 'auto', sticky: true, });
   },
 
-  _onEachRouteLoaded: function(route) {
+  _onEachRouteLoaded(route) {
     if (this.options.legend) {
       this._legend.addBaseLayer(route, '<svg id="legend_' + route._leaflet_id + '" width="25" height="10" version="1.1" xmlns="http://www.w3.org/2000/svg">' + '<line x1="0" x2="50" y1="5" y2="5" stroke="' + route.options.originalStyle.color + '" fill="transparent" stroke-width="5" /></svg>' + ' ' + route.options.name);
     }
@@ -234,21 +230,21 @@ L.GpxGroup = L.Class.extend({
     }
   },
 
-  highlight: function(route, polyline) {
+  highlight(route, polyline) {
     polyline.setStyle(this.options.highlight);
     if (this.options.distanceMarkers) {
       polyline.addDistanceMarkers();
     }
   },
 
-  unhighlight: function(route, polyline) {
+  unhighlight(route, polyline) {
     polyline.setStyle(route.options.originalStyle);
     if (this.options.distanceMarkers) {
       polyline.removeDistanceMarkers();
     }
   },
 
-  _onRouteMouseOver: function(route, polyline) {
+  _onRouteMouseOver(route, polyline) {
     if (!route.isSelected()) {
       this.highlight(route, polyline);
       if (this.options.legend) {
@@ -259,24 +255,24 @@ L.GpxGroup = L.Class.extend({
     this.fire('route_mouseover', { route: route, polyline: polyline });
   },
 
-  _onRouteMouseOut: function(route, polyline) {
+  _onRouteMouseOut(route, polyline) {
     if (!route.isSelected()) {
       this.unhighlight(route, polyline);
     }
     this.fire('route_mouseout', { route: route, polyline: polyline });
   },
 
-  _onRouteClick: function(route, polyline) {
+  _onRouteClick(route, polyline) {
     this.setSelection(route);
   },
 
-  _onRouteSelected: function(route, polyline) {
+  _onRouteSelected(route, polyline) {
     if (!route.isSelected()) {
       this.unhighlight(route, polyline);
     }
   },
 
-  _onSelectionChanged: function(e) {
+  _onSelectionChanged(e) {
     var elevation = this._elevation;
     var eleDiv = elevation.getContainer();
     var route = this.getSelection();
@@ -300,7 +296,7 @@ L.GpxGroup = L.Class.extend({
     }
   },
 
-  _onLegendSelected: function(e) {
+  _onLegendSelected(e) {
     var parent = e.input.closest('.leaflet-control-layers-list');
     var route = e.layer;
 
@@ -321,11 +317,11 @@ L.GpxGroup = L.Class.extend({
     });
   },
 
-  _uniqueColors: function(count) {
+  _uniqueColors(count) {
     return count === 1 ? ['#0000ff'] : new Array(count).fill(null).map((_,i) => this._hsvToHex(i * (1 / count), 1, 0.7));
   },
 
-  _hsvToHex: function(h, s, v) {
+  _hsvToHex(h, s, v) {
     var i = Math.floor(h * 6);
     var f = h * 6 - i;
     var p = v * (1 - s);
@@ -335,13 +331,10 @@ L.GpxGroup = L.Class.extend({
     return rgb.map(d => d * 255).reduce((hex, byte) => hex + ((byte >> 4) & 0x0F).toString(16) + (byte & 0x0F).toString(16), "#");
   },
 
-  removeFrom: function(map) {
+  removeFrom(map) {
     this._layers.removeFrom(map);
   },
 
 });
-
-L.GpxGroup.include(L.Mixin.Events);
-L.GpxGroup.include(L.Mixin.Selection);
 
 L.gpxGroup = (tracks, options) => new L.GpxGroup(tracks, options);

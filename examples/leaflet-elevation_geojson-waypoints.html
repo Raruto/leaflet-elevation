@@ -7,18 +7,18 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<link rel="dns-prefetch" href="https://tile.opentopomap.org">
 	<link rel="dns-prefetch preconnect" href="https://unpkg.com" />
-	<link rel="preload" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" as="script">
-	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script">
+	<link rel="preload" href="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js" as="script">
 
 	<style>@import '../libs/fullpage.css';</style>
 
 	<!-- leaflet-ui -->
-	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet-src.js"></script>
-	<script src="https://unpkg.com/leaflet-ui@0.6.0/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js"></script>
 
 	<!-- leaflet-elevation -->
-	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.css" />
-	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.9.0/dist/leaflet-elevation.min.css" />
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@2.9.0/dist/leaflet-elevation.min.js"></script>
 
 	<style>
 		.elevation-tooltip.leaflet-tooltip,
@@ -113,28 +113,28 @@
 					 * Custom waypoint icons
 					 */
 					wptIcons: {
-						'': L.divIcon({
+						'': new L.DivIcon({
 							className: 'elevation-waypoint-marker',
 							html: '<i class="elevation-waypoint-icon default"></i>',
 							iconSize: [30, 30],
 							iconAnchor: [8, 30],
 						}),
-						'summit': L.divIcon({
+						'summit': new L.DivIcon({
 							className: 'elevation-waypoint-marker',
 							html: '<i class="elevation-waypoint-icon peak"></i>',
 							iconSize: [40, 40],
 						}),
-						'trail-head': L.divIcon({
+						'trail-head': new L.DivIcon({
 							className: 'elevation-waypoint-marker',
 							html: '<i class="elevation-waypoint-icon peak"></i>',
 							iconSize: [40, 40],
 						}),
-						// 'dollar-lake': L.divIcon({
+						// 'dollar-lake': new L.DivIcon({
 						// 	className: 'elevation-waypoint-marker',
 						// 	html: '<i class="elevation-waypoint-icon poi"></i>',
 						// 	iconSize: [20, 20],
 						// }),
-						// 'wyeast-basin': L.divIcon({
+						// 'wyeast-basin': new L.DivIcon({
 						// 	className: 'elevation-waypoint-marker',
 						// 	html: '<i class="elevation-waypoint-icon poi"></i>',
 						// 	iconSize: [20, 20],
@@ -144,7 +144,7 @@
 			}
 		};
 
-		let map = L.map('map', opts.map);
+		let map = new L.Map('map', opts.map);
 
 		let controlElevation = L.control.elevation(opts.elevationControl.options);
 

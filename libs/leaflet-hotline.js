@@ -67,7 +67,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Sets the width of the canvas. Used when clearing the canvas.
          * @param {number} width - Width of the canvas.
          */
-        width: function (width) {
+        width(width) {
             this._width = width;
             return this;
         },
@@ -76,7 +76,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Sets the height of the canvas. Used when clearing the canvas.
          * @param {number} height - Height of the canvas.
          */
-        height: function (height) {
+        height(height) {
             this._height = height;
             return this;
         },
@@ -85,7 +85,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Sets the weight of the path.
          * @param {number} weight - Weight of the path in px.
          */
-        weight: function (weight) {
+        weight(weight) {
             this._weight = weight;
             return this;
         },
@@ -94,7 +94,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Sets the width of the outline around the path.
          * @param {number} outlineWidth - Width of the outline in px.
          */
-        outlineWidth: function (outlineWidth) {
+        outlineWidth(outlineWidth) {
             this._outlineWidth = outlineWidth;
             return this;
         },
@@ -103,7 +103,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Sets the color of the outline around the path.
          * @param {string} outlineColor - A CSS color value.
          */
-        outlineColor: function (outlineColor) {
+        outlineColor(outlineColor) {
             this._outlineColor = outlineColor;
             return this;
         },
@@ -113,7 +113,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * @param {Object.<number, string>} palette  - Gradient definition.
          * e.g. { 0.0: 'white', 1.0: 'black' }
          */
-        palette: function (palette) {
+        palette(palette) {
             var canvas = document.createElement('canvas'),
                 ctx = canvas.getContext('2d'),
                 gradient = ctx.createLinearGradient(0, 0, 0, 256);
@@ -137,7 +137,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Sets the value used at the start of the palette gradient.
          * @param {number} min
          */
-        min: function (min) {
+        min(min) {
             this._min = min;
             return this;
         },
@@ -146,7 +146,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Sets the value used at the end of the palette gradient.
          * @param {number} max
          */
-        max: function (max) {
+        max(max) {
             this._max = max;
             return this;
         },
@@ -160,7 +160,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Sets the data that gets drawn on the canvas.
          * @param {(Path|Path[])} data - A single path or an array of paths.
          */
-        data: function (data) {
+        data(data) {
             this._data = data;
             return this;
         },
@@ -169,7 +169,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Adds a path to the list of paths.
          * @param {Path} path
          */
-        add: function (path) {
+        add(path) {
             this._data.push(path);
             return this;
         },
@@ -177,7 +177,7 @@ https://github.com/iosphere/Leaflet.hotline/
         /**
          * Draws the currently set paths.
          */
-        draw: function () {
+        draw() {
             var ctx = this._ctx;
 
             ctx.globalCompositeOperation = 'source-over';
@@ -194,7 +194,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * @param {number} value - Value to get the color for, should be between min and max.
          * @returns {Array.<number>} The RGB values as an array [r, g, b]
          */
-        getRGBForValue: function (value) {
+        getRGBForValue(value) {
             var valueRelative = this._max === this._min ? 0 : Math.min(Math.max((value - this._min) / (this._max - this._min), 0), 0.999);
             var paletteIndex = Math.floor(valueRelative * 256) * 4;
 
@@ -209,7 +209,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Draws the outline of the graphs.
          * @private
          */
-        _drawOutline: function (ctx) {
+        _drawOutline(ctx) {
             var i, j, dataLength, path, pathLength, pointStart, pointEnd;
 
             if (this._outlineWidth) {
@@ -235,7 +235,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * Draws the color encoded hotline of the graphs.
          * @private
          */
-        _drawHotline: function (ctx) {
+        _drawHotline(ctx) {
             var i, j, dataLength, path, pathLength, pointStart, pointEnd,
                 gradient, gradientStartRGB, gradientEndRGB;
 
@@ -272,18 +272,18 @@ https://github.com/iosphere/Leaflet.hotline/
 
 
     var Renderer = L.Canvas.extend({
-        _initContainer: function () {
+        _initContainer() {
             L.Canvas.prototype._initContainer.call(this);
             this._hotline = new Hotline(this._container);
         },
 
-        _update: function () {
+        _update() {
             L.Canvas.prototype._update.call(this);
             this._hotline.width(this._container.width);
             this._hotline.height(this._container.height);
         },
 
-        _updatePoly: function (layer) {
+        _updatePoly(layer) {
             if (!this._drawing) { return; }
 
             var parts = layer._parts;
@@ -297,7 +297,7 @@ https://github.com/iosphere/Leaflet.hotline/
                 .draw();
         },
 
-        _updateOptions: function (layer) {
+        _updateOptions(layer) {
             if (layer.options.min != null) {
                 this._hotline.min(layer.options.min);
             }
@@ -320,7 +320,7 @@ https://github.com/iosphere/Leaflet.hotline/
     });
 
     var renderer = function (options) {
-        return L.Browser.canvas ? new Renderer(options) : null;
+        return document.createElement('canvas').getContext ? new Renderer(options) : null;
     };
 
 
@@ -329,7 +329,7 @@ https://github.com/iosphere/Leaflet.hotline/
          * This is just a copy of the original Leaflet version that support a third z coordinate.
          * @see {@link http://leafletjs.com/reference.html#lineutil-clipsegment|Leaflet}
          */
-        clipSegment: function (a, b, bounds, useLastCode, round) {
+        clipSegment(a, b, bounds, useLastCode, round) {
             var codeA = useLastCode ? this._lastCode : L.LineUtil._getBitCode(a, bounds),
                 codeB = L.LineUtil._getBitCode(b, bounds),
                 codeOut, p, newCode;
@@ -385,14 +385,14 @@ https://github.com/iosphere/Leaflet.hotline/
             outlineWidth: 1
         },
 
-        getRGBForValue: function (value) {
+        getRGBForValue(value) {
             return this._renderer._hotline.getRGBForValue(value);
         },
 
         /**
          * Just like the Leaflet version, but with support for a z coordinate.
          */
-        _projectLatlngs: function (latlngs, result, projectedBounds) {
+        _projectLatlngs(latlngs, result, projectedBounds) {
             var flat = latlngs[0] instanceof L.LatLng,
                 len = latlngs.length,
                 i, ring;
@@ -416,7 +416,7 @@ https://github.com/iosphere/Leaflet.hotline/
         /**
          * Just like the Leaflet version, but uses `Util.clipSegment()`.
          */
-        _clipPoints: function () {
+        _clipPoints() {
             if (this.options.noClip) {
                 this._parts = this._rings;
                 return;
@@ -448,7 +448,7 @@ https://github.com/iosphere/Leaflet.hotline/
             }
         },
 
-        _clickTolerance: function () {
+        _clickTolerance() {
             return this.options.weight / 2 + this.options.outlineWidth + (L.Browser.touch ? 10 : 0);
         }
     });

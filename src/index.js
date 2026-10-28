@@ -39,4 +39,6 @@ import { Elevation } from './control';
 
 Elevation.Utils = _;
 
+// backcomps for leaflet v1
+L.control = L.control || {};
 L.control.elevation = (options) => new Elevation(options);

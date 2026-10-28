@@ -1,5 +1,3 @@
-import { create } from '../utils.js';
-
 /**
  * @see https://github.com/Raruto/leaflet-elevation/issues/251
  * 
@@ -63,7 +61,7 @@ export function LinearGradient() {
   };
 
   const { preferCanvas } = this.options;
-  const { attr, path: path_name, range, min, max } = L.extend({
+  const { attr, path: path_name, range, min, max } = Object.assign({
     attr: 'z',
     path: 'altitude',
     range: { 0.0: '#008800', 0.5: '#ffff00', 1.0: '#ff0000' },
@@ -95,8 +93,8 @@ export function LinearGradient() {
       path.__fillStyle = gradient = chart._context.createLinearGradient(0, 0, chart._width(), 0);
     } else {
       defs.querySelector('#' + gradient_id)?.remove();
-      gradient = create('svg:linearGradient', '', { id: gradient_id }, defs);
-      gradient.addColorStop = (offset, color) => create('svg:stop', '', { offset, 'stop-color': color }, gradient);
+      gradient = _.create('svg:linearGradient', '', { id: gradient_id }, defs);
+      gradient.addColorStop = (offset, color) => _.create('svg:stop', '', { offset, 'stop-color': color }, gradient);
       path.setAttribute('fill', 'url(#' + gradient_id + ')');
       path.classList.remove('area');
     }
@@ -119,8 +117,8 @@ export function LinearGradient() {
     const chart = this._chart;
     const { defs } = chart._chart.utils;
     defs.querySelector('#' + legend_id)?.remove();
-    const legendGradient = create('svg:linearGradient', '', { id: legend_id }, defs);
-    Object.keys(range).sort().forEach(i => create('svg:stop', '', { offset: i, 'stop-color': range[i] }, legendGradient));
+    const legendGradient = _.create('svg:linearGradient', '', { id: legend_id }, defs);
+    Object.keys(range).sort().forEach(i => _.create('svg:stop', '', { offset: i, 'stop-color': range[i] }, legendGradient));
 
     const rect = chart._container.querySelector('.legend-' + path_name + ' > rect');
     if (rect) {

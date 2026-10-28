@@ -1,5 +1,6 @@
 import * as esbuild from 'esbuild';
 import { fileURLToPath } from 'node:url';
+import { readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const builds = [
@@ -34,6 +35,14 @@ const builds = [
         minify: true,
         external: ['../images/*.svg'],
     },
+    ...readdirSync('libs')
+        .filter(f => /\.(js|css)$/.test(f) && !/\.min\./.test(f) && f !== 'fullpage.css')
+        .map(f => ({
+            entryPoints: [`libs/${f}`],
+            outfile: `libs/${f.replace(/\.(js|css)$/, '.min.$1')}`,
+            minify: true,
+            allowOverwrite: true,
+        })),
 ];
 
 export async function build({ watch = false } = {}) {
