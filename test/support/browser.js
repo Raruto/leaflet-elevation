@@ -47,7 +47,6 @@ Given('a Chromium browser using the local plugin', async function () {
         if (process.env.LEAFLET_VERSION === '2') {
             body = body
                 .replace(/leaflet@[^/]+\/dist\/leaflet\.js/g, 'leaflet@2.0.0-alpha.1/dist/leaflet-global.js')
-                .replace(/<script src="https:\/\/unpkg\.com\/leaflet-ui@[^"]+\/dist\/leaflet-ui\.js"><\/script>/g, '')
                 .replace('<head>', '<head><link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css">');
         }
         await route.fulfill({ response, body });

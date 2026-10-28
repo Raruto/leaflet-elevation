@@ -8,6 +8,7 @@
  */
 export async function Runner() {
 
+  // backcomps for leaflet v1
   Object.assign(L, {
     latLngBounds: L.latLngBounds || ((...args) => new L.LatLngBounds(...args)),
     latLng: L.latLng || ((...args) => new L.LatLng(...args)),
@@ -18,6 +19,7 @@ export async function Runner() {
   L.Util.isArray = L.Util.isArray || Array.isArray;
   L.Util.requestAnimFrame = L.Util.requestAnimFrame || ((fn, context) => window.requestAnimationFrame(fn.bind(context)));
   L.Util.cancelAnimFrame = L.Util.cancelAnimFrame || (id => window.cancelAnimationFrame(id));
+
   await this.import(this.__LMOTION || 'https://unpkg.com/leaflet.motion@0.3.2/dist/leaflet.motion.min.js', typeof L.Motion !== 'object')
 
   const _ = L.Control.Elevation.Utils;

@@ -15,16 +15,6 @@
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js"></script>
-	<script>
-		if (!L.map) {
-			document.write('<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/libs/leaflet-distance-marker.min.css">');
-			document.write('<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.css">');
-			document.write('<script src="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/libs/leaflet-distance-marker.js"><\/script>');
-			document.write('<script src="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.js"><\/script>');
-			document.write('<script src="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/libs/leaflet-gpxgroup.js"><\/script>');
-		}
-	</script>
-
 	<style>
 		.leaflet-right .leaflet-control-layers-list {
 			max-width: 250px;
@@ -140,7 +130,7 @@
 		let map = new L.Map('map', opts.map);
 		let routes;
 
-		function initializePlugins() {
+		map.on('plugins_loaded', function() {
 			routes = L.gpxGroup(tracks, {
 				points: points,
 				points_options: opts.points,
@@ -160,10 +150,7 @@
 			routes.addTo(map);
 
 			map.attributionControl.addAttribution('Map Data: &copy; <a href="https://github.com/adoroszlai">Attila Doroszlai</a> (<a href="https://github.com/adoroszlai/joebed/blob/gh-pages/LICENSE.md">MIT License</a>)');
-		}
-
-		if (L.map) map.on('plugins_loaded', initializePlugins);
-		else initializePlugins();
+		});
 
 	</script>
 

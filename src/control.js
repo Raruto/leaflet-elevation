@@ -1,17 +1,9 @@
 import * as _      from './utils';
 import { Options } from './options';
 
-L.locales = L.locales || {};
-L.registerLocale = L.registerLocale || ((name, messages) => {
-	L.locales[name] = Object.assign({}, L.locales[name], messages);
-});
-L.setLocale = L.setLocale || (locale => { L.locale = locale; });
-
+// "leaflet-i18n" fallback
 if (!L._ || !L.i18n) {
-	L._ = L.i18n = (string, data) => {
-		const translated = L.locale && L.locales[L.locale] && L.locales[L.locale][string];
-		return L.Util.template(translated || string, data);
-	};
+	L._ = L.i18n = (string, data) => string;
 }
 
 export const Elevation = L.Control.Elevation = L.Control.extend({
@@ -1354,6 +1346,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 });
 
+// backcomp for leaflet v1
 if (!('on' in Elevation.prototype)) {
 	for (const name of Object.getOwnPropertyNames(L.Evented.prototype)) {
 		if (name !== 'constructor') {

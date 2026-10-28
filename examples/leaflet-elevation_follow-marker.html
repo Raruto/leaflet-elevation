@@ -15,12 +15,6 @@
 	<!-- leaflet-ui -->
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/leaflet-ui@0.7.0/dist/leaflet-ui.js"></script>
-	<script>
-		if (!L.map) {
-			document.write('<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.css">');
-			document.write('<script src="https://unpkg.com/@raruto/leaflet-elevation@2.8.0/dist/leaflet-elevation.min.js"><\/script>');
-		}
-	</script>
 </head>
 
 <body>
@@ -60,17 +54,14 @@
 		let map = new L.Map('map', opts.map);
 		let controlElevation, controlLayer;
 
-		function initializePlugins() {
+		map.on('plugins_loaded', function() {
 			controlElevation = L.control.elevation(opts.elevationControl.options).addTo(map);
 			controlLayer = new L.Control.Layers(null, null, opts.layersControl.options);
 
 			controlElevation.on('eledata_loaded', ({layer, name}) => controlLayer.addTo(map) && layer.eachLayer((trkseg) => trkseg.feature.geometry.type != "Point" && controlLayer.addOverlay(trkseg, trkseg.feature && trkseg.feature.properties && trkseg.feature.properties.name || name)));
 
 			controlElevation.load(opts.elevationControl.url);
-		}
-
-		if (L.map) map.on('plugins_loaded', initializePlugins);
-		else initializePlugins();
+		});
 	</script>
 
 	<a href="https://github.com/Raruto/leaflet-elevation" class="view-on-github" style="position: fixed;bottom: 30px;left: calc(50% - 81px);z-index: 9999;"> <img alt="View on Github" src="https://raruto.github.io/img/view-on-github.png" title="View on Github" width="163"> </a>
