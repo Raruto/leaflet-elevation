@@ -618,6 +618,7 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
   },
 });
 
+// backcomps for leaflet v1
 L.control = L.control || {};
 L.control.edgeScale = function (options) {
   return new L.Control.EdgeScale(options);

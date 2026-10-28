@@ -318,9 +318,9 @@ All notable changes to this project are documented in the [releases](https://git
 ---
 
 **Compatibile with:**
-Leaflet 1.9.4 and Leaflet 2.0.0-alpha.1 (global build).
-[![Leaflet 1.x and 2.0 alpha compatible!](https://img.shields.io/badge/Leaflet-1.x%20%2F%202.0%20alpha-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
-[![@tmcw/togeojson v5 compatibile!](https://img.shields.io/badge/@tmcw/togeojson-5.6-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
+[![Leaflet 1.9.4](https://img.shields.io/badge/Leaflet-1.9.4-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
+[![Leaflet 2.0.0-alpha.1](https://img.shields.io/badge/Leaflet-2.0.0--alpha.1-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
+[![@tmcw/togeojson v5](https://img.shields.io/badge/@tmcw/togeojson-5.6-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
 
 
 ---

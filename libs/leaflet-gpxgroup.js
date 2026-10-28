@@ -83,6 +83,7 @@ L.Control.LayersLegend = L.Control.Layers.extend({
   }
 });
 
+// backcomps for leaflet v1
 L.control = L.control || {};
 L.control.layersLegend = (baseLayers, overlays, options) => new L.Control.LayersLegend(baseLayers, overlays, options);
 

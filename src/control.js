@@ -218,11 +218,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			case this.__TOGEOJSON:   condition = typeof toGeoJSON !== 'object'; break;
 			case this.__LGEOMUTIL:
 				condition = typeof L.GeometryUtil !== 'object';
+				// backcomps for leaflet v1
 				L.extend = L.extend || Object.assign;
 				L.point = L.point || ((x, y) => new L.Point(x, y));
 				break;
 			case this.__LALMOSTOVER:
 				condition = typeof L.Handler.AlmostOver !== 'function';
+				// backcomp for leaflet v1
 				L.stamp = L.stamp || L.Util.stamp;
 				break;
 			case this.__LDISTANCEM:  condition = typeof L.DistanceMarkers  !== 'function'; break;

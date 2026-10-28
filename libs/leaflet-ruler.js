@@ -178,6 +178,8 @@ L.Control.Ruler = L.Control.extend({
 		this._toggleMeasure();
 	},
 });
+
+// backcomps for leaflet v1
 L.control = L.control || {};
 L.control.ruler = function (options) {
 	return new L.Control.Ruler(options);
