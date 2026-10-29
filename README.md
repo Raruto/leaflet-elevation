@@ -136,6 +136,50 @@ A Leaflet plugin that allows to add elevation profiles using native SVG and Canv
 | `colors` | theme defaults | Override Canvas track colors by theme name. |
 | `srcFolder` | inferred from script URL | Base URL used to load optional modules and assets; set for custom hosting or ES module builds. |
 
+#### Custom locales (i18n)
+
+Use `L.registerLocale(code, strings)` to register translations and `L.setLocale(code)` to select the language before creating the elevation control. These functions require [leaflet-i18n](https://github.com/yohanboniface/Leaflet.i18n), included by `leaflet-ui`; when using plain Leaflet, load it separately.
+
+```js
+L.registerLocale("it", {
+  "Altitude": "Altitudine",
+  "Slope": "Pendenza",
+  "Total Length: ": "Distanza: ",
+  "Max Elevation: ": "Altezza Max: ",
+  "y: ": "Altitudine: ",
+  "x: ": "Distanza: ",
+});
+L.setLocale("it");
+
+const elevation = L.control.elevation().addTo(map);
+```
+
+Keys must match the original strings exactly, including capitalization, punctuation, and trailing spaces. The selected locale is shared by controls using `leaflet-i18n`, not set per elevation control.
+
+See the [translation example](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_i18n-strings.html) for more keys.
+
+#### Custom formats
+
+Set these options in `L.control.elevation({...})` to customize units and time labels. Labels change text only; factors convert numeric values.
+
+| Option | What it changes | Example |
+|---|---|---|
+| `timeFormat` | Date/time shown in the tooltip when `timestamps: true`. Accepts `"time"`, `"date"`, or a function receiving the point's timestamp. | `timeFormat: "time"` shows only the clock time. |
+| `xTimeFormat` | Labels on the chart's time axis. The function receives elapsed milliseconds. | `xTimeFormat: (ms) => Math.round(ms / 60000) + " min"` |
+| `timeAVGSpeed` | Assumed speed in km/h when timestamps are missing; default `3.6`. Estimated times are not recorded measurements. | `timeAVGSpeed: 18` estimates times at cycling speed. |
+| `speedLabel` | Speed unit text; does not convert values. | `speedLabel: "km/h"` |
+| `slopeLabel` | Slope unit text; does not convert values. | `slopeLabel: "%"` |
+| `accelerationLabel` | Acceleration unit text; does not convert values. | `accelerationLabel: "m/s²"` |
+| `paceLabel` | Pace unit text; does not convert values. | `paceLabel: "min/km"` |
+| `altitudeFactor` | Multiplies elevation values; default `1` in metric mode. | `altitudeFactor: 0.001` converts meters to kilometers; also set `yLabel: "km"`. |
+| `distanceFactor` | Multiplies distance values; default `1` in metric mode. | `distanceFactor: 1000` converts kilometers to meters; also set `xLabel: "m"`. |
+| `speedFactor` | Multiplies calculated speed; default `1`. | `speedFactor: 1 / 3.6` converts km/h to m/s; also set `speedLabel: "m/s"`. |
+| `accelerationFactor` | Multiplies calculated acceleration; default `1`. | `accelerationFactor: 100` converts m/s² to cm/s²; also change `accelerationLabel`. |
+| `paceFactor` | Divisor used to express pace in minutes rather than seconds; default `60`. | `paceFactor: 1` uses seconds; also set `paceLabel: "s/km"`. |
+| `temperatureFactor1`, `temperatureFactor2` | Convert source temperatures using `value * temperatureFactor1 + temperatureFactor2`. | `1` and `0` keep Celsius; `1.8` and `32` convert Celsius to Fahrenheit. |
+
+With `imperial: true`, distance and elevation use the built-in miles/feet conversions instead of `distanceFactor` and `altitudeFactor`. Changing distance or speed factors also affects other calculated measurements, such as slope, speed, pace, and acceleration.
+
 #### Custom waypoint icons
 
 Keys come from GPX `<sym>` or GeoJSON `properties.sym`, falling back to the waypoint name. They are lowercased, spaces become hyphens, and single/double quotes are removed: `Drinking Water` becomes `drinking-water`.
@@ -160,28 +204,6 @@ L.control.elevation({
 ```
 
 Keep the `""` entry: unlisted symbols generate a `DivIcon` from its options with HTML `<i class="elevation-waypoint-icon SYMBOL"></i>`, allowing symbol-specific CSS styling. `wptLabels` controls labels independently of icons.
-
-#### Custom formats
-
-Set these options in `L.control.elevation({...})` to customize units and time labels. Labels change text only; factors convert numeric values.
-
-| Option | What it changes | Example |
-|---|---|---|
-| `timeFormat` | Date/time shown in the tooltip when `timestamps: true`. Accepts `"time"`, `"date"`, or a function receiving the point's timestamp. | `timeFormat: "time"` shows only the clock time. |
-| `xTimeFormat` | Labels on the chart's time axis. The function receives elapsed milliseconds. | `xTimeFormat: (ms) => Math.round(ms / 60000) + " min"` |
-| `timeAVGSpeed` | Assumed speed in km/h when timestamps are missing; default `3.6`. Estimated times are not recorded measurements. | `timeAVGSpeed: 18` estimates times at cycling speed. |
-| `speedLabel` | Speed unit text; does not convert values. | `speedLabel: "km/h"` |
-| `slopeLabel` | Slope unit text; does not convert values. | `slopeLabel: "%"` |
-| `accelerationLabel` | Acceleration unit text; does not convert values. | `accelerationLabel: "m/s²"` |
-| `paceLabel` | Pace unit text; does not convert values. | `paceLabel: "min/km"` |
-| `altitudeFactor` | Multiplies elevation values; default `1` in metric mode. | `altitudeFactor: 0.001` converts meters to kilometers; also set `yLabel: "km"`. |
-| `distanceFactor` | Multiplies distance values; default `1` in metric mode. | `distanceFactor: 1000` converts kilometers to meters; also set `xLabel: "m"`. |
-| `speedFactor` | Multiplies calculated speed; default `1`. | `speedFactor: 1 / 3.6` converts km/h to m/s; also set `speedLabel: "m/s"`. |
-| `accelerationFactor` | Multiplies calculated acceleration; default `1`. | `accelerationFactor: 100` converts m/s² to cm/s²; also change `accelerationLabel`. |
-| `paceFactor` | Divisor used to express pace in minutes rather than seconds; default `60`. | `paceFactor: 1` uses seconds; also set `paceLabel: "s/km"`. |
-| `temperatureFactor1`, `temperatureFactor2` | Convert source temperatures using `value * temperatureFactor1 + temperatureFactor2`. | `1` and `0` keep Celsius; `1.8` and `32` convert Celsius to Fahrenheit. |
-
-With `imperial: true`, distance and elevation use the built-in miles/feet conversions instead of `distanceFactor` and `altitudeFactor`. Changing distance or speed factors also affects other calculated measurements, such as slope, speed, pace, and acceleration.
 
 #### Custom handlers
 
