@@ -11,14 +11,6 @@ A Leaflet plugin that allows to add elevation profiles using native SVG and Canv
 
 ---
 
-<blockquote>
-    <p align="center">
-        <em>Initially based on the <a href="http://mrmufflon.github.io/Leaflet.Elevation/">work</a> of <strong>Felix “MrMufflon” Bache</strong></em>
-    </p>
-</blockquote>
-
----
-
 ## Examples
 
 | Topic | Demos |
@@ -30,6 +22,14 @@ A Leaflet plugin that allows to add elevation profiles using native SVG and Canv
 | Layout and controls | [Multiple maps](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_multiple-maps.html), [stacked charts](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_multiple-charts.html), [hide map](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-map.html), [hide chart](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hidden-chart.html), [clear button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_clear-button.html), [collapse button](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_close-button.html) |
 | Map interaction | [Follow marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_follow-marker.html), [near-track hover](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_almost-over.html), [edge scale](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_edge-scale.html), [GPX waypoints](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_gpx-waypoints.html), [GeoJSON waypoints](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_geojson-waypoints.html) |
 | Live data and animation | [Live tracking](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_live-tracking.html), [walking marker](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_dynamic-runner.html) |
+
+---
+
+<blockquote>
+    <p align="center">
+        <em>Initially based on the <a href="http://mrmufflon.github.io/Leaflet.Elevation/">work</a> of <strong>Felix “MrMufflon” Bache</strong></em>
+    </p>
+</blockquote>
 
 ---
 
@@ -136,8 +136,6 @@ A Leaflet plugin that allows to add elevation profiles using native SVG and Canv
 | `colors` | theme defaults | Override Canvas track colors by theme name. |
 | `srcFolder` | inferred from script URL | Base URL used to load optional modules and assets; set for custom hosting or ES module builds. |
 
-Additional handler options include `timeFormat` (`"time"`, `"date"`, or a formatter function), `xTimeFormat`, `timeAVGSpeed`, unit labels such as `speedLabel` and `slopeLabel`, and conversion factors such as `altitudeFactor`, `distanceFactor`, `speedFactor`, `accelerationFactor`, `paceFactor`, and `temperatureFactor1`/`temperatureFactor2`. See [`src/handlers/`](./src/handlers/) for the full list and accepted track attributes. A custom handler can be added to `handlers` as a module path or handler function.
-
 #### Custom waypoint icons
 
 Keys come from GPX `<sym>` or GeoJSON `properties.sym`, falling back to the waypoint name. They are lowercased, spaces become hyphens, and single/double quotes are removed: `Drinking Water` becomes `drinking-water`.
@@ -162,6 +160,91 @@ L.control.elevation({
 ```
 
 Keep the `""` entry: unlisted symbols generate a `DivIcon` from its options with HTML `<i class="elevation-waypoint-icon SYMBOL"></i>`, allowing symbol-specific CSS styling. `wptLabels` controls labels independently of icons.
+
+#### Custom formats
+
+Set these options in `L.control.elevation({...})` to customize units and time labels. Labels change text only; factors convert numeric values.
+
+| Option | What it changes | Example |
+|---|---|---|
+| `timeFormat` | Date/time shown in the tooltip when `timestamps: true`. Accepts `"time"`, `"date"`, or a function receiving the point's timestamp. | `timeFormat: "time"` shows only the clock time. |
+| `xTimeFormat` | Labels on the chart's time axis. The function receives elapsed milliseconds. | `xTimeFormat: (ms) => Math.round(ms / 60000) + " min"` |
+| `timeAVGSpeed` | Assumed speed in km/h when timestamps are missing; default `3.6`. Estimated times are not recorded measurements. | `timeAVGSpeed: 18` estimates times at cycling speed. |
+| `speedLabel` | Speed unit text; does not convert values. | `speedLabel: "km/h"` |
+| `slopeLabel` | Slope unit text; does not convert values. | `slopeLabel: "%"` |
+| `accelerationLabel` | Acceleration unit text; does not convert values. | `accelerationLabel: "m/s²"` |
+| `paceLabel` | Pace unit text; does not convert values. | `paceLabel: "min/km"` |
+| `altitudeFactor` | Multiplies elevation values; default `1` in metric mode. | `altitudeFactor: 0.001` converts meters to kilometers; also set `yLabel: "km"`. |
+| `distanceFactor` | Multiplies distance values; default `1` in metric mode. | `distanceFactor: 1000` converts kilometers to meters; also set `xLabel: "m"`. |
+| `speedFactor` | Multiplies calculated speed; default `1`. | `speedFactor: 1 / 3.6` converts km/h to m/s; also set `speedLabel: "m/s"`. |
+| `accelerationFactor` | Multiplies calculated acceleration; default `1`. | `accelerationFactor: 100` converts m/s² to cm/s²; also change `accelerationLabel`. |
+| `paceFactor` | Divisor used to express pace in minutes rather than seconds; default `60`. | `paceFactor: 1` uses seconds; also set `paceLabel: "s/km"`. |
+| `temperatureFactor1`, `temperatureFactor2` | Convert source temperatures using `value * temperatureFactor1 + temperatureFactor2`. | `1` and `0` keep Celsius; `1.8` and `32` convert Celsius to Fahrenheit. |
+
+With `imperial: true`, distance and elevation use the built-in miles/feet conversions instead of `distanceFactor` and `altitudeFactor`. Changing distance or speed factors also affects other calculated measurements, such as slope, speed, pace, and acceleration.
+
+#### Custom handlers
+
+Add a function to `handlers` and enable its `name` as a control option. Keep the default handlers when adding your own; order matters for handlers that depend on previously calculated values.
+
+This example reads power values from GeoJSON `properties.coordinateProperties.powers` and adds a profile, tooltip, and maximum-power summary:
+
+```js
+function Power() {
+  const { iMax } = L.Control.Elevation.Utils;
+
+  return {
+    name: "power",
+    unit: "W",
+    coordinateProperties: ["powers"],
+    pointToAttr: (point) => point.meta.power ?? NaN,
+    stats: { max: iMax },
+    scale: {
+      axis: "y",
+      position: "right",
+      scale: { min: 0 },
+    },
+    path: {
+      label: "Power",
+      yAttr: "power",
+      scaleX: "distance",
+      scaleY: "power",
+      color: "#ffa500",
+      fillOpacity: 0.3,
+    },
+    tooltip: {
+      chart: (item) => "Power: " + item.power + " W",
+    },
+    summary: {
+      maxpower: {
+        label: "Max Power: ",
+        value: (track, unit) => (track.power_max ?? "—") + " " + unit,
+      },
+    },
+  };
+}
+
+var controlElevation = L.control.elevation({
+  handlers: [
+    "Distance", "Time", "Altitude", "Slope", "Speed", "Acceleration", Power,
+  ],
+  power: true,
+}).addTo(map);
+```
+
+| Handler field | Purpose |
+|---|---|
+| `name` | Control option and output data field (`"power"` in the example). |
+| `coordinateProperties` | Source property names; values are copied to `point.meta[name]`. Arrays must match the track coordinates. |
+| `pointToAttr(point, index)` | Calculate each point's value. Return `NaN` for missing data rather than treating it as zero. |
+| `stats` | Statistic functions from `L.Control.Elevation.Utils`, such as `iMin`, `iMax`, and `iAvg`; results appear in `track_info` as `<name>_<stat>`. |
+| `scale`, `path` | Profile axis and plot configuration. |
+| `tooltip` | `chart` and/or `marker` formatter functions receiving a normalized data point. |
+| `summary` | Named entries with a `label` and `value(track_info, unit)` formatter. |
+
+- Use a regular function for the handler factory: `this` is the elevation control.
+- To load an external module, export one named handler function and pass `import("./power.js")` in `handlers` instead of `Power`.
+- For more configurations, see the built-in [handlers](./src/handlers/) and [extended profiles example](https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_extended-ui.html).
 
 ### Methods
 
