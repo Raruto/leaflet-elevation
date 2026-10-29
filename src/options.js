@@ -4,7 +4,7 @@ export var Options = {
 	autofitBounds: true,
 	autohide: false,
 	autohideMarker: true,
-	almostover: true,
+	almostOver: true,
 	altitude: true,
 	closeBtn: true,
 	collapsed: false,
