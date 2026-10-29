@@ -48,11 +48,11 @@ Given('a track using the {string} map renderer and {string} chart renderer', asy
     }), renderer === 'canvas');
 });
 
-async function drawnColor(world) {
+async function drawnColor(world, canvasColor) {
     if (world.mapRenderer === 'SVG') {
         return world.page.evaluate(() => getComputedStyle(legendTrack.getElement()).stroke);
     }
-    await world.page.waitForFunction(() => window.trackStrokes.length > 0);
+    await world.page.waitForFunction(color => window.trackStrokes.at(-1) === color, canvasColor);
     return world.page.evaluate(() => window.trackStrokes.filter(color => color !== '#ff00ff').at(-1));
 }
 
@@ -61,7 +61,7 @@ Then('the map track is drawn in the theme color', async function () {
         window.trackStrokes.length = 0;
         legendTrack.redraw();
     });
-    assert.strictEqual(await drawnColor(this), this.mapRenderer === 'canvas' ? '#3366cc' : 'rgb(51, 102, 204)');
+    assert.strictEqual(await drawnColor(this, '#3366cc'), this.mapRenderer === 'canvas' ? '#3366cc' : 'rgb(51, 102, 204)');
 });
 
 When('I disable every chart series using the legend', async function () {
@@ -76,7 +76,7 @@ When('I disable every chart series using the legend', async function () {
 });
 
 Then('the map track is drawn in black', async function () {
-    assert.strictEqual(await drawnColor(this), this.mapRenderer === 'canvas' ? '#000000' : 'rgb(0, 0, 0)');
+    assert.strictEqual(await drawnColor(this, '#000000'), this.mapRenderer === 'canvas' ? '#000000' : 'rgb(0, 0, 0)');
 });
 
 When('I pan the map with all chart series disabled', async function () {

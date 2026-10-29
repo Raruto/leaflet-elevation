@@ -371,7 +371,14 @@ When('I select a different route in the group legend', async function () {
 });
 
 Then('the profile and highlight switch to that route', async function () {
-    await this.page.waitForFunction(() => routes.getSelection() === nextInteractionRoute && routes._elevation._data.length > 0);
+    await this.page.waitForFunction(() => {
+        const points = nextInteractionRoute.getLayers()
+            .filter(layer => layer instanceof L.Polyline)
+            .flatMap(layer => layer.getLatLngs().flat(Infinity));
+        const data = routes._elevation._data;
+        return routes.getSelection() === nextInteractionRoute && points.length > 0 &&
+            data.length === points.length && data.every((point, i) => point.latlng.equals(points[i]));
+    });
     const state = await this.page.evaluate(() => ({
         oldSelected: interactionRoute.isSelected(),
         selected: nextInteractionRoute.isSelected(),
@@ -412,6 +419,7 @@ Then('its elevation profile is removed and its original color restored', async f
 
 When('I select the second track radio button', async function () {
     await this.page.waitForFunction(() => traces.length === 2 && traces.every(trace => trace.line) && controlLayer._layers.length === 2);
+    await waitForMapBounds(this.page, await this.page.evaluate(() => traces[0].gpx.getBounds()));
     this.firstTrackProfile = await this.page.evaluate(() => ({
         distance: controlElevation.track_info.distance,
         count: controlElevation._data.length
@@ -440,7 +448,10 @@ When('I select the first track radio button', async function () {
 });
 
 Then('the original track and elevation profile are restored', async function () {
-    await this.page.waitForFunction(() => map.hasLayer(traces[0].gpx) && !map.hasLayer(traces[1].gpx));
+    await this.page.waitForFunction(({ distance, count }) =>
+        map.hasLayer(traces[0].gpx) && !map.hasLayer(traces[1].gpx) &&
+        controlElevation.track_info.distance === distance && controlElevation._data.length === count,
+    this.firstTrackProfile);
     assert.deepStrictEqual(await this.page.evaluate(() => ({
         distance: controlElevation.track_info.distance,
         count: controlElevation._data.length
