@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/@raruto/leaflet-elevation.svg?color=red)](https://www.npmjs.com/package/@raruto/leaflet-elevation)
 [![License](https://img.shields.io/badge/license-GPL%203-blue.svg?style=flat)](LICENSE)
 
-A Leaflet plugin for interactive elevation profiles using native SVG and Canvas.
+A Leaflet plugin that allows to add elevation profiles using native SVG and Canvas elements.
 
 <p align="center">
     <a href="https://raruto.github.io/leaflet-elevation/examples/leaflet-elevation_hoverable-tracks.html"><img src="https://raruto.github.io/img/leaflet-elevation.png" alt="Leaflet elevation viewer" /></a>
