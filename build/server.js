@@ -20,15 +20,19 @@ const contentTypes = {
     '.xml': 'text/xml',
 };
 
+export function rewritePluginUrls(html) {
+    return html
+        .replace(/https?:\/\/[^/\s"'`?#]+\/(?:[^/\s"'`?#]+\/)*(?:@raruto\/|%40raruto%2f)leaflet-elevation(?:@[^/\s"'?#]+)?(?=\/|[?#"'`\s])/gi,
+            (match, offset, source) => source[offset + match.length] === '/' ? '' : '/dist/leaflet-elevation.min.js')
+        .replace(/(["'`])@raruto\/leaflet-elevation(?:@[^/\s"'?#]+)?(?=\/|[?#"'`\s])/g,
+            (match, quote, offset, source) => quote + (source[offset + match.length] === '/' ? '' : '/dist/leaflet-elevation.min.js'));
+}
+
 export function startServer(port = 8080, { localCdn = false } = {}) {
     const server = createServer(async (request, response) => {
         let filename;
-        let url;
         try {
-            url = new URL(request.url, 'http://localhost');
-            filename = localCdn && url.pathname === '/__leaflet-elevation-dev-worker.js'
-                ? resolve(root, 'build/dev-worker.js')
-                : resolve(root, `.${decodeURIComponent(url.pathname)}`);
+            filename = resolve(root, `.${decodeURIComponent(new URL(request.url, 'http://localhost').pathname)}`);
         } catch {
             response.writeHead(400).end('Bad request');
             return;
@@ -58,36 +62,8 @@ export function startServer(port = 8080, { localCdn = false } = {}) {
             let content = await readFile(filename);
             if (localCdn) {
                 response.setHeader('Cache-Control', 'no-store');
-                if (extname(filename) === '.html' && request.headers['sec-fetch-mode'] === 'navigate') {
-                    if (!url.searchParams.has('__leaflet_local')) {
-                        // Wait for control before parsing the page so its first CDN requests are intercepted.
-                        response.writeHead(200, { 'Content-Type': 'text/html' });
-                        response.end(`<!DOCTYPE html><title>Preparing local assets</title>
-<p>Preparing local assets...</p><script>
-(async () => {
-    try {
-        await navigator.serviceWorker.register('/__leaflet-elevation-dev-worker.js', { scope: '/' });
-        await navigator.serviceWorker.ready;
-        const worker = new URL('/__leaflet-elevation-dev-worker.js', location.origin).href;
-        while (navigator.serviceWorker.controller?.scriptURL !== worker) {
-            await new Promise(resolve => navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true }));
-        }
-        const url = new URL(location.href);
-        url.searchParams.set('__leaflet_local', '1');
-        location.replace(url.href);
-    } catch (error) {
-        document.querySelector('p').textContent = 'Could not enable local assets: ' + error;
-        console.error(error);
-    }
-})();
-</script>`);
-                        return;
-                    }
-                    const restoreUrl = `<script>{const url = new URL(location.href); url.searchParams.delete('__leaflet_local'); history.replaceState(history.state, '', url.href);}</script>`;
-                    const html = content.toString();
-                    content = Buffer.from(/<head(?:\s[^>]*)?>/i.test(html)
-                        ? html.replace(/<head(?:\s[^>]*)?>/i, '$&' + restoreUrl)
-                        : html.replace(/^(<!doctype[^>]*>)?/i, '$&' + restoreUrl));
+                if (extname(filename) === '.html') {
+                    content = Buffer.from(rewritePluginUrls(content.toString()));
                 }
             }
             response.writeHead(200, { 'Content-Type': contentTypes[extname(filename)] || 'application/octet-stream' });

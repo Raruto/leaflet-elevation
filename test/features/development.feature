@@ -1,5 +1,5 @@
 @development
 Feature: Local development assets
 
-  Scenario: CDN requests for the plugin use the local checkout
-    Then the development server serves local assets for static and dynamic CDN requests
+  Scenario: Plugin URLs in served pages use the local checkout
+    Then the development server rewrites static and plugin loader URLs

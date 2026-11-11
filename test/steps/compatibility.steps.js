@@ -9,7 +9,34 @@ Given('the native Leaflet compatibility fixture uses {string}', async function (
     this.page.on('pageerror', error => this.errors.push(error.stack));
     await this.page.route('https://unpkg.com/@tmcw/togeojson@*/dist/togeojson.umd.js', route =>
         route.fulfill({ path: fileURLToPath(new URL('../../node_modules/@tmcw/togeojson/dist/togeojson.umd.js', import.meta.url)) }));
-    await this.page.goto(`${this.base}/test/fixtures/leaflet-elevation-compatibility.html?leaflet=${process.env.LEAFLET_VERSION || '1'}&bundle=${bundle}`);
+    const version = process.env.LEAFLET_VERSION === '2' ? '2.0.0-beta.3' : '1.9.4';
+    const leaflet = version.startsWith('1.') ? 'leaflet.js' : 'leaflet-global.js';
+    const suffix = bundle === 'minified' ? '.min' : '';
+    await this.page.route(`${this.base}/test/native-compatibility.html`, route => route.fulfill({
+        contentType: 'text/html',
+        body: `<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@${version}/dist/leaflet.css">
+<link rel="stylesheet" href="/dist/leaflet-elevation.css">
+<style>#map { height: 400px; } #elevation-div { height: 240px; }</style>
+<script src="https://unpkg.com/leaflet@${version}/dist/${leaflet}"></script>
+</head><body><div id="map"></div><div id="elevation-div"></div>
+<script type="module">
+  await import('/dist/leaflet-elevation${suffix}.js');
+  window.map = new (L.LeafletMap || L.Map)('map', { center: [45, 9], zoom: 12, renderer: new L.Canvas() });
+  window.profile = new L.Control.Elevation({
+    distanceMarkers: { lazy: false, distance: true, direction: true },
+    edgeScale: { bar: true, icon: true, coords: true }, hotline: 'elevation',
+    height: 220, width: 700, srcFolder: new URL('/dist/', location.href).href,
+  }).addTo(map);
+  window.track = {
+    type: 'Feature', properties: { name: 'Compatibility' },
+    geometry: { type: 'LineString', coordinates: [[9, 45, 0], [9.03, 45.01, 100], [9.06, 45.02, 50]] },
+  };
+  profile.load(JSON.stringify(track));
+</script></body></html>`,
+    }));
+    await this.page.goto(`${this.base}/test/native-compatibility.html`);
     await this.page.waitForFunction(() => window.profile?._data.length === 3 && profile._chart && profile._marker && profile._summary && map.edgeScaleControl && L.DistanceMarkers);
 });
 
