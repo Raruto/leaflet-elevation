@@ -30,10 +30,10 @@ Then('the development server rewrites static and plugin loader URLs', async func
         await page.waitForFunction(() => typeof controlElevation !== 'undefined' && controlElevation?._data.length > 0);
 
         const urls = JSON.parse(rewritePluginUrls(JSON.stringify([
-            'https://unpkg.com/@raruto/leaflet-elevation@2.9.2/src/options.js?cache=1',
+            'https://unpkg.com/@raruto/leaflet-elevation@2.9.2/src/index.js?cache=1',
             'https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@1.2.3/dist/leaflet-elevation.css',
-            'https://unpkg.com/%40raruto%2Fleaflet-elevation@2.9.2/src/options.js',
-            '@raruto/leaflet-elevation@2.9.2/src/options.js',
+            'https://unpkg.com/%40raruto%2Fleaflet-elevation@2.9.2/src/index.js',
+            '@raruto/leaflet-elevation@2.9.2/src/index.js',
             'https://unpkg.com/@raruto/leaflet-elevation@2.9.2',
             'https://unpkg.com/@raruto/leaflet-elevation@2.9.2/does-not-exist.js',
             'https://unpkg.com/unrelated-package@1/test.txt',
@@ -44,14 +44,14 @@ Then('the development server rewrites static and plugin loader URLs', async func
                 return { url, status: response.status, text: await response.text() };
             }));
         }, urls);
-        const options = await readFile(new URL('../../src/options.js', import.meta.url), 'utf8');
+        const index = await readFile(new URL('../../src/index.js', import.meta.url), 'utf8');
         const css = await readFile(new URL('../../dist/leaflet-elevation.css', import.meta.url), 'utf8');
         const bundle = await readFile(new URL('../../dist/leaflet-elevation.min.js', import.meta.url), 'utf8');
         assert.deepEqual(assets, [
-            { url: '/src/options.js?cache=1', status: 200, text: options },
+            { url: '/src/index.js?cache=1', status: 200, text: index },
             { url: '/dist/leaflet-elevation.css', status: 200, text: css },
-            { url: '/src/options.js', status: 200, text: options },
-            { url: '/src/options.js', status: 200, text: options },
+            { url: '/src/index.js', status: 200, text: index },
+            { url: '/src/index.js', status: 200, text: index },
             { url: '/dist/leaflet-elevation.min.js', status: 200, text: bundle },
             { url: '/does-not-exist.js', status: 404, text: 'Not found' },
             { url: 'https://unpkg.com/unrelated-package@1/test.txt', status: 200, text: 'external' },

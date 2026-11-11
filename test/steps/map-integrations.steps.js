@@ -2,18 +2,19 @@ import assert from 'node:assert/strict';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { localFixture, openExample } from '../support/browser.js';
 
-Given('the chart is ready but its marker module is still loading', async function () {
+Given('the chart module is still loading', async function () {
     const gate = new Promise(resolve => { this.releaseData = resolve; });
-    await this.page.route('**/src/components/marker.js', async route => {
+    await this.page.route('**/src/handlers/chart.js', async route => {
         await gate;
-        await route.continue();
+        await route.fallback();
     });
     await localFixture(this.page, 'via-emilia.gpx');
     await openExample(this, '');
     await this.page.waitForFunction(() =>
-        typeof controlElevation !== 'undefined' && controlElevation._chart
+        typeof controlElevation !== 'undefined' && controlElevation._modulesLoaded
     );
-    assert.strictEqual(await this.page.evaluate(() => typeof controlElevation._marker), 'undefined');
+    assert.deepStrictEqual(await this.page.evaluate(() =>
+        [typeof controlElevation._chart, typeof controlElevation._marker]), ['undefined', 'undefined']);
 });
 
 When('the map emits zoom and view reset events', async function () {
@@ -24,7 +25,7 @@ When('the map emits zoom and view reset events', async function () {
     });
 });
 
-Then('the marker finishes loading and can still be hidden', async function () {
+Then('the chart and marker finish loading and the marker can still be hidden', async function () {
     this.releaseData();
     await this.page.waitForFunction(() => controlElevation._marker && controlElevation._data.length > 0);
     assert.strictEqual(await this.page.evaluate(() => {

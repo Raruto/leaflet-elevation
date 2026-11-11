@@ -112,9 +112,9 @@ Given('I open the low-level canvas page in {string}', async function (browserNam
 Given('I create a canvas chart with a mask and tooltip overlay', async function () {
     await this.page.evaluate(async base => {
         L.Control.Elevation = { Utils: await import(`${base}/src/utils.js`) };
-        const { Chart } = await import(`${base}/src/components/chart.js`);
+        const { Chart } = await import(`${base}/src/handlers/chart.js`);
         const { create } = L.Control.Elevation.Utils;
-        window.chart = new Chart({
+        window.chart = Chart({
             width: 320, height: 240, preferCanvas: true,
             margins: { left: 40, top: 30, right: 20, bottom: 20 },
             xAttr: 'dist', yAttr: 'z',
@@ -167,7 +167,7 @@ Given('I open a transformed chart host in {string} at DPR {int}', async function
     await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
     await this.page.evaluate(async base => {
         L.Control.Elevation = { Utils: await import(`${base}/src/utils.js`) };
-        window.ProfileChart = (await import(`${base}/src/components/chart.js`)).Chart;
+        window.ProfileChart = (await import(`${base}/src/handlers/chart.js`)).Chart;
     }, this.base);
 });
 
@@ -176,7 +176,7 @@ When('I render a profile with {string} rendering', async function (renderingMode
     this.preferCanvas = renderingMode.toLowerCase() === 'canvas';
     await this.page.evaluate(preferCanvas => {
         document.querySelector('#host').replaceChildren();
-        window.profile = new ProfileChart({
+        window.profile = ProfileChart({
             width: 320, height: 240, margins: { left: 40, top: 30, right: 20, bottom: 20 },
             preferCanvas, xAttr: 'dist', yAttr: 'z', yAxisMin: 0, yAxisMax: 100,
             distance: false, altitude: false, legend: false, ruler: false,

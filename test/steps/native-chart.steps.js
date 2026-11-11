@@ -10,28 +10,29 @@ Given('a native chart in a scaled container', async function () {
         const utils = await import(`${base}/src/utils.js`);
         L._ = text => text;
         L.Control.Elevation = { Utils: utils };
-        window.nativeChart = await import(`${base}/src/components/chart.js`);
+        window.nativeChart = await import(`${base}/src/handlers/chart.js`);
         const { Chart } = nativeChart;
-        window.profile = new Chart({
+        window.chartControl = Object.assign(new L.Evented(), {
+            _data: Array.from({ length: 11 }, (_, i) => ({ dist: i, z: i * 10 - 50, latlng: new L.LatLng(0, i) })),
+        });
+        window.profile = Chart({
             width: 500, height: 300, margins: { left: 40, top: 30, right: 30, bottom: 60 },
             xAttr: 'dist', yAttr: 'z', yAxisMin: -50, yAxisMax: 50,
             dragging: true, zooming: true, legend: true, ruler: true, altitude: true,
-        }, Object.assign(new L.Evented(), {
-            _data: Array.from({ length: 11 }, (_, i) => ({ dist: i, z: i * 10 - 50, latlng: new L.LatLng(0, i) })),
-        }));
+        }, chartControl);
         profile._registerAreaPath({ name: 'altitude', scaleX: 'distance', scaleY: 'altitude' });
         profile._registerAxisScale({ name: 'time', axis: 'x', position: 'top', scale: 'x' });
         profile.render()(document.querySelector('#host'));
         profile.update();
         window.nativeEvents = { dragged: [], ruler: [], hover: [] };
-        profile.on('dragged', event => nativeEvents.dragged.push([event.dragstart.dist, event.dragend.dist]));
-        profile.on('ruler_filter', event => nativeEvents.ruler.push(event.coords.map(group => group.map(point => point.lng))));
-        profile.on('mouse_move', event => {
+        chartControl.on('dragged', event => nativeEvents.dragged.push([event.dragstart.dist, event.dragend.dist]));
+        chartControl.on('ruler_filter', event => nativeEvents.ruler.push(event.coords.map(group => group.map(point => point.lng))));
+        chartControl.on('mouse_move', event => {
             nativeEvents.hover.push(event.xCoord);
             profile._showDiagramIndicator(event.item, event.xCoord);
         });
-        profile.on('mouse_out', () => profile._hideDiagramIndicator());
-        profile.on('zoom', () => profile.update());
+        chartControl.on('mouse_out', () => profile._hideDiagramIndicator());
+        chartControl.on('zoom', () => profile.update());
     }, this.base);
 });
 
@@ -67,7 +68,7 @@ Then('native scales and bisection handle constant, empty and duplicate values', 
 Then('all supported interpolations produce the expected SVG paths', async function () {
     assert.deepStrictEqual(await this.page.evaluate(() => {
         const values = {};
-        const chart = new nativeChart.Chart({
+        const chart = nativeChart.Chart({
             width: 4, height: 10, margins: { left: 0, top: 0, right: 0, bottom: 0 },
             xAttr: 'x', yAttr: 'y',
         }, new L.Evented());
@@ -112,11 +113,7 @@ Then('native axes and custom callbacks receive SVG elements', async function () 
             circle.getAttribute('r'), circle.parentNode === svg, svg.parentNode === html,
         ];
     }), [true, 'host', 'HTML', true, 'chart', '0 0 10 10', true, 'point', '2', true, true]);
-    assert.deepStrictEqual(await this.page.evaluate(async base => {
-        const modules = await Promise.all(['chart', 'marker', 'summary'].map(name =>
-            import(`${base}/src/components/${name}.js`)));
-        return modules.map(module => Object.keys(module));
-    }, this.base), [['Chart'], ['Marker'], ['Summary']]);
+    assert.deepStrictEqual(await this.page.evaluate(() => Object.keys(nativeChart)), ['Chart']);
     assert.strictEqual(await this.page.evaluate(() => {
         let mounted = false;
         profile._props.axes.time.onAxisMount = axis => { mounted = axis instanceof SVGGElement && !!axis.querySelector('.tick'); };

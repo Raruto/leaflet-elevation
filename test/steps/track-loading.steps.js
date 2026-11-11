@@ -8,16 +8,15 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
         stdin: {
             contents: `
                 import * as toGeoJSON from '@tmcw/togeojson';
-                import './dist/leaflet-elevation.js';
-                import { Chart } from './src/components/chart.js';
-                import { Marker } from './src/components/marker.js';
-                import { Summary } from './src/components/summary.js';
+                import { Elevation } from './src/index.js';
+                import { Chart } from './src/handlers/chart.js';
                 import { Distance } from './src/handlers/distance.js';
                 import { Time } from './src/handlers/time.js';
                 import { Altitude } from './src/handlers/altitude.js';
 
                 Object.assign(globalThis, { toGeoJSON });
-                Object.assign(L.Control.Elevation, { Chart, Marker, Summary });
+                if (Elevation !== L.Control.Elevation) throw new Error('The entry point must export the elevation control');
+                Object.assign(L.Control.Elevation, { Chart });
                 L.Control.Elevation.include({
                     import(src) {
                         return Array.isArray(src) ? Promise.all(src.map(item => this.import(item))) : Promise.resolve();
@@ -40,6 +39,7 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
         bundle: true,
         format: 'iife',
         platform: 'browser',
+        define: { 'import.meta': 'null' },
         write: false
     });
     await this.page.goto(this.base);

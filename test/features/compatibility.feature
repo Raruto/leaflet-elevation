@@ -15,3 +15,7 @@ Feature: Native Leaflet 1.9 and 2 beta compatibility without leaflet-ui
     Given the native Leaflet compatibility fixture uses "readable"
     When I create a rotated map for the native compatibility fixture
     Then the edge scale draws correctly through rotation, pan, zoom and resize
+
+  Scenario: Chart events are fired on the elevation control
+    Given the native Leaflet compatibility fixture uses "readable"
+    Then chart events are emitted on the elevation control

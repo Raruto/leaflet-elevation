@@ -3,10 +3,10 @@ Feature: Integrating elevation charts with Leaflet maps
   Background:
     Given a Chromium browser using the local plugin
 
-  Scenario: Map events are safe while the elevation marker module is still loading
-    Given the chart is ready but its marker module is still loading
+  Scenario: Map events are safe while the chart and its marker are still loading
+    Given the chart module is still loading
     When the map emits zoom and view reset events
-    Then the marker finishes loading and can still be hidden
+    Then the chart and marker finish loading and the marker can still be hidden
     And no browser errors have occurred
 
   @issue-259 @example-almost-over

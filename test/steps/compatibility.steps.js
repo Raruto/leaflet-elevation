@@ -89,6 +89,27 @@ Then('native profiles, markers, gradients, distance markers and scales work', as
     assert.deepEqual(this.errors, []);
 });
 
+Then('chart events are emitted on the elevation control', async function () {
+    const result = await this.page.evaluate(() => {
+        const chart = profile._chart;
+        const events = [];
+        profile.on('zoom reset_drag', event => events.push([event.type, event.target === profile]));
+        chart._setSelection([10, 20]);
+        chart._setZoom(2, 0);
+        return {
+            plain: [profile._marker, profile._summary, chart].every(component => !(component instanceof L.Class)),
+            owned: chart._marker === profile._marker && chart._summary === profile._summary,
+            chartHasEvents: typeof chart.on === 'function',
+            events,
+        };
+    });
+    assert.deepEqual(result, {
+        plain: true, owned: true, chartHasEvents: false,
+        events: [['reset_drag', true], ['zoom', true]],
+    });
+    assert.deepEqual(this.errors, []);
+});
+
 Then('native profile clearing and reloading preserves initialization hooks', async function () {
     await this.page.evaluate(async () => {
         profile.clear();

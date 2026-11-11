@@ -36,7 +36,7 @@ Given('the chart module loads only after the map track is visible', async functi
             this.pluginResponse = response;
         }
     });
-    await this.page.route('**/src/components/chart.js', async route => {
+    await this.page.route('**/src/handlers/chart.js', async route => {
         await this.page.waitForFunction(() => document.querySelector('path.elevation-polyline'));
         await route.fallback();
     });
