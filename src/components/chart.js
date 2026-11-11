@@ -1,8 +1,9 @@
 const _ = L.Control.Elevation.Utils;
 
-export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
-
-	initialize(opts, control) {
+export var Chart = L.Control.Elevation.Chart = class extends (L.version.startsWith('1.') ? L.Evented.extend({}) : L.Evented) {
+  static initHooks = true;
+  constructor(opts, control) {
+    super();
 		this.options = opts;
 		this.control = control;
 		this._data = control._data || [];
@@ -193,13 +194,17 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 			this._togglePath(name, !enabled);
 			this.fire('elepath_toggle', { path, name, legend, enabled });
 		});
-	},
 
-	render() {
+    this._initialized = true;
+    this.callInitHooks();
+  }
+  callInitHooks() {
+    if (!L.version.startsWith('1.') || this._initialized) super.callInitHooks();
+  }
+  render() {
 		return container => container.appendChild(this._container);
-	},
-
-	clear() {
+	}
+  clear() {
 		this._resetDrag();
 		this._hideDiagramIndicator();
 		this._transform = { k: 1, x: 0 };
@@ -211,13 +216,11 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		this._chart._renderCanvas();
 		this._mask.querySelectorAll('.gap').forEach(node => node.remove());
 		this._maskGaps = [];
-	},
-
-	_hasActiveLayers() {
+	}
+  _hasActiveLayers() {
 		return Object.values(this._paths).some(path => !path.classList.contains('leaflet-hidden'));
-	},
-
-	_setSelection(values) {
+	}
+  _setSelection(values) {
 		this._selection = values.map(x => _.clamp(x, [0, this._width()])).sort((a, b) => a - b);
 		const [start, end] = this._selection;
 		_.setAttributes(this._chart.panes.brush.querySelector('.selection'), {
@@ -226,9 +229,8 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		for (const edge of ['w', 'e']) _.setAttributes(this._chart.panes.brush.querySelector('.handle--' + edge), {
 			x: (edge === 'w' ? start : end) - 3, y: 0, width: 6, height: this._height(), display: 'inline',
 		});
-	},
-
-	_setZoom(k, x) {
+	}
+  _setZoom(k, x) {
 		if (!Number.isFinite(k) || !Number.isFinite(x) || k <= 0) throw new Error('Invalid chart zoom');
 		k = _.clamp(k, [1, 10]);
 		this._transform = { k, x: _.clamp(x, [this._width() * (1 - k), 0]) };
@@ -238,9 +240,8 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		this._resetDrag();
 		this._updateScale();
 		this.fire('zoom');
-	},
-
-	_registerAreaPath(props) {
+	}
+  _registerAreaPath(props) {
 		props = { xAttr: this.options.xAttr, yAttr: this.options.yAttr, preferCanvas: this.options.preferCanvas, ...props };
 		const { name, color, strokeColor, strokeOpacity, fillOpacity, className = '' } = props;
 		const path = this._paths[name] = _.create('svg:path', '', {
@@ -251,13 +252,11 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		path.style.pointerEvents = 'none';
 		this._props.areas[props.name] = props;
 		if (this.options.legend) this._props.legendItems[props.name] = { ...props, path: this._paths[props.name] };
-	},
-
-	_registerAxisGrid(props) {
+	}
+  _registerAxisGrid(props) {
 		this._props.grids[props.name || props.axis] = { ...props };
-	},
-
-	_registerAxisScale(props) {
+	}
+  _registerAxisScale(props) {
 		props = { ...props };
 		const alias = props.scale;
 		if (alias === 'y') props.scale = this._y;
@@ -329,9 +328,8 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		if (props.name === this.options.yScale) this._y = props.scale;
 		if (props.name === this.options.xScale) this._x = props.scale;
 		return props.scale;
-	},
-
-	_registerCheckPoint(point) {
+	}
+  _registerCheckPoint(point) {
 		if (!this._data.length) return;
 		const { xAttr, yAttr } = this.options;
 		let item, x;
@@ -356,14 +354,12 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		_.setAttributes(point.item.querySelector('line'), { y2: ({ top: -y, bottom: this._height() - y })[point.position],
 			x2: ({ left: -x, right: this._width() - x })[point.position] || 0 });
 		if (point.label) point.item.querySelector('text').textContent = point.label;
-	},
-
-	_registerTooltip(props) {
+	}
+  _registerTooltip(props) {
 		props.order = props.order ?? 1000;
 		this._props.tooltipItems[props.name] = props;
-	},
-
-	_updateArea() {
+	}
+  _updateArea() {
 		this._context.clearRect(0, 0, this._width(), this._height());
 		for (const name in this._paths) {
 			const path = this._paths[name], area = this._props.areas[name];
@@ -391,9 +387,8 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 			else this._area.appendChild(path);
 		}
 		this._chart._renderCanvas();
-	},
-
-	update(props) {
+	}
+  update(props) {
 		if (props?.data) this._data = props.data;
 		if (props?.options) this.options = props.options;
 		this.options.xTicks = this._xTicks();
@@ -520,9 +515,8 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		});
 		this._updateArea();
 		return this;
-	},
-
-	_updateScale() {
+	}
+  _updateScale() {
 		for (const name in this._domains) {
 			const scale = this._scales[name];
 			scale.domain(this._domains[name](this._data)).range(this._ranges[name](this._width(), this._height()));
@@ -532,42 +526,35 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 			}
 		}
 		return { x: this._x, y: this._y };
-	},
-
-	_width() {
+	}
+  _width() {
 		return this.options.width - this.options.margins.left - this.options.margins.right;
-	},
-
-	_height() {
+	}
+  _height() {
 		return this.options.height - this.options.margins.top - this.options.margins.bottom;
-	},
-
-	_findIndexForXCoord(x) {
+	}
+  _findIndexForXCoord(x) {
 		return Math.min(this._data.length - 1, _.bisect(this._data, this._x.invert(x), this.options.xAttr));
-	},
-
-	_findIndexForLatLng(latlng) {
+	}
+  _findIndexForLatLng(latlng) {
 		let result = null, distance = Infinity;
 		this._data.forEach((item, index) => {
 			const current = latlng.distanceTo(item.latlng);
 			if (current < distance) { distance = current; result = index; }
 		});
 		return result;
-	},
-
-	_resetDrag() {
+	}
+  _resetDrag() {
 		if (!this._selection) return;
 		this._selection = null;
 		for (const node of this._chart.panes.brush.querySelectorAll('.selection, .handle')) node.setAttribute('display', 'none');
 		this._hideDiagramIndicator();
 		this.fire('reset_drag');
-	},
-
-	_resetZoom() {
+	}
+  _resetZoom() {
 		this._setZoom(1, 0);
-	},
-
-	_showDiagramIndicator(item, xCoordinate) {
+	}
+  _showDiagramIndicator(item, xCoordinate) {
 		this._tooltip.removeAttribute('display');
 		const group = this._tooltip;
 		const xCoord = xCoordinate, yCoord = this._y(item[this.options.yAttr]);
@@ -584,13 +571,12 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		for (const span of text.children) span.setAttribute('x', 0);
 		const bounds = text.getBBox();
 		const x = xCoord ? xCoord + (xCoord < this._width() / 2 ? 10 : -bounds.width - 10) : 0;
-		const y = yCoord ? Math.max(yCoord - bounds.height, (L.Browser.webkit || L.Browser.safari) ? 0 : -Infinity) : 0;
+		const y = yCoord ? Math.max(yCoord - bounds.height, /AppleWebKit/i.test(navigator.userAgent) ? 0 : -Infinity) : 0;
 		for (const span of text.children) span.setAttribute('x', x);
 		text.setAttribute('y', y);
 		_.setAttributes(rect, { x: x + bounds.x - 5, y: y + bounds.y - 5, width: bounds.width + 10, height: bounds.height + 10 });
-	},
-
-	_togglePath(name, enabled = true, lazy = false) {
+	}
+  _togglePath(name, enabled = true, lazy = false) {
 		const path = this._paths[name];
 		const legend = this._legend.querySelector(`[data-name="${name}"]`);
 		path.classList.toggle('leaflet-hidden', !enabled);
@@ -601,17 +587,14 @@ export var Chart = L.Control.Elevation.Chart = L.Evented.extend({
 		}
 		path.setAttribute('mask', `url(#${this._mask.id})`);
 		if (!lazy) this._updateArea();
-	},
-
-	_hideDiagramIndicator() {
+	}
+  _hideDiagramIndicator() {
 		this._tooltip.setAttribute('display', 'none');
-	},
-
-	_xTicks() {
+	}
+  _xTicks() {
 		return this.__xTicks || Math.round(this._width() / 75);
-	},
-
-	_yTicks() {
+	}
+  _yTicks() {
 		return this.__yTicks || Math.round(this._height() / 30);
-	},
-});
+	}
+};

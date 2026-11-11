@@ -16,7 +16,7 @@
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- * 
+ *
  *     Copyright (c) 2014- Doroszlai Attila, 2016- Phil Whitehurst
  *
  *     Permission to use, copy, modify, and/or distribute this software
@@ -34,10 +34,10 @@
  *     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-// TODO: the "L.DistanceMarker" (canvas marker) class could be alternatively provided by "leaflet-rotate"? 
+// TODO: the "L.DistanceMarker" (canvas marker) class could be alternatively provided by "leaflet-rotate"?
 
-L.DistanceMarker = L.CircleMarker.extend({
-	_updatePath () {
+L.DistanceMarker = class extends (L.version.startsWith('1.') ? L.CircleMarker.extend({}) : L.CircleMarker) {
+  _updatePath () {
 		let ctx = this._renderer._ctx;
 		let p = this._point;
 
@@ -111,28 +111,19 @@ L.DistanceMarker = L.CircleMarker.extend({
 			ctx.restore();
 		}
 	}
-});
+};
 
-L.DistanceMarkers = L.LayerGroup.extend({
-	options: {
-		cssClass: 'dist-marker',
-		iconSize: [12, 12],
-		arrowSize: [10, 10],
-		arrowUrl: "data:image/svg+xml,%3Csvg transform='rotate(90)' xmlns='http://www.w3.org/2000/svg' width='560px' height='560px' viewBox='0 0 560 560'%3E%3Cpath stroke-width='35' fill='%23000' stroke='%23FFF' d='M280,40L522,525L280,420L38,525z'/%3E%3C/svg%3E",
-		offset: 1000,
-		showAll: 12,
-		textFunction: (distance, i, offset) => i,
-		distance: true,
-		direction: true,
-	},
-	initialize (line, map, options) {
+L.DistanceMarkers = class extends (L.version.startsWith('1.') ? L.LayerGroup.extend({}) : L.LayerGroup) {
+  static initHooks = true;
+  constructor(line, map, options) {
+    super();
 
 		this._layers = {};
 		this._zoomLayers = {};
 
 		options = L.Util.setOptions(this, options);
 
-		let preferCanvas = map.options.preferCanvas;
+		let preferCanvas = map.options.renderer instanceof L.Canvas || map.options.preferCanvas;
 		let showAll = Math.min(map.getMaxZoom(), options.showAll);
 
 		// You should use "leaflet-rotate" to show rotated arrow markers (preferCanvas: false)
@@ -273,17 +264,34 @@ L.DistanceMarkers = L.LayerGroup.extend({
 		};
 		map.on('zoomend', updateMarkerVisibility);
 		updateMarkerVisibility();
-	},
 
-	_minimumZoomLevelForItem (i, zoom) {
+    this._initialized = true;
+    this.callInitHooks();
+  }
+  callInitHooks() {
+    if (!L.version.startsWith('1.') || this._initialized) super.callInitHooks();
+  }
+  _minimumZoomLevelForItem (i, zoom) {
 		while (i > 0 && i % 2 === 0) {
 			--zoom;
 			i = Math.floor(i / 2);
 		}
 		return zoom;
-	},
-
-});
+	}
+  static {
+    this.mergeOptions({
+		cssClass: 'dist-marker',
+		iconSize: [12, 12],
+		arrowSize: [10, 10],
+		arrowUrl: "data:image/svg+xml,%3Csvg transform='rotate(90)' xmlns='http://www.w3.org/2000/svg' width='560px' height='560px' viewBox='0 0 560 560'%3E%3Cpath stroke-width='35' fill='%23000' stroke='%23FFF' d='M280,40L522,525L280,420L38,525z'/%3E%3C/svg%3E",
+		offset: 1000,
+		showAll: 12,
+		textFunction: (distance, i, offset) => i,
+		distance: true,
+		direction: true,
+	});
+  }
+};
 
 L.Polyline.include({
 

@@ -154,7 +154,7 @@ export function pointer(event, element) {
 /**
  * TODO: use generators instead? (ie. "yield")
  */
-export const iMax = (iVal, max = -Infinity) => (iVal > max ? iVal : max); 
+export const iMax = (iVal, max = -Infinity) => (iVal > max ? iVal : max);
 export const iMin = (iVal, min = +Infinity) => (iVal < min ? iVal : min);
 export const iAvg = (iVal, avg = 0, idx = 1) => (iVal + avg * (idx - 1)) / idx;
 export const iSum = (iVal, sum = 0) => iVal + sum;
@@ -196,7 +196,7 @@ export const wrapDelta = (curr, prev, deltaMax) => Math.abs(curr - prev) > delta
 
 /**
  * A deep copy implementation that takes care of correct prototype chain and cycles, references
- * 
+ *
  * @see https://web.dev/structured-clone/#features-and-limitations
  */
 export function cloneDeep(o, skipProps = [], cache = []) {
@@ -233,3 +233,4 @@ export function cloneDeep(o, skipProps = [], cache = []) {
 			return o;
 	}
 }
+export const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);

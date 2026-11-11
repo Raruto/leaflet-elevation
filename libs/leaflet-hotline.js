@@ -42,7 +42,7 @@ https://github.com/iosphere/Leaflet.hotline/
             1.0: 'red'
         };
 
-        this._canvas = canvas = ('string' === typeof canvas) 
+        this._canvas = canvas = ('string' === typeof canvas)
             ? document.getElementById(canvas)
             : canvas;
 
@@ -271,19 +271,17 @@ https://github.com/iosphere/Leaflet.hotline/
     };
 
 
-    var Renderer = L.Canvas.extend({
-        _initContainer() {
+    var Renderer = class extends (L.version.startsWith('1.') ? L.Canvas.extend({}) : L.Canvas) {
+  _initContainer() {
             L.Canvas.prototype._initContainer.call(this);
             this._hotline = new Hotline(this._container);
-        },
-
-        _update() {
+        }
+  _update() {
             L.Canvas.prototype._update.call(this);
             this._hotline.width(this._container.width);
             this._hotline.height(this._container.height);
-        },
-
-        _updatePoly(layer) {
+        }
+  _updatePoly(layer) {
             if (!this._drawing) { return; }
 
             var parts = layer._parts;
@@ -295,9 +293,8 @@ https://github.com/iosphere/Leaflet.hotline/
             this._hotline
                 .data(parts)
                 .draw();
-        },
-
-        _updateOptions(layer) {
+        }
+  _updateOptions(layer) {
             if (layer.options.min != null) {
                 this._hotline.min(layer.options.min);
             }
@@ -317,7 +314,7 @@ https://github.com/iosphere/Leaflet.hotline/
                 this._hotline.palette(layer.options.palette);
             }
         }
-    });
+};
 
     var renderer = function (options) {
         return document.createElement('canvas').getContext ? new Renderer(options) : null;
@@ -365,34 +362,14 @@ https://github.com/iosphere/Leaflet.hotline/
     };
 
 
-    L.Hotline = L.Polyline.extend({
-        statics: {
-            Renderer: Renderer,
-            renderer: renderer
-        },
-
-        options: {
-            renderer: renderer(),
-            min: 0,
-            max: 1,
-            palette: {
-                0.0: 'green',
-                0.5: 'yellow',
-                1.0: 'red'
-            },
-            weight: 5,
-            outlineColor: 'black',
-            outlineWidth: 1
-        },
-
-        getRGBForValue(value) {
+    L.Hotline = class extends (L.version.startsWith('1.') ? L.Polyline.extend({}) : L.Polyline) {
+  getRGBForValue(value) {
             return this._renderer._hotline.getRGBForValue(value);
-        },
-
-        /**
+        }
+  /**
          * Just like the Leaflet version, but with support for a z coordinate.
          */
-        _projectLatlngs(latlngs, result, projectedBounds) {
+  _projectLatlngs(latlngs, result, projectedBounds) {
             var flat = latlngs[0] instanceof L.LatLng,
                 len = latlngs.length,
                 i, ring;
@@ -411,12 +388,11 @@ https://github.com/iosphere/Leaflet.hotline/
                     this._projectLatlngs(latlngs[i], result, projectedBounds);
                 }
             }
-        },
-
-        /**
+        }
+  /**
          * Just like the Leaflet version, but uses `Util.clipSegment()`.
          */
-        _clipPoints() {
+  _clipPoints() {
             if (this.options.noClip) {
                 this._parts = this._rings;
                 return;
@@ -446,12 +422,30 @@ https://github.com/iosphere/Leaflet.hotline/
                     }
                 }
             }
-        },
-
-        _clickTolerance() {
-            return this.options.weight / 2 + this.options.outlineWidth + (L.Browser.touch ? 10 : 0);
         }
-    });
+  _clickTolerance() {
+            return this.options.weight / 2 + this.options.outlineWidth + (navigator.maxTouchPoints ? 10 : 0);
+        }
+  static {
+    this.mergeOptions({
+            renderer: renderer(),
+            min: 0,
+            max: 1,
+            palette: {
+                0.0: 'green',
+                0.5: 'yellow',
+                1.0: 'red'
+            },
+            weight: 5,
+            outlineColor: 'black',
+            outlineWidth: 1
+        });
+    Object.assign(this, {
+            Renderer: Renderer,
+            renderer: renderer
+        });
+  }
+};
 
     L.hotline = function (latlngs, options) {
         return new L.Hotline(latlngs, options);

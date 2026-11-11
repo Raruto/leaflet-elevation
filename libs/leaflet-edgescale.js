@@ -16,7 +16,7 @@
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- * 
+ *
  *     Copyright (c) GPL-3.0+ Project  - 2018- Dražen Tutić - https://github.com/dtutic/Leaflet.EdgeScaleBar
  *     Copyright (c) MIT License (MIT) - 2015- Xisco Guaita - https://github.com/xguaita/Leaflet.MapCenterCoord
  */
@@ -24,48 +24,18 @@
 /**
  * Original source: https://github.com/xguaita/Leaflet.MapCenterCoord
  */
-L.Control.EdgeScale = L.Control.extend({
-  
-  // Defaults
-  options: {
-    position: 'bottomleft',
-    icon: true,
-    coords: true,
-    bar: true,
-    onMove: true,
-    template: '{y} | {x}', // https://en.wikipedia.org/wiki/ISO_6709
-    projected: false,
-    formatProjected: '#.##0,000',
-    latlngFormat: 'DD', // DD, DM, DMS
-    latlngDesignators: true,
-    latLngFormatter: undefined,
-    iconStyle: {
-      background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 100 100'%3E%3Cg stroke='%23fff'%3E%3Ccircle cx='50' cy='50.2' r='3.9' stroke-width='2' /%3E%3Cpath stroke-width='3' d='M5 54h32a4 4 0 1 0 0-8H5a4 4 0 1 0 0 8z M54 5a4 4 0 1 0-8 0v32a4 4 0 1 0 8 0V5z M99 50c0-2-2-4-4-4H63a4 4 0 1 0 0 8h32c2 0 4-1 4-4zM46 95a4 4 0 1 0 8 0V64a4 4 0 1 0-8 0v31z'/%3E%3C/g%3E%3C/svg%3E%0A")`,
-      width:      '24px',
-      height:     '24px',
-      left:       'calc(50% - 12px)',
-      top:        'calc(50% - 12px)',
-      content:    '',
-      display:    'block',
-      position:   'absolute',
-      zIndex:     999,
-      pointerEvents: 'none',
-    },
-    containerStyle: {
-      backgroundColor: 'rgba(255, 255, 255, 0.7)',
-      boxShadow:       '0 0 5px #bbb',
-      borderRadius:    '3px',
-      padding:         '3px 2px',
-      color:           '#333',
-      font:            '11px/1.5 Consolas, monaco, monospace',
-      writingMode:     'vertical-lr',
-    },
-  },
-
-  initialize(options) {
+L.Control.EdgeScale = class extends (L.version.startsWith('1.') ? L.Control.extend({}) : L.Control) {
+  static initHooks = true;
+  constructor(options) {
+    super(options);
     L.Util.setOptions(this, options);
-  },
 
+    this._initialized = true;
+    this.callInitHooks();
+  }
+  callInitHooks() {
+    if (!L.version.startsWith('1.') || this._initialized) super.callInitHooks();
+  }
   onAdd (map) {
 
     if (this.options.bar) {
@@ -97,8 +67,7 @@ L.Control.EdgeScale = L.Control.extend({
     map.on('moveend', this._onMapMove, this);
 
     return this._container;
-  },
-
+  }
   onRemove (map) {
     if (this.options.bar) {
       this._scaleBar.remove();
@@ -110,22 +79,19 @@ L.Control.EdgeScale = L.Control.extend({
     }
     map.off('move', this._onMapMove, this);
     map.off('moveend', this._onMapMove, this);
-  },
-
+  }
   // update coordinates
   _onMapMove (e) {
     if (this.options.onMove || 'moveend' === e.type) {
       this._container.innerHTML = this._getMapCenterCoord();
     }
-  },
-
+  }
   _getMapCenterCoord () {
     const center = this._map.getCenter();
     return this.options.projected
       ? this._getProjectedCoord(this._map.options.crs.project(center))
       : this._getLatLngCoord(center);
-  },
-
+  }
   _getProjectedCoord (center) {
     return L.Util.template(
       this.options.template,
@@ -134,8 +100,7 @@ L.Control.EdgeScale = L.Control.extend({
         y: this._format(this.options.formatProjected, center.y)
       }
     );
-  },
-
+  }
   _getLatLngCoord (latLng) {
 
     const { latLngFormatter, latlngFormat, latlngDesignators: designators } = this.options;
@@ -151,7 +116,7 @@ L.Control.EdgeScale = L.Control.extend({
       lat: latLng.lat,
       lng: latLng.lng,
       lng_neg: latLng.lng < 0,
-      lat_neg: latLng.lat < 0, 
+      lat_neg: latLng.lat < 0,
     };
 
     // 180 degrees & negative
@@ -188,13 +153,12 @@ L.Control.EdgeScale = L.Control.extend({
       x: (!designators && center.lng_neg ? '-' : '') + lng + (designators ? (center.lng_neg ? ' W' : ' E') : ''),
       y: (!designators && center.lat_neg ? '-' : '') + lat + (designators ? (center.lat_neg ? ' S' : ' N') : '')
     });
-  },
-
+  }
   /**
    * IntegraXor Web SCADA - JavaScript Number Formatter
-   * 
+   *
    * @see https://code.google.com/p/javascript-number-formatter
-   * @authors KPL, KHL 
+   * @authors KPL, KHL
    */
   _format (m, v) {
     if (!m || isNaN(+v)) {
@@ -252,52 +216,56 @@ L.Control.EdgeScale = L.Control.extend({
     v[1] = (m[1] && v[1]) ? Decimal + v[1] : "";
     return (isNegative ? '-' : '') + v[0] + v[1];                  // put back any negation and combine integer and fraction.
   }
-
-});
+  static {
+    this.mergeOptions({
+    position: 'bottomleft',
+    icon: true,
+    coords: true,
+    bar: true,
+    onMove: true,
+    template: '{y} | {x}', // https://en.wikipedia.org/wiki/ISO_6709
+    projected: false,
+    formatProjected: '#.##0,000',
+    latlngFormat: 'DD', // DD, DM, DMS
+    latlngDesignators: true,
+    latLngFormatter: undefined,
+    iconStyle: {
+      background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 100 100'%3E%3Cg stroke='%23fff'%3E%3Ccircle cx='50' cy='50.2' r='3.9' stroke-width='2' /%3E%3Cpath stroke-width='3' d='M5 54h32a4 4 0 1 0 0-8H5a4 4 0 1 0 0 8z M54 5a4 4 0 1 0-8 0v32a4 4 0 1 0 8 0V5z M99 50c0-2-2-4-4-4H63a4 4 0 1 0 0 8h32c2 0 4-1 4-4zM46 95a4 4 0 1 0 8 0V64a4 4 0 1 0-8 0v31z'/%3E%3C/g%3E%3C/svg%3E%0A")`,
+      width:      '24px',
+      height:     '24px',
+      left:       'calc(50% - 12px)',
+      top:        'calc(50% - 12px)',
+      content:    '',
+      display:    'block',
+      position:   'absolute',
+      zIndex:     999,
+      pointerEvents: 'none',
+    },
+    containerStyle: {
+      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+      boxShadow:       '0 0 5px #bbb',
+      borderRadius:    '3px',
+      padding:         '3px 2px',
+      color:           '#333',
+      font:            '11px/1.5 Consolas, monaco, monospace',
+      writingMode:     'vertical-lr',
+    },
+  });
+  }
+};
 
 /**
  * Original Source: https://github.com/dtutic/Leaflet.EdgeScaleBar
- * 
- * Draws the metric scale bars in Web Mercator map along top and right edges. 
+ *
+ * Draws the metric scale bars in Web Mercator map along top and right edges.
  * Authors: Dražen Tutić (dtutic@geof.hr), Ana Kuveždić Divjak (akuvezdic@geof.hr)
  * University of Zagreb, Faculty of Geodesy, GEOF-OSGL Lab
  *  Inspired by LatLonGraticule Leaflet plugin by: lanwei@cloudybay.com.tw
  */
-L.Control.EdgeScale.Layer = L.Layer.extend({
-
-  options: {
-      opacity: 1,
-      weight: 0.8,
-      gradient: {
-        size: 10,
-        opacity: 0.5,
-      }, 
-      color: '#000',
-      font: '11px Arial',
-      zoomInterval: [
-          {start: 0, end: 2, interval: 5000000},
-          {start: 3, end: 3, interval: 2000000},
-          {start: 4, end: 4, interval: 1000000},
-          {start: 5, end: 5, interval: 500000},
-          {start: 6, end: 7, interval: 200000},
-          {start: 8, end: 8, interval: 100000},
-          {start: 9, end: 9, interval: 50000},
-          {start: 10, end: 10, interval: 20000},
-          {start: 11, end: 11, interval: 10000},
-          {start: 12, end: 12, interval: 5000},
-          {start: 13, end: 13, interval: 2000},
-          {start: 14, end: 14, interval: 1000},
-          {start: 15, end: 15, interval: 500},
-          {start: 16, end: 16, interval: 200},
-          {start: 17, end: 17, interval: 100},
-          {start: 18, end: 18, interval: 50},
-          {start: 19, end: 19, interval: 20},
-          {start: 20, end: 20, interval: 10}
-      ],
-      pane: 'edgescalePane'
-  },
-
-  initialize (options) {
+L.Control.EdgeScale.Layer = class extends (L.version.startsWith('1.') ? L.Layer.extend({}) : L.Layer) {
+  static initHooks = true;
+  constructor(options) {
+    super();
 
     L.Util.setOptions(this, options);
 
@@ -326,8 +294,13 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
 
     // Latitude limit of the Web Mercator projection
     this._LIMIT_PHI = 1.484419982;
-  },
 
+    this._initialized = true;
+    this.callInitHooks();
+  }
+  callInitHooks() {
+    if (!L.version.startsWith('1.') || this._initialized) super.callInitHooks();
+  }
   onAdd (map) {
     this._map = map;
 
@@ -353,56 +326,52 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     map.on('move', this._reset, this);
     map.on('moveend', this._reset, this);
     map.on('rotate', this._reset, this);
+    map.on('resize', this._reset, this);
 
     this._reset();
-  },
-
+  }
   onRemove (map) {
     this._pane.removeChild(this._canvas);
 
     map.off('viewreset', this._reset, this);
     map.off('move', this._reset, this);
     map.off('moveend', this._reset, this);
-  },
-
+    map.off('rotate', this._reset, this);
+    map.off('resize', this._reset, this);
+  }
   addTo (map) {
     map.addLayer(this);
     return this;
-  },
-
+  }
   setOpacity (opacity) {
     this.options.opacity = opacity;
     this._canvas.style.opacity = this.options.opacity;
     return this;
-  },
-
+  }
   bringToFront () {
     if (this._canvas) {
         this._pane.appendChild(this._canvas);
     }
     return this;
-  },
-
+  }
   bringToBack () {
     if (this._canvas) {
       this._pane.insertBefore(this._canvas, pane.firstChild);
     }
     return this;
-  },
-
+  }
   _initCanvas () {
     this._canvas = L.DomUtil.create('canvas', '');
     this._ctx = this._canvas.getContext('2d');
 
-    this.setOpacity();
+    this.setOpacity(this.options.opacity);
 
     Object.assign(this._canvas, {
       onselectstart: L.Util.falseFn,
       onmousemove: L.Util.falseFn,
       onload: this._onCanvasLoad.bind(this)
     });
-  },
-
+  }
   _reset () {
     var canvas = this._canvas,
         size = this._map.getSize();
@@ -413,13 +382,6 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     canvas.height = size.y;
     canvas.style.width  = size.x + 'px';
     canvas.style.height = size.y + 'px';
-
-    /**
-     * @TODO add support for "leaflet-rotate"
-     */
-    if (this._map._bearing) {
-      return;
-    }
 
     const { gradient } = this.options;
 
@@ -449,62 +411,71 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
 
     this._calcInterval();
     this._draw();
-  },
-
+  }
   _onCanvasLoad () {
     this.fire('load');
-  },
-
+  }
   _calcInterval() {
     const { zoomInterval } = this.options;
     const zoom = this._map.getZoom();
 
+    this._interval = undefined;
     if (undefined !== zoomInterval) {
       // Manually set scale using a custom this.options.zoomInterval object
-      for (const idx in zoomInterval) {
-        const dict = zoomInterval[idx];
-        if (dict.start <= zoom && dict.end && dict.end >= zoom) {
-          this._interval = dict.interval;
-          break;
+      for (const level of [zoom, Math.floor(zoom)]) {
+        for (const idx in zoomInterval) {
+          const dict = zoomInterval[idx];
+          if (dict.start <= level && dict.end >= level) {
+            this._interval = dict.interval;
+            break;
+          }
         }
+        if (this._interval !== undefined) break;
       }
-    } else {
+    }
+    if (this._interval === undefined) {
       // Autamatically get current scale using L.Control.Scale
       // Source: https://gis.stackexchange.com/a/198444
-      this._interval = L.Control.Scale.prototype._getRoundNum(
+      this._interval = (L.ScaleControl || L.Control.Scale).prototype._getRoundNum(
         this._map
           .containerPointToLatLng([0, this._map.getSize().y / 2 ])
           .distanceTo(
-            this._map.containerPointToLatLng([L.Control.Scale.prototype.options.maxWidth, this._map.getSize().y / 2 ]
+            this._map.containerPointToLatLng([(L.ScaleControl?.defaultOptions || L.Control.Scale.prototype.options).maxWidth, this._map.getSize().y / 2 ]
           )
         )
       );
     }
+    if (!Number.isFinite(this._interval) || this._interval <= 0) {
+      throw new Error('Edge scale interval must be a positive finite number');
+    }
 
     this._currZoom = zoom;
 
-  },
-
+  }
   _draw() {
-    this._ctx.strokeStyle = this.options.color;    
-    this._create_lat_ticks();
-    this._create_lon_ticks();
+    this._ctx.strokeStyle = this.options.color;
+    if (this._map._bearing || this._map._pitch) {
+      this._create_rotated_ticks(false);
+      this._create_rotated_ticks(true);
+    } else {
+      this._create_lat_ticks();
+      this._create_lon_ticks();
+    }
 
     this._ctx.fillStyle = this.options.color;
     this._ctx.font      = this.options.font;
 
     const size = this._map.getSize();
-    const text = this._interval >= 1000 ? (this._interval / 1000 + ' km') : this._interval + ' m';    
+    const text = this._interval >= 1000 ? (this._interval / 1000 + ' km') : this._interval + ' m';
 
     this._ctx.textAlign    = 'left';
-    this._ctx.textBaseline = 'middle'; 
+    this._ctx.textBaseline = 'middle';
     this._ctx.fillText(text, +12, size.y / 2);
 
     this._ctx.textAlign    = 'center';
-    this._ctx.textBaseline = 'top'; 
+    this._ctx.textBaseline = 'top';
     this._ctx.fillText(text, size.x / 2, 12);
-  },
-
+  }
   _create_lat_ticks() {
     const { weight } = this.options;
     const size       = this._map.getSize();
@@ -512,36 +483,35 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     const center     = this._merLength(this._map.containerPointToLatLng(new L.Point(0, size.y / 2)).lat * to_rad);
     const top        = this._merLength(this._map.containerPointToLatLng(new L.Point(0,0)).lat * to_rad);
     const bottom     = this._merLength(this._map.containerPointToLatLng(new L.Point(0, size.y)).lat * to_rad);
-        
-    // draw major ticks    
+
+    // draw major ticks
     for (let i = center + this._interval / 2; i < top; i = i + this._interval) {
-      const phi = this._invmerLength(i);			
+      const phi = this._invmerLength(i);
       if ((phi < this._LIMIT_PHI) && (phi > -this._LIMIT_PHI)) {
         this._draw_lat_tick(phi, 10, weight * 1.5);
       }
     }
     for (let i = center - this._interval / 2; i > bottom; i = i - this._interval) {
-      const phi = this._invmerLength(i);			
+      const phi = this._invmerLength(i);
       if ((phi > -this._LIMIT_PHI) && (phi < this._LIMIT_PHI)) {
         this._draw_lat_tick(phi, 10, weight * 1.5);
       }
     }
 
-    // draw minor ticks    
+    // draw minor ticks
     for (let i = center; i < top; i = i + this._interval / 10.0) {
-      const phi = this._invmerLength(i);			
+      const phi = this._invmerLength(i);
       if ((phi < this._LIMIT_PHI) && (phi > -this._LIMIT_PHI)) {
         this._draw_lat_tick(phi, 4, weight);
       }
     }
     for (let i = center - this._interval / 10; i > bottom; i = i - this._interval / 10.0) {
-      const phi = this._invmerLength(i);			
+      const phi = this._invmerLength(i);
       if ((phi > -this._LIMIT_PHI) && (phi < this._LIMIT_PHI)) {
         this._draw_lat_tick(phi, 4, weight);
       }
     }
-  },
-
+  }
   _create_lon_ticks() {
     const { weight } = this.options;
     const size       = this._map.getSize();
@@ -553,37 +523,61 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     const sinPhi2    = Math.pow(Math.sin(center.lat * to_rad), 2);
     const N          = this._a / Math.sqrt(1.0 - this._e2 * sinPhi2);
     const dl         = this._interval / (N * Math.cos(center.lat * to_rad)) * to_deg;
-        
+
     // draw major ticks
     for (let i = center.lng + dl / 2; i < right.lng; i = i + dl) this._draw_lon_tick(i, 10, weight * 1.5);
     for (let i = center.lng - dl / 2; i > left.lng;  i = i - dl) this._draw_lon_tick(i, 10, weight * 1.5);
-    
+
     // draw minor ticks
     for (let i = center.lng;           i < right.lng; i = i + dl / 10) this._draw_lon_tick(i, 4, weight);
     for (let i = center.lng - dl / 10; i > left.lng;  i = i - dl / 10) this._draw_lon_tick(i, 4, weight);
-  },
+  }
+  _create_rotated_ticks(horizontal) {
+    const size = this._map.getSize();
+    const half = (horizontal ? size.x : size.y) / 2;
+    const step = this._interval / 10;
+    const rad = Math.PI / 180;
+    const ctx = this._ctx;
+    const weight = this.options.weight;
 
-  _setCanvasPosition() {
-    let lt = this._map.containerPointToLayerPoint([0, 0]);
-    /**
-     * @TODO add support for "leaflet-rotate"
-     */
-    if (this._map._bearing) {
-      lt = this._map.rotatedPointToMapPanePoint(
-        this._map.containerPointToLayerPoint(new L.Point(this._map._container.getBoundingClientRect()))
-      );
+    // ponytail: sample every 4px; use adaptive integration if very low zoom requires more precision.
+    for (const direction of [-1, 1]) {
+      let previous = this._map.containerPointToLatLng(horizontal ? [half, 0] : [0, half]);
+      let distance = 0;
+      let tick = direction === -1 ? 1 : 0;
+      for (let offset = 0; offset < half;) {
+        const next = Math.min(offset + 4, half);
+        const point = half + direction * next;
+        const current = this._map.containerPointToLatLng(horizontal ? [point, 0] : [0, point]);
+        const phi = (previous.lat + current.lat) * rad / 2;
+        const denominator = Math.sqrt(1 - this._e2 * Math.sin(phi) ** 2);
+        const dy = (current.lat - previous.lat) * rad * this._a * (1 - this._e2) / denominator ** 3;
+        const dx = (current.lng - previous.lng) * rad * this._a * Math.cos(phi) / denominator;
+        const segment = Math.hypot(dx, dy);
+        while (tick * step <= distance + segment && segment > 0) {
+          const position = half + direction * (offset + (tick * step - distance) / segment * (next - offset));
+          const major = tick % 10 === 5;
+          ctx.lineWidth = major ? weight * 1.5 : weight;
+          ctx.beginPath();
+          ctx.moveTo(horizontal ? position : 0, horizontal ? 0 : position);
+          ctx.lineTo(horizontal ? position : (major ? 10 : 4), horizontal ? (major ? 10 : 4) : position);
+          ctx.stroke();
+          tick++;
+        }
+        distance += segment;
+        previous = current;
+        offset = next;
+      }
     }
-    L.DomUtil.setPosition(this._canvas, lt);
-  },
-
+  }
+  _setCanvasPosition() {
+    L.DomUtil.setPosition(this._canvas, this._map._getMapPanePos().multiplyBy(-1));
+  }
   _latLngToCanvasPoint (latlng) {
-    return new L.Point(
-      this._map
-      .project(latlng)
-        ._subtract(this._map.getPixelOrigin())
-      ).add(this._map._getMapPanePos()); 
-  },
-
+    return this._map.layerPointToContainerPoint(
+      this._map.project(latlng).subtract(this._map.getPixelOrigin())
+    );
+  }
   _draw_lat_tick (phi, lenght, weight) {
     const to_deg = 180.0/Math.PI;
     const size   = this._map.getSize();
@@ -593,8 +587,7 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     this._ctx.moveTo(0, y);
     this._ctx.lineTo(+ lenght, y);
     this._ctx.stroke();
-  },
-
+  }
   _draw_lon_tick(lam, lenght, weight) {
     const x = this._latLngToCanvasPoint(new L.LatLng(0.0, lam)).x;
     this._ctx.lineWidth = weight;
@@ -602,21 +595,52 @@ L.Control.EdgeScale.Layer = L.Layer.extend({
     this._ctx.moveTo(x, 0);
     this._ctx.lineTo(x, lenght);
     this._ctx.stroke();
-  },
-
+  }
   _merLength(phi) {
     const cos2 = Math.cos(2.0 * phi);
-    const sin2 = Math.sin(2.0 * phi); 
+    const sin2 = Math.sin(2.0 * phi);
     return this._A * (phi + sin2 * (this._c1 + (this._c2 + (this._c3 + (this._c4 + this._c5 * cos2) * cos2) *cos2) * cos2));
-  },
-
+  }
   _invmerLength(s) {
     const psi = s/this._A;
     const cos2 = Math.cos(2.0 * psi);
-    const sin2 = Math.sin(2.0 * psi); 
+    const sin2 = Math.sin(2.0 * psi);
     return psi + sin2 * (this._ic1 + (this._ic2 + (this._ic3 + (this._ic4 + this._ic5 * cos2) * cos2) * cos2) * cos2);
-  },
-});
+  }
+  static {
+    this.mergeOptions({
+      opacity: 1,
+      weight: 0.8,
+      gradient: {
+        size: 10,
+        opacity: 0.5,
+      },
+      color: '#000',
+      font: '11px Arial',
+      zoomInterval: [
+          {start: 0, end: 2, interval: 5000000},
+          {start: 3, end: 3, interval: 2000000},
+          {start: 4, end: 4, interval: 1000000},
+          {start: 5, end: 5, interval: 500000},
+          {start: 6, end: 7, interval: 200000},
+          {start: 8, end: 8, interval: 100000},
+          {start: 9, end: 9, interval: 50000},
+          {start: 10, end: 10, interval: 20000},
+          {start: 11, end: 11, interval: 10000},
+          {start: 12, end: 12, interval: 5000},
+          {start: 13, end: 13, interval: 2000},
+          {start: 14, end: 14, interval: 1000},
+          {start: 15, end: 15, interval: 500},
+          {start: 16, end: 16, interval: 200},
+          {start: 17, end: 17, interval: 100},
+          {start: 18, end: 18, interval: 50},
+          {start: 19, end: 19, interval: 20},
+          {start: 20, end: 20, interval: 10}
+      ],
+      pane: 'edgescalePane'
+  });
+  }
+};
 
 // backcomps for leaflet v1
 L.control = L.control || {};

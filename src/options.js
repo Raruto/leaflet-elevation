@@ -11,7 +11,7 @@ export var Options = {
 	detached: true,
 	distance: true,
 	distanceMarkers: { lazy: true, distance: true, direction: true },
-	dragging: !L.Browser.mobile,
+	dragging: !_.mobile,
 	downloadLink: 'link',
 	elevationDiv: "#elevation-div",
 	edgeScale: { bar: true, icon: false, coords: false },
@@ -67,7 +67,7 @@ export var Options = {
 	yAttr: "z",
 	yLabel: "m",
 	zFollow: false,
-	zooming: !L.Browser.mobile,
+	zooming: !_.mobile,
 
 	// Quite uncommon and undocumented options
 	margins: { top: 30, right: 30, bottom: 30, left: 40 },

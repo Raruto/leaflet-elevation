@@ -54,7 +54,7 @@ export function Time() {
 			return time;
 		},
 		onPointAdded: (_, i) => this.track_info.time = this._data[i].duration,
-		scale: (opts.time && opts.time != "summary" && !L.Browser.mobile) && {
+		scale: (opts.time && opts.time != "summary" && !_.mobile) && {
 			axis       : "x",
 			position   : "top",
 			scale      : "x",

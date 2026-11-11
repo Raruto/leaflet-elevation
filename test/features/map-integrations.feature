@@ -37,6 +37,12 @@ Feature: Integrating elevation charts with Leaflet maps
     Then the edge scale stays rendered and only the final track waypoints remain
     And no browser errors have occurred
 
+  @example-edge-scale
+  Scenario: Edge scale ticks remain aligned and accurate when the map rotates
+    When I open the edge-scale example
+    Then the edge scale draws correctly through rotation, pan, zoom and resize
+    And no browser errors have occurred
+
   # https://github.com/Raruto/leaflet-elevation/issues/238#issuecomment-1493717835
   # https://github.com/Raruto/leaflet-elevation/issues/238#issuecomment-1493826767
   @issue-238 @example-multiple-maps

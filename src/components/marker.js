@@ -1,8 +1,9 @@
 const _ = L.Control.Elevation.Utils;
 
-export var Marker = L.Class.extend({
-
-	initialize(options, control) {
+export var Marker = class extends (L.version.startsWith('1.') ? L.Class.extend({}) : L.Class) {
+  static initHooks = true;
+  constructor(options, control) {
+    super();
 		this.options = options;
 		this.control = control
 
@@ -13,11 +14,13 @@ export var Marker = L.Class.extend({
 		}
 
 		this._labels = {};
-
-		return this;
-	},
-
-	addTo(map) {
+    this._initialized = true;
+    this.callInitHooks();
+  }
+  callInitHooks() {
+    if (!L.version.startsWith('1.') || this._initialized) super.callInitHooks();
+  }
+  addTo(map) {
 		this._map = map;
 		switch(this.options.marker) {
 			case 'elevation-line':
@@ -28,12 +31,11 @@ export var Marker = L.Class.extend({
 			case 'position-marker': this._marker.addTo(map, { pane: 'overlayPane' }); break;
 		}
 		return this;
-	},
-
-	/**
+	}
+  /**
 	 * Update position marker ("leaflet-marker").
 	 */
-	update(props) {
+  update(props) {
 		if (props) this._props = props;
 		else props = this._props;
 
@@ -79,25 +81,21 @@ export var Marker = L.Class.extend({
 				this._marker.setLatLng(this._latlng);
 			break;
 		}
-	},
-
-	/*
+	}
+  /*
 	 * Hides the position/height indicator marker drawn onto the map
 	 */
-	remove() {
+  remove() {
 		this._props = null;
 		switch(this.options.marker) {
 			case 'elevation-line':  this._container && this._container.classList.add("leaflet-hidden"); break;
 			case 'position-marker': _.addClass(this._marker.getElement(), 'leaflet-hidden');            break;
 		}
-	},
-
-	getLatLng() {
+	}
+  getLatLng() {
 		return this._latlng;
-	},
-
-	_registerTooltip(props) {
+	}
+  _registerTooltip(props) {
 		this._labels[props.name] = props;
 	}
-
-});
+};

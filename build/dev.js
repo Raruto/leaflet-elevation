@@ -1,7 +1,7 @@
 import { build } from './build.js';
 import { startServer } from './server.js';
 
-const server = await startServer();
+const server = await startServer(8080, { localCdn: true });
 let stopBuild;
 
 try {

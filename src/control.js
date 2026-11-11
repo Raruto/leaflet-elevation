@@ -6,167 +6,13 @@ if (!L._ || !L.i18n) {
 	L._ = L.i18n = (string, data) => string;
 }
 
-export const Elevation = L.Control.Elevation = L.Control.extend({
-
-	options: Options,
-	__mileFactor:     0.621371, // 1 km = (0.621371 mi)
-	__footFactor:     3.28084, // 1 m  = (3.28084 ft)
-	__TOGEOJSON:     'https://unpkg.com/@tmcw/togeojson@5.6.2/dist/togeojson.umd.js',
-	__LHOTLINE:      '../libs/leaflet-hotline.min.js',
-	__LDISTANCEM:    '../libs/leaflet-distance-marker.min.js',
-	__LEDGESCALE:    '../libs/leaflet-edgescale.min.js',
-	__LCHART:        '../src/components/chart.js',
-	__LMARKER:       '../src/components/marker.js',
-	__LSUMMARY:      '../src/components/summary.js',
-	__modulesFolder: '../src/handlers/',
-	__btnIcon:       '../images/elevation.svg',
-
-	/*
-	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
-	 */
-	addData(d, layer) {
-		return Promise.resolve().then(() => {
-			if (!this._modulesLoaded) {
-				return new Promise(resolve => this.once('modules_loaded', () => resolve(this.addData(d, layer))));
-			}
-			layer = layer ?? (d.on && d);
-			this._addData(d);
-			this._addLayer(layer);
-			this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
-		});
-
-	},
-
-	/**
-	 * Adds the control to the given map.
-	 */
-	addTo(map) {
-		if (this.options.detached) {
-			let parent = _.select(this.options.elevationDiv);
-			let eleDiv = this.onAdd(map);
-			parent ? _.append(parent, eleDiv) : _.insert(map.getContainer(), eleDiv, 'afterend');
-		} else {
-			L.Control.prototype.addTo.call(this, map);
-		}
-		return this;
-	},
-
-	/*
-	 * Reset data and display
-	 */
-	clear() {
-		if (this._marker)        this._marker.remove();
-		if (this._chart)         this._clearChart();
-		if (this._layers)        this._clearLayers(this._layers);
-		if (this._markers)       this._clearLayers(this._markers);
-		if (this._circleMarkers) this._circleMarkers.remove();
-		if (this._hotline)       this._hotline.eachLayer(l => l.options.renderer.remove()); // hotfix for: https://github.com/Raruto/leaflet-elevation/issues/233
-		if (this._hotline)       this._clearLayers(this._hotline);
-
-		this._data      = [];
-		this.track_info = {};
-		this._yCoordMin = 0;
-		this._yCoordMax = -Infinity;
-
-		this._fireEvt("eledata_clear");
-
-		this._updateChart();
-	},
-
-	_clearChart() {
-		if (this._events && this._events.elechart_updated) {
-			this._events.elechart_updated.forEach(({fn, ctx}) => this.off('elechart_updated', fn, ctx));
-		}
-		if (this._chart && this._chart._container) {
-			this._chart._container.querySelectorAll('g.point .point').forEach(node => node.remove());
-			this._chart.clear();
-		}
-	},
-
-	_clearLayers(l) {
-		l = l || this._layers;
-		if (l && l.eachLayer) {
-			l.eachLayer(f => f.remove())
-			l.clearLayers();
-		}
-	},
-
-	/**
-	 * TODO: Create a base class to handle custom data attributes (heart rate, cadence, temperature, ...)
-	 * 
-	 * @link https://leafletjs.com/examples/extending/extending-3-controls.html#handlers
-	 */
-	// addHandler(name, HandlerClass) {
-	// 	if (HandlerClass) {
-	// 		let handler = this[name] = new HandlerClass(this);
-	// 		this.handlers.push(handler);
-	// 		if (this.options[name]) {
-	// 			handler.enable();
-	// 		}
-	// 	}
-	// 	return this;
-	// },
-
-	/**
-	 * Disable chart brushing.
-	 */
-	disableBrush() {
-		this._chart._brushEnabled = false;
-		this._resetDrag();
-	},
-
-	/**
-	 * Enable chart brushing.
-	 */
-	enableBrush() {
-		this._chart._brushEnabled = true;
-	},
-
-	/**
-	 * Disable chart zooming.
-	 */
-	disableZoom() {
-		this._chart._zoomEnabled = false;
-		this._chart._resetZoom();
-	},
-
-	/**
-	 * Enable chart zooming.
-	 */
-	enableZoom() {
-		this._chart._zoomEnabled = true;
-	},
-
-	/**
-	 * Sets a map view that contains the given geographical bounds.
-	 */
-	fitBounds(bounds) {
-		bounds = bounds || this.getBounds();
-		if (this._map && bounds.isValid()) this._map.fitBounds(bounds);
-	},
-
-	getBounds(data) {
-		return new L.LatLngBounds((data || this._data).map((d) => d.latlng));
-	},
-
-	/**
-	 * Get default zoom level (followMarker: true).
-	 */
-	getZFollow() {
-		return this.options.zFollow;
-	},
-
-	/**
-	 * Hide current elevation chart profile.
-	 */
-	hide() {
-		_.style(this._container, "display", "none");
-	},
-
-	/**
+export const Elevation = L.Control.Elevation = class extends (L.version.startsWith('1.') ? L.Control.extend({}) : L.Control) {
+  static initHooks = true;
+  /**
 	 * Initialize chart control "options" and "container".
 	 */
-	initialize(opts) {
+  constructor(opts) {
+    super();
 
 		// Fixes: https://github.com/Raruto/leaflet-elevation/pull/240
 		opts = L.Util.setOptions(this, Object.assign({}, _.cloneDeep(Options), opts)); // "deep copy" nested objects (multiple charts)
@@ -203,12 +49,144 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this._fixCanvasPaths();
 		this._fixTooltipSize();
 
-	},
+
+    this._initialized = true;
+    this.callInitHooks();
+  }
+  callInitHooks() {
+    if (!L.version.startsWith('1.') || this._initialized) super.callInitHooks();
+  }
+  /*
+	 * Add data to the diagram either from GPX or GeoJSON and update the axis domain and data
+	 */
+  addData(d, layer) {
+		return Promise.resolve().then(() => {
+			if (!this._modulesLoaded) {
+				return new Promise(resolve => this.once('modules_loaded', () => resolve(this.addData(d, layer))));
+			}
+			layer = layer ?? (d.on && d);
+			this._addData(d);
+			this._addLayer(layer);
+			this._fireEvt("eledata_added", { data: d, layer: layer, track_info: this.track_info });
+		});
+
+	}
+  /**
+	 * Adds the control to the given map.
+	 */
+  addTo(map) {
+		if (this.options.detached) {
+			let parent = _.select(this.options.elevationDiv);
+			let eleDiv = this.onAdd(map);
+			parent ? _.append(parent, eleDiv) : _.insert(map.getContainer(), eleDiv, 'afterend');
+		} else {
+			L.Control.prototype.addTo.call(this, map);
+		}
+		return this;
+	}
+  /*
+	 * Reset data and display
+	 */
+  clear() {
+		if (this._marker)        this._marker.remove();
+		if (this._chart)         this._clearChart();
+		if (this._layers)        this._clearLayers(this._layers);
+		if (this._markers)       this._clearLayers(this._markers);
+		if (this._circleMarkers) this._circleMarkers.remove();
+		if (this._hotline)       this._hotline.eachLayer(l => l.options.renderer.remove()); // hotfix for: https://github.com/Raruto/leaflet-elevation/issues/233
+		if (this._hotline)       this._clearLayers(this._hotline);
+
+		this._data      = [];
+		this.track_info = {};
+		this._yCoordMin = 0;
+		this._yCoordMax = -Infinity;
+
+		this._fireEvt("eledata_clear");
+
+		this._updateChart();
+	}
+  _clearChart() {
+		this.off('elechart_updated');
+		if (this._chart && this._chart._container) {
+			this._chart._container.querySelectorAll('g.point .point').forEach(node => node.remove());
+			this._chart.clear();
+		}
+	}
+  _clearLayers(l) {
+		l = l || this._layers;
+		if (l && l.eachLayer) {
+			l.eachLayer(f => f.remove())
+			l.clearLayers();
+		}
+	}
+  /**
+	 * TODO: Create a base class to handle custom data attributes (heart rate, cadence, temperature, ...)
+	 *
+	 * @link https://leafletjs.com/examples/extending/extending-3-controls.html#handlers
+	 */
+	// addHandler(name, HandlerClass) {
+	// 	if (HandlerClass) {
+	// 		let handler = this[name] = new HandlerClass(this);
+	// 		this.handlers.push(handler);
+	// 		if (this.options[name]) {
+	// 			handler.enable();
+	// 		}
+	// 	}
+	// 	return this;
+	// },
 
 	/**
+	 * Disable chart brushing.
+	 */
+  disableBrush() {
+		this._chart._brushEnabled = false;
+		this._resetDrag();
+	}
+  /**
+	 * Enable chart brushing.
+	 */
+  enableBrush() {
+		this._chart._brushEnabled = true;
+	}
+  /**
+	 * Disable chart zooming.
+	 */
+  disableZoom() {
+		this._chart._zoomEnabled = false;
+		this._chart._resetZoom();
+	}
+  /**
+	 * Enable chart zooming.
+	 */
+  enableZoom() {
+		this._chart._zoomEnabled = true;
+	}
+  /**
+	 * Sets a map view that contains the given geographical bounds.
+	 */
+  fitBounds(bounds) {
+		bounds = bounds || this.getBounds();
+		if (this._map && bounds.isValid()) this._map.fitBounds(bounds);
+	}
+  getBounds(data) {
+		return new L.LatLngBounds((data || this._data).map((d) => d.latlng));
+	}
+  /**
+	 * Get default zoom level (followMarker: true).
+	 */
+  getZFollow() {
+		return this.options.zFollow;
+	}
+  /**
+	 * Hide current elevation chart profile.
+	 */
+  hide() {
+		_.style(this._container, "display", "none");
+	}
+  /**
 	 * Javascript scripts downloader (lazy loader)
 	 */
-	import(src, condition) {
+  import(src, condition) {
 		if (Array.isArray(src)) {
 			return Promise.all(src.map(m => this.import(m)));
 		}
@@ -219,20 +197,18 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			case this.__LHOTLINE:    condition = typeof L.Hotline  !== 'function'; break;
 		}
 		return condition !== false ? import(_.resolveURL(src, this.options.srcFolder)) : Promise.resolve();
-	},
-
-	/**
+	}
+  /**
 	 * Load elevation data (GPX, GeoJSON, KML or TCX).
 	 */
-	load(data) {
+  load(data) {
 		this._parseFromString(data).then( geojson => geojson ? this._loadLayer(geojson) : this._loadFile(data));
-	},
-
-	/**
+	}
+  /**
 	 * Create container DOM element and related event listeners.
 	 * Called on control.addTo(map).
 	 */
-	onAdd(map) {
+  onAdd(map) {
 		this._map = map;
 
 		let container = this._container = _.create("div", "elevation-control " + this.options.theme + " " + (this.options.detached ? 'elevation-detached' : 'leaflet-control'), this.options.detached ? { id: 'elevation-' + _.randomId() } : {});
@@ -254,13 +230,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		this.fire('add');
 
 		return container;
-	},
-
-	/**
+	}
+  /**
 	 * Clean up control code and related event listeners.
 	 * Called on control.remove().
 	 */
-	onRemove(map) {
+  onRemove(map) {
 		this._container = null;
 
 		map
@@ -278,33 +253,29 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.off('eledata_added eledata_loaded', this._updateSummary, this);
 
 		this.fire('remove');
-	},
-
-	/**
+	}
+  /**
 	 * Redraws the chart control. Sometimes useful after screen resize.
 	 */
-	redraw() {
+  redraw() {
 		this._resizeChart();
-	},
-
-	/**
+	}
+  /**
 	 * Set default zoom level (followMarker: true).
 	 */
-	setZFollow(zoom) {
+  setZFollow(zoom) {
 		this.options.zFollow = zoom;
-	},
-
-	/**
+	}
+  /**
 	 * Hide current elevation chart profile.
 	 */
-	show() {
+  show() {
 		_.style(this._container, "display", "block");
-	},
-
-	/*
+	}
+  /*
 	 * Parsing data either from GPX or GeoJSON and update the diagram data
 	 */
-	_addData(d) {
+  _addData(d) {
 		if (!d) {
 			return;
 		}
@@ -329,12 +300,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			return this._addGeoJSONData(d._latlngs, d.feature && d.feature.properties);
 		}
 
-	},
-
-	/*
+	}
+  /*
 	 * Parsing of GeoJSON data lines and their elevation in z-coordinate
 	 */
-	_addGeoJSONData(coords, properties, nestingLevel) {
+  _addGeoJSONData(coords, properties, nestingLevel) {
 
 		// "coordinateProperties" property is generated inside "@tmcw/toGeoJSON"
 		let props  = (properties && properties.coordinateProperties) || properties;
@@ -343,13 +313,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 
 			// GARMIN_EXTENSIONS = ["hr", "cad", "atemp", "wtemp", "depth", "course", "bearing"];
 			point.meta = point.meta ?? { time: null, ele: null };
-			
+
 			point.prev = (attr) => (attr ? this._data[i > 0 ? i - 1 : 0][attr] : this._data[i > 0 ? i - 1 : 0]);
 
 			this.fire("elepoint_init", { point: point, props: props, id: i, isMulti: nestingLevel });
 
 			this._addPoint(
-				point.lat ?? point[1], 
+				point.lat ?? point[1],
 				point.lng ?? point[0],
 				point.alt ?? point.meta.ele ?? point[2]
 			);
@@ -361,12 +331,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		});
 
 		this.fire("eletrack_added", { coords: coords, index: this._data.length - 1 });
-	},
-
-	/*
+	}
+  /*
 	 * Parse and push a single (x, y, z) point to current elevation profile.
 	 */
-	_addPoint(x, y, z) {
+  _addPoint(x, y, z) {
 		if (this.options.reverseCoords) {
 			[x, y] = [y, x];
 		}
@@ -379,29 +348,26 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		});
 
 		this.fire("eledata_updated", { index: this._data.length - 1 });
-	},
-
-	_addLayer(layer) {
+	}
+  _addLayer(layer) {
 		if (layer) this._layers.addLayer(layer)
 		// Postpone adding the distance markers (lazy: true)
 		if (layer && this.options.distanceMarkers && this.options.distanceMarkers.lazy) {
 			layer.on('add remove', ({target, type}) => L.DistanceMarkers && target instanceof L.Polyline && target[type + 'DistanceMarkers']());
 		}
 		return layer;
-	},
-
-	_addMarker(marker) {
+	}
+  _addMarker(marker) {
 		if (marker) this._markers.addLayer(marker)
 		return marker;
-	},
-
-	/**
+	}
+  /**
 	 * Initialize "L.AlmostOver" integration
-	 * 
+	 *
 	 * Inspired by: https://github.com/makinacorpus/Leaflet.AlmostOver
 	 */
-	_initAlmostOverHandler(map, layer) {
-		if (!map || !this.options.almostOver || L.Browser.mobile) return Promise.resolve();
+  _initAlmostOverHandler(map, layer) {
+		if (!map || !this.options.almostOver || _.mobile) return Promise.resolve();
 		map.almostOver = map.almostOver || {
 			_map: map,
 			_projectedLayers: new WeakMap(),
@@ -414,12 +380,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			enable() {
 				if (this.enabled()) return;
 				this._enabled = true;
-				if (this._map.options.almostOnMouseMove !== false) this._map.on('mousemove', this._sampleMouseMove, this);
+				if (this._map.options.almostOnMouseMove !== false) this._map.on(L.version.startsWith('1.') ? 'mousemove' : 'pointermove', this._sampleMouseMove, this);
 				this._map.on('click dblclick', this._onMouseClick, this);
 			},
 			disable() {
 				if (!this.enabled()) return;
-				this._map.off('mousemove', this._sampleMouseMove, this);
+				this._map.off(L.version.startsWith('1.') ? 'mousemove' : 'pointermove', this._sampleMouseMove, this);
 				this._map.off('click dblclick', this._onMouseClick, this);
 				if (this._previous) this._map.fire('almost:out', { layer: this._previous.layer });
 				this._previous = null;
@@ -539,26 +505,23 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			});
 		}
 		return Promise.resolve();
-	},
-
-	/**
+	}
+  /**
 	 * Initialize "L.DistanceMarkers" integration
 	 */
-	_initDistanceMarkers() {
+  _initDistanceMarkers() {
 		return this.options.distanceMarkers ? this.import(this.__LDISTANCEM) : Promise.resolve();
-	},
-
-	/**
+	}
+  /**
 	 * Initialize "L.Control.EdgeScale" integration
 	 */
-	_initEdgeScale(map) {
+  _initEdgeScale(map) {
 		return this.options.edgeScale ? this.import(this.__LEDGESCALE)
 			.then(() => {
 				map.edgeScaleControl = map.edgeScaleControl || L.control.edgeScale('boolean' !== typeof this.options.edgeScale ? this.options.edgeScale : {}).addTo(map);
 			}) : Promise.resolve();
-	},
-
-	_initHotLine(layer) {
+	}
+  _initHotLine(layer) {
 		let prop = typeof this.options.hotline == 'string' ? this.options.hotline : 'elevation';
 		return this.options.hotline ? this.import(this.__LHOTLINE)
 			.then(() => {
@@ -587,12 +550,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 					}
 				});
 			}) : Promise.resolve();
-	},
-
-	/**
+	}
+  /**
 	 * Initialize "L.AlmostOver" and "L.DistanceMarkers"
 	 */
-	_initMapIntegrations(layer) {
+  _initMapIntegrations(layer) {
 		let map = this._map;
 		if (map) {
 			if (this._data.length) {
@@ -617,28 +579,25 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		} else {
 			this.once('add', () => this._initMapIntegrations(layer));
 		}
-	},
-
-	/*
+	}
+  /*
 	 * Collapse current chart control.
 	 */
-	_collapse() {
+  _collapse() {
 		_.replaceClass(this._container, 'elevation-expanded', 'elevation-collapsed');
 		if (this._map) this._map.invalidateSize();
-	},
-
-	/*
+	}
+  /*
 	 * Expand current chart control.
 	 */
-	_expand() {
+  _expand() {
 		_.replaceClass(this._container, 'elevation-collapsed', 'elevation-expanded');
 		if (this._map) this._map.invalidateSize();
-	},
-
-	/**
+	}
+  /**
 	 * Add some basic colors to leaflet canvas renderer (preferCanvas: true).
 	 */
-	_fixCanvasPaths() {
+  _fixCanvasPaths() {
 		let oldProto = L.Canvas.prototype._fillStroke;
 		let control  = this;
 
@@ -670,14 +629,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				}
 			}
 		});
-	},
-
-	/**
+	}
+  /**
 	 * Partial fix for initial tooltip size
-	 * 
+	 *
 	 * @link https://github.com/Raruto/leaflet-elevation/issues/81#issuecomment-713477050
 	 */
-	_fixTooltipSize() {
+  _fixTooltipSize() {
 		this.on('elechart_init', () =>
 			this.once('elechart_change elechart_hover', ({data, xCoord}) => {
 				if (this._chartEnabled) {
@@ -687,43 +645,38 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this._updateMarker(data);
 			})
 		);
-	},
-
-	/*
+	}
+  /*
 	 * Finds a data entry for the given LatLng
 	 */
-	_findItemForLatLng(latlng) {
+  _findItemForLatLng(latlng) {
 		return this._data[this._chart._findIndexForLatLng(latlng)];
-	},
-
-	/*
+	}
+  /*
 	 * Finds a data entry for the given xDiagCoord
 	 */
-	_findItemForX(x) {
+  _findItemForX(x) {
 		return this._data[this._chart._findIndexForXCoord(x)];
-	},
-
-	/**
+	}
+  /**
 	 * Fires an event of the specified type.
 	 */
-	_fireEvt(type, data, propagate) {
+  _fireEvt(type, data, propagate) {
 		if (this.fire) this.fire(type, data, propagate);
 		if (this._map) this._map.fire(type, data, propagate);
-	},
-
-	/*
+	}
+  /*
 	 * Hides the position/height indicator marker drawn onto the map
 	 */
-	_hideMarker() {
+  _hideMarker() {
 		if (this.options.autohideMarker && this._marker) {
 			this._marker.remove();
 		}
-	},
-
-	/**
+	}
+  /**
 	 * Generate "svg" chart (DOM element).
 	 */
-	_initChart(container) {
+  _initChart(container) {
 		let opts = this.options;
 		let map  = this._map;
 
@@ -743,12 +696,12 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			.then((m) => {
 
 			let chart = this._chart = new (m || Elevation).Chart(opts, this);
-	
+
 			this._x     = this._chart._x;
 			this._y     = this._chart._y;
-	
+
 			chart.render()(container);
-	
+
 			chart
 				.on('reset_drag',      this._hideMarker,     this)
 				.on('mouse_enter',     this._onMouseEnter,   this)
@@ -759,8 +712,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				.on('zoom',            this._updateChart,    this)
 				.on('elepath_toggle',  this._onToggleChart,  this)
 				.on('margins_updated', this._resizeChart,    this);
-	
-	
+
+
 			this.fire("elechart_init");
 
 			map
@@ -784,19 +737,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		});
 
 
-	},
-
-	_initLayer() {
+	}
+  _initLayer() {
 		this._layers
 			.on('layeradd layerremove', ({layer, type}) => {
 				let node  = layer.getElement && layer.getElement();
 				_.toggleClass(node,  this.options.polyline.className + ' ' + this.options.theme, type == 'layeradd');
-				_.toggleEvent(layer, "mousemove", this._onMouseMoveLayer.bind(this),             type == 'layeradd')
-				_.toggleEvent(layer, "mouseout",  this._onMouseOut.bind(this),                   type == 'layeradd');
+				_.toggleEvent(layer, L.version.startsWith('1.') ? "mousemove" : "pointermove", this._onMouseMoveLayer.bind(this), type == 'layeradd')
+				_.toggleEvent(layer, L.version.startsWith('1.') ? "mouseout" : "pointerout", this._onMouseOut.bind(this), type == 'layeradd');
 			});
-	},
-
-	_initMarker(map) {
+	}
+  _initMarker(map) {
 		let pane                     = map.getPane('elevationPane');
 		if (!pane) {
 			pane = this._pane        = map.createPane('elevationPane', map.getPane('norotatePane') || map.getPane('mapPane'));
@@ -812,15 +763,13 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this._marker             = new (m || Elevation).Marker(this.options, this);
 				this.fire("elechart_marker");
 			});
-	},
-
-	/**
+	}
+  /**
 	 * Inspired by L.Control.Layers
 	 */
-	_initButton(container) {
-		L.DomEvent
-			.disableClickPropagation(container)
-			.disableScrollPropagation(container);
+  _initButton(container) {
+		L.DomEvent.disableClickPropagation(container);
+		L.DomEvent.disableScrollPropagation(container);
 
 		this.options.collapsed ? this._collapse() : this._expand();
 
@@ -837,9 +786,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			_.on(link, 'focus', this._toggle, this);
 			fetch(_.resolveURL(this.__btnIcon, this.options.srcFolder)).then(r => r.ok && r.text().then(img => link.innerHTML = img));
 		}
-	},
-
-	_initSummary(container) {
+	}
+  _initSummary(container) {
 		this.import(this.__LSUMMARY).then((m)=>{
 			this._summary = new (m || Elevation).Summary({ summary: this.options.summary }, this);
 			const render = () => {
@@ -849,12 +797,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if (this._chart && container.contains(this._chart._container)) render();
 			else this.once('elechart_init', render);
 		});
-	},
-
-	/**
+	}
+  /**
 	 * Retrieve data from a remote url (HTTP).
 	 */
-	_loadFile(url) {
+  _loadFile(url) {
 		fetch(url)
 			.then((response) => response.text())
 			.then((data)     => {
@@ -862,12 +809,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this._parseFromString(data)
 					.then( geojson => geojson && this._loadLayer(geojson));
 			}).catch((err) => console.warn(err));
-	},
-
-	/**
+	}
+  /**
 	 * Dynamically import only required javascript modules (code splitting)
 	 */
-	_loadModules(handlers) {
+  _loadModules(handlers) {
 		// First map known classnames (eg. "Altitude" --> L.Control.Elevation.Altitude)
 		handlers = handlers.map((h) => typeof h === 'string' && typeof Elevation[h] !== "undefined" ? Elevation[h] : h);
 		// Then load optional classes and custom imports (eg. "Cadence" --> import('../src/handlers/cadence.js'))
@@ -881,12 +827,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			});
 			_.each(handlers, h => ["function", "object"].includes(typeof h) && this._registerHandler(h));
 		});
-	},
-
-	/**
+	}
+  /**
 	 * Simple GeoJSON data loader (L.GeoJSON).
 	 */
-	_loadLayer(geojson) {
+  _loadLayer(geojson) {
 		let { polyline, theme, waypoints, wptIcons, wptLabels, distanceMarkers } = this.options;
 		let style = Object.assign({}, polyline);
 		let dataAdded = [];
@@ -938,32 +883,28 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		});
 
 		return layer;
-	},
-
-	_onDragEnd({ dragstart, dragend}) {
+	}
+  _onDragEnd({ dragstart, dragend}) {
 		this._hideMarker();
 		this.fitBounds(new L.LatLngBounds([dragstart.latlng, dragend.latlng]));
 
 		this.fire("elechart_dragged");
-	},
-
-	_onKeyDown({key}) {
+	}
+  _onKeyDown({key}) {
 		if (!this.options.detached && key === "Escape"){
 			this._collapse()
 		};
-	},
-
-	/**
+	}
+  /**
 	 * Trigger mouseenter event.
 	 */
-	_onMouseEnter() {
+  _onMouseEnter() {
 		this.fire('elechart_enter');
-	},
-
-	/*
+	}
+  /*
 	 * Handles the moueseover the chart and displays distance and altitude level.
 	 */
-	_onMouseMove({xCoord}) {
+  _onMouseMove({xCoord}) {
 		if (this._chartEnabled && this._data.length) {
 			let item = this._findItemForX(xCoord);
 			if (item) {
@@ -980,30 +921,28 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this.fire("elechart_hover",  { data: item, xCoord: xCoord });
 			}
 		}
-	},
-
-	/*
+	}
+  /*
 	 * Handles mouseover events of the data layers on the map.
 	 */
-	_onMouseMoveLayer({latlng}) {
+  _onMouseMoveLayer({latlng}) {
 		if (this._data.length) {
 			let item = this._findItemForLatLng(latlng);
 			if (item) {
 				let xCoord = item.xDiagCoord;
-	
+
 				if (this._chartEnabled) this._chart._showDiagramIndicator(item, xCoord);
-	
+
 				this._updateMarker(item);
-	
+
 				this.fire("elechart_change", { data: item, xCoord: xCoord });
 			}
 		}
-	},
-
-	/*
+	}
+  /*
 	 * Handles the moueseout over the chart.
 	 */
-	_onMouseOut() {
+  _onMouseOut() {
 		if (!this.options.detached) {
 			this._hideMarker();
 			this._chart._hideDiagramIndicator();
@@ -1014,19 +953,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		}
 
 		this.fire("elechart_leave");
-	},
-
-	/**
+	}
+  /**
 	 * Handles the drag event over the ruler filter.
 	 */
-	_onRulerFilter({coords}) {
+  _onRulerFilter({coords}) {
 		this._updateMapSegments(coords);
-	},
-
-	/**
+	}
+  /**
 	 * Toggle chart data on legend click
 	 */
-	_onToggleChart({ name, enabled }) {
+  _onToggleChart({ name, enabled }) {
 
 		this._chartEnabled = this._chart._hasActiveLayers();
 
@@ -1044,21 +981,19 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			this._chart._hideDiagramIndicator();
 			this._marker.remove();
 		}
-	},
-
-	/**
+	}
+  /**
 	 * Simple GeoJSON Parser
 	 */
-	_parseFromGeoJSONString(data) {
+  _parseFromGeoJSONString(data) {
 		try {
 			return JSON.parse(data);
 		} catch (e) { }
-	},
-
-	/**
+	}
+  /**
 	 * Attempt to parse raw response data (GeoJSON or XML > GeoJSON)
 	 */
-	_parseFromString(data) {
+  _parseFromString(data) {
 		return new Promise(resolve =>
 			this.import(this.__TOGEOJSON).then(() => {
 				let geojson;
@@ -1073,12 +1008,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				resolve(geojson);
 			})
 		);
-	},
-
-	/**
+	}
+  /**
 	 * Simple XML Parser (GPX, KML, TCX)
 	 */
-	_parseFromXMLString(data) {
+  _parseFromXMLString(data) {
 		if (data.indexOf("<") != 0) {
 			throw 'Invalid XML';
 		}
@@ -1094,43 +1028,38 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 		let geojson  = toGeoJSON[type](xml);
 		geojson.name = name.length > 0 ? (Array.from(name).find(tag => tag.parentElement.tagName == "trk") ?? name[0]).textContent : '';
 		return geojson;
-	},
-
-	/**
+	}
+  /**
 	 * Add chart profile to diagram
 	 */
-	_registerAreaPath(props) {
+  _registerAreaPath(props) {
 		this.on("elechart_init", () => this._chart._registerAreaPath(props));
-	},
-
-	/**
+	}
+  /**
 	 * Add chart grid to diagram
 	 */
-	_registerAxisGrid(props) {
+  _registerAxisGrid(props) {
 		this.on("elechart_axis", () => this._chart._registerAxisGrid(props));
-	},
-
-	/**
+	}
+  /**
 	 * Add chart axis to diagram
 	 */
-	_registerAxisScale(props) {
+  _registerAxisScale(props) {
 		this.on("elechart_axis", () => this._chart._registerAxisScale(props));
-	},
-
-	/**
+	}
+  /**
 	 * Add a point of interest over the diagram
 	 */
-	_registerCheckPoint(props) {
+  _registerCheckPoint(props) {
 		const cb = () => this._chart._registerCheckPoint(props);
 		this
 			.on("elechart_updated", cb)
 			.once("eledata_clear", () => this.off("elechart_updated", cb));
-	},
-
-	/**
+	}
+  /**
 	 * Base handler for iterative track statistics (dist, time, z, slope, speed, acceleration, ...)
 	 */
-	 _registerDataAttribute(props) {
+  _registerDataAttribute(props) {
 
 		// parse of "coordinateProperties" for later usage
 		if (props.coordPropsToMeta) {
@@ -1180,7 +1109,7 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			if (props.deltaMax) {
 				curr[attr] =_.wrapDelta(curr[attr], prev[attr], props.deltaMax);
 			}
-			
+
 			// Range of acceptable values.
 			if (props.clampRange) {
 				curr[attr] = _.clamp(curr[attr], props.clampRange);
@@ -1202,12 +1131,11 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			// update here some mixins (eg. complex "track_info" stuff)
 			if (props.onPointAdded) props.onPointAdded.call(this, curr[attr], i, point);
 		});
-	},
-
-	/**
+	}
+  /**
 	 * Parse a module definition and attach related function listeners
 	 */
-	_registerHandler(props) {
+  _registerHandler(props) {
 
 		// eg. L.Control.Altitude
 		if (typeof props === "function") {
@@ -1271,9 +1199,8 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this._registerSummary(summary);
 			}
 		}
-	},
-
-	_registerMarker({latlng, sym, content}) {
+	}
+  _registerMarker({latlng, sym, content}) {
 		let { wptIcons } = this.options;
 		// generate and cache appropriate icon symbol
 		if (!wptIcons.hasOwnProperty(sym)) {
@@ -1285,47 +1212,42 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			marker.bindTooltip(content, { className: 'elevation-tooltip', direction: 'auto', sticky: true, opacity: 1 }).openTooltip();
 		}
 		return this._addMarker(marker)
-	},
-	
-	/**
+	}
+  /**
 	 * Add chart or marker tooltip info
 	 */
-	_registerTooltip(props) {
+  _registerTooltip(props) {
 		props.chart  && this.on("elechart_init",   () => this._chart._registerTooltip(Object.assign({}, props, { value: props.chart })));
 		props.marker && this.on("elechart_marker", () => this._marker._registerTooltip(Object.assign({}, props, { value: props.marker })));
-	},
-
-	/**
+	}
+  /**
 	 * Add summary info to diagram
 	 */
-	_registerSummary(props) {
+  _registerSummary(props) {
 		this.on('elechart_summary',  () => this._summary._registerSummary(props));
-	},
-
-	/*
+	}
+  /*
 	 * Removes the drag rectangle and zoms back to the total extent of the data.
 	 */
-	_resetDrag() {
+  _resetDrag() {
 		this._chart._resetDrag();
 		this._hideMarker();
-	},
-
-	/**
+	}
+  /**
 	 * Resets drag, marker and bounds.
 	 */
-	_resetView() {
+  _resetView() {
 		if (this._map && this._map._isFullscreen) return;
 		this._resetDrag();
 		this._hideMarker();
 		if (this.options.autofitBounds) {
 			this.fitBounds();
 		}
-	},
-
-	/**
+	}
+  /**
 	 * Hacky way for handling chart resize. Deletes it and redraw chart.
 	 */
-	_resizeChart() {
+  _resizeChart() {
 		if (this._container && _.style(this._container, "display") != "none") {
 			let opts = this.options;
 			let newWidth = opts.detached ? (this.eleDiv || this._container).offsetWidth : _.clamp(opts._maxWidth, [0, this._map.getContainer().clientWidth - 30]);
@@ -1338,19 +1260,17 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 			}
 			this._updateMapSegments();
 		}
-	},
-
-	/**
+	}
+  /**
 	 * Collapse or Expand chart control.
 	 */
-	_toggle() {
+  _toggle() {
 		_.hasClass(this._container, "elevation-expanded") ? this._collapse() : this._expand();
-	},
-
-	/**
+	}
+  /**
 	 * Update map center and zoom (followMarker: true)
 	 */
-	_setMapView(item) {
+  _setMapView(item) {
 		if (this._map && this.options.followMarker) {
 			let zoom = this._map.getZoom();
 			let z    = this.options.zFollow;
@@ -1360,28 +1280,26 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				this._map.setView(item.latlng, zoom, { animate: true, duration: 0.25 });
 			}
 		}
-	},
-
-	/**
+	}
+  /**
 	 * Calculates [x, y] domain and then update chart.
 	 */
-	_updateChart() {
+  _updateChart() {
 		if (this._chart && this._container) {
 			this.fire("elechart_axis");
-	
+
 			this._chart.update({ data: this._data, options: this.options });
-	
+
 			this._x     = this._chart._x;
 			this._y     = this._chart._y;
-	
-			this.fire('elechart_updated');		
-		}
-	},
 
-	/*
+			this.fire('elechart_updated');
+		}
+	}
+  /*
 	 * Update the position/height indicator marker drawn onto the map
 	 */
-	_updateMarker(item) {
+  _updateMarker(item) {
 		if (this._marker) {
 			this._marker.update({
 				map         : this._map,
@@ -1391,31 +1309,28 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				options     : this.options
 			});
 		}
-	},
-
-	/**
+	}
+  /**
 	 * Fix marker rotation on rotated maps
 	 */
-	_rotateMarker() {
+  _rotateMarker() {
 		if (this._marker) {
 			this._marker.update();
 		}
-	},
-
-	/**
+	}
+  /**
 	 * Highlight track segments on the map.
 	 */
-	_updateMapSegments(coords) {
+  _updateMapSegments(coords) {
 		this._markedSegments.setLatLngs(coords || []);
 		if (coords && this._map && !this._map.hasLayer(this._markedSegments)) {
 			this._markedSegments.addTo(this._map);
 		}
-	},
-
-	/**
+	}
+  /**
 	 * Update chart summary.
 	 */
-	_updateSummary() {
+  _updateSummary() {
 		if (this._summary) {
 			this._summary.reset();
 			if (this.options.summary) {
@@ -1436,33 +1351,43 @@ export const Elevation = L.Control.Elevation = L.Control.extend({
 				};
 			}
 		}
-	},
-
-
-	/**
+	}
+  /**
 	 * Calculates chart width.
 	 */
-	_width() {
+  _width() {
 		if (this._chart) return this._chart._width();
 		const { width, margins } = this.options;
 		return width - margins.left - margins.right;
-	},
-
-	/**
+	}
+  /**
 	 * Calculates chart height.
 	 */
-	_height() {
+  _height() {
 		if (this._chart) return this._chart._height();
 		const { height, margins } = this.options;
 		return height - margins.top - margins.bottom;
-	},
-
-});
+	}
+  static {
+    this.mergeOptions(Options);
+    this.prototype.__mileFactor = 0.621371;
+    this.prototype.__footFactor = 3.28084;
+    this.prototype.__TOGEOJSON = 'https://unpkg.com/@tmcw/togeojson@5.6.2/dist/togeojson.umd.js';
+    this.prototype.__LHOTLINE = '../libs/leaflet-hotline.min.js';
+    this.prototype.__LDISTANCEM = '../libs/leaflet-distance-marker.min.js';
+    this.prototype.__LEDGESCALE = '../libs/leaflet-edgescale.min.js';
+    this.prototype.__LCHART = '../src/components/chart.js';
+    this.prototype.__LMARKER = '../src/components/marker.js';
+    this.prototype.__LSUMMARY = '../src/components/summary.js';
+    this.prototype.__modulesFolder = '../src/handlers/';
+    this.prototype.__btnIcon = '../images/elevation.svg';
+  }
+};
 
 // backcomp for leaflet v1
 if (!('on' in Elevation.prototype)) {
 	for (const name of Object.getOwnPropertyNames(L.Evented.prototype)) {
-		if (name !== 'constructor') {
+		if (!['constructor', 'callInitHooks', '_initHooks', 'options'].includes(name)) {
 			Object.defineProperty(Elevation.prototype, name, Object.getOwnPropertyDescriptor(L.Evented.prototype, name));
 		}
 	}

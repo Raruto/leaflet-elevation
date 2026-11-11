@@ -46,8 +46,8 @@ Given('a Chromium browser using the local plugin', async function () {
         if (this.htmlTransform) body = this.htmlTransform(body);
         if (process.env.LEAFLET_VERSION === '2') {
             body = body
-                .replace(/leaflet@[^/]+\/dist\/leaflet\.js/g, 'leaflet@2.0.0-alpha.1/dist/leaflet-global.js')
-                .replace('<head>', '<head><link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css">');
+                .replace(/leaflet@[^/]+\/dist\/leaflet\.js/g, 'leaflet@2.0.0-beta.3/dist/leaflet-global.js')
+                .replace('<head>', '<head><link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-beta.3/dist/leaflet.css">');
         }
         await route.fulfill({ response, body });
     });

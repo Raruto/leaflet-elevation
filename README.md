@@ -438,10 +438,10 @@ cd ./leaflet-elevation
 npm i         # install dependencies
 npm run dev   # start dev server at: http://localhost:8080
 npm run build # generate "dist" files (once)
-npm test      # run all cucumber tests 
+npm test      # run all cucumber tests
 ```
 
-After that you can start developing inside the `src` and `test` folders (eg. open "http://localhost:8080/test" in your browser to preview changes). Check also [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for some information about it.
+After that you can start developing inside the `src` and `examples` folders (eg. open "http://localhost:8080/examples" in your browser to preview changes). Check also [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for some information about it.
 
 ### FAQ
 
@@ -543,7 +543,7 @@ All notable changes to this project are documented in the [releases](https://git
 
 **Compatible with:**
 [![Leaflet 1.9.4](https://img.shields.io/badge/Leaflet-1.9.4-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
-[![Leaflet 2.0.0-alpha.1](https://img.shields.io/badge/Leaflet-2.0.0--alpha.1-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
+[![Leaflet 2.0.0-beta.3](https://img.shields.io/badge/Leaflet-2.0.0--beta.3-1EB300.svg?style=flat)](http://leafletjs.com/reference.html)
 [![@tmcw/togeojson v5](https://img.shields.io/badge/@tmcw/togeojson-5.6-1EB300.svg?style=flat)](https://www.npmjs.com/package/@tmcw/togeojson)
 
 

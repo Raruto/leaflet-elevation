@@ -10,7 +10,9 @@
     "dev": "node build/dev.js",
     "build": "node build/build.js",
     "test": "node build/test.js",
-    "version": "npm run build && git add -A"
+    "preversion": "node build/version.js",
+    "version": "npm run build && git add -A",
+    "postversion": "npm publish --access public && git push --follow-tags"
   },
   "repository": {
     "type": "git",
@@ -53,7 +55,7 @@
   },
   "peerDependencies": {
     "@tmcw/togeojson": "5.6.2",
-    "leaflet": "^1.9.4 || ^2.0.0-alpha.1",
+    "leaflet": "^1.9.4 || ^2.0.0-beta.3",
     "leaflet-i18n": "^0.3.1"
   }
 }

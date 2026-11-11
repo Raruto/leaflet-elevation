@@ -21,19 +21,15 @@ For those wishing to try, clone this repository into your localhost folder and i
 
 3. `npm run dev`
 
-After that you can start developing inside the `src` and `test` folders (open "http://localhost/leaflet-elevation/test" in your browser to see your changes).
+After that you can start developing inside the `src` and `examples` folders (open "http://localhost/leaflet-elevation/examples" in your browser to see your changes).
 
 ### Automated tests
 
 All tests use Cucumber; `npm run test` runs every scenario. Please include an issue URL comment and `@issue-NNN` tag above new regression scenarios.
 
-Run `npm run build` before browser tests. Plugin assets are served locally, including dynamic `leaflet-ui` imports; other CDN dependencies still require internet access.
-
-You can use `@example-NAME`, to tests all browser scenarios linked to a specific demonstration the page (eg. `@example-gpx-waypoints` for anything related to `examples/leaflet-elevation_gpx-waypoints.html`).
+Run `npm run build` before browser tests. 
 
 The `@unit` tag usually refers to all tests that doesn't need browser to be run.
-
-The example-coverage scenario checks that every HTML page in `examples` has at least one tagged scenario. When adding an example, add behavior assertions as well as its `@example-NAME` tag; the base page uses `@example-default`.
 
 ## Submitting a pull request
 

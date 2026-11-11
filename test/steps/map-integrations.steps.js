@@ -174,7 +174,7 @@ Then('their heights increase monotonically from the chart minimum to maximum', f
 When('I open the edge-scale example', async function () {
     for (const filename of ['demo.geojson', 'waypoints.geojson']) await localFixture(this.page, filename);
     await openExample(this, 'edge-scale');
-    await this.page.waitForFunction(() => typeof map !== 'undefined' && typeof map.edgeScaleControl !== 'undefined');
+    await this.page.waitForFunction(() => typeof map !== 'undefined' && typeof map.edgeScaleControl !== 'undefined' && controlElevation._data.length > 0);
 });
 
 Then('the edge scale control is initialized with its bar, icon and coordinates enabled', async function () {
@@ -186,6 +186,83 @@ Then('the edge scale control is initialized with its bar, icon and coordinates e
     assert.strictEqual(state.options.bar, true);
     assert.strictEqual(state.options.icon, true);
     assert.strictEqual(state.options.coords, true);
+});
+
+Then('the edge scale draws correctly through rotation, pan, zoom and resize', async function () {
+    const states = await this.page.evaluate(() => {
+        const scale = map.edgeScaleControl._scaleBar;
+        const inspect = label => {
+            const canvas = scale._canvas;
+            const rect = canvas.getBoundingClientRect();
+            const container = map.getContainer().getBoundingClientRect();
+            const { width, height } = canvas;
+            const pixels = scale._ctx.getImageData(0, 0, width, height).data;
+            const major = horizontal => {
+                const half = (horizontal ? width : height) / 2;
+                for (let i = Math.ceil(half) + 2; i < (horizontal ? width : height) - 1; i++) {
+                    const index = ((horizontal ? 7 : i) * width + (horizontal ? i : 7)) * 4;
+                    if (pixels[index + 3] && pixels[index] < 180) {
+                        const start = map.containerPointToLatLng(horizontal ? [half, 0] : [0, half]);
+                        const end = map.containerPointToLatLng(horizontal ? [i, 0] : [0, i]);
+                        return map.distance(start, end);
+                    }
+                }
+                return null;
+            };
+            return {
+                label, interval: scale._interval, bearing: map.getBearing(),
+                x: rect.left - container.left, y: rect.top - container.top,
+                width, height, size: map.getSize(), major: [major(true), major(false)]
+            };
+        };
+        map.setView([45, 9], 12, { animate: false });
+        const results = [];
+        for (const bearing of [0, 45, 90, 135, 0]) {
+            map.setBearing(bearing);
+            results.push(inspect(`bearing ${bearing}`));
+        }
+        map.setBearing(45);
+        map.panBy([90, 40], { animate: false });
+        results.push(inspect('pan'));
+        map.options.zoomSnap = 0;
+        map.setZoom(12.5, { animate: false });
+        results.push(inspect('fractional zoom'));
+        map.getContainer().style.width = '80%';
+        map.invalidateSize({ animate: false });
+        results.push(inspect('resize'));
+        const registered = () => (map._events.rotate || []).some(listener => listener.ctx === scale && listener.fn === scale._reset);
+        scale.remove();
+        map.setBearing(90);
+        results.push({ label: 'removed', unchanged: !registered() && !scale._canvas.isConnected });
+        scale.addTo(map);
+        results.push(inspect('readded'));
+        map.setView([70, 9], 5, { animate: false });
+        results.push(inspect('high latitude'));
+        map.setView([45, 9], 21, { animate: false });
+        results.push(inspect('zoom above configured intervals'));
+        const translucent = new L.Control.EdgeScale.Layer({ opacity: 0.4 }).addTo(map);
+        results.push({ label: 'opacity', opacity: translucent._canvas.style.opacity });
+        translucent.remove();
+        return results;
+    });
+    for (const state of states) {
+        if (state.label === 'removed') {
+            assert.equal(state.unchanged, true);
+            continue;
+        }
+        if (state.label === 'opacity') {
+            assert.equal(state.opacity, '0.4');
+            continue;
+        }
+        assert.ok(Number.isFinite(state.interval) && state.interval > 0, state.label);
+        assert.ok(Math.abs(state.x) < 1 && Math.abs(state.y) < 1, state.label);
+        assert.equal(state.width, state.size.x, state.label);
+        assert.equal(state.height, state.size.y, state.label);
+        for (const distance of state.major) {
+            assert.ok(distance !== null && Math.abs(distance / (state.interval / 2) - 1) < 0.05, `${state.label}: ${distance}`);
+        }
+    }
+    assert.deepEqual(this.errors, []);
 });
 
 When('I open the multiple-maps example', async function () {

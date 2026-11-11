@@ -2,6 +2,7 @@
 <html>
 
 <head>
+	<base href="../">
 	<title>leaflet-elevation.js</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
@@ -21,12 +22,10 @@
 
 	<!-- leaflet-ui -->
 	<script>
-		// ?leaflet=1 (default) or ?leaflet=2 (alpha, global build)
+		// Leaflet 2 uses the native fixture until leaflet-ui is migrated.
 		var lv = new URLSearchParams(location.search).get('leaflet') === '2' ? '2' : '1';
-		document.write(lv === '2'
-			? '<link rel="stylesheet" href="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet.css">'
-			+ '<script src="https://unpkg.com/leaflet@2.0.0-alpha.1/dist/leaflet-global.js"><\/script>'
-			: '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'
+		if (lv === '2') location.replace('fixtures/leaflet-elevation-compatibility.html');
+		document.write('<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'
 			+ '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.js"><\/script>');
 	</script>
 
@@ -81,8 +80,8 @@
 				// url: "../examples/time.geojson",
 				url: "../examples/time.gpx",
 				// url: "../examples/blue-hills.gpx",
-				// url: 'multi.gpx',
-				// url: 'multi-2.gpx',
+				// url: 'fixtures/multi.gpx',
+				// url: 'fixtures/multi-2.gpx',
 				// url: '../examples/demo.kml',
 				// url: "../examples/demo.tcx",
 				// url: "../examples/via-aurelia.gpx",
