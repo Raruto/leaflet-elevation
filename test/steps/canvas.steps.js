@@ -111,14 +111,14 @@ Given('I open the low-level canvas page in {string}', async function (browserNam
 
 Given('I create a canvas chart with a mask and tooltip overlay', async function () {
     await this.page.evaluate(async base => {
-        L.Control.Elevation = { Utils: await import(`${base}/src/utils.js`) };
-        const { Chart } = await import(`${base}/src/handlers/chart.js`);
+        await import(`${base}/src/index.js`);
         const { create } = L.Control.Elevation.Utils;
-        window.chart = Chart({
+        const control = new L.Control.Elevation({
             width: 320, height: 240, preferCanvas: true,
             margins: { left: 40, top: 30, right: 20, bottom: 20 },
-            xAttr: 'dist', yAttr: 'z',
-        }, new L.Evented())._chart;
+            xAttr: 'dist', yAttr: 'z', legend: false,
+        });
+        window.chart = control._createChart()._chart;
         document.body.append(chart.svg);
         chart.panes.tooltip.removeAttribute('display');
         create('svg:rect', '', { x: 20, y: 20, width: 40, height: 40, fill: '#0000ff' }, chart.panes.tooltip);
@@ -166,8 +166,7 @@ Given('I open a transformed chart host in {string} at DPR {int}', async function
     await this.page.addStyleTag({ url: `${this.base}/src/index.css` });
     await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
     await this.page.evaluate(async base => {
-        L.Control.Elevation = { Utils: await import(`${base}/src/utils.js`) };
-        window.ProfileChart = (await import(`${base}/src/handlers/chart.js`)).Chart;
+        await import(`${base}/src/index.js`);
     }, this.base);
 });
 
@@ -176,18 +175,21 @@ When('I render a profile with {string} rendering', async function (renderingMode
     this.preferCanvas = renderingMode.toLowerCase() === 'canvas';
     await this.page.evaluate(preferCanvas => {
         document.querySelector('#host').replaceChildren();
-        window.profile = ProfileChart({
+        const control = new L.Control.Elevation({
             width: 320, height: 240, margins: { left: 40, top: 30, right: 20, bottom: 20 },
             preferCanvas, xAttr: 'dist', yAttr: 'z', yAxisMin: 0, yAxisMax: 100,
             distance: false, altitude: false, legend: false, ruler: false,
             dragging: false, zooming: false
-        }, Object.assign(new L.Evented(), { _data: [{ dist: 0, z: 50 }, { dist: 1, z: 50 }] }));
-        profile._registerAreaPath({
+        });
+        control._data = [{ dist: 0, z: 50 }, { dist: 1, z: 50 }];
+        window.profileControl = control;
+        window.profile = control._createChart();
+        control._registerChartAreaPath({
             name: 'altitude', color: '#ff0000', strokeColor: '#ff0000',
             fillOpacity: 1, strokeOpacity: 1, scaleX: 'distance', scaleY: 'altitude'
         });
-        profile.render()(document.querySelector('#host'));
-        profile.update();
+        document.querySelector('#host').appendChild(profile._container);
+        control._renderChart();
     }, this.preferCanvas);
 });
 
@@ -198,8 +200,8 @@ When('I resize the profile to width {int} and left margin {int}', async function
         profile.options.width = width;
         profile.options.margins.left = left;
         profile._chart._resize(profile.options);
-        profile.update();
-        profile._showDiagramIndicator(profile._data[0], 100);
+        profileControl._renderChart();
+        profileControl._showDiagramIndicator(profile._data[0], 100);
     }, { width, left });
 });
 
@@ -220,7 +222,7 @@ Then('the profile pixels show the aligned altitude area and tooltip', async func
 });
 
 When('I hide the altitude area', async function () {
-    await this.page.evaluate(() => profile._togglePath('altitude', false));
+    await this.page.evaluate(() => profileControl._togglePath('altitude', false));
 });
 
 Then('the profile pixels show no altitude area and preserve the tooltip', async function () {
@@ -229,7 +231,7 @@ Then('the profile pixels show no altitude area and preserve the tooltip', async 
 });
 
 When('I show the altitude area', async function () {
-    await this.page.evaluate(() => profile._togglePath('altitude', true));
+    await this.page.evaluate(() => profileControl._togglePath('altitude', true));
 });
 
 Then('the profile pixels show the restored altitude area and tooltip', async function () {
@@ -238,7 +240,7 @@ Then('the profile pixels show the restored altitude area and tooltip', async fun
 });
 
 When('I clear the profile', async function () {
-    await this.page.evaluate(() => profile.clear());
+    await this.page.evaluate(() => profileControl._clearChartContent());
 });
 
 Then('the profile pixels show a cleared chart', async function () {

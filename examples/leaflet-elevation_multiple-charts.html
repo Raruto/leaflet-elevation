@@ -242,7 +242,7 @@
 			chart.load(opts.elevationControl.url);
 			chart.on('elechart_leave', () => {
 				chart._hideMarker();
-				chart._chart._hideDiagramIndicator();
+				chart._hideDiagramIndicator();
 				chart._map.getContainer().classList.toggle('elechart-hover', false);
 			})
 		});

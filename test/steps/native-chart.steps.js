@@ -7,32 +7,29 @@ Given('a native chart in a scaled container', async function () {
     await this.page.addStyleTag({ url: `${this.base}/src/index.css` });
     await this.page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
     await this.page.evaluate(async base => {
-        const utils = await import(`${base}/src/utils.js`);
         L._ = text => text;
-        L.Control.Elevation = { Utils: utils };
-        window.nativeChart = await import(`${base}/src/handlers/chart.js`);
-        const { Chart } = nativeChart;
-        window.chartControl = Object.assign(new L.Evented(), {
-            _data: Array.from({ length: 11 }, (_, i) => ({ dist: i, z: i * 10 - 50, latlng: new L.LatLng(0, i) })),
-        });
-        window.profile = Chart({
+        await import(`${base}/src/index.js`);
+        window.chartControl = new L.Control.Elevation({
             width: 500, height: 300, margins: { left: 40, top: 30, right: 30, bottom: 60 },
             xAttr: 'dist', yAttr: 'z', yAxisMin: -50, yAxisMax: 50,
-            dragging: true, zooming: true, legend: true, ruler: true, altitude: true,
-        }, chartControl);
-        profile._registerAreaPath({ name: 'altitude', scaleX: 'distance', scaleY: 'altitude' });
-        profile._registerAxisScale({ name: 'time', axis: 'x', position: 'top', scale: 'x' });
-        profile.render()(document.querySelector('#host'));
-        profile.update();
+            dragging: true, zooming: true, legend: true, ruler: true, altitude: true, detached: false,
+        });
+        chartControl.options.margins.bottom = 60;
+        chartControl._data = Array.from({ length: 11 }, (_, i) => ({ dist: i, z: i * 10 - 50, latlng: new L.LatLng(0, i) }));
+        window.profile = chartControl._createChart();
+        chartControl._registerChartAreaPath({ name: 'altitude', scaleX: 'distance', scaleY: 'altitude' });
+        chartControl._registerChartAxisScale({ name: 'time', axis: 'x', position: 'top', scale: 'x' });
+        document.querySelector('#host').appendChild(profile._container);
+        chartControl._renderChart();
         window.nativeEvents = { dragged: [], ruler: [], hover: [] };
         chartControl.on('dragged', event => nativeEvents.dragged.push([event.dragstart.dist, event.dragend.dist]));
         chartControl.on('ruler_filter', event => nativeEvents.ruler.push(event.coords.map(group => group.map(point => point.lng))));
         chartControl.on('mouse_move', event => {
             nativeEvents.hover.push(event.xCoord);
-            profile._showDiagramIndicator(event.item, event.xCoord);
+            chartControl._showDiagramIndicator(event.item, event.xCoord);
         });
-        chartControl.on('mouse_out', () => profile._hideDiagramIndicator());
-        chartControl.on('zoom', () => profile.update());
+        chartControl.on('mouse_out', () => chartControl._hideDiagramIndicator());
+        chartControl.on('zoom', () => chartControl._renderChart());
     }, this.base);
 });
 
@@ -43,7 +40,7 @@ Then('native scales and bisection handle constant, empty and duplicate values', 
         const copy = scale.copy().domain([0, 100]);
         const constant = scale.copy().domain([10, 10]).range([0, 200]);
         const data = [{ x: 0 }, { x: 1 }, { x: 1 }, { x: 3 }];
-        profile._registerAxisScale({
+        chartControl._registerChartAxisScale({
             name: 'test', axis: 'y', attr: 'x', min: 0, max: 10,
             scale: { forceBounds: true },
         });
@@ -68,25 +65,26 @@ Then('native scales and bisection handle constant, empty and duplicate values', 
 Then('all supported interpolations produce the expected SVG paths', async function () {
     assert.deepStrictEqual(await this.page.evaluate(() => {
         const values = {};
-        const chart = nativeChart.Chart({
+        const control = new L.Control.Elevation({
             width: 4, height: 10, margins: { left: 0, top: 0, right: 0, bottom: 0 },
-            xAttr: 'x', yAttr: 'y',
-        }, new L.Evented());
-        chart._registerAreaPath({ name: 'test', scaleX: 'distance', scaleY: 'altitude' });
+            xAttr: 'x', yAttr: 'y', legend: false,
+        });
+        const chart = control._createChart();
+        control._registerChartAreaPath({ name: 'test', scaleX: 'distance', scaleY: 'altitude' });
         chart._x.domain([0, 4]).range([0, 4]);
         chart._y.domain([0, 10]).range([0, 10]);
         for (const interpolation of ['curveLinear', 'curveStep', 'curveStepBefore', 'curveStepAfter']) {
             chart.options.interpolation = interpolation;
             chart._data = [{ x: 0, y: 2 }, { x: 4, y: 6 }];
-            chart._updateArea();
+            control._updateArea();
             values[interpolation] = chart._paths.test.getAttribute('d');
             chart._data = [];
-            chart._updateArea();
+            control._updateArea();
             if (chart._paths.test.getAttribute('d') !== '') throw new Error('An empty profile must have no path');
         }
         try {
             chart.options.interpolation = 'curveBasis';
-            chart._updateArea();
+            control._updateArea();
             throw new Error('Unsupported interpolation was accepted');
         } catch (error) {
             if (!error.message.startsWith('Unsupported interpolation')) throw error;
@@ -113,14 +111,49 @@ Then('native axes and custom callbacks receive SVG elements', async function () 
             circle.getAttribute('r'), circle.parentNode === svg, svg.parentNode === html,
         ];
     }), [true, 'host', 'HTML', true, 'chart', '0 0 10 10', true, 'point', '2', true, true]);
-    assert.deepStrictEqual(await this.page.evaluate(() => Object.keys(nativeChart)), ['Chart']);
     assert.strictEqual(await this.page.evaluate(() => {
         let mounted = false;
         profile._props.axes.time.onAxisMount = axis => { mounted = axis instanceof SVGGElement && !!axis.querySelector('.tick'); };
-        profile.update();
+        chartControl._renderChart();
         return mounted && profile._paths.altitude instanceof SVGPathElement &&
             profile._chart.pane('area') instanceof SVGGElement && typeof window.d3 === 'undefined';
     }), true);
+});
+
+Then('numeric axis labels use each browser locale without overriding custom formatters', async function () {
+    for (const [locale, decimal, grouped] of [['en-US', '0.2', '10,000'], ['it-IT', '0,2', '10.000']]) {
+        const page = await this.browser.newPage({ locale });
+        try {
+            page.on('pageerror', error => this.errors.push(error.stack || error.message));
+            await page.goto(this.base);
+            await page.setContent('<div id="host"></div>');
+            await page.addScriptTag({ url: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' });
+            await page.addScriptTag({ url: `${this.base}/dist/leaflet-elevation.min.js` });
+            const labels = await page.evaluate(() => {
+                const control = new L.Control.Elevation({ legend: false, xTicks: 6, yTicks: 5 });
+                control._data = [{ dist: 0, z: 10000 }, { dist: 1.5, z: 15000 }];
+                const chart = control._createChart();
+                control._registerChartAxisScale({
+                    name: 'custom', axis: 'x', position: 'top', scale: 'x', tickFormat: value => `value:${value}`,
+                });
+                document.querySelector('#host').appendChild(chart._container);
+                control._renderChart();
+                const texts = selector => [...chart._axis.querySelectorAll(selector)].map(node => node.textContent);
+                return {
+                    locale: new Intl.NumberFormat().resolvedOptions().locale,
+                    x: texts('.x.axis.bottom .tick text'),
+                    y: texts('.y.axis.left .tick text'),
+                    custom: texts('.x.axis.top .tick text'),
+                };
+            });
+            assert.strictEqual(labels.locale, locale);
+            assert.ok(labels.x.includes(decimal), `${locale}: ${labels.x}`);
+            assert.ok(labels.y.includes(grouped), `${locale}: ${labels.y}`);
+            assert.ok(labels.custom.length > 0 && labels.custom.every(text => text.startsWith('value:')));
+        } finally {
+            await page.close();
+        }
+    }
 });
 
 async function drag(page, start, end) {
@@ -133,12 +166,12 @@ async function drag(page, start, end) {
 Then('the tooltip tightly encloses changing labels on both sides of the chart', async function () {
     const measurements = await this.page.evaluate(() => {
         const results = [];
-        profile._registerTooltip({ name: 'altitude', value: item => `Altitude: ${item.z} m`, order: 1 });
-        profile._registerTooltip({ name: 'description', value: item => item.description, order: 2 });
-        profile._registerTooltip({ name: 'time', value: () => 'Duration: 00:38:03', order: 3 });
+        chartControl._registerChartTooltip({ name: 'altitude', value: item => `Altitude: ${item.z} m`, order: 1 });
+        chartControl._registerChartTooltip({ name: 'description', value: item => item.description, order: 2 });
+        chartControl._registerChartTooltip({ name: 'time', value: () => 'Duration: 00:38:03', order: 3 });
         for (const description of ['A much longer recorded track description', 'Short']) {
-            for (const x of [20, profile._width() - 20]) {
-                profile._showDiagramIndicator({ ...profile._data[5], description }, x);
+            for (const x of [20, chartControl._width() - 20]) {
+                chartControl._showDiagramIndicator({ ...profile._data[5], description }, x);
                 const text = profile._tooltip.querySelector('text').getBBox();
                 const rect = profile._tooltip.querySelector('rect').getBBox();
                 results.push({
@@ -170,7 +203,7 @@ When('I select, move and resize a native profile range', async function () {
 
 Then('the selected samples and rectangle match the pointer positions', async function () {
     const state = await this.page.evaluate(() => ({
-        selection: profile._selection.map(value => value / profile._width()),
+        selection: profile._selection.map(value => value / chartControl._width()),
         events: nativeEvents.dragged,
     }));
     assert.equal(state.events.length, 3);
@@ -182,11 +215,11 @@ Then('the selected samples and rectangle match the pointer positions', async fun
 });
 
 When('I disable native brushing and clear the chart', async function () {
-    await this.page.evaluate(() => { profile._brushEnabled = false; profile._resetDrag(); });
+    await this.page.evaluate(() => { profile._brushEnabled = false; chartControl._resetChartDrag(); });
     const box = await this.page.locator('.brush .overlay').boundingBox();
     await drag(this.page, { x: box.x + 10, y: box.y + 20 }, { x: box.x + 100, y: box.y + 20 });
     assert.strictEqual(await this.page.evaluate(() => profile._selection), null);
-    await this.page.evaluate(() => { profile._setZoom(2, -100); profile.clear(); });
+    await this.page.evaluate(() => { chartControl._setZoom(2, -100); chartControl._clearChartContent(); });
 });
 
 Then('no range or stale zoom remains', async function () {
@@ -212,9 +245,9 @@ Then('the zoom is bounded and the axes share the visible distance scale', async 
         const { k, x } = profile._transform;
         const aliases = profile._scales.time === profile._x && profile._props.axes.time.scale === profile._x;
         const domain = profile._x.domain();
-        profile._setZoom(100, -1e9);
+        chartControl._setZoom(100, -1e9);
         const maximum = { ...profile._transform };
-        return { k, x, aliases, domain, maximum, width: profile._width() };
+        return { k, x, aliases, domain, maximum, width: chartControl._width() };
     });
     assert.ok(state.k > 1 && state.k <= 10);
     assert.ok(state.x <= 0);
@@ -224,7 +257,7 @@ Then('the zoom is bounded and the axes share the visible distance scale', async 
 });
 
 When('I drag the native ruler and toggle the legend using the keyboard', async function () {
-    await this.page.evaluate(() => profile._resetZoom());
+    await this.page.evaluate(() => chartControl._resetZoom());
     const ruler = await this.page.locator('.horizontal-drag-rect').boundingBox();
     const plot = await this.page.locator('.brush .overlay').boundingBox();
     await drag(this.page, { x: ruler.x + ruler.width / 2, y: ruler.y + ruler.height / 2 }, { x: plot.x + plot.width / 2, y: plot.y + plot.height / 2 });
@@ -269,7 +302,7 @@ Then('a touch range is selected and its tooltip is hidden on release', async fun
 });
 
 When('I cancel another touch selection', async function () {
-    await this.page.evaluate(() => profile._resetDrag());
+    await this.page.evaluate(() => chartControl._resetChartDrag());
     await touch(this, true);
 });
 

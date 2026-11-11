@@ -90,7 +90,7 @@ export function LinearGradient() {
 
     if (preferCanvas) {
       /** ref: `path.__fillStyle` within L.Control.Elevation.Utils::drawCanvas(ctx, path) */
-      path.__fillStyle = gradient = chart._context.createLinearGradient(0, 0, chart._width(), 0);
+      path.__fillStyle = gradient = chart._context.createLinearGradient(0, 0, this._width(), 0);
     } else {
       defs.querySelector('#' + gradient_id)?.remove();
       gradient = _.create('svg:linearGradient', '', { id: gradient_id }, defs);

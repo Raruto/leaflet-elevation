@@ -94,19 +94,53 @@ Then('chart events are emitted on the elevation control', async function () {
         const chart = profile._chart;
         const events = [];
         profile.on('zoom reset_drag', event => events.push([event.type, event.target === profile]));
-        chart._setSelection([10, 20]);
-        chart._setZoom(2, 0);
+        profile._setSelection([10, 20]);
+        profile._setZoom(2, 0);
         return {
             plain: [profile._marker, profile._summary, chart].every(component => !(component instanceof L.Class)),
             owned: chart._marker === profile._marker && chart._summary === profile._summary,
             chartHasEvents: typeof chart.on === 'function',
+            chartHasZoomMethod: typeof chart._setZoom === 'function',
+            controlHasZoomMethod: typeof Object.getPrototypeOf(profile)._setZoom === 'function',
             events,
         };
     });
     assert.deepEqual(result, {
-        plain: true, owned: true, chartHasEvents: false,
+        plain: true, owned: true, chartHasEvents: false, chartHasZoomMethod: false, controlHasZoomMethod: true,
         events: [['reset_drag', true], ['zoom', true]],
     });
+    assert.deepEqual(this.errors, []);
+});
+
+Then('chart events remain isolated when a control is removed and re-added', async function () {
+    await this.page.evaluate(() => {
+        window.lifecycle = new L.Control.Elevation({
+            detached: false, handlers: [], distanceMarkers: false, hotline: false, edgeScale: false,
+            srcFolder: profile.options.srcFolder,
+        });
+        window.lifecycleEvents = { primary: 0, lifecycle: 0 };
+        profile.on('elechart_enter', () => lifecycleEvents.primary++);
+        lifecycle.on('elechart_enter', () => lifecycleEvents.lifecycle++);
+        lifecycle.addTo(map);
+    });
+    await this.page.waitForFunction(() => lifecycle._chart && lifecycle.listens('mouse_enter'));
+    const before = await this.page.evaluate(() => {
+        window.oldBrush = lifecycle._chart._chart.panes.brush;
+        oldBrush.dispatchEvent(new PointerEvent('pointerenter'));
+        lifecycle.remove();
+        oldBrush.dispatchEvent(new PointerEvent('pointerenter'));
+        lifecycle.addTo(map);
+        return { ...lifecycleEvents };
+    });
+    await this.page.waitForFunction(() =>
+        lifecycle._chart._chart.panes.brush !== oldBrush && lifecycle.listens('mouse_enter'));
+    const after = await this.page.evaluate(() => {
+        lifecycle._chart._chart.panes.brush.dispatchEvent(new PointerEvent('pointerenter'));
+        lifecycle.remove();
+        return { ...lifecycleEvents };
+    });
+    assert.deepEqual(before, { primary: 0, lifecycle: 1 });
+    assert.deepEqual(after, { primary: 0, lifecycle: 2 });
     assert.deepEqual(this.errors, []);
 });
 

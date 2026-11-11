@@ -62,7 +62,7 @@ export function Time() {
 			labelY     : -10,
 			labelX     : () => this._width(),
 			name       : "time",
-			ticks      : () => _.clamp(this._chart._xTicks() / 2, [4, +Infinity]),
+			ticks      : () => _.clamp(this._xTicks() / 2, [4, +Infinity]),
 			tickFormat : (distance) => {
 				const data = this._data;
 				if (!data.length) return '';

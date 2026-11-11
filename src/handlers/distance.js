@@ -23,7 +23,7 @@ export function Distance() {
 			scale   : "x", // this._chart._x,
 			labelY  : 25,
 			labelX  : () => this._width() + 6,
-			ticks   : () => _.clamp(this._chart._xTicks() / 2, [4, +Infinity]),
+			ticks   : () => _.clamp(this._xTicks() / 2, [4, +Infinity]),
 		},
 		grid: opts.distance && {
 			axis      : "x",

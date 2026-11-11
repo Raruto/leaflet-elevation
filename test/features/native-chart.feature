@@ -11,6 +11,10 @@ Feature: Native SVG chart without D3
     And native axes and custom callbacks receive SVG elements
     And no browser errors have occurred
 
+  Scenario: Automatic axis labels follow the browser locale
+    Then numeric axis labels use each browser locale without overriding custom formatters
+    And no browser errors have occurred
+
   Scenario: Mouse selection can be moved, resized, disabled and reset
     When I select, move and resize a native profile range
     Then the selected samples and rectangle match the pointer positions

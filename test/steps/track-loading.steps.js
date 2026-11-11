@@ -9,14 +9,12 @@ Given('all elevation dependencies are bundled and the lazy loader is disabled', 
             contents: `
                 import * as toGeoJSON from '@tmcw/togeojson';
                 import { Elevation } from './src/index.js';
-                import { Chart } from './src/handlers/chart.js';
                 import { Distance } from './src/handlers/distance.js';
                 import { Time } from './src/handlers/time.js';
                 import { Altitude } from './src/handlers/altitude.js';
 
                 Object.assign(globalThis, { toGeoJSON });
                 if (Elevation !== L.Control.Elevation) throw new Error('The entry point must export the elevation control');
-                Object.assign(L.Control.Elevation, { Chart });
                 L.Control.Elevation.include({
                     import(src) {
                         return Array.isArray(src) ? Promise.all(src.map(item => this.import(item))) : Promise.resolve();

@@ -54,8 +54,7 @@ When('I load the track with the time axis and a numeric duration formatter', asy
 
 When('I set the time-axis zoom to {int}', async function (zoom) {
     await this.page.evaluate(zoom => {
-        const chart = controlElevation._chart;
-        chart._setZoom(zoom, -50 * (zoom - 1));
+        controlElevation._setZoom(zoom, -50 * (zoom - 1));
     }, zoom);
 });
 

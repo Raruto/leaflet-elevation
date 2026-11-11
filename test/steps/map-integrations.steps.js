@@ -2,17 +2,19 @@ import assert from 'node:assert/strict';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { localFixture, openExample } from '../support/browser.js';
 
-Given('the chart module is still loading', async function () {
+Given('a chart handler is still loading', async function () {
     const gate = new Promise(resolve => { this.releaseData = resolve; });
-    await this.page.route('**/src/handlers/chart.js', async route => {
+    let intercepted;
+    const handlerRequested = new Promise(resolve => { intercepted = resolve; });
+    await this.page.route('**/src/handlers/altitude.js', async route => {
+        intercepted();
         await gate;
         await route.fallback();
     });
     await localFixture(this.page, 'via-emilia.gpx');
     await openExample(this, '');
-    await this.page.waitForFunction(() =>
-        typeof controlElevation !== 'undefined' && controlElevation._modulesLoaded
-    );
+    await handlerRequested;
+    await this.page.waitForFunction(() => typeof controlElevation !== 'undefined');
     assert.deepStrictEqual(await this.page.evaluate(() =>
         [typeof controlElevation._chart, typeof controlElevation._marker]), ['undefined', 'undefined']);
 });

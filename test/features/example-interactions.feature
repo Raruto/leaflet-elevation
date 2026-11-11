@@ -20,10 +20,10 @@ Feature: Interacting with the example charts and tracks
     And no browser errors have occurred
 
   @example-follow-marker
-  Scenario: Example interaction: a delayed local chart keeps the map and followed marker aligned
-    Given the chart module loads only after the map track is visible
+  Scenario: Example interaction: the bundled chart keeps the map and followed marker aligned
+    Given the local plugin bundle is observed
     And the interactive "follow-marker" example is ready
-    Then the dynamically loaded plugin matches the local build
+    Then the plugin matches the local build without requesting a chart module
     When I hover over two distant positions on the elevation profile
     Then the map follows both positions at zoom 15
     And no browser errors have occurred

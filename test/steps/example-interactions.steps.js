@@ -30,22 +30,25 @@ async function groupTrackPoint(page, selected = false) {
     }, selected);
 }
 
-Given('the chart module loads only after the map track is visible', async function () {
+Given('the local plugin bundle is observed', function () {
+    this.chartRequests = [];
+    this.page.on('request', request => {
+        if (/\/src\/(?:components|handlers)\/chart\.js$/.test(new URL(request.url()).pathname)) {
+            this.chartRequests.push(request.url());
+        }
+    });
     this.page.on('response', response => {
         if (/\/dist\/leaflet-elevation\.min\.js$/.test(new URL(response.url()).pathname)) {
             this.pluginResponse = response;
         }
     });
-    await this.page.route('**/src/handlers/chart.js', async route => {
-        await this.page.waitForFunction(() => document.querySelector('path.elevation-polyline'));
-        await route.fallback();
-    });
 });
 
-Then('the dynamically loaded plugin matches the local build', async function () {
+Then('the plugin matches the local build without requesting a chart module', async function () {
     assert.ok(this.pluginResponse, 'The elevation plugin bundle was not loaded');
     assert.strictEqual(await this.pluginResponse.text(),
         await readFile(new URL('../../dist/leaflet-elevation.min.js', import.meta.url), 'utf8'));
+    assert.deepStrictEqual(this.chartRequests, []);
     assert.strictEqual(await this.page.evaluate(() =>
         map.getSize().y === map.getContainer().clientHeight
     ), true);
