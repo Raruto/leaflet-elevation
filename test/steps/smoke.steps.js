@@ -89,7 +89,8 @@ Then('the example {string} loads without browser errors', { timeout: 30000 }, as
       url.origin === base && bundleName.test(path.posix.basename(url.pathname));
   }
   page.on('request', request => {
-    if (packageCdn.test(request.url())) errors.push(`Unexpected plugin CDN request: ${request.url()}`);
+    // leaflet-ui@0.8.0 bundles an older plugin copy that loads its own images from unpkg
+    if (packageCdn.test(request.url()) && !request.url().includes(`${manifest.name}@2.`)) errors.push(`Unexpected plugin CDN request: ${request.url()}`);
   });
   page.on('pageerror', error => errors.push(`JavaScript: ${error.message}`));
   page.on('console', message => {
