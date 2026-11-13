@@ -4,6 +4,7 @@ import path from 'node:path';
 import { AfterAll, Before, Then } from '@cucumber/cucumber';
 import { startServer } from '../../build/server.js';
 import { chromium } from 'playwright';
+import { useCachedUnpkg } from '../support/unpkg.js';
 
 const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
 const pluginName = manifest.name.split('/').pop();
@@ -80,6 +81,7 @@ Then('development pages rewrite CDN URLs without changing files', { timeout: 300
 
 Then('the example {string} loads without browser errors', { timeout: 30000 }, async function (example) {
   const page = await browser.newPage();
+  await useCachedUnpkg(page);
   const errors = [];
   let googleKeyWarning = false;
   let bundleLoaded = false;
@@ -89,8 +91,7 @@ Then('the example {string} loads without browser errors', { timeout: 30000 }, as
       url.origin === base && bundleName.test(path.posix.basename(url.pathname));
   }
   page.on('request', request => {
-    // leaflet-ui@0.8.0 bundles an older plugin copy that loads its own images from unpkg
-    if (packageCdn.test(request.url()) && !request.url().includes(`${manifest.name}@2.`)) errors.push(`Unexpected plugin CDN request: ${request.url()}`);
+    if (packageCdn.test(request.url()) && request.url() !== `https://unpkg.com/${manifest.name}@2.9.0/images/elevation-locate.png`) errors.push(`Unexpected plugin CDN request: ${request.url()}`);
   });
   page.on('pageerror', error => errors.push(`JavaScript: ${error.message}`));
   page.on('console', message => {

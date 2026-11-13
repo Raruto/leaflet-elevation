@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { Given, When, Then } from '@cucumber/cucumber';
+import { useCachedUnpkg } from '../support/unpkg.js';
 
 Given('a native chart in a scaled container', async function () {
     await this.page.goto(this.base);
@@ -123,6 +124,7 @@ Then('native axes and custom callbacks receive SVG elements', async function () 
 Then('numeric axis labels use each browser locale without overriding custom formatters', async function () {
     for (const [locale, decimal, grouped] of [['en-US', '0.2', '10,000'], ['it-IT', '0,2', '10.000']]) {
         const page = await this.browser.newPage({ locale });
+        await useCachedUnpkg(page);
         try {
             page.on('pageerror', error => this.errors.push(error.stack || error.message));
             await page.goto(this.base);

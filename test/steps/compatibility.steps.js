@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'node:url';
+import { useCachedUnpkg } from '../support/unpkg.js';
 
 Given('the native Leaflet compatibility fixture uses {string}', async function (bundle) {
     this.browser = await chromium.launch();
     this.page = await this.browser.newPage();
+    await useCachedUnpkg(this.page);
     this.page.on('pageerror', error => this.errors.push(error.stack));
     await this.page.route('https://unpkg.com/@tmcw/togeojson@*/dist/togeojson.umd.js', route =>
         route.fulfill({ path: fileURLToPath(new URL('../../node_modules/@tmcw/togeojson/dist/togeojson.umd.js', import.meta.url)) }));

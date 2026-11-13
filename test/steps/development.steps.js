@@ -4,6 +4,7 @@ import { Then } from '@cucumber/cucumber';
 import { chromium } from 'playwright';
 import { rewritePluginUrls, startServer } from '../../build/server.js';
 import { fixturePath } from '../support/browser.js';
+import { missingAssets, useCachedUnpkg } from '../support/unpkg.js';
 
 Then('the development server rewrites static and plugin loader URLs', async function () {
     const server = await startServer(0, { localCdn: true });
@@ -11,6 +12,7 @@ Then('the development server rewrites static and plugin loader URLs', async func
     try {
         browser = await chromium.launch();
         const context = await browser.newContext();
+        await useCachedUnpkg(context);
         await context.route(/^https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net)\/.*@raruto\/leaflet-elevation/, route => route.abort());
         await context.route('**/via-emilia.gpx', route => route.fulfill({ path: fixturePath('via-emilia.gpx') }));
         await context.route('https://unpkg.com/unrelated-package@1/test.txt', route => route.fulfill({
@@ -62,5 +64,28 @@ Then('the development server rewrites static and plugin loader URLs', async func
         await browser?.close();
         server.closeAllConnections();
         await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    }
+});
+
+Then('unpkg resources are served from the predownloaded cache', async function () {
+    const browser = await chromium.launch();
+    try {
+        const context = await browser.newContext();
+        await context.route('https://unpkg.com/**', route => route.abort());
+        await useCachedUnpkg(context);
+        const page = await context.newPage();
+        await page.goto(this.base);
+        const response = await page.evaluate(async () => {
+            const response = await fetch('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+            return { status: response.status, text: await response.text() };
+        });
+        assert.equal(response.status, 200);
+        assert.equal(response.text, await readFile(new URL('../../node_modules/.cache/unpkg/leaflet@1.9.4/dist/leaflet.js', import.meta.url), 'utf8'));
+        const missing = 'unlisted-package@1.0.0/missing.js';
+        const status = await page.evaluate(async url => (await fetch(url)).status, `https://unpkg.com/${missing}`);
+        assert.equal(status, 404);
+        assert.ok(missingAssets.delete(missing), 'Missing resources must be reported');
+    } finally {
+        await browser.close();
     }
 });

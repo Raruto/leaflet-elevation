@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { Given, When, Then } from '@cucumber/cucumber';
 import { chromium, webkit } from 'playwright';
+import { useCachedUnpkg } from '../support/unpkg.js';
 
 const lowLevelBrowsers = {
     'macOS Chromium': { engine: chromium, platform: 'MacIntel' },
@@ -79,6 +80,7 @@ async function openPage(world, configuration, { profile = false, dpr = 1 } = {})
     };
     if (configuration.userAgent) pageOptions.userAgent = configuration.userAgent;
     world.page = await world.browser.newPage(pageOptions);
+    await useCachedUnpkg(world.page);
     if (profile) world.page.on('pageerror', error => world.errors.push(error.message));
     await world.page.addInitScript(platform => {
         Object.defineProperty(navigator, 'platform', { get: () => platform });

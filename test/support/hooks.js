@@ -1,10 +1,15 @@
-import { After, AfterAll, Before, setDefaultTimeout } from '@cucumber/cucumber';
+import { After, AfterAll, Before, BeforeAll, setDefaultTimeout } from '@cucumber/cucumber';
 import { startServer } from '../../build/server.js';
+import { downloadAssets, missingAssets } from './unpkg.js';
 
 setDefaultTimeout(60000);
 
 let server;
 let base;
+
+BeforeAll(async () => {
+    await downloadAssets();
+});
 
 Before(async function ({ pickle }) {
     if (!pickle.tags.some(tag => tag.name === '@unit') && !server) {
@@ -44,6 +49,9 @@ After(async function ({ result }) {
         }));
     }
     await this.browser?.close();
+    const missing = [...missingAssets];
+    missingAssets.clear();
+    if (missing.length) throw new Error(`Uncached unpkg resources:\n${missing.join('\n')}`);
 });
 
 AfterAll(async function () {

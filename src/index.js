@@ -2192,7 +2192,7 @@ export const Elevation = L.Control.Elevation = class extends (L.version.startsWi
     this.mergeOptions(Options);
     this.prototype.__mileFactor = 0.621371;
     this.prototype.__footFactor = 3.28084;
-    this.prototype.__TOGEOJSON = 'https://unpkg.com/@tmcw/togeojson@5.6.2/dist/togeojson.umd.js';
+    this.prototype.__TOGEOJSON = 'https://unpkg.com/@tmcw/togeojson@7.1.3/dist/togeojson.umd.js';
     this.prototype.__LHOTLINE = '../libs/leaflet-hotline.min.js';
     this.prototype.__LDISTANCEM = '../libs/leaflet-distance-marker.min.js';
     this.prototype.__LEDGESCALE = '../libs/leaflet-edgescale.min.js';

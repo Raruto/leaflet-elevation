@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { Given, Then } from '@cucumber/cucumber';
 import { chromium } from 'playwright';
+import { useCachedUnpkg } from './unpkg.js';
 
 export const fixturePath = name => fileURLToPath(new URL(`../../examples/${name}`, import.meta.url));
 
@@ -25,6 +26,7 @@ export async function waitForMapBounds(page, bounds) {
 Given('a Chromium browser using the local plugin', async function () {
     this.browser = await chromium.launch();
     this.page = await this.browser.newPage();
+    await useCachedUnpkg(this.page);
     this.page.on('pageerror', error => this.errors.push(error.stack || error.message));
     this.d3Requests = [];
     await this.page.route(/(?:\/d3(?:@|\/)|\/d3[^/]*\.js)/i, route => {
