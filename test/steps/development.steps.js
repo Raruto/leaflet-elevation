@@ -32,12 +32,12 @@ Then('the development server rewrites static and plugin loader URLs', async func
         await page.waitForFunction(() => typeof controlElevation !== 'undefined' && controlElevation?._data.length > 0);
 
         const urls = JSON.parse(rewritePluginUrls(JSON.stringify([
-            'https://unpkg.com/@raruto/leaflet-elevation@3.0.0/src/index.js?cache=1',
-            'https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@3.0.0/dist/leaflet-elevation.css',
+            'https://unpkg.com/@raruto/leaflet-elevation@3.0.1/src/index.js?cache=1',
+            'https://cdn.jsdelivr.net/npm/@raruto/leaflet-elevation@3.0.1/dist/leaflet-elevation.css',
             'https://unpkg.com/%40raruto%2Fleaflet-elevation@2.9.2/src/index.js',
-            '@raruto/leaflet-elevation@3.0.0/src/index.js',
-            'https://unpkg.com/@raruto/leaflet-elevation@3.0.0',
-            'https://unpkg.com/@raruto/leaflet-elevation@3.0.0/does-not-exist.js',
+            '@raruto/leaflet-elevation@3.0.1/src/index.js',
+            'https://unpkg.com/@raruto/leaflet-elevation@3.0.1',
+            'https://unpkg.com/@raruto/leaflet-elevation@3.0.1/does-not-exist.js',
             'https://unpkg.com/unrelated-package@1/test.txt',
         ])));
         const assets = await page.evaluate(async urls => {
