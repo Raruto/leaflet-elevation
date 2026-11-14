@@ -10,9 +10,7 @@
     "dev": "node build/dev.js",
     "build": "node build/build.js",
     "test": "node build/test.js",
-    "preversion": "node build/version.js",
-    "version": "npm run build && git add -A",
-    "postversion": "npm publish --access public && git push --follow-tags"
+    "preversion": "node -e \"console.error('Versioning is handled by GitHub Actions; do not run npm version locally.'); process.exit(1)\""
   },
   "repository": {
     "type": "git",
