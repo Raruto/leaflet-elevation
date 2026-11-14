@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 
 const cache = fileURLToPath(new URL('../../node_modules/.cache/unpkg/', import.meta.url));
 export const assets = [
-    '@raruto/leaflet-elevation@2.9.0/images/elevation-locate.png',
     '@tmcw/togeojson@7.1.3/dist/togeojson.umd.js',
     'leaflet-gpx@1.7.0/gpx.js',
     'leaflet-rotate@0.6.0/dist/leaflet-rotate.js',
@@ -47,7 +46,8 @@ export const missingAssets = new Set();
 export async function useCachedUnpkg(page) {
     await page.route('https://unpkg.com/**', async route => {
         const asset = decodeURIComponent(new URL(route.request().url()).pathname.slice(1));
-        if (!assets.includes(asset)) {
+        const legacyIcon = /^@raruto\/leaflet-elevation@2\.9\.0\/images\/elevation-locate\.png$/.test(asset);
+        if (!legacyIcon && !assets.includes(asset)) {
             missingAssets.add(asset);
             await route.fulfill({
                 status: 404,
@@ -57,7 +57,9 @@ export async function useCachedUnpkg(page) {
             return;
         }
         await route.fulfill({
-            path: cachedAsset(asset),
+            path: legacyIcon
+                ? fileURLToPath(new URL('../../images/elevation-locate.png', import.meta.url))
+                : cachedAsset(asset),
             headers: { 'access-control-allow-origin': '*' },
         });
     });

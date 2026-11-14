@@ -75,19 +75,23 @@ Then('unpkg resources are served from the predownloaded cache', async function (
         await useCachedUnpkg(context);
         const page = await context.newPage();
         await page.goto(this.base);
+        const { name } = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8'));
+        const legacyIcon = `${name}@2.9.0/images/elevation-locate.png`;
         for (const asset of [
             'leaflet@1.9.4/dist/leaflet.js',
             'leaflet@1.9.4/dist/images/marker-icon.png',
             'leaflet@1.9.4/dist/images/marker-shadow.png',
             'leaflet-ui@0.8.1/dist/locales/en-US.js',
             'leaflet-ui@0.8.1/dist/locales/en.js',
+            legacyIcon,
         ]) {
             const response = await page.evaluate(async asset => {
                 const response = await fetch(`https://unpkg.com/${asset}`);
                 return { status: response.status, bytes: [...new Uint8Array(await response.arrayBuffer())] };
             }, asset);
             assert.equal(response.status, 200, asset);
-            assert.deepEqual(Buffer.from(response.bytes), await readFile(cachedAsset(asset)), asset);
+            const file = asset === legacyIcon ? new URL('../../images/elevation-locate.png', import.meta.url) : cachedAsset(asset);
+            assert.deepEqual(Buffer.from(response.bytes), await readFile(file), asset);
         }
         const missing = 'unlisted-package@1.0.0/missing.js';
         const status = await page.evaluate(async url => (await fetch(url)).status, `https://unpkg.com/${missing}`);
