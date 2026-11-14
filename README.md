@@ -43,7 +43,7 @@ A Leaflet plugin that allows to add elevation profiles using native SVG and Canv
 
     <!-- leaflet-ui -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-ui@0.8.0/dist/leaflet-ui.js"></script>
+    <script src="https://unpkg.com/leaflet-ui@0.8.1/dist/leaflet-ui.js"></script>
 
     <!-- leaflet-elevation -->
     <link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation/dist/leaflet-elevation.css" />
