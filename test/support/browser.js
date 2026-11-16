@@ -6,6 +6,28 @@ import { useCachedUnpkg } from './unpkg.js';
 
 export const fixturePath = name => fileURLToPath(new URL(`../../examples/${name}`, import.meta.url));
 
+export const cityMapperBrowserOptions = {
+    headless: true,
+    ...(process.platform === 'win32' ? { channel: 'chromium' } : {}),
+    args: process.platform === 'win32'
+        ? ['--disable-gpu-process-for-dx12-info-collection']
+        : ['--enable-unsafe-webgpu', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader',
+            '--use-angle=swiftshader', '--use-webgpu-adapter=swiftshader',
+            '--enable-features=Vulkan', '--use-vulkan=swiftshader', '--disable-vulkan-surface'],
+};
+
+export async function mapTile(page, color = 'rgb(128, 100, 0)') {
+    const image = await page.evaluate(color => {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 512;
+        const context = canvas.getContext('2d');
+        context.fillStyle = color;
+        context.fillRect(0, 0, 512, 512);
+        return canvas.toDataURL('image/png').split(',')[1];
+    }, color);
+    return Buffer.from(image, 'base64');
+}
+
 export async function localFixture(page, name) {
     await page.route(`**/${name}`, route => route.fulfill({ path: fixturePath(name) }));
 }

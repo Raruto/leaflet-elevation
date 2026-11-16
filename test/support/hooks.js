@@ -21,7 +21,7 @@ Before(async function ({ pickle }) {
     this.warnings = [];
 });
 
-After(async function ({ result }) {
+After({ timeout: process.platform === 'win32' ? 90000 : 60000 }, async function ({ result }) {
     this.releaseData?.();
     if (result.status === 'FAILED' && this.page) {
         console.error('Browser errors:', this.errors);

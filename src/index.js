@@ -362,7 +362,9 @@ export const Elevation = L.Control.Elevation = class extends (L.version.startsWi
 			.off('zoom viewreset zoomanim',      this._hideMarker,    this)
 			.off('resize',                       this._resetView,     this)
 			.off('resize',                       this._resizeChart,   this)
-			.off('mousedown',                    this._resetDrag,     this);
+			.off('rotate pitch move terrainchange', this._rotateMarker, this)
+			.off(L.version.startsWith('1.') ? 'mousedown' : 'pointerdown', this._resetDrag, this);
+		if (this._marker?._anchor) this._marker._anchor.remove();
 
 		_.off(map.getContainer(), 'mousewheel',  this._resetDrag,     this);
 		_.off(map.getContainer(), 'touchstart',  this._resetDrag,     this);
@@ -848,8 +850,8 @@ export const Elevation = L.Control.Elevation = class extends (L.version.startsWi
 				.on('zoom viewreset zoomanim',      this._hideMarker,    this)
 				.on('resize',                       this._resetView,     this)
 				.on('resize',                       this._resizeChart,   this)
-				.on('rotate',                       this._rotateMarker,  this)
-				.on('mousedown',                    this._resetDrag,     this);
+				.on('rotate pitch move terrainchange', this._rotateMarker, this)
+				.on(L.version.startsWith('1.') ? 'mousedown' : 'pointerdown', this._resetDrag, this);
 
 			_.on(map.getContainer(), 'mousewheel',  this._resetDrag,     this);
 			_.on(map.getContainer(), 'touchstart',  this._resetDrag,     this);
@@ -1081,6 +1083,12 @@ export const Elevation = L.Control.Elevation = class extends (L.version.startsWi
 						this._container = map.getPane('elevationPane').querySelector("svg > g");
 						this._container.replaceChildren();
 						this._container.setAttribute('class', 'height-focus-group');
+						if (typeof map.getPitch === 'function') {
+							this._anchor = L.marker([0, 0], {
+								icon: L.divIcon({ className: '', iconSize: [0, 0], iconAnchor: [0, 0] }),
+								interactive: false,
+							}).addTo(map);
+						}
 					break;
 					case 'position-marker': this._marker.addTo(map, { pane: 'overlayPane' }); break;
 				}
@@ -1099,6 +1107,14 @@ export const Elevation = L.Control.Elevation = class extends (L.version.startsWi
 						if (this._container) {
 							let point = this._map.latLngToLayerPoint(this._latlng);
 							point = Object.assign({}, props.item, this._map._rotate ? this._map.rotatedPointToMapPanePoint(point) : point);
+							if (this._anchor) {
+								if (!this._map.hasLayer(this._anchor)) this._anchor.addTo(this._map);
+								this._anchor.setLatLng(this._latlng);
+								const rect = this._anchor.getElement().getBoundingClientRect();
+								const projected = new DOMPoint(rect.left, rect.top).matrixTransform(this._container.getScreenCTM().inverse());
+								point.x = projected.x;
+								point.y = projected.y;
+							}
 							let yMin = props.yCoordMin || 0;
 							let yMax = (this.control._height() / (props.yCoordMax - yMin) * (point[this.options.yAttr] - yMin));
 							if (!isFinite(yMax) || isNaN(yMax)) yMax = 0;
@@ -1129,7 +1145,10 @@ export const Elevation = L.Control.Elevation = class extends (L.version.startsWi
 			remove() {
 				this._props = null;
 				switch (this.options.marker) {
-					case 'elevation-line': this._container && this._container.classList.add("leaflet-hidden"); break;
+					case 'elevation-line':
+						this._container && this._container.classList.add("leaflet-hidden");
+						if (this._anchor) this._anchor.remove();
+					break;
 					case 'position-marker': _.addClass(this._marker.getElement(), 'leaflet-hidden'); break;
 				}
 			},
@@ -1656,14 +1675,14 @@ export const Elevation = L.Control.Elevation = class extends (L.version.startsWi
 	 */
   _loadModules(handlers) {
 		// First map known classnames (eg. "Altitude" --> L.Control.Elevation.Altitude)
-		handlers = handlers.map((h) => typeof h === 'string' && typeof Elevation[h] !== "undefined" ? Elevation[h] : h);
+		handlers = handlers.map((h) => typeof h === 'string' && Object.prototype.hasOwnProperty.call(Elevation, h) ? Elevation[h] : h);
 		// Then load optional classes and custom imports (eg. "Cadence" --> import('../src/handlers/cadence.js'))
 		let modules = handlers.map(file => (typeof file === 'string' && this.import(this.__modulesFolder + file.toLowerCase() + '.js')) || (file instanceof Promise && file) || Promise.resolve());
 		return Promise.all(modules).then((m) => {
 			_.each(m, (exported, i) => {
 				let fn = exported && Object.keys(exported)[0];
 				if (fn) {
-					handlers[i] = Elevation[fn] = (Elevation[fn] ?? exported[fn]);
+					handlers[i] = Elevation[fn] = (Object.prototype.hasOwnProperty.call(Elevation, fn) ? Elevation[fn] : exported[fn]);
 				}
 			});
 			_.each(handlers, h => ["function", "object"].includes(typeof h) && this._registerHandler(h));

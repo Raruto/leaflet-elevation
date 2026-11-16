@@ -1,7 +1,9 @@
 import { spawnSync } from 'node:child_process';
 import { build } from './build.js';
+import { prepareIntegration } from './prepareIntegration.js';
 
 await build();
+await prepareIntegration();
 
 for (const version of ['1', '2']) {
   console.log(`\nRunning tests with Leaflet v${version}.x`);

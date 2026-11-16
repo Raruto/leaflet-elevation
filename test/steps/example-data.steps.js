@@ -1,7 +1,134 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { Given, When, Then } from '@cucumber/cucumber';
-import { fixturePath, localFixture, openExample } from '../support/browser.js';
+import { chromium } from 'playwright';
+import { cityMapperBrowserOptions, fixturePath, localFixture, openExample, mapTile } from '../support/browser.js';
+import { useCachedUnpkg } from '../support/unpkg.js';
+
+Then('the city mapper example renders an interactive GeoJSON track and profile', { timeout: 60000 }, async function () {
+    this.browser = await chromium.launch(cityMapperBrowserOptions);
+    this.page = await this.browser.newPage();
+    await this.page.setViewportSize({ width: 742, height: 380 });
+    const image = await mapTile(this.page);
+    const terrainImage = await mapTile(this.page, 'rgb(128, 100, 0)');
+    await this.page.route(/^https:\/\/(?!unpkg\.com\/)/, async route => {
+        await route.fulfill({
+            contentType: 'image/png', body: image,
+            headers: { 'access-control-allow-origin': '*' },
+        });
+    });
+    await useCachedUnpkg(this.page);
+    await this.page.route('https://tiles.mapterhorn.com/**', route => route.fulfill({
+        contentType: 'image/png', body: terrainImage,
+        headers: { 'access-control-allow-origin': '*' },
+    }));
+    await this.page.route(/^https:\/\/unpkg\.com\/@raruto\/leaflet-elevation@[^/]+\//, async route => {
+        const path = new URL(route.request().url()).pathname.replace(/^\/@raruto\/leaflet-elevation@[^/]+\//, '/');
+        const response = await route.fetch({ url: this.base + path });
+        assert.ok(response.ok(), `Failed to load local elevation resource: ${path}`);
+        await route.fulfill({ response, headers: { ...response.headers(), 'access-control-allow-origin': '*' } });
+    });
+    this.page.on('pageerror', error => this.errors.push(error.stack || error.message));
+    this.page.on('console', message => { if (message.type() === 'error') this.errors.push(message.text()); });
+    try {
+        await this.page.goto(`${this.base}/examples/leaflet-elevation_city-mapper.html`, { waitUntil: 'domcontentloaded' });
+        assert.ok(await this.page.evaluate(async () => !!(await navigator.gpu?.requestAdapter())), 'WebGPU adapter unavailable');
+        await this.page.waitForFunction(() => window.controlElevation?._data.length > 0 &&
+            controlElevation._layers.getLayers().some(layer => layer instanceof L.Polyline && map.hasLayer(layer)) &&
+            document.querySelector('#map canvas.leaflet-3d'));
+        const height = await this.page.evaluate(async () =>
+            (await terrain.options.getTile(10, 993, 654, new AbortController().signal))[0]);
+        assert.equal(height, 100);
+        const source = JSON.parse(await readFile(fixturePath('demo.geojson'), 'utf8'));
+        const result = await this.page.evaluate(() => ({
+            samples: controlElevation._data.map(point => [point.latlng.lng, point.latlng.lat, point.z]),
+            distance: controlElevation.track_info.distance,
+            time: controlElevation.track_info.time,
+            chart: controlElevation._chart._paths.altitude.getAttribute('d'),
+            track: controlElevation._layers.getLayers().some(layer => layer instanceof L.Polyline && map.hasLayer(layer)),
+            pitch: map.getPitch(),
+            mapHeight: map.getContainer().getBoundingClientRect().height,
+            viewportHeight: innerHeight,
+        }));
+        assert.deepStrictEqual(result.samples, source.features.flatMap(feature => feature.geometry.coordinates));
+        assert.ok(result.distance > 0 && result.time > 0);
+        assert.match(result.chart, /L/);
+        assert.ok(result.track && result.pitch > 0);
+        assert.ok(result.mapHeight >= result.viewportHeight / 2);
+        await this.page.waitForTimeout(1000);
+        const screenshot = await this.page.locator('#map').screenshot();
+        const trackPixels = await this.page.evaluate(async image => {
+            const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${image}`)).blob());
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            const context = canvas.getContext('2d');
+            context.drawImage(bitmap, 0, 0);
+            bitmap.close();
+            const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+            let count = 0;
+            for (let i = 0; i < pixels.length; i += 4) {
+                if (pixels[i] > 220 && pixels[i + 1] > 30 && pixels[i + 1] < 120 && pixels[i + 2] < 60) count++;
+            }
+            return count;
+        }, screenshot.toString('base64'));
+        assert.ok(trackPixels > 20, `Track not visible in 3D map (${trackPixels} pixels)`);
+        const overlay = this.page.locator('.brush .overlay').first();
+        const box = await overlay.boundingBox();
+        await overlay.hover({ position: { x: box.width / 2, y: box.height / 2 } });
+        await this.page.waitForFunction(() => controlElevation._marker.getLatLng());
+        const state = await this.page.evaluate(() => {
+            const errors = [];
+            for (const [pitch, bearing, index] of [[45, 25, 30], [70, 90, 80], [25, 180, 130]]) {
+                map.setPitch(pitch, { animate: false });
+                map.setBearing(bearing, { animate: false });
+                controlElevation._updateMarker(controlElevation._data[index]);
+                const circle = controlElevation._marker._container.querySelector('circle').getBoundingClientRect();
+                const anchor = controlElevation._marker._anchor.getElement().getBoundingClientRect();
+                errors.push(Math.hypot(circle.x + circle.width / 2 - anchor.x, circle.y + circle.height / 2 - anchor.y));
+            }
+            map.setPitch(70, { animate: false });
+            const scale = map.edgeScaleControl._scaleBar;
+            const ctx = scale._ctx, move = ctx.moveTo, line = ctx.lineTo, stroke = ctx.stroke, ticks = [];
+            let position;
+            ctx.moveTo = function (x, y) { position = [x, y]; return move.call(this, x, y); };
+            ctx.lineTo = function (x, y) {
+                if (position && position[1] === 0 && x === position[0] && y > 0) ticks.push(x);
+                return line.call(this, x, y);
+            };
+            try { scale._reset(); }
+            finally { ctx.moveTo = move; ctx.lineTo = line; ctx.stroke = stroke; }
+            ticks.sort((a, b) => a - b);
+            return {
+                errors, ticks,
+                listensToPitch: (map._events.pitch || []).some(listener => listener.ctx === scale && listener.fn === scale._reset),
+            };
+        });
+        assert.ok(state.errors.every(error => error < 2), `Marker misalignment: ${state.errors}`);
+        assert.ok(state.listensToPitch && state.ticks.length > 2);
+        assert.ok(state.ticks.slice(1).every((tick, i) => tick - state.ticks[i] >= 2.9), 'Edge scale ticks overlap');
+        const cleanup = await this.page.evaluate(() => {
+            const marker = controlElevation._marker;
+            const scale = map.edgeScaleControl._scaleBar;
+            marker.remove();
+            const markerRemoved = !map.hasLayer(marker._anchor);
+            controlElevation._updateMarker(controlElevation._data[80]);
+            const markerRestored = map.hasLayer(marker._anchor);
+            controlElevation.remove();
+            scale.remove();
+            return {
+                markerRemoved, markerRestored,
+                markerDetached: !map.hasLayer(marker._anchor),
+                scaleDetached: !(map._events.pitch || []).some(listener => listener.ctx === scale && listener.fn === scale._reset),
+                controlDetached: !(map._events.pitch || []).some(listener => listener.ctx === controlElevation && listener.fn === controlElevation._rotateMarker),
+            };
+        });
+        assert.ok(Object.values(cleanup).every(Boolean), `Incomplete marker or scale cleanup: ${JSON.stringify(cleanup)}`);
+        assert.deepStrictEqual(this.errors, []);
+    } finally {
+        await this.page.evaluate(() => { window.map?.remove(); window.map = null; });
+    }
+});
 
 async function waitForTrack(page) {
     await page.waitForFunction(() =>

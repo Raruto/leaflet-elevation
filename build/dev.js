@@ -1,7 +1,7 @@
 import { build } from './build.js';
 import { startServer } from './server.js';
 
-const server = await startServer(8080, { localCdn: true });
+const server = await startServer(8080, { localCdn: true, cityMapperDist: process.env.LEAFLET_CITY_MAPPER_FOLDER });
 let stopBuild;
 
 try {

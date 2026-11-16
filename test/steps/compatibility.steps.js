@@ -4,6 +4,67 @@ import { chromium } from 'playwright';
 import { fileURLToPath } from 'node:url';
 import { useCachedUnpkg } from '../support/unpkg.js';
 
+Then('a Time control does not prevent elevation profiles from loading', async function () {
+    const version = process.env.LEAFLET_VERSION === '2' ? '2.0.0-beta.3' : '1.9.4';
+    const leaflet = version.startsWith('1.') ? 'leaflet.js' : 'leaflet-global.js';
+    await this.page.goto(this.base);
+    await this.page.setContent('<div id="map" style="height:400px"></div><div id="elevation-div"></div>');
+    await this.page.addScriptTag({ url: `https://unpkg.com/leaflet@${version}/dist/${leaflet}` });
+    await this.page.evaluate(() => { L.Control.Time = class extends L.Control {}; });
+    await this.page.addScriptTag({ url: `${this.base}/dist/leaflet-elevation.js` });
+    await this.page.evaluate(() => {
+        window.map = new (L.LeafletMap || L.Map)('map', { center: [45, 9], zoom: 12 });
+        window.profiles = [1, 2].map(() => new L.Control.Elevation({
+            closeBtn: false, distanceMarkers: false, edgeScale: false, hotline: false,
+        }).addTo(map));
+    });
+    await this.page.waitForFunction(() => profiles.every(profile => profile._modulesLoaded));
+    const result = await this.page.evaluate(async () => {
+        const track = { type: 'Feature', properties: {}, geometry: {
+            type: 'LineString', coordinates: [[9, 45, 10], [9.01, 45.01, 20]]
+        } };
+        await Promise.all(profiles.map(profile => profile.addData(track)));
+        return {
+            samples: profiles.map(profile => profile._data.length),
+            durations: profiles.map(profile => profile.track_info.time),
+            distinct: L.Control.Elevation.Time !== L.Control.Time,
+        };
+    });
+    assert.deepEqual(result.samples, [2, 2]);
+    assert.ok(result.durations.every(duration => duration > 0));
+    assert.equal(result.distinct, true);
+});
+
+Then('map pointer events reset and detach the elevation selection', async function () {
+    const version = process.env.LEAFLET_VERSION === '2' ? '2.0.0-beta.3' : '1.9.4';
+    const leaflet = version.startsWith('1.') ? 'leaflet.js' : 'leaflet-global.js';
+    this.page.on('console', message => { if (message.type() === 'error') this.errors.push(message.text()); });
+    await this.page.goto(this.base);
+    await this.page.setContent('<div id="map" style="height:400px"></div>');
+    await this.page.addScriptTag({ url: `https://unpkg.com/leaflet@${version}/dist/${leaflet}` });
+    await this.page.addScriptTag({ url: `${this.base}/dist/leaflet-elevation.js` });
+    await this.page.evaluate(() => {
+        window.map = new (L.LeafletMap || L.Map)('map', { center: [45, 9], zoom: 12 });
+        window.profile = new L.Control.Elevation({
+            detached: false, handlers: [], closeBtn: false, distanceMarkers: false, edgeScale: false, hotline: false,
+        }).addTo(map);
+    });
+    await this.page.waitForFunction(() => profile._chart);
+    const result = await this.page.evaluate(() => {
+        let resets = 0;
+        const event = L.version.startsWith('1.') ? 'mousedown' : 'pointerdown';
+        profile.on('reset_drag', () => resets++);
+        profile._setSelection([10, 20]);
+        map.fire(event);
+        const before = resets;
+        profile.remove();
+        profile._setSelection([10, 20]);
+        map.fire(event);
+        return { before, after: resets };
+    });
+    assert.deepEqual(result, { before: 1, after: 1 });
+});
+
 Given('the native Leaflet compatibility fixture uses {string}', async function (bundle) {
     this.browser = await chromium.launch();
     this.page = await this.browser.newPage();

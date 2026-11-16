@@ -10,9 +10,12 @@ export const assets = [
     'leaflet-rotate@0.6.0/dist/leaflet-rotate.js',
     'leaflet-ui@0.8.1/dist/leaflet-ui.css',
     'leaflet-ui@0.8.1/dist/leaflet-ui.js',
+    'leaflet-city-mapper@0.1.2/dist/leaflet-city-mapper.js',
+    'leaflet-city-mapper@0.1.2/dist/leaflet-city-mapper-worker.js',
     'leaflet-ui@0.8.1/dist/locales/en-US.js',
     'leaflet-ui@0.8.1/dist/locales/en.js',
     'leaflet-ui@0.8.1/dist/locales/it.js',
+    'leaflet-ui@0.8.1/dist/locales/it-IT.js',
     'leaflet-ui@0.8.1/dist/images/leaflet-pegman/maps.gstatic.com/api-3cb_scout5.png',
     'leaflet-ui@0.8.1/dist/images/leaflet-pegman/maps.gstatic.com/pegman_v3runway-1x.png',
     'leaflet-ui@0.8.1/dist/images/leaflet-search/imagessearch-icon.png',
@@ -31,6 +34,7 @@ export function cachedAsset(asset) {
 
 export async function downloadAssets() {
     await Promise.all(assets.map(async asset => {
+        if (process.env.LEAFLET_CITY_MAPPER_FOLDER && asset.startsWith('leaflet-city-mapper@')) return;
         const url = `https://unpkg.com/${asset}`;
         const filename = cachedAsset(asset);
         if (existsSync(filename) && statSync(filename).size) return;
@@ -46,6 +50,13 @@ export const missingAssets = new Set();
 export async function useCachedUnpkg(page) {
     await page.route('https://unpkg.com/**', async route => {
         const asset = decodeURIComponent(new URL(route.request().url()).pathname.slice(1));
+        if (process.env.LEAFLET_CITY_MAPPER_FOLDER && /^leaflet-city-mapper@[^/]+\/dist\/leaflet-city-mapper(?:-worker)?\.js$/.test(asset)) {
+            await route.fulfill({
+                path: join(process.env.LEAFLET_CITY_MAPPER_FOLDER, asset.split('/').pop()),
+                headers: { 'access-control-allow-origin': '*' },
+            });
+            return;
+        }
         const legacyIcon = /^@raruto\/leaflet-elevation@2\.9\.0\/images\/elevation-locate\.png$/.test(asset);
         if (!legacyIcon && !assets.includes(asset)) {
             missingAssets.add(asset);

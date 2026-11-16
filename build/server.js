@@ -28,11 +28,23 @@ export function rewritePluginUrls(html) {
             (match, quote, offset, source) => quote + (source[offset + match.length] === '/' ? '' : '/dist/leaflet-elevation.min.js'));
 }
 
-export function startServer(port = 8080, { localCdn = false } = {}) {
+export function startServer(port = 8080, { localCdn = false, cityMapperDist } = {}) {
     const server = createServer(async (request, response) => {
         let filename;
+        const pathname = new URL(request.url, 'http://localhost').pathname;
+        const cityFiles = ['/__city-mapper/leaflet-city-mapper.js', '/__city-mapper/leaflet-city-mapper-worker.js'];
+        if (cityMapperDist && cityFiles.includes(pathname)) {
+            try {
+                const content = await readFile(resolve(cityMapperDist, pathname.split('/').pop()));
+                response.writeHead(200, { 'Content-Type': 'text/javascript', 'Cache-Control': 'no-store' }).end(content);
+            } catch (error) {
+                console.error(error);
+                response.writeHead(500).end('Failed to load local city-mapper bundle');
+            }
+            return;
+        }
         try {
-            filename = resolve(root, `.${decodeURIComponent(new URL(request.url, 'http://localhost').pathname)}`);
+            filename = resolve(root, `.${decodeURIComponent(pathname)}`);
         } catch {
             response.writeHead(400).end('Bad request');
             return;
@@ -64,6 +76,11 @@ export function startServer(port = 8080, { localCdn = false } = {}) {
                 response.setHeader('Cache-Control', 'no-store');
                 if (extname(filename) === '.html') {
                     content = Buffer.from(rewritePluginUrls(content.toString()));
+                    if (cityMapperDist) {
+                        content = Buffer.from(content.toString().replace(
+                            /https:\/\/unpkg\.com\/leaflet-city-mapper@[^/\s"'<>]+\/dist\/leaflet-city-mapper\.js/g,
+                            '/__city-mapper/leaflet-city-mapper.js'));
+                    }
                 }
             }
             response.writeHead(200, { 'Content-Type': contentTypes[extname(filename)] || 'application/octet-stream' });

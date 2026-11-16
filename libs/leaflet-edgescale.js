@@ -326,6 +326,7 @@ L.Control.EdgeScale.Layer = class extends (L.version.startsWith('1.') ? L.Layer.
     map.on('move', this._reset, this);
     map.on('moveend', this._reset, this);
     map.on('rotate', this._reset, this);
+    map.on('pitch', this._reset, this);
     map.on('resize', this._reset, this);
 
     this._reset();
@@ -337,6 +338,7 @@ L.Control.EdgeScale.Layer = class extends (L.version.startsWith('1.') ? L.Layer.
     map.off('move', this._reset, this);
     map.off('moveend', this._reset, this);
     map.off('rotate', this._reset, this);
+    map.off('pitch', this._reset, this);
     map.off('resize', this._reset, this);
   }
   addTo (map) {
@@ -454,7 +456,7 @@ L.Control.EdgeScale.Layer = class extends (L.version.startsWith('1.') ? L.Layer.
   }
   _draw() {
     this._ctx.strokeStyle = this.options.color;
-    if (this._map._bearing || this._map._pitch) {
+    if (this._map.getBearing?.() || this._map.getPitch?.() || this._map._bearing || this._map._pitch) {
       this._create_rotated_ticks(false);
       this._create_rotated_ticks(true);
     } else {
@@ -545,6 +547,7 @@ L.Control.EdgeScale.Layer = class extends (L.version.startsWith('1.') ? L.Layer.
       let previous = this._map.containerPointToLatLng(horizontal ? [half, 0] : [0, half]);
       let distance = 0;
       let tick = direction === -1 ? 1 : 0;
+      let last = -Infinity;
       for (let offset = 0; offset < half;) {
         const next = Math.min(offset + 4, half);
         const point = half + direction * next;
@@ -554,15 +557,20 @@ L.Control.EdgeScale.Layer = class extends (L.version.startsWith('1.') ? L.Layer.
         const dy = (current.lat - previous.lat) * rad * this._a * (1 - this._e2) / denominator ** 3;
         const dx = (current.lng - previous.lng) * rad * this._a * Math.cos(phi) / denominator;
         const segment = Math.hypot(dx, dy);
+        const skip = Math.max(1, Math.ceil(4 * segment / ((next - offset) * step)));
+        if (skip > 1) tick += (5 - tick % 10 + 10) % 10;
         while (tick * step <= distance + segment && segment > 0) {
           const position = half + direction * (offset + (tick * step - distance) / segment * (next - offset));
           const major = tick % 10 === 5;
-          ctx.lineWidth = major ? weight * 1.5 : weight;
-          ctx.beginPath();
-          ctx.moveTo(horizontal ? position : 0, horizontal ? 0 : position);
-          ctx.lineTo(horizontal ? position : (major ? 10 : 4), horizontal ? (major ? 10 : 4) : position);
-          ctx.stroke();
-          tick++;
+          if (Math.abs(position - last) >= 3) {
+            ctx.lineWidth = major ? weight * 1.5 : weight;
+            ctx.beginPath();
+            ctx.moveTo(horizontal ? position : 0, horizontal ? 0 : position);
+            ctx.lineTo(horizontal ? position : (major ? 10 : 4), horizontal ? (major ? 10 : 4) : position);
+            ctx.stroke();
+            last = position;
+          }
+          tick += skip > 1 ? 10 * Math.ceil(skip / 10) : 1;
         }
         distance += segment;
         previous = current;

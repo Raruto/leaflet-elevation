@@ -5,6 +5,7 @@ import { AfterAll, Before, Then } from '@cucumber/cucumber';
 import { startServer } from '../../build/server.js';
 import { chromium } from 'playwright';
 import { useCachedUnpkg } from '../support/unpkg.js';
+import { cityMapperBrowserOptions, mapTile } from '../support/browser.js';
 
 const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
 const pluginName = manifest.name.split('/').pop();
@@ -80,8 +81,23 @@ Then('development pages rewrite CDN URLs without changing files', { timeout: 300
 });
 
 Then('the example {string} loads without browser errors', { timeout: 30000 }, async function (example) {
-  const page = await browser.newPage();
+  const gpuBrowser = example === 'leaflet-elevation_city-mapper.html'
+    ? await chromium.launch(cityMapperBrowserOptions) : null;
+  if (gpuBrowser) this.browser = gpuBrowser;
+  const page = await (gpuBrowser || browser).newPage();
   await useCachedUnpkg(page);
+  if (example === 'leaflet-elevation_city-mapper.html') {
+    const image = await mapTile(page);
+    await page.route(/^https:\/\/(?!unpkg\.com\/)/, route => route.fulfill({
+      contentType: 'image/png', body: image,
+      headers: { 'access-control-allow-origin': '*' },
+    }));
+    const terrain = await mapTile(page, 'rgb(128, 0, 0)');
+    await page.route('https://tiles.mapterhorn.com/**', route => route.fulfill({
+      contentType: 'image/png', body: terrain,
+      headers: { 'access-control-allow-origin': '*' },
+    }));
+  }
   const errors = [];
   let googleKeyWarning = false;
   let bundleLoaded = false;
@@ -128,6 +144,7 @@ Then('the example {string} loads without browser errors', { timeout: 30000 }, as
     throw error;
   } finally {
     page.removeAllListeners();
-    await page.close();
+    if (gpuBrowser) await page.evaluate(() => window.map?.remove());
+    else await page.close();
   }
 });

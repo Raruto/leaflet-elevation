@@ -1,10 +1,83 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import childProcess from 'node:child_process';
+import { mkdtemp, readFile, rm, rmdir, unlink, writeFile } from 'node:fs/promises';
+import { syncBuiltinESMExports } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { Then } from '@cucumber/cucumber';
 import { chromium } from 'playwright';
 import { rewritePluginUrls, startServer } from '../../build/server.js';
 import { fixturePath } from '../support/browser.js';
 import { cachedAsset, missingAssets, useCachedUnpkg } from '../support/unpkg.js';
+import { prepareIntegration } from '../../build/prepareIntegration.js';
+
+Then('integration preparation builds city mapper once and propagates setup failures', async function () {
+    const keys = ['CI', 'LEAFLET_CITY_MAPPER_FOLDER'];
+    const saved = new Map(keys.map(key => [key, process.env[key]]));
+    const spawn = childProcess.spawnSync, folders = [], calls = [];
+    let failed = false;
+    childProcess.spawnSync = (command, args, options) => {
+        calls.push({ command, args, options });
+        if (command === 'git') folders.push(args.at(-1));
+        return { status: failed ? 1 : 0 };
+    };
+    syncBuiltinESMExports();
+    try {
+        for (const key of keys) delete process.env[key];
+        await prepareIntegration();
+        assert.equal(calls.length, 0);
+        process.env.CI = 'true';
+        await prepareIntegration();
+        assert.equal(calls.length, 3);
+        assert.deepEqual(calls[0].args.slice(0, -1), [
+            'clone', '--depth', '1', '--branch', 'master', 'https://github.com/Raruto/leaflet-city-mapper.git',
+        ]);
+        assert.deepEqual(calls.slice(1).map(call => call.args), [['ci'], ['run', 'build']]);
+        assert.ok(calls.slice(1).every(call => call.options.cwd === folders[0]));
+        assert.equal(process.env.LEAFLET_CITY_MAPPER_FOLDER, join(folders[0], 'dist'));
+        await prepareIntegration();
+        assert.equal(calls.length, 3, 'Explicit bundles must not be cloned or rebuilt');
+        delete process.env.LEAFLET_CITY_MAPPER_FOLDER;
+        failed = true;
+        await assert.rejects(prepareIntegration(), /Integration setup failed: git/);
+        assert.equal(process.env.LEAFLET_CITY_MAPPER_FOLDER, undefined);
+    } finally {
+        childProcess.spawnSync = spawn;
+        syncBuiltinESMExports();
+        for (const [key, value] of saved) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
+        for (const folder of folders) await rm(folder, { recursive: true, force: true });
+    }
+});
+
+Then('the development server serves only the selected city mapper bundles', async function () {
+    const directory = await mkdtemp(join(tmpdir(), 'elevation-city-mapper-'));
+    const names = ['leaflet-city-mapper.js', 'leaflet-city-mapper-worker.js'];
+    let server;
+    try {
+        for (const name of names) await writeFile(join(directory, name), name);
+        server = await startServer(0, { localCdn: true, cityMapperDist: directory });
+        const base = `http://127.0.0.1:${server.address().port}`;
+        const html = await (await fetch(`${base}/examples/leaflet-elevation_city-mapper.html`)).text();
+        assert.ok(html.includes('src="/__city-mapper/leaflet-city-mapper.js"'));
+        assert.ok(!html.includes('https://unpkg.com/leaflet-city-mapper@'), 'The upcoming CDN version must also be rewritten');
+        for (const name of names) {
+            const response = await fetch(`${base}/__city-mapper/${name}`);
+            assert.equal(response.status, 200);
+            assert.equal(await response.text(), name);
+        }
+        assert.equal((await fetch(`${base}/__city-mapper/other.js`)).status, 404);
+    } finally {
+        if (server) {
+            server.closeAllConnections();
+            await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+        }
+        for (const name of names) await unlink(join(directory, name));
+        await rmdir(directory);
+    }
+});
 
 Then('the development server rewrites static and plugin loader URLs', async function () {
     const server = await startServer(0, { localCdn: true });

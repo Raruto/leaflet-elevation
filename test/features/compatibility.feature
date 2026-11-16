@@ -1,5 +1,15 @@
 @compatibility
 Feature: Native Leaflet 1.9 and 2 beta compatibility without leaflet-ui
+  Scenario: Inherited Leaflet control names do not override elevation handlers
+    Given a Chromium browser using the local plugin
+    Then a Time control does not prevent elevation profiles from loading
+    And no browser errors have occurred
+
+  Scenario: Map pointer events reset selections and detach cleanly
+    Given a Chromium browser using the local plugin
+    Then map pointer events reset and detach the elevation selection
+    And no browser errors have occurred
+
   Scenario Outline: Public bundles render profiles and optional map integrations
     Given the native Leaflet compatibility fixture uses "<bundle>"
     Then native profiles, markers, gradients, distance markers and scales work

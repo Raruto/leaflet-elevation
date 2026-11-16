@@ -44,3 +44,8 @@ Feature: Example smoke tests
       | leaflet-elevation_toggable-charts.html |
       | leaflet-elevation_toggable-tracks.html |
       | leaflet-elevation_upload-gpx.html |
+
+    @city-mapper-smoke
+    Examples: City mapper
+      | example |
+      | leaflet-elevation_city-mapper.html |

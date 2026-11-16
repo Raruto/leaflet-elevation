@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>GeoJSON elevation profile on a 3D map</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+		@import '../libs/fullpage.css';
+		#map { flex: 1 1 auto; height: auto; min-height: 0; }
+		#elevation-div { flex: 0 0 40%; overflow: auto; }
+	</style>
+
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-ui@0.8.1/dist/leaflet-ui.js"></script>
+	<script src="https://unpkg.com/leaflet-city-mapper@0.1.2/dist/leaflet-city-mapper.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/@raruto/leaflet-elevation@3.0.2/dist/leaflet-elevation.min.css">
+	<script src="https://unpkg.com/@raruto/leaflet-elevation@3.0.2/dist/leaflet-elevation.min.js"></script>
+</head>
+<body>
+	<div id="map" class="leaflet-map" aria-label="3D map and GeoJSON track"></div>
+	<div id="elevation-div" aria-label="Elevation profile"></div>
+	<script type="module">
+		const map = window.map = new L.Map('map', {
+			center: [-44.696476, 169.13693],
+			zoom: 11,
+			fullscreenControl: false,
+			minimapControl: false,
+			resizerControl: false,
+			preferCanvas: true,
+			rotate: true,
+			bearing: 25,
+			pitch: 45,
+			rotateControl: { closeOnZeroBearing: true },
+			touchRotate: true,
+			touchPitch: true,
+		});
+
+		const terrain = window.terrain = new L.Layer({
+			source: {
+				type: 'terrain',
+				async getTile(z, x, y, signal) {
+					this.cache = this.cache || new Map();
+					const sourceZoom = Math.max(0, Math.min(17, z - 1));
+					const factor = 2 ** (z - sourceZoom);
+					const url = `https://tiles.mapterhorn.com/${sourceZoom}/${Math.floor(x / factor)}/${Math.floor(y / factor)}.webp`;
+					let tile = this.cache.get(url);
+					if (tile && tile.signal?.aborted) {
+						this.cache.delete(url);
+						tile = null;
+					}
+					if (!tile) {
+						tile = {
+							promise: (async () => {
+								const response = await fetch(url, { signal });
+								if (!response.ok) throw new Error(`Mapterhorn: HTTP ${response.status} (${url})`);
+								const image = await createImageBitmap(await response.blob());
+								try {
+									if (image.width !== 512 || image.height !== 512) throw new Error(`Invalid terrain tile: ${url}`);
+									const canvas = document.createElement('canvas');
+									canvas.width = canvas.height = 512;
+									const context = canvas.getContext('2d', { willReadFrequently: true });
+									context.drawImage(image, 0, 0);
+									return context.getImageData(0, 0, 512, 512).data;
+								} finally {
+									image.close();
+								}
+							})(),
+							signal,
+						};
+						this.cache.set(url, tile);
+						if (this.cache.size > 64) this.cache.delete(this.cache.keys().next().value);
+					}
+					try {
+						const pixels = await tile.promise;
+						const heights = new Float32Array(256 * 256);
+						const size = 512 / factor;
+						for (let i = 0; i < heights.length; i++) {
+							const px = Math.floor((x % factor) * size + (i % 256 + 0.5) * size / 256);
+							const py = Math.floor((y % factor) * size + (Math.floor(i / 256) + 0.5) * size / 256);
+							const index = (py * 512 + px) * 4;
+							if (pixels[index + 3] !== 255) throw new Error(`Missing elevation values: ${url}`);
+							heights[i] = pixels[index] * 256 + pixels[index + 1] + pixels[index + 2] / 256 - 32768;
+						}
+						return heights;
+					} catch (error) {
+						if (this.cache.get(url) === tile) this.cache.delete(url);
+						throw error;
+					}
+				},
+			},
+			attribution: 'Elevation: <a href="https://mapterhorn.com/attribution">&copy; Mapterhorn</a>',
+		});
+		terrain.on('error', event => console.error('Terrain:', event.error));
+		terrain.addTo(map);
+
+		const controlElevation = window.controlElevation = L.control.elevation({
+			theme: 'lime-theme',
+			collapsed: false,
+			autohide: false,
+			autofitBounds: true,
+			position: 'bottomleft',
+			detached: true,
+			elevationDiv: '#elevation-div',
+			height: 145,
+			summary: 'inline',
+			imperial: false,
+			polyline: { className: 'elevation-polyline', color: '#ff3c00', weight: 5, opacity: 1 },
+			slope: true,
+			speed: false,
+			acceleration: false,
+			time: true,
+			legend: true,
+			followMarker: true,
+			almostOver: true,
+			distanceMarkers: true,
+			hotline: false,
+		}).addTo(map);
+		const controlLayer = new L.Control.Layers(null, null, { collapsed: false });
+		controlElevation.on('eledata_loaded', ({ layer, name }) =>
+			controlLayer.addTo(map) && layer.eachLayer(trkseg =>
+				trkseg.feature.geometry.type != 'Point' && controlLayer.addOverlay(trkseg, trkseg.feature?.properties?.name || name)));
+		controlElevation.load('demo.geojson');
+	</script>
+</body>
+</html>
